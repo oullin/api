@@ -48,14 +48,12 @@ func main() {
 				continue
 			}
 
-			err = input.Parse()
-
-			if err != nil {
+			if post, err := input.Parse(); err != nil {
 				fmt.Println(err)
 				continue
+			} else {
+				(*postsHandler).HandlePost(post)
 			}
-
-			(*postsHandler).HandlePost()
 
 			return
 		case 2:

@@ -10,7 +10,7 @@ type Input struct {
 	Url string `validate:"required,min=10"`
 }
 
-func (i *Input) Parse() error {
+func (i *Input) Parse() (*markdown.Post, error) {
 	file := markdown.Parser{
 		Url: i.Url,
 	}
@@ -18,13 +18,13 @@ func (i *Input) Parse() error {
 	response, err := file.Fetch()
 
 	if err != nil {
-		return fmt.Errorf("%sError fetching the markdown content: %v %s", cli.Red, err, cli.Reset)
+		return nil, fmt.Errorf("%sError fetching the markdown content: %v %s", cli.Red, err, cli.Reset)
 	}
 
 	post, err := markdown.Parse(response)
 
 	if err != nil {
-		return fmt.Errorf("%sEerror parsing markdown: %v %s", cli.Red, err, cli.Reset)
+		return nil, fmt.Errorf("%sEerror parsing markdown: %v %s", cli.Red, err, cli.Reset)
 	}
 
 	// --- All good!
@@ -40,5 +40,5 @@ func (i *Input) Parse() error {
 	fmt.Println("\n--- Content ---")
 	fmt.Println(post.Content)
 
-	return nil
+	return &post, nil
 }
