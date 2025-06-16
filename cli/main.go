@@ -28,14 +28,14 @@ func main() {
 
 		switch panel.GetChoice() {
 		case 1:
-			uri, err := panel.CapturePostURL()
+			input, err := panel.CapturePostURL()
 
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 
-			err = uri.Parse()
+			err = input.Parse()
 
 			if err != nil {
 				fmt.Println(err)

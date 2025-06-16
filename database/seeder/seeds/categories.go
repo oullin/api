@@ -11,18 +11,13 @@ type CategoriesSeed struct {
 	db *database.Connection
 }
 
-type CategoriesAttrs struct {
-	Slug        string
-	Description string
-}
-
 func MakeCategoriesSeed(db *database.Connection) *CategoriesSeed {
 	return &CategoriesSeed{
 		db: db,
 	}
 }
 
-func (s CategoriesSeed) Create(attrs CategoriesAttrs) ([]database.Category, error) {
+func (s CategoriesSeed) Create(attrs database.CategoriesAttrs) ([]database.Category, error) {
 	var categories []database.Category
 
 	seeds := []string{

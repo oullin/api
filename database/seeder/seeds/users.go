@@ -14,19 +14,13 @@ type UsersSeed struct {
 	db *database.Connection
 }
 
-type UsersAttrs struct {
-	Username string
-	Name     string
-	IsAdmin  bool
-}
-
 func MakeUsersSeed(db *database.Connection) *UsersSeed {
 	return &UsersSeed{
 		db: db,
 	}
 }
 
-func (s UsersSeed) Create(attrs UsersAttrs) (database.User, error) {
+func (s UsersSeed) Create(attrs database.UsersAttrs) (database.User, error) {
 	pass, _ := pkg.MakePassword("password")
 
 	fake := database.User{

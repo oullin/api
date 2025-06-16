@@ -5,26 +5,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/gorm"
-	"time"
 )
 
 type PostsSeed struct {
 	db *database.Connection
-}
-
-type PostsAttrs struct {
-	AuthorID    uint64
-	Slug        string
-	Title       string
-	Excerpt     string
-	Content     string
-	PublishedAt *time.Time
-	Author      database.User
-	Categories  []database.Category
-	Tags        []database.Tag
-	PostViews   []database.PostView
-	Comments    []database.Comment
-	Likes       []database.Like
 }
 
 func MakePostsSeed(db *database.Connection) *PostsSeed {
@@ -33,7 +17,7 @@ func MakePostsSeed(db *database.Connection) *PostsSeed {
 	}
 }
 
-func (s PostsSeed) CreatePosts(attrs PostsAttrs, number int) ([]database.Post, error) {
+func (s PostsSeed) CreatePosts(attrs database.PostsAttrs, number int) ([]database.Post, error) {
 	var posts []database.Post
 
 	for i := 1; i <= number; i++ {
