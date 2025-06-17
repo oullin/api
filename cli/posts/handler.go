@@ -43,8 +43,9 @@ func (h *Handler) ParseCategories(payload *markdown.Post) []database.CategoriesA
 	var categories []database.CategoriesAttrs
 
 	slice := append(categories, database.CategoriesAttrs{
-		Slug: payload.CategorySlug,
-		Name: payload.Category,
+		Slug:        payload.CategorySlug,
+		Name:        payload.Category,
+		Description: "",
 	})
 
 	return slice

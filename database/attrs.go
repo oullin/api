@@ -11,8 +11,9 @@ type UsersAttrs struct {
 }
 
 type CategoriesAttrs struct {
-	Slug string
-	Name string
+	Slug        string
+	Name        string
+	Description string
 }
 
 type TagAttrs struct {

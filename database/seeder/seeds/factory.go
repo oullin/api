@@ -101,6 +101,7 @@ func (s *Seeder) SeedCategories() []database.Category {
 
 	result, err := categories.Create(database.CategoriesAttrs{
 		Slug:        fmt.Sprintf("category-slug-%s", uuid.NewString()),
+		Name:        fmt.Sprintf("category-slug-%s", uuid.NewString()),
 		Description: fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris", uuid.NewString()),
 	})
 
