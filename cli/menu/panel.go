@@ -20,18 +20,18 @@ func (p *Panel) GetChoice() int {
 }
 
 func (p *Panel) CaptureInput() error {
-	fmt.Print(cli.Yellow + "Select an option: " + cli.Reset)
+	fmt.Print(cli.YellowColour + "Select an option: " + cli.Reset)
 	input, err := p.Reader.ReadString('\n')
 
 	if err != nil {
-		return fmt.Errorf("%s error reading input: %v %s", cli.Red, err, cli.Reset)
+		return fmt.Errorf("%s error reading input: %v %s", cli.RedColour, err, cli.Reset)
 	}
 
 	input = strings.TrimSpace(input)
 	choice, err := strconv.Atoi(input)
 
 	if err != nil {
-		return fmt.Errorf("%s Please enter a valid number. %s", cli.Red, cli.Reset)
+		return fmt.Errorf("%s Please enter a valid number. %s", cli.RedColour, cli.Reset)
 	}
 
 	p.Choice = &choice
@@ -57,7 +57,7 @@ func (p *Panel) PrintMenu() {
 
 	// Print in color
 	fmt.Println()
-	fmt.Println(cli.Cyan + border)
+	fmt.Println(cli.CyanColour + border)
 	fmt.Println(title)
 	fmt.Println(divider)
 
@@ -97,21 +97,21 @@ func (p *Panel) CapturePostURL() (*posts.Input, error) {
 	uri, err := p.Reader.ReadString('\n')
 
 	if err != nil {
-		return nil, fmt.Errorf("%sError reading the given post URL: %v %s", cli.Red, err, cli.Reset)
+		return nil, fmt.Errorf("%sError reading the given post URL: %v %s", cli.RedColour, err, cli.Reset)
 	}
 
 	uri = strings.TrimSpace(uri)
 	if uri == "" {
-		return nil, fmt.Errorf("%sError: no URL provided: %s", cli.Red, cli.Reset)
+		return nil, fmt.Errorf("%sError: no URL provided: %s", cli.RedColour, cli.Reset)
 	}
 
 	parsedURL, err := url.Parse(uri)
 	if err != nil {
-		return nil, fmt.Errorf("%sError: invalid URL: %v %s", cli.Red, err, cli.Reset)
+		return nil, fmt.Errorf("%sError: invalid URL: %v %s", cli.RedColour, err, cli.Reset)
 	}
 
 	if parsedURL.Scheme != "https" || parsedURL.Host != "raw.githubusercontent.com" {
-		return nil, fmt.Errorf("%sError: URL must begin with https://raw.githubusercontent.com: %v %s", cli.Red, err, cli.Reset)
+		return nil, fmt.Errorf("%sError: URL must begin with https://raw.githubusercontent.com: %v %s", cli.RedColour, err, cli.Reset)
 	}
 
 	input := posts.Input{Url: parsedURL.String()}
@@ -120,10 +120,10 @@ func (p *Panel) CapturePostURL() (*posts.Input, error) {
 	if _, err := validate.Rejects(input); err != nil {
 		return nil, fmt.Errorf(
 			"%sError validating the given post URL: %v %s \n%sViolations:%s %s",
-			cli.Red,
+			cli.RedColour,
 			err,
 			cli.Reset,
-			cli.Blue,
+			cli.BlueColour,
 			cli.Reset,
 			validate.GetErrorsAsJason(),
 		)

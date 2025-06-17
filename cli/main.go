@@ -35,7 +35,7 @@ func main() {
 		err := panel.CaptureInput()
 
 		if err != nil {
-			fmt.Println(cli.Red + err.Error() + cli.Reset)
+			fmt.Println(cli.RedColour + err.Error() + cli.Reset)
 			continue
 		}
 
@@ -61,10 +61,10 @@ func main() {
 		case 3:
 			timeParse()
 		case 0:
-			fmt.Println(cli.Green + "Goodbye!" + cli.Reset)
+			fmt.Println(cli.GreenColour + "Goodbye!" + cli.Reset)
 			return
 		default:
-			fmt.Println(cli.Red, "Unknown option. Try again.", cli.Reset)
+			fmt.Println(cli.RedColour, "Unknown option. Try again.", cli.Reset)
 		}
 
 		fmt.Print("\nPress Enter to continue...")
@@ -76,7 +76,7 @@ func main() {
 func showTime() {
 	fmt.Println("")
 	now := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Println(cli.Green, "\nCurrent time is", now, cli.Reset)
+	fmt.Println(cli.GreenColour, "\nCurrent time is", now, cli.Reset)
 }
 
 func timeParse() {

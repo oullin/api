@@ -18,13 +18,13 @@ func (i *Input) Parse() (*markdown.Post, error) {
 	response, err := file.Fetch()
 
 	if err != nil {
-		return nil, fmt.Errorf("%sError fetching the markdown content: %v %s", cli.Red, err, cli.Reset)
+		return nil, fmt.Errorf("%sError fetching the markdown content: %v %s", cli.RedColour, err, cli.Reset)
 	}
 
 	post, err := markdown.Parse(response)
 
 	if err != nil {
-		return nil, fmt.Errorf("%sEerror parsing markdown: %v %s", cli.Red, err, cli.Reset)
+		return nil, fmt.Errorf("%sEerror parsing markdown: %v %s", cli.RedColour, err, cli.Reset)
 	}
 
 	// --- All good!
