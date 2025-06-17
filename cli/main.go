@@ -58,6 +58,8 @@ func main() {
 			return
 		case 2:
 			showTime()
+		case 3:
+			timeParse()
 		case 0:
 			fmt.Println(cli.Green + "Goodbye!" + cli.Reset)
 			return
@@ -75,4 +77,14 @@ func showTime() {
 	fmt.Println("")
 	now := time.Now().Format("2006-01-02 15:04:05")
 	fmt.Println(cli.Green, "\nCurrent time is", now, cli.Reset)
+}
+
+func timeParse() {
+	s := pkg.MakeStringable("2025-04-12")
+
+	if seed, err := s.ToDatetime(); err != nil {
+		panic(err)
+	} else {
+		fmt.Println(seed.Format(time.DateTime))
+	}
 }

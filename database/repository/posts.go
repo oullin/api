@@ -6,6 +6,10 @@ import (
 )
 
 type Posts struct {
-	Db  *database.Connection
-	Env *env.Environment
+	Connection *database.Connection
+	Env        *env.Environment
+}
+
+func (r Posts) Create() (*database.Post, error) {
+	return nil, nil
 }

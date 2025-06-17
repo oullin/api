@@ -63,6 +63,7 @@ func (p *Panel) PrintMenu() {
 
 	p.PrintOption("1) Parse Posts", inner)
 	p.PrintOption("2) Show Time", inner)
+	p.PrintOption("3) Show Date", inner)
 	p.PrintOption("0) Exit", inner)
 
 	fmt.Println(footer + cli.Reset)

@@ -7,19 +7,22 @@ import (
 )
 
 type Handler struct {
-	Env        *env.Environment
-	Repository repository.Posts
+	Env             *env.Environment
+	PostsRepository *repository.Posts
+	UsersRepository *repository.Users
 }
 
 func MakePostsHandler(env *env.Environment) *Handler {
 	cnn := boost.MakeDbConnection(env)
 
-	repo := repository.Posts{
-		Db:  cnn,
-		Env: env,
-	}
-
 	return &Handler{
-		Repository: repo,
+		PostsRepository: &repository.Posts{
+			Connection: cnn,
+			Env:        env,
+		},
+		UsersRepository: &repository.Users{
+			Connection: cnn,
+			Env:        env,
+		},
 	}
 }

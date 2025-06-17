@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 )
 
 func (p Parser) Fetch() (string, error) {
@@ -39,16 +38,6 @@ func (p Parser) Fetch() (string, error) {
 	}
 
 	return string(body), nil
-}
-
-func (p Parser) GetUrl() string {
-	sep := "?"
-
-	if strings.Contains(p.Url, "?") {
-		sep = "&"
-	}
-
-	return fmt.Sprintf("%s%sts=%d", p.Url, sep, time.Now().UnixNano())
 }
 
 // Parse splits the document into front-matter and content, then parses YAML.
@@ -96,5 +85,15 @@ func Parse(data string) (Post, error) {
 		post.Content = body
 	}
 
+	parseCategory(&post)
+
 	return post, nil
+}
+
+func parseCategory(post *Post) {
+	category := post.FrontMatter.Category
+	parts := strings.Split(category, ":")
+
+	post.Category = parts[1]
+	post.CategorySlug = parts[0]
 }

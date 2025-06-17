@@ -11,8 +11,13 @@ type UsersAttrs struct {
 }
 
 type CategoriesAttrs struct {
-	Slug        string
-	Description string
+	Slug string
+	Name string
+}
+
+type TagAttrs struct {
+	Slug string
+	Name string
 }
 
 type CommentsAttrs struct {
@@ -51,10 +56,11 @@ type PostsAttrs struct {
 	Title       string
 	Excerpt     string
 	Content     string
+	ImageURL    string
 	PublishedAt *time.Time
 	Author      User
-	Categories  []Category
-	Tags        []Tag
+	Categories  []CategoriesAttrs
+	Tags        []TagAttrs
 	PostViews   []PostView
 	Comments    []Comment
 	Likes       []Like
