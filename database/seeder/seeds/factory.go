@@ -72,7 +72,6 @@ func (s *Seeder) SeedPosts(UserA, UserB database.User) []database.Post {
 		Excerpt:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris", uuid.NewString()),
 		Content:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris. Nullam tempor velit id mi luctus, a scelerisque libero accumsan. In hac habitasse platea dictumst. Cras ac nunc nec massa tristique fringilla.", uuid.NewString()),
 		PublishedAt: &timex,
-		Author:      UserA,
 	}, 1)
 
 	if err != nil {
@@ -86,7 +85,6 @@ func (s *Seeder) SeedPosts(UserA, UserB database.User) []database.Post {
 		Excerpt:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris", uuid.NewString()),
 		Content:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris. Nullam tempor velit id mi luctus, a scelerisque libero accumsan. In hac habitasse platea dictumst. Cras ac nunc nec massa tristique fringilla.", uuid.NewString()),
 		PublishedAt: &timex,
-		Author:      UserB,
 	}, 1)
 
 	if err != nil {

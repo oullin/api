@@ -59,10 +59,6 @@ type PostsAttrs struct {
 	Content     string
 	ImageURL    string
 	PublishedAt *time.Time
-	Author      User
 	Categories  []CategoriesAttrs
 	Tags        []TagAttrs
-	PostViews   []PostView
-	Comments    []Comment
-	Likes       []Like
 }

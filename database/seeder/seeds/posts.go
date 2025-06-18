@@ -24,8 +24,8 @@ func (s PostsSeed) CreatePosts(attrs database.PostsAttrs, number int) ([]databas
 		post := database.Post{
 			UUID:          uuid.NewString(),
 			AuthorID:      attrs.AuthorID,
-			Slug:          fmt.Sprintf("%s-post-%s-%d", attrs.Author.Username, attrs.Slug, i),
-			Title:         fmt.Sprintf("Post: [%d] by %s", i, attrs.Author.Username),
+			Slug:          attrs.Slug,
+			Title:         attrs.Title,
 			Excerpt:       "This is an excerpt.",
 			Content:       "This is the full content of the post.",
 			CoverImageURL: "",
