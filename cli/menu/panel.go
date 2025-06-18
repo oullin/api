@@ -16,6 +16,10 @@ func (p *Panel) PrintLine() {
 }
 
 func (p *Panel) GetChoice() int {
+	if p.Choice == nil {
+		return 0
+	}
+
 	return *p.Choice
 }
 
@@ -111,7 +115,7 @@ func (p *Panel) CapturePostURL() (*posts.Input, error) {
 	}
 
 	if parsedURL.Scheme != "https" || parsedURL.Host != "raw.githubusercontent.com" {
-		return nil, fmt.Errorf("%sError: URL must begin with https://raw.githubusercontent.com: %v %s", cli.RedColour, err, cli.Reset)
+		return nil, fmt.Errorf("%sError: URL must begin with https://raw.githubusercontent.com %s", cli.RedColour, cli.Reset)
 	}
 
 	input := posts.Input{Url: parsedURL.String()}

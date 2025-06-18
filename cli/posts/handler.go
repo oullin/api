@@ -29,7 +29,6 @@ func (h *Handler) HandlePost(payload *markdown.Post) error {
 		Content:     payload.Content,
 		PublishedAt: publishedAt,
 		ImageURL:    payload.ImageURL,
-		Author:      *author,
 		Categories:  h.ParseCategories(payload),
 		Tags:        h.ParseTags(payload),
 	}
