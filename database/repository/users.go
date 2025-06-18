@@ -13,10 +13,10 @@ type Users struct {
 }
 
 func (u Users) FindBy(username string) *database.User {
-	user := &database.User{}
+	user := database.User{}
 
 	result := u.DB.Sql().
-		Where("username = ?", username).
+		Where("LOWER(username) = ?", strings.ToLower(username)).
 		First(&user)
 
 	if gorm.HasDbIssues(result.Error) {
@@ -24,7 +24,7 @@ func (u Users) FindBy(username string) *database.User {
 	}
 
 	if strings.Trim(user.UUID, " ") != "" {
-		return user
+		return &user
 	}
 
 	return nil

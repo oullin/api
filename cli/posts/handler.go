@@ -3,6 +3,7 @@ package posts
 import (
 	"fmt"
 	"github.com/oullin/database"
+	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/markdown"
 	"time"
 )
@@ -33,13 +34,11 @@ func (h *Handler) HandlePost(payload *markdown.Post) error {
 		Tags:        h.ParseTags(payload),
 	}
 
-	var post *database.Post
-	if post, err = h.Posts.Create(attrs); err != nil {
+	if _, err = h.Posts.Create(attrs); err != nil {
 		return fmt.Errorf("handler: error persiting the post [%s]: %s", attrs.Title, err.Error())
 	}
 
-	fmt.Println("-----------------")
-	fmt.Println(post)
+	cli.Successln(fmt.Sprintf("Post [%s] created successfully.", attrs.Title))
 
 	return nil
 }

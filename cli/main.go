@@ -52,7 +52,10 @@ func main() {
 				fmt.Println(err)
 				continue
 			} else {
-				(*postsHandler).HandlePost(post)
+				if err := (*postsHandler).HandlePost(post); err != nil {
+					fmt.Println(err)
+					continue
+				}
 			}
 
 			return

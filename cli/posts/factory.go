@@ -7,10 +7,9 @@ import (
 )
 
 type Handler struct {
-	Env        *env.Environment
-	Posts      *repository.Posts
-	Users      *repository.Users
-	Categories *repository.Categories
+	Env   *env.Environment
+	Posts *repository.Posts
+	Users *repository.Users
 }
 
 func MakePostsHandler(env *env.Environment) *Handler {
@@ -20,6 +19,10 @@ func MakePostsHandler(env *env.Environment) *Handler {
 		Posts: &repository.Posts{
 			DB:  db,
 			Env: env,
+			Categories: &repository.Categories{
+				DB:  db,
+				Env: env,
+			},
 		},
 		Users: &repository.Users{
 			DB:  db,

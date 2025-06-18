@@ -15,10 +15,10 @@ type Categories struct {
 }
 
 func (c Categories) FindBy(slug string) *database.Category {
-	category := &database.Category{}
+	category := database.Category{}
 
 	result := c.DB.Sql().
-		Where("slug = ?", slug).
+		Where("LOWER(slug) = ?", strings.ToLower(slug)).
 		First(&category)
 
 	if gorm.HasDbIssues(result.Error) {
@@ -26,7 +26,7 @@ func (c Categories) FindBy(slug string) *database.Category {
 	}
 
 	if strings.Trim(category.UUID, " ") != "" {
-		return category
+		return &category
 	}
 
 	return nil
@@ -79,8 +79,13 @@ func (c Categories) ExistOrUpdate(seed database.CategoriesAttrs) (bool, error) {
 		return false, nil
 	}
 
-	category.Name = seed.Name
-	category.Description = seed.Description
+	if strings.Trim(seed.Name, " ") != "" {
+		category.Name = seed.Name
+	}
+
+	if strings.Trim(seed.Description, " ") != "" {
+		category.Description = seed.Description
+	}
 
 	if result := c.DB.Sql().Save(&category); gorm.HasDbIssues(result.Error) {
 		return false, fmt.Errorf("error on exist or update category [%s]: %s", category.Name, result.Error)

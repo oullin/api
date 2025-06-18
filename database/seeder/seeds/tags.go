@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/gorm"
+	"strings"
 )
 
 type TagsSeed struct {
@@ -24,11 +25,11 @@ func (s TagsSeed) Create() ([]database.Tag, error) {
 		"Automation", "Teamwork", "Agile", "OpenAI", "Scaling", "Future",
 	}
 
-	for index, name := range allowed {
+	for _, name := range allowed {
 		tag := database.Tag{
 			UUID: uuid.NewString(),
 			Name: name,
-			Slug: fmt.Sprintf("tag[%d]-slug-%s", index, name),
+			Slug: strings.ToLower(name),
 		}
 
 		tags = append(tags, tag)
