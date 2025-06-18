@@ -13,14 +13,14 @@ func (h *Handler) HandlePost(payload *markdown.Post) error {
 	author := h.Users.FindBy(payload.Author)
 
 	if author == nil {
-		return fmt.Errorf("the given author [%s] does not exist", payload.Author)
+		return fmt.Errorf("handler: the given author [%s] does not exist", payload.Author)
 	}
 
 	if publishedAt, err = payload.GetPublishedAt(); err != nil {
-		return fmt.Errorf("the given published_at [%s] date is invalid", payload.PublishedAt)
+		return fmt.Errorf("handler: the given published_at [%s] date is invalid", payload.PublishedAt)
 	}
 
-	post := database.PostsAttrs{
+	attrs := database.PostsAttrs{
 		AuthorID:    author.ID,
 		Slug:        payload.Slug,
 		Title:       payload.Title,
@@ -31,6 +31,11 @@ func (h *Handler) HandlePost(payload *markdown.Post) error {
 		Author:      *author,
 		Categories:  h.ParseCategories(payload),
 		Tags:        h.ParseTags(payload),
+	}
+
+	var post *database.Post
+	if post, err = h.Posts.Create(attrs); err != nil {
+		return fmt.Errorf("handler: error persiting the post [%s]: %s", attrs.Title, err.Error())
 	}
 
 	fmt.Println("-----------------")
