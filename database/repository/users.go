@@ -8,14 +8,14 @@ import (
 )
 
 type Users struct {
-	Connection *database.Connection
-	Env        *env.Environment
+	DB  *database.Connection
+	Env *env.Environment
 }
 
-func (r Users) FindBy(username string) *database.User {
+func (u Users) FindBy(username string) *database.User {
 	user := &database.User{}
 
-	result := r.Connection.Sql().
+	result := u.DB.Sql().
 		Where("username = ?", username).
 		First(&user)
 

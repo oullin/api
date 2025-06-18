@@ -10,7 +10,7 @@ import (
 func (h *Handler) HandlePost(payload *markdown.Post) error {
 	var err error
 	var publishedAt *time.Time
-	author := h.UsersRepository.FindBy(payload.Author)
+	author := h.Users.FindBy(payload.Author)
 
 	if author == nil {
 		return fmt.Errorf("the given author [%s] does not exist", payload.Author)

@@ -9,15 +9,15 @@ import (
 	"strings"
 )
 
-type Category struct {
-	Connection *database.Connection
-	Env        *env.Environment
+type Categories struct {
+	DB  *database.Connection
+	Env *env.Environment
 }
 
-func (r Category) FindBy(slug string) *database.Category {
+func (c Categories) FindBy(slug string) *database.Category {
 	category := &database.Category{}
 
-	result := r.Connection.Sql().
+	result := c.DB.Sql().
 		Where("slug = ?", slug).
 		First(&category)
 
@@ -32,11 +32,11 @@ func (r Category) FindBy(slug string) *database.Category {
 	return nil
 }
 
-func (r Category) CreateOrUpdate(post database.Post, attrs database.PostsAttrs) (*[]database.Category, error) {
+func (c Categories) CreateOrUpdate(post database.Post, attrs database.PostsAttrs) (*[]database.Category, error) {
 	var output []database.Category
 
 	for _, seed := range attrs.Categories {
-		exists, err := r.ExistOrUpdate(seed)
+		exists, err := c.ExistOrUpdate(seed)
 
 		if exists {
 			continue
@@ -53,7 +53,7 @@ func (r Category) CreateOrUpdate(post database.Post, attrs database.PostsAttrs) 
 			Description: seed.Description,
 		}
 
-		if result := r.Connection.Sql().Create(&category); gorm.HasDbIssues(result.Error) {
+		if result := c.DB.Sql().Create(&category); gorm.HasDbIssues(result.Error) {
 			return nil, fmt.Errorf("error creating category [%s]: %s", seed.Name, result.Error)
 		}
 
@@ -62,7 +62,7 @@ func (r Category) CreateOrUpdate(post database.Post, attrs database.PostsAttrs) 
 			PostID:     post.ID,
 		}
 
-		if result := r.Connection.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
+		if result := c.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
 			return nil, fmt.Errorf("error creating category trace [%s:%s]: %s", category.Name, post.Title, result.Error)
 		}
 
@@ -72,17 +72,17 @@ func (r Category) CreateOrUpdate(post database.Post, attrs database.PostsAttrs) 
 	return &output, nil
 }
 
-func (r Category) ExistOrUpdate(seed database.CategoriesAttrs) (bool, error) {
+func (c Categories) ExistOrUpdate(seed database.CategoriesAttrs) (bool, error) {
 	var category *database.Category
 
-	if category = r.FindBy(seed.Slug); category == nil {
+	if category = c.FindBy(seed.Slug); category == nil {
 		return false, nil
 	}
 
 	category.Name = seed.Name
 	category.Description = seed.Description
 
-	if result := r.Connection.Sql().Save(&category); gorm.HasDbIssues(result.Error) {
+	if result := c.DB.Sql().Save(&category); gorm.HasDbIssues(result.Error) {
 		return false, fmt.Errorf("error on exist or update category [%s]: %s", category.Name, result.Error)
 	}
 
