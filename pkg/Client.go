@@ -12,7 +12,7 @@ type Client struct {
 	UserAgent      string
 	client         *http.Client
 	transport      *http.Transport
-	WithHeaders    *func(*http.Request)
+	WithHeaders    func(*http.Request)
 	AbortOnNone2xx bool
 }
 
@@ -25,6 +25,10 @@ func GetDefaultTransport() *http.Transport {
 }
 
 func MakeDefaultClient(transport *http.Transport) *Client {
+	if transport == nil {
+		transport = GetDefaultTransport()
+	}
+
 	client := &http.Client{
 		Transport: transport,
 		Timeout:   15 * time.Second,
@@ -40,6 +44,10 @@ func MakeDefaultClient(transport *http.Transport) *Client {
 }
 
 func (f *Client) Get(ctx context.Context, url string) (string, error) {
+	if f == nil || f.client == nil {
+		return "", fmt.Errorf("client is nil")
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 
 	if err != nil {
@@ -47,7 +55,7 @@ func (f *Client) Get(ctx context.Context, url string) (string, error) {
 	}
 
 	if f.WithHeaders != nil {
-		callback := *f.WithHeaders
+		callback := f.WithHeaders
 		callback(req)
 	}
 
