@@ -22,8 +22,6 @@ func init() {
 }
 
 func main() {
-	postsHandler := posts.MakePostsHandler(environment)
-
 	panel := menu.Panel{
 		Reader:    bufio.NewReader(os.Stdin),
 		Validator: pkg.GetDefaultValidator(),
@@ -48,14 +46,15 @@ func main() {
 				continue
 			}
 
-			if post, err := input.Parse(); err != nil {
+			handler := posts.MakeHandler(
+				input,
+				pkg.MakeDefaultClient(pkg.GetDefaultTransport()),
+				environment,
+			)
+
+			if _, err := handler.NotParsed(); err != nil {
 				fmt.Println(err)
 				continue
-			} else {
-				if err := (*postsHandler).HandlePost(post); err != nil {
-					fmt.Println(err)
-					continue
-				}
 			}
 
 			return

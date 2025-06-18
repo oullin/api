@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (h *Handler) HandlePost(payload *markdown.Post) error {
+func (h Handler) HandlePost(payload *markdown.Post) error {
 	var err error
 	var publishedAt *time.Time
 	author := h.Users.FindBy(payload.Author)
@@ -42,7 +42,7 @@ func (h *Handler) HandlePost(payload *markdown.Post) error {
 	return nil
 }
 
-func (h *Handler) ParseCategories(payload *markdown.Post) []database.CategoriesAttrs {
+func (h Handler) ParseCategories(payload *markdown.Post) []database.CategoriesAttrs {
 	var categories []database.CategoriesAttrs
 
 	slice := append(categories, database.CategoriesAttrs{
@@ -54,7 +54,7 @@ func (h *Handler) ParseCategories(payload *markdown.Post) []database.CategoriesA
 	return slice
 }
 
-func (h *Handler) ParseTags(payload *markdown.Post) []database.TagAttrs {
+func (h Handler) ParseTags(payload *markdown.Post) []database.TagAttrs {
 	var slice []database.TagAttrs
 
 	for _, tag := range payload.Tags {
