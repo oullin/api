@@ -16,6 +16,7 @@ func MakePostsHandler(env *env.Environment) *Handler {
 	db := boost.MakeDbConnection(env)
 
 	return &Handler{
+		Env: env,
 		Posts: &repository.Posts{
 			DB:  db,
 			Env: env,

@@ -19,7 +19,7 @@ func Successln(message string) {
 }
 
 func Warning(message string) {
-	fmt.Print(GreenColour + message + Reset)
+	fmt.Print(YellowColour + message + Reset)
 }
 
 func Warningln(message string) {

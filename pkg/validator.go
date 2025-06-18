@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"strings"
+	"sync"
 )
 
 type Validator struct {
@@ -14,11 +15,18 @@ type Validator struct {
 }
 
 func GetDefaultValidator() *Validator {
-	return MakeValidatorFrom(
-		validator.New(
-			validator.WithRequiredStructEnabled(),
-		),
-	)
+	var once sync.Once
+	var defaultValidator *Validator
+
+	once.Do(func() {
+		defaultValidator = MakeValidatorFrom(
+			validator.New(
+				validator.WithRequiredStructEnabled(),
+			),
+		)
+	})
+
+	return defaultValidator
 }
 
 func MakeValidatorFrom(abstract *validator.Validate) *Validator {

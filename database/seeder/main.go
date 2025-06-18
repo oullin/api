@@ -107,9 +107,10 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		cli.Successln("Seeding Newsletters ...")
 		if err := seeder.SeedNewsLetters(); err != nil {
 			cli.Error(err.Error())
+		} else {
+			cli.Successln("Seeding Newsletters ...")
 		}
 	}()
 

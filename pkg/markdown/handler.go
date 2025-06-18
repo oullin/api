@@ -96,4 +96,14 @@ func parseCategory(post *Post) {
 
 	post.Category = parts[1]
 	post.CategorySlug = parts[0]
+
+	if len(parts) >= 2 {
+		post.Category = parts[1]
+		post.CategorySlug = parts[0]
+
+		return
+	}
+
+	post.Category = category
+	post.Slug = strings.ToLower(category)
 }

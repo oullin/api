@@ -24,16 +24,22 @@ func (i *Input) Parse() (*markdown.Post, error) {
 	}
 
 	post, err := markdown.Parse(response)
-	i.MarkdownPost = &post
 
 	if err != nil {
 		return nil, fmt.Errorf("%sEerror parsing markdown: %v %s", cli.RedColour, err, cli.Reset)
 	}
 
-	return &post, nil
+	i.MarkdownPost = &post
+
+	return i.MarkdownPost, nil
 }
 
 func (i *Input) Render() {
+	if i.MarkdownPost == nil {
+		cli.Errorln("No markdown post found or initialised. Called Parse() first.")
+		return
+	}
+
 	fmt.Printf("Title: %s\n", i.MarkdownPost.Title)
 	fmt.Printf("Excerpt: %s\n", i.MarkdownPost.Excerpt)
 	fmt.Printf("Slug: %s\n", i.MarkdownPost.Slug)
