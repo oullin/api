@@ -12,12 +12,16 @@ import (
 
 var environment *env.Environment
 
+// init loads environment variables from the .env file and assigns them to the global environment variable.
 func init() {
 	secrets, _ := boost.Spark("./.env")
 
 	environment = secrets
 }
 
+// main orchestrates the database seeding process, performing truncation and seeding of all entities in a structured and concurrent manner.
+// It initializes environment configuration, establishes database and logging connections, and coordinates the seeding of users, posts, categories, tags, comments, likes, post-category and post-tag relationships, post views, and newsletters.
+// The function ensures proper sequencing and concurrency for dependent and independent seeding tasks, and outputs progress and status messages to the CLI.
 func main() {
 	cli.ClearScreen()
 

@@ -15,6 +15,7 @@ import (
 var guard gate.Guard
 var environment *env.Environment
 
+// init loads environment secrets from a .env file and initializes the global environment and authentication guard.
 func init() {
 	secrets, _ := boost.Spark("./../.env")
 
@@ -22,6 +23,7 @@ func init() {
 	guard = gate.MakeGuard(environment.App.Credentials)
 }
 
+// main is the entry point for the CLI application, handling user authentication and presenting a menu-driven interface for further actions.
 func main() {
 	cli.ClearScreen()
 

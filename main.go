@@ -19,6 +19,7 @@ func init() {
 	validator = validate
 }
 
+// main initializes application dependencies, registers user routes, verifies database connectivity, and starts the HTTP server. Panics if the server fails to start.
 func main() {
 	dbConnection := boost.MakeDbConnection(environment)
 	logs := boost.MakeLogs(environment)

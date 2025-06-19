@@ -15,6 +15,7 @@ type Guard struct {
 	reader *bufio.Reader
 }
 
+// MakeGuard creates and returns a Guard initialized with the provided token and a buffered reader for standard input.
 func MakeGuard(token auth.Token) Guard {
 	return Guard{
 		token:  token,

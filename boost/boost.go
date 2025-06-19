@@ -46,6 +46,8 @@ func MakeDbConnection(env *env.Environment) *database.Connection {
 	return dbConn
 }
 
+// MakeLogs creates and returns a logging driver configured with the provided environment settings.
+// Panics if log files cannot be opened.
 func MakeLogs(env *env.Environment) *llogs.Driver {
 	lDriver, err := llogs.MakeFilesLogs(env)
 
@@ -56,6 +58,8 @@ func MakeLogs(env *env.Environment) *llogs.Driver {
 	return &lDriver
 }
 
+// MakeEnv constructs an env.Environment from a map of environment variable values, validating each component and panicking if any validation fails.
+// All string values are trimmed of whitespace before assignment. Returns the fully validated environment configuration.
 func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment {
 	errorSufix := "Environment: "
 

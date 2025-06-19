@@ -6,6 +6,8 @@ import (
 	"os/exec"
 )
 
+// ClearScreen attempts to clear the terminal screen by running the "clear" command.
+// If the command fails, it logs an error message.
 func ClearScreen() {
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
