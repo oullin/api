@@ -22,7 +22,6 @@ func init() {
 func main() {
 	dbConnection := boost.MakeDbConnection(environment)
 	logs := boost.MakeLogs(environment)
-	adminUser := boost.MakeAdminUser(environment)
 	localSentry := boost.MakeSentry(environment)
 
 	defer (*logs).Close()
@@ -34,7 +33,6 @@ func main() {
 		Validator:    validator,
 		Logs:         logs,
 		DbConnection: dbConnection,
-		AdminUser:    adminUser,
 		Env:          environment,
 		Mux:          mux,
 		Sentry:       localSentry,

@@ -5,12 +5,10 @@ import (
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/oullin/database"
 	"github.com/oullin/env"
-	"github.com/oullin/handler/user"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/llogs"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -56,27 +54,14 @@ func MakeLogs(env *env.Environment) *llogs.Driver {
 	return &lDriver
 }
 
-func MakeAdminUser(env *env.Environment) *user.AdminUser {
-	return &user.AdminUser{
-		PublicToken:  env.App.AppUserAmin.PublicToken,
-		PrivateToken: env.App.AppUserAmin.PrivateToken,
-	}
-}
-
 func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment {
 	errorSufix := "Environment: "
 
 	port, _ := strconv.Atoi(values["ENV_DB_PORT"])
 
-	userAminEnvValues := &env.AppUserAminEnvValues{
-		PublicToken:  strings.Trim(values["ENV_APP_ADMIN_PUBLIC_TOKEN"], " "),
-		PrivateToken: strings.Trim(values["ENV_APP_ADMIN_PRIVATE_TOKEN"], " "),
-	}
-
 	app := env.AppEnvironment{
-		Name:        values["ENV_APP_NAME"],
-		Type:        values["ENV_APP_ENV_TYPE"],
-		AppUserAmin: userAminEnvValues,
+		Name: values["ENV_APP_NAME"],
+		Type: values["ENV_APP_ENV_TYPE"],
 	}
 
 	db := env.DBEnvironment{
@@ -114,10 +99,6 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 
 	if _, err := validate.Rejects(db); err != nil {
 		panic(errorSufix + "invalid [Sql] model: " + validate.GetErrorsAsJason())
-	}
-
-	if _, err := validate.Rejects(userAminEnvValues); err != nil {
-		panic(errorSufix + "invalid [AppUserAminEnvValues] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {
