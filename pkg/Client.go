@@ -12,7 +12,7 @@ type Client struct {
 	UserAgent      string
 	client         *http.Client
 	transport      *http.Transport
-	WithHeaders    func(*http.Request)
+	OnHeaders      func(req *http.Request)
 	AbortOnNone2xx bool
 }
 
@@ -38,7 +38,7 @@ func MakeDefaultClient(transport *http.Transport) *Client {
 		client:         client,
 		transport:      transport,
 		UserAgent:      "gocanto.dev",
-		WithHeaders:    nil,
+		OnHeaders:      nil,
 		AbortOnNone2xx: false,
 	}
 }
@@ -54,9 +54,8 @@ func (f *Client) Get(ctx context.Context, url string) (string, error) {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	if f.WithHeaders != nil {
-		callback := f.WithHeaders
-		callback(req)
+	if f.OnHeaders != nil {
+		f.OnHeaders(req)
 	}
 
 	req.Header.Set("User-Agent", f.UserAgent)

@@ -11,7 +11,10 @@ import (
 func (h Handler) HandlePost(payload *markdown.Post) error {
 	var err error
 	var publishedAt *time.Time
-	author := h.Users.FindBy(payload.Author)
+
+	author := h.Users.FindBy(
+		payload.Author,
+	)
 
 	if author == nil {
 		return fmt.Errorf("handler: the given author [%s] does not exist", payload.Author)
@@ -23,11 +26,11 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 
 	attrs := database.PostsAttrs{
 		AuthorID:    author.ID,
+		PublishedAt: publishedAt,
 		Slug:        payload.Slug,
 		Title:       payload.Title,
 		Excerpt:     payload.Excerpt,
 		Content:     payload.Content,
-		PublishedAt: publishedAt,
 		ImageURL:    payload.ImageURL,
 		Categories:  h.ParseCategories(payload),
 		Tags:        h.ParseTags(payload),
@@ -37,7 +40,7 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 		return fmt.Errorf("handler: error persiting the post [%s]: %s", attrs.Title, err.Error())
 	}
 
-	cli.Successln(fmt.Sprintf("Post [%s] created successfully.", attrs.Title))
+	cli.Successln("\n" + fmt.Sprintf("Post [%s] created successfully.", attrs.Title))
 
 	return nil
 }

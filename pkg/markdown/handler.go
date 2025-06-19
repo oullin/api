@@ -42,13 +42,13 @@ func (p Parser) Fetch() (string, error) {
 
 // Parse splits the document into front-matter and content, then parses YAML.
 // It also extracts a leading Parser image (header image) if present.
-func Parse(data string) (Post, error) {
+func Parse(data string) (*Post, error) {
 	var post Post
 
 	// Expecting format: ---\n<yaml>---\n<content>
 	sections := strings.SplitN(data, "---", 3)
 	if len(sections) < 3 {
-		return post, fmt.Errorf("invalid front-matter format")
+		return nil, fmt.Errorf("invalid front-matter format")
 	}
 
 	fm := strings.TrimSpace(sections[1])
@@ -57,7 +57,7 @@ func Parse(data string) (Post, error) {
 	// Unmarshal YAML into FrontMatter
 	err := yaml.Unmarshal([]byte(fm), &post.FrontMatter)
 	if err != nil {
-		return post, err
+		return nil, err
 	}
 
 	// Look for a header image at the top of the content
@@ -87,7 +87,7 @@ func Parse(data string) (Post, error) {
 
 	parseCategory(&post)
 
-	return post, nil
+	return &post, nil
 }
 
 func parseCategory(post *Post) {

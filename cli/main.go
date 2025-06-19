@@ -1,15 +1,12 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/oullin/boost"
-	"github.com/oullin/cli/menu"
+	"github.com/oullin/cli/panel"
 	"github.com/oullin/cli/posts"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/cli"
-	"os"
 	"time"
 )
 
@@ -22,38 +19,30 @@ func init() {
 }
 
 func main() {
-	panel := menu.Panel{
-		Reader:    bufio.NewReader(os.Stdin),
-		Validator: pkg.GetDefaultValidator(),
-	}
-
-	panel.PrintMenu()
+	menu := panel.MakeMenu()
 
 	for {
-		err := panel.CaptureInput()
+		err := menu.CaptureInput()
 
 		if err != nil {
-			fmt.Println(cli.RedColour + err.Error() + cli.Reset)
+			cli.Errorln(err.Error())
 			continue
 		}
 
-		switch panel.GetChoice() {
+		switch menu.GetChoice() {
 		case 1:
-			input, err := panel.CapturePostURL()
+			input, err := menu.CapturePostURL()
 
 			if err != nil {
-				fmt.Println(err)
+				cli.Errorln(err.Error())
 				continue
 			}
 
-			handler := posts.MakeHandler(
-				input,
-				pkg.MakeDefaultClient(pkg.GetDefaultTransport()),
-				environment,
-			)
+			httpClient := pkg.MakeDefaultClient(nil)
+			handler := posts.MakeHandler(input, httpClient, environment)
 
 			if _, err := handler.NotParsed(); err != nil {
-				fmt.Println(err)
+				cli.Errorln(err.Error())
 				continue
 			}
 
@@ -63,22 +52,22 @@ func main() {
 		case 3:
 			timeParse()
 		case 0:
-			fmt.Println(cli.GreenColour + "Goodbye!" + cli.Reset)
+			cli.Successln("Goodbye!")
 			return
 		default:
-			fmt.Println(cli.RedColour, "Unknown option. Try again.", cli.Reset)
+			cli.Errorln("Unknown option. Try again.")
 		}
 
-		fmt.Print("\nPress Enter to continue...")
+		cli.Blueln("Press Enter to continue...")
 
-		panel.PrintLine()
+		menu.PrintLine()
 	}
 }
 
 func showTime() {
-	fmt.Println("")
 	now := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Println(cli.GreenColour, "\nCurrent time is", now, cli.Reset)
+
+	cli.Cyanln("\nThe current time is: " + now)
 }
 
 func timeParse() {
@@ -87,6 +76,6 @@ func timeParse() {
 	if seed, err := s.ToDatetime(); err != nil {
 		panic(err)
 	} else {
-		fmt.Println(seed.Format(time.DateTime))
+		cli.Magentaln(seed.Format(time.DateTime))
 	}
 }

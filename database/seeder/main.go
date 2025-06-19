@@ -116,7 +116,7 @@ func main() {
 
 	wg.Wait()
 
-	cli.Successln("DB seeded as expected.")
+	cli.Magentaln("DB seeded as expected ....")
 }
 
 func clearScreen() {
