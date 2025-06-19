@@ -1,14 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/oullin/boost"
 	"github.com/oullin/database"
 	"github.com/oullin/database/seeder/seeds"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg/cli"
-	"os"
-	"os/exec"
 	"sync"
 	"time"
 )
@@ -22,7 +19,8 @@ func init() {
 }
 
 func main() {
-	clearScreen()
+	cli.ClearScreen()
+
 	dbConnection := boost.MakeDbConnection(environment)
 	logs := boost.MakeLogs(environment)
 
@@ -117,16 +115,4 @@ func main() {
 	wg.Wait()
 
 	cli.Magentaln("DB seeded as expected ....")
-}
-
-func clearScreen() {
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		message := fmt.Sprintf("Could not clear screen. Error: %s", err.Error())
-
-		cli.Errorln(message)
-	}
 }

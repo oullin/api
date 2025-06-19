@@ -5,8 +5,8 @@ import (
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/oullin/database"
 	"github.com/oullin/env"
-	"github.com/oullin/handler/user"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"log"
 	"strconv"
@@ -56,56 +56,50 @@ func MakeLogs(env *env.Environment) *llogs.Driver {
 	return &lDriver
 }
 
-func MakeAdminUser(env *env.Environment) *user.AdminUser {
-	return &user.AdminUser{
-		PublicToken:  env.App.AppUserAmin.PublicToken,
-		PrivateToken: env.App.AppUserAmin.PrivateToken,
-	}
-}
-
 func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment {
 	errorSufix := "Environment: "
 
 	port, _ := strconv.Atoi(values["ENV_DB_PORT"])
 
-	userAminEnvValues := &env.AppUserAminEnvValues{
-		PublicToken:  strings.Trim(values["ENV_APP_ADMIN_PUBLIC_TOKEN"], " "),
-		PrivateToken: strings.Trim(values["ENV_APP_ADMIN_PRIVATE_TOKEN"], " "),
+	token := auth.Token{
+		Username: strings.TrimSpace(values["ENV_APP_TOKEN_USERNAME"]),
+		Public:   strings.TrimSpace(values["ENV_APP_TOKEN_PUBLIC"]),
+		Private:  strings.TrimSpace(values["ENV_APP_TOKEN_PRIVATE"]),
 	}
 
 	app := env.AppEnvironment{
-		Name:        values["ENV_APP_NAME"],
-		Type:        values["ENV_APP_ENV_TYPE"],
-		AppUserAmin: userAminEnvValues,
+		Name:        strings.TrimSpace(values["ENV_APP_NAME"]),
+		Type:        strings.TrimSpace(values["ENV_APP_ENV_TYPE"]),
+		Credentials: token,
 	}
 
 	db := env.DBEnvironment{
-		UserName:     values["ENV_DB_USER_NAME"],
-		UserPassword: values["ENV_DB_USER_PASSWORD"],
-		DatabaseName: values["ENV_DB_DATABASE_NAME"],
+		UserName:     strings.TrimSpace(values["ENV_DB_USER_NAME"]),
+		UserPassword: strings.TrimSpace(values["ENV_DB_USER_PASSWORD"]),
+		DatabaseName: strings.TrimSpace(values["ENV_DB_DATABASE_NAME"]),
 		Port:         port,
-		Host:         values["ENV_DB_HOST"],
+		Host:         strings.TrimSpace(values["ENV_DB_HOST"]),
 		DriverName:   "postgres",
-		BinDir:       values["EN_DB_BIN_DIR"],
-		URL:          values["ENV_DB_URL"],
-		SSLMode:      values["ENV_DB_SSL_MODE"],
-		TimeZone:     values["ENV_DB_TIMEZONE"],
+		BinDir:       strings.TrimSpace(values["EN_DB_BIN_DIR"]),
+		URL:          strings.TrimSpace(values["ENV_DB_URL"]),
+		SSLMode:      strings.TrimSpace(values["ENV_DB_SSL_MODE"]),
+		TimeZone:     strings.TrimSpace(values["ENV_DB_TIMEZONE"]),
 	}
 
 	logsCreds := env.LogsEnvironment{
-		Level:      values["ENV_APP_LOG_LEVEL"],
-		Dir:        values["ENV_APP_LOGS_DIR"],
-		DateFormat: values["ENV_APP_LOGS_DATE_FORMAT"],
+		Level:      strings.TrimSpace(values["ENV_APP_LOG_LEVEL"]),
+		Dir:        strings.TrimSpace(values["ENV_APP_LOGS_DIR"]),
+		DateFormat: strings.TrimSpace(values["ENV_APP_LOGS_DATE_FORMAT"]),
 	}
 
 	net := env.NetEnvironment{
-		HttpHost: values["ENV_HTTP_HOST"],
-		HttpPort: values["ENV_HTTP_PORT"],
+		HttpHost: strings.TrimSpace(values["ENV_HTTP_HOST"]),
+		HttpPort: strings.TrimSpace(values["ENV_HTTP_PORT"]),
 	}
 
 	sentryEnvironment := env.SentryEnvironment{
-		DSN: values["ENV_SENTRY_DSN"],
-		CSP: values["ENV_SENTRY_CSP"],
+		DSN: strings.TrimSpace(values["ENV_SENTRY_DSN"]),
+		CSP: strings.TrimSpace(values["ENV_SENTRY_CSP"]),
 	}
 
 	if _, err := validate.Rejects(app); err != nil {
@@ -116,8 +110,8 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 		panic(errorSufix + "invalid [Sql] model: " + validate.GetErrorsAsJason())
 	}
 
-	if _, err := validate.Rejects(userAminEnvValues); err != nil {
-		panic(errorSufix + "invalid [AppUserAminEnvValues] model: " + validate.GetErrorsAsJason())
+	if _, err := validate.Rejects(token); err != nil {
+		panic(errorSufix + "invalid [token] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {
