@@ -26,11 +26,12 @@ func (g *Guard) CaptureInput() error {
 	cli.Warning("Type the public token: ")
 
 	input, err := g.reader.ReadString('\n')
-	input = strings.TrimSpace(input)
 
 	if err != nil {
 		return fmt.Errorf("error reading input: %v", err)
 	}
+
+	input = strings.TrimSpace(input)
 
 	if len(input) == 0 {
 		return fmt.Errorf("token cannot be empty")
