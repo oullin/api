@@ -1,97 +1,97 @@
 package main
 
 import (
-	"github.com/oullin/boost"
-	"github.com/oullin/cli/gate"
-	"github.com/oullin/cli/panel"
-	"github.com/oullin/cli/posts"
-	"github.com/oullin/env"
-	"github.com/oullin/pkg"
-	"github.com/oullin/pkg/cli"
-	"os"
-	"time"
+    "github.com/oullin/boost"
+    "github.com/oullin/cli/gate"
+    "github.com/oullin/cli/panel"
+    "github.com/oullin/cli/posts"
+    "github.com/oullin/env"
+    "github.com/oullin/pkg"
+    "github.com/oullin/pkg/cli"
+    "os"
+    "time"
 )
 
 var guard gate.Guard
 var environment *env.Environment
 
 func init() {
-	secrets, _ := boost.Spark("./../.env")
+    secrets, _ := boost.Spark("./../.env")
 
-	environment = secrets
-	guard = gate.MakeGuard(environment.App.Credentials)
+    environment = secrets
+    guard = gate.MakeGuard(environment.App.Credentials)
 }
 
 func main() {
-	cli.ClearScreen()
+    cli.ClearScreen()
 
-	if err := guard.CaptureInput(); err != nil {
-		cli.Errorln(err.Error())
-		return
-	}
+    if err := guard.CaptureInput(); err != nil {
+        cli.Errorln(err.Error())
+        return
+    }
 
-	if guard.IsInvalid() {
-		cli.Errorln("Invalid credentials")
-		os.Exit(1)
-	}
+    if guard.Rejects() {
+        cli.Errorln("Invalid credentials")
+        os.Exit(1)
+    }
 
-	menu := panel.MakeMenu()
+    menu := panel.MakeMenu()
 
-	for {
-		err := menu.CaptureInput()
+    for {
+        err := menu.CaptureInput()
 
-		if err != nil {
-			cli.Errorln(err.Error())
-			continue
-		}
+        if err != nil {
+            cli.Errorln(err.Error())
+            continue
+        }
 
-		switch menu.GetChoice() {
-		case 1:
-			input, err := menu.CapturePostURL()
+        switch menu.GetChoice() {
+        case 1:
+            input, err := menu.CapturePostURL()
 
-			if err != nil {
-				cli.Errorln(err.Error())
-				continue
-			}
+            if err != nil {
+                cli.Errorln(err.Error())
+                continue
+            }
 
-			httpClient := pkg.MakeDefaultClient(nil)
-			handler := posts.MakeHandler(input, httpClient, environment)
+            httpClient := pkg.MakeDefaultClient(nil)
+            handler := posts.MakeHandler(input, httpClient, environment)
 
-			if _, err := handler.NotParsed(); err != nil {
-				cli.Errorln(err.Error())
-				continue
-			}
+            if _, err := handler.NotParsed(); err != nil {
+                cli.Errorln(err.Error())
+                continue
+            }
 
-			return
-		case 2:
-			showTime()
-		case 3:
-			timeParse()
-		case 0:
-			cli.Successln("Goodbye!")
-			return
-		default:
-			cli.Errorln("Unknown option. Try again.")
-		}
+            return
+        case 2:
+            showTime()
+        case 3:
+            timeParse()
+        case 0:
+            cli.Successln("Goodbye!")
+            return
+        default:
+            cli.Errorln("Unknown option. Try again.")
+        }
 
-		cli.Blueln("Press Enter to continue...")
+        cli.Blueln("Press Enter to continue...")
 
-		menu.PrintLine()
-	}
+        menu.PrintLine()
+    }
 }
 
 func showTime() {
-	now := time.Now().Format("2006-01-02 15:04:05")
+    now := time.Now().Format("2006-01-02 15:04:05")
 
-	cli.Cyanln("\nThe current time is: " + now)
+    cli.Cyanln("\nThe current time is: " + now)
 }
 
 func timeParse() {
-	s := pkg.MakeStringable("2025-04-12")
+    s := pkg.MakeStringable("2025-04-12")
 
-	if seed, err := s.ToDatetime(); err != nil {
-		panic(err)
-	} else {
-		cli.Magentaln(seed.Format(time.DateTime))
-	}
+    if seed, err := s.ToDatetime(); err != nil {
+        panic(err)
+    } else {
+        cli.Magentaln(seed.Format(time.DateTime))
+    }
 }
