@@ -10,7 +10,7 @@ import (
 )
 
 type Guard struct {
-	salt   string
+	salt   *string
 	token  auth.Token
 	reader *bufio.Reader
 }
@@ -24,17 +24,33 @@ func MakeGuard(token auth.Token) Guard {
 
 func (g *Guard) CaptureInput() error {
 	cli.Warning("Type the public token: ")
+
 	input, err := g.reader.ReadString('\n')
+	input = strings.TrimSpace(input)
 
 	if err != nil {
-		return fmt.Errorf("%s error reading input: %v %s", cli.RedColour, err, cli.Reset)
+		return fmt.Errorf("error reading input: %v", err)
 	}
 
-	g.salt = strings.TrimSpace(input)
+	if len(input) == 0 {
+		return fmt.Errorf("token cannot be empty")
+	}
+
+	if len(input) > 1024 {
+		return fmt.Errorf("token is too long")
+	}
+
+	g.salt = &input
 
 	return nil
 }
 
 func (g *Guard) Rejects() bool {
-	return g.token.IsInvalid(g.salt)
+	if g.salt == nil {
+		return true
+	}
+
+	salt := *g.salt
+
+	return g.token.IsInvalid(salt)
 }
