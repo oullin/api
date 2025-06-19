@@ -7,7 +7,7 @@ import (
 )
 
 func Spark(envPath string) (*env.Environment, *pkg.Validator) {
-	validate := GetDefaultValidate()
+	validate := pkg.GetDefaultValidator()
 
 	envMap, err := godotenv.Read(envPath)
 

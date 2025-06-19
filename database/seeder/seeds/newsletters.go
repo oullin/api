@@ -4,19 +4,10 @@ import (
 	"fmt"
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/gorm"
-	"time"
 )
 
 type NewslettersSeed struct {
 	db *database.Connection
-}
-
-type NewsletterAttrs struct {
-	FirstName      string
-	LastName       string
-	Email          string
-	SubscribedAt   *time.Time
-	UnsubscribedAt *time.Time
 }
 
 func MakeNewslettersSeed(db *database.Connection) *NewslettersSeed {
@@ -25,7 +16,7 @@ func MakeNewslettersSeed(db *database.Connection) *NewslettersSeed {
 	}
 }
 
-func (s NewslettersSeed) Create(attrs []NewsletterAttrs) error {
+func (s NewslettersSeed) Create(attrs []database.NewsletterAttrs) error {
 	var newsletters []database.Newsletter
 
 	for _, attr := range attrs {

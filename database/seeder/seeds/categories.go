@@ -5,15 +5,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/gorm"
+	"strings"
 )
 
 type CategoriesSeed struct {
 	db *database.Connection
-}
-
-type CategoriesAttrs struct {
-	Slug        string
-	Description string
 }
 
 func MakeCategoriesSeed(db *database.Connection) *CategoriesSeed {
@@ -22,7 +18,7 @@ func MakeCategoriesSeed(db *database.Connection) *CategoriesSeed {
 	}
 }
 
-func (s CategoriesSeed) Create(attrs CategoriesAttrs) ([]database.Category, error) {
+func (s CategoriesSeed) Create(attrs database.CategoriesAttrs) ([]database.Category, error) {
 	var categories []database.Category
 
 	seeds := []string{
@@ -30,11 +26,11 @@ func (s CategoriesSeed) Create(attrs CategoriesAttrs) ([]database.Category, erro
 		"Cloud", "Data", "DevOps", "ML", "Startups", "Engineering",
 	}
 
-	for index, seed := range seeds {
+	for _, seed := range seeds {
 		categories = append(categories, database.Category{
 			UUID:        uuid.NewString(),
 			Name:        seed,
-			Slug:        fmt.Sprintf("[%d]: slug-%s", index+1, attrs.Slug),
+			Slug:        strings.ToLower(seed),
 			Description: attrs.Description,
 		})
 	}

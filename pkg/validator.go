@@ -6,11 +6,27 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"strings"
+	"sync"
 )
 
 type Validator struct {
 	instance *validator.Validate
 	Errors   map[string]interface{}
+}
+
+func GetDefaultValidator() *Validator {
+	var once sync.Once
+	var defaultValidator *Validator
+
+	once.Do(func() {
+		defaultValidator = MakeValidatorFrom(
+			validator.New(
+				validator.WithRequiredStructEnabled(),
+			),
+		)
+	})
+
+	return defaultValidator
 }
 
 func MakeValidatorFrom(abstract *validator.Validate) *Validator {

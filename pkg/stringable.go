@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -12,7 +13,7 @@ type Stringable struct {
 
 func MakeStringable(value string) *Stringable {
 	return &Stringable{
-		value: value,
+		value: strings.TrimSpace(value),
 	}
 }
 
@@ -35,4 +36,27 @@ func (s Stringable) ToSnakeCase() string {
 
 func (s Stringable) Dd(abstract any) {
 	fmt.Println(fmt.Sprintf("dd: %+v", abstract))
+}
+
+func (s Stringable) ToDatetime() (*time.Time, error) {
+	parsed, err := time.Parse(time.DateOnly, s.value)
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing date string: %v", err)
+	}
+
+	now := time.Now()
+
+	produce := time.Date(
+		parsed.Year(),
+		parsed.Month(),
+		parsed.Day(),
+		now.Hour(),
+		now.Minute(),
+		now.Second(),
+		now.Nanosecond(),
+		now.Location(),
+	)
+
+	return &produce, nil
 }

@@ -36,7 +36,7 @@ func main() {
 	if err := seeder.TruncateDB(); err != nil {
 		panic(err)
 	} else {
-		cli.MakeTextColour("DB Truncated successfully ...", cli.Green).Print()
+		cli.Successln("DB Truncated successfully ...")
 		time.Sleep(2 * time.Second)
 	}
 
@@ -50,14 +50,14 @@ func main() {
 	go func() {
 		defer close(categoriesChan)
 
-		cli.MakeTextColour("Seeding categories ...", cli.Yellow).Print()
+		cli.Warningln("Seeding categories ...")
 		categoriesChan <- seeder.SeedCategories()
 	}()
 
 	go func() {
 		defer close(tagsChan)
 
-		cli.MakeTextColour("Seeding tags ...", cli.Magenta).Print()
+		cli.Magentaln("Seeding tags ...")
 		tagsChan <- seeder.SeedTags()
 	}()
 
@@ -72,50 +72,51 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		cli.MakeTextColour("Seeding comments ...", cli.Blue).Print()
+		cli.Blueln("Seeding comments ...")
 		seeder.SeedComments(posts...)
 	}()
 
 	go func() {
 		defer wg.Done()
 
-		cli.MakeTextColour("Seeding likes ...", cli.Cyan).Print()
+		cli.Cyanln("Seeding likes ...")
 		seeder.SeedLikes(posts...)
 	}()
 
 	go func() {
 		defer wg.Done()
 
-		cli.MakeTextColour("Seeding posts-categories ...", cli.Gray).Print()
+		cli.Grayln("Seeding posts-categories ...")
 		seeder.SeedPostsCategories(categories, posts)
 	}()
 
 	go func() {
 		defer wg.Done()
 
-		cli.MakeTextColour("Seeding posts-tags ...", cli.Magenta).Print()
+		cli.Grayln("Seeding posts-tags ...")
 		seeder.SeedPostTags(tags, posts)
 	}()
 
 	go func() {
 		defer wg.Done()
 
-		cli.MakeTextColour("Seeding views ...", cli.Yellow).Print()
+		cli.Warningln("Seeding views ...")
 		seeder.SeedPostViews(posts, UserA, UserB)
 	}()
 
 	go func() {
 		defer wg.Done()
 
-		cli.MakeTextColour("Seeding Newsletters ...", cli.Green).Print()
 		if err := seeder.SeedNewsLetters(); err != nil {
-			cli.MakeTextColour(err.Error(), cli.Red).Print()
+			cli.Error(err.Error())
+		} else {
+			cli.Successln("Seeding Newsletters ...")
 		}
 	}()
 
 	wg.Wait()
 
-	cli.MakeTextColour("DB seeded as expected.", cli.Green).Print()
+	cli.Magentaln("DB seeded as expected ....")
 }
 
 func clearScreen() {
@@ -126,6 +127,6 @@ func clearScreen() {
 	if err := cmd.Run(); err != nil {
 		message := fmt.Sprintf("Could not clear screen. Error: %s", err.Error())
 
-		cli.MakeTextColour(message, cli.Red).Print()
+		cli.Errorln(message)
 	}
 }

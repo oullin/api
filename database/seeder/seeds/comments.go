@@ -4,20 +4,10 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"time"
 )
 
 type CommentsSeed struct {
 	db *database.Connection
-}
-
-type CommentsAttrs struct {
-	UUID       string
-	PostID     uint64
-	AuthorID   uint64
-	ParentID   *uint64
-	Content    string
-	ApprovedAt *time.Time
 }
 
 func MakeCommentsSeed(db *database.Connection) *CommentsSeed {
@@ -26,7 +16,7 @@ func MakeCommentsSeed(db *database.Connection) *CommentsSeed {
 	}
 }
 
-func (s CommentsSeed) Create(attrs ...CommentsAttrs) ([]database.Comment, error) {
+func (s CommentsSeed) Create(attrs ...database.CommentsAttrs) ([]database.Comment, error) {
 	var comments []database.Comment
 
 	for _, attr := range attrs {

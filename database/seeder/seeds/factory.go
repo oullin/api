@@ -38,7 +38,7 @@ func (s *Seeder) TruncateDB() error {
 func (s *Seeder) SeedUsers() (database.User, database.User) {
 	users := MakeUsersSeed(s.dbConn)
 
-	UserA, err := users.Create(UsersAttrs{
+	UserA, err := users.Create(database.UsersAttrs{
 		Username: "gocanto",
 		Name:     "Gus",
 		IsAdmin:  true,
@@ -48,7 +48,7 @@ func (s *Seeder) SeedUsers() (database.User, database.User) {
 		panic(err)
 	}
 
-	UserB, err := users.Create(UsersAttrs{
+	UserB, err := users.Create(database.UsersAttrs{
 		Username: "li",
 		Name:     "liane",
 		IsAdmin:  false,
@@ -65,28 +65,26 @@ func (s *Seeder) SeedPosts(UserA, UserB database.User) []database.Post {
 	posts := MakePostsSeed(s.dbConn)
 	timex := time.Now()
 
-	PostsA, err := posts.CreatePosts(PostsAttrs{
+	PostsA, err := posts.CreatePosts(database.PostsAttrs{
 		AuthorID:    UserA.ID,
 		Slug:        fmt.Sprintf("post-slug-%s", uuid.NewString()),
 		Title:       fmt.Sprintf("Post %s title", uuid.NewString()),
 		Excerpt:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris", uuid.NewString()),
 		Content:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris. Nullam tempor velit id mi luctus, a scelerisque libero accumsan. In hac habitasse platea dictumst. Cras ac nunc nec massa tristique fringilla.", uuid.NewString()),
 		PublishedAt: &timex,
-		Author:      UserA,
 	}, 1)
 
 	if err != nil {
 		panic(err)
 	}
 
-	PostsB, err := posts.CreatePosts(PostsAttrs{
+	PostsB, err := posts.CreatePosts(database.PostsAttrs{
 		AuthorID:    UserB.ID,
 		Slug:        fmt.Sprintf("post-slug-%s", uuid.NewString()),
 		Title:       fmt.Sprintf("Post %s title", uuid.NewString()),
 		Excerpt:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris", uuid.NewString()),
 		Content:     fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris. Nullam tempor velit id mi luctus, a scelerisque libero accumsan. In hac habitasse platea dictumst. Cras ac nunc nec massa tristique fringilla.", uuid.NewString()),
 		PublishedAt: &timex,
-		Author:      UserB,
 	}, 1)
 
 	if err != nil {
@@ -99,8 +97,9 @@ func (s *Seeder) SeedPosts(UserA, UserB database.User) []database.Post {
 func (s *Seeder) SeedCategories() []database.Category {
 	categories := MakeCategoriesSeed(s.dbConn)
 
-	result, err := categories.Create(CategoriesAttrs{
+	result, err := categories.Create(database.CategoriesAttrs{
 		Slug:        fmt.Sprintf("category-slug-%s", uuid.NewString()),
+		Name:        fmt.Sprintf("category-slug-%s", uuid.NewString()),
 		Description: fmt.Sprintf("[%s] Sed at risus vel nulla consequat fermentum. Donec et orci mauris", uuid.NewString()),
 	})
 
@@ -127,10 +126,10 @@ func (s *Seeder) SeedComments(posts ...database.Post) {
 	seed := MakeCommentsSeed(s.dbConn)
 
 	timex := time.Now()
-	var attrs []CommentsAttrs
+	var values []database.CommentsAttrs
 
 	for index, post := range posts {
-		attrs = append(attrs, CommentsAttrs{
+		values = append(values, database.CommentsAttrs{
 			PostID:     post.ID,
 			AuthorID:   post.AuthorID,
 			ParentID:   nil,
@@ -139,23 +138,23 @@ func (s *Seeder) SeedComments(posts ...database.Post) {
 		})
 	}
 
-	if _, err := seed.Create(attrs...); err != nil {
+	if _, err := seed.Create(values...); err != nil {
 		panic(err)
 	}
 }
 
 func (s *Seeder) SeedLikes(posts ...database.Post) {
 	seed := MakeLikesSeed(s.dbConn)
-	var attrs []LikesAttrs
+	var values []database.LikesAttrs
 
 	for _, post := range posts {
-		attrs = append(attrs, LikesAttrs{
+		values = append(values, database.LikesAttrs{
 			PostID: post.ID,
 			UserID: post.AuthorID,
 		})
 	}
 
-	_, err := seed.Create(attrs...)
+	_, err := seed.Create(values...)
 
 	if err != nil {
 		panic(err)
@@ -221,11 +220,11 @@ func (s *Seeder) SeedPostViews(posts []database.Post, users ...database.User) {
 
 	seed := MakePostViewsSeed(s.dbConn)
 
-	var attrs []PostViewsAttr
+	var values []database.PostViewsAttr
 
 	for pIndex, post := range posts {
 		for uIndex, user := range users {
-			attrs = append(attrs, PostViewsAttr{
+			values = append(values, database.PostViewsAttr{
 				Post:      post,
 				User:      user,
 				IPAddress: fmt.Sprintf("192.168.0.%d", pIndex+1),
@@ -234,7 +233,7 @@ func (s *Seeder) SeedPostViews(posts []database.Post, users ...database.User) {
 		}
 	}
 
-	err := seed.Create(attrs)
+	err := seed.Create(values)
 
 	if err != nil {
 		panic(err)
@@ -242,9 +241,9 @@ func (s *Seeder) SeedPostViews(posts []database.Post, users ...database.User) {
 }
 
 func (s *Seeder) SeedNewsLetters() error {
-	var newsletters []NewsletterAttrs
+	var newsletters []database.NewsletterAttrs
 
-	a := NewsletterAttrs{
+	a := database.NewsletterAttrs{
 		FirstName:      "John",
 		LastName:       "Smith",
 		Email:          "john.smith@gmail.com",
@@ -254,7 +253,7 @@ func (s *Seeder) SeedNewsLetters() error {
 
 	currentTime := time.Now()
 	last3Month := currentTime.AddDate(0, -3, 0)
-	b := NewsletterAttrs{
+	b := database.NewsletterAttrs{
 		FirstName:      "Don",
 		LastName:       "Smith",
 		Email:          "Don.smith@gmail.com",
