@@ -61,15 +61,16 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 
 	port, _ := strconv.Atoi(values["ENV_DB_PORT"])
 
-	app := env.AppEnvironment{
-		Name: strings.TrimSpace(values["ENV_APP_NAME"]),
-		Type: strings.TrimSpace(values["ENV_APP_ENV_TYPE"]),
-	}
-
 	token := auth.Token{
 		Username: strings.TrimSpace(values["ENV_APP_TOKEN_USERNAME"]),
 		Public:   strings.TrimSpace(values["ENV_APP_TOKEN_PUBLIC"]),
 		Private:  strings.TrimSpace(values["ENV_APP_TOKEN_PRIVATE"]),
+	}
+
+	app := env.AppEnvironment{
+		Name:        strings.TrimSpace(values["ENV_APP_NAME"]),
+		Type:        strings.TrimSpace(values["ENV_APP_ENV_TYPE"]),
+		Credentials: token,
 	}
 
 	db := env.DBEnvironment{
@@ -110,7 +111,7 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 	}
 
 	if _, err := validate.Rejects(token); err != nil {
-		panic(errorSufix + "invalid [Token] model: " + validate.GetErrorsAsJason())
+		panic(errorSufix + "invalid [token] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {

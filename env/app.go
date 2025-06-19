@@ -1,13 +1,16 @@
 package env
 
+import "github.com/oullin/pkg/auth"
+
 const local = "local"
 const staging = "staging"
 const production = "production"
 const ApiKeyHeader = "X-API-Key"
 
 type AppEnvironment struct {
-	Name string `validate:"required,min=4"`
-	Type string `validate:"required,lowercase,oneof=local production staging"`
+	Name        string     `validate:"required,min=4"`
+	Type        string     `validate:"required,lowercase,oneof=local production staging"`
+	Credentials auth.Token `validate:"required"`
 }
 
 func (e AppEnvironment) IsProduction() bool {
