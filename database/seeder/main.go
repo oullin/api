@@ -30,11 +30,11 @@ func main() {
 	// [1] --- Create the Seeder Runner.
 	seeder := seeds.MakeSeeder(dbConnection, environment)
 
-	// [2] --- Truncate the DB.
+	// [2] --- Truncate the db.
 	if err := seeder.TruncateDB(); err != nil {
 		panic(err)
 	} else {
-		cli.Successln("DB Truncated successfully ...")
+		cli.Successln("db Truncated successfully ...")
 		time.Sleep(2 * time.Second)
 	}
 
@@ -114,5 +114,5 @@ func main() {
 
 	wg.Wait()
 
-	cli.Magentaln("DB seeded as expected ....")
+	cli.Magentaln("db seeded as expected ....")
 }

@@ -9,26 +9,10 @@ import (
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"log"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
-
-type App struct {
-	Env          *env.Environment     `validate:"required"`
-	Mux          *http.ServeMux       `validate:"required"`
-	Logs         *llogs.Driver        `validate:"required"`
-	Sentry       *pkg.Sentry          `validate:"required"`
-	Validator    *pkg.Validator       `validate:"required"`
-	DbConnection *database.Connection `validate:"required"`
-}
-
-func MakeApp(mux *http.ServeMux, app App) App {
-	app.Mux = mux
-
-	return app
-}
 
 func MakeSentry(env *env.Environment) *pkg.Sentry {
 	cOptions := sentry.ClientOptions{
@@ -66,7 +50,7 @@ func MakeLogs(env *env.Environment) *llogs.Driver {
 	lDriver, err := llogs.MakeFilesLogs(env)
 
 	if err != nil {
-		panic("Logs: error opening logs file: " + err.Error())
+		panic("logs: error opening logs file: " + err.Error())
 	}
 
 	return &lDriver
@@ -130,7 +114,7 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 	}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {
-		panic(errorSufix + "invalid [Logs Creds] model: " + validate.GetErrorsAsJason())
+		panic(errorSufix + "invalid [logs Creds] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(net); err != nil {
