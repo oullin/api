@@ -14,26 +14,66 @@ type Router struct {
 	Pipeline middleware.Pipeline
 }
 
-func MakeRouter(mux *baseHttp.ServeMux) *Router {
-	return &Router{
-		Mux: mux,
-	}
-}
-
-func (r *Router) Profile() {
+func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
 		r.Env.App.Credentials,
 	)
 
-	profileHandler := handler.MakeProfileHandler()
-
-	getHandler := http.MakeApiHandler(
+	return http.MakeApiHandler(
 		r.Pipeline.Chain(
-			profileHandler.Handle,
+			apiHandler,
 			middleware.UsernameCheck,
 			tokenMiddleware.Handle,
 		),
 	)
+}
 
-	r.Mux.HandleFunc("GET /profile", getHandler)
+func (r *Router) Profile() {
+	abstract := handler.MakeProfileHandler()
+
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("GET /profile", resolver)
+}
+
+func (r *Router) Experience() {
+	abstract := handler.MakeExperienceHandler()
+
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("GET /experience", resolver)
+}
+
+func (r *Router) Projects() {
+	abstract := handler.MakeProjectsHandler()
+
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("GET /projects", resolver)
+}
+
+func (r *Router) Social() {
+	abstract := handler.MakeSocialHandler()
+
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("GET /social", resolver)
+}
+
+func (r *Router) Talks() {
+	abstract := handler.MakeTalks()
+
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("GET /talks", resolver)
 }
