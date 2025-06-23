@@ -5,7 +5,6 @@ import "github.com/oullin/pkg/auth"
 const local = "local"
 const staging = "staging"
 const production = "production"
-const ApiKeyHeader = "X-API-Key"
 
 type AppEnvironment struct {
 	Name        string     `validate:"required,min=4"`

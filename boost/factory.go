@@ -50,7 +50,7 @@ func MakeLogs(env *env.Environment) *llogs.Driver {
 	lDriver, err := llogs.MakeFilesLogs(env)
 
 	if err != nil {
-		panic("Logs: error opening logs file: " + err.Error())
+		panic("logs: error opening logs file: " + err.Error())
 	}
 
 	return &lDriver
@@ -62,9 +62,8 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 	port, _ := strconv.Atoi(values["ENV_DB_PORT"])
 
 	token := auth.Token{
-		Username: strings.TrimSpace(values["ENV_APP_TOKEN_USERNAME"]),
-		Public:   strings.TrimSpace(values["ENV_APP_TOKEN_PUBLIC"]),
-		Private:  strings.TrimSpace(values["ENV_APP_TOKEN_PRIVATE"]),
+		Public:  strings.TrimSpace(values["ENV_APP_TOKEN_PUBLIC"]),
+		Private: strings.TrimSpace(values["ENV_APP_TOKEN_PRIVATE"]),
 	}
 
 	app := env.AppEnvironment{
@@ -115,7 +114,7 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 	}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {
-		panic(errorSufix + "invalid [Logs Creds] model: " + validate.GetErrorsAsJason())
+		panic(errorSufix + "invalid [logs Creds] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(net); err != nil {

@@ -23,7 +23,7 @@ func MakeSeeder(dbConnection *database.Connection, environment *env.Environment)
 
 func (s *Seeder) TruncateDB() error {
 	if s.environment.App.IsProduction() {
-		return fmt.Errorf("cannot truncate DB at the seeder level")
+		return fmt.Errorf("cannot truncate db at the seeder level")
 	}
 
 	truncate := database.MakeTruncate(s.dbConn, s.environment)

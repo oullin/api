@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/pkg"
 )
 
-func Spark(envPath string) (*env.Environment, *pkg.Validator) {
+func Ignite(envPath string) (*env.Environment, *pkg.Validator) {
 	validate := pkg.GetDefaultValidator()
 
 	envMap, err := godotenv.Read(envPath)

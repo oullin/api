@@ -3,43 +3,53 @@ package boost
 import (
 	"github.com/oullin/database"
 	"github.com/oullin/env"
-	"github.com/oullin/handler/user"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/http/middleware"
 	"github.com/oullin/pkg/llogs"
-	"github.com/oullin/pkg/middleware"
-	"net/http"
+	baseHttp "net/http"
 )
 
 type App struct {
-	Validator    *pkg.Validator       `validate:"required"`
-	Logs         *llogs.Driver        `validate:"required"`
-	DbConnection *database.Connection `validate:"required"`
-	AdminUser    *user.AdminUser      `validate:"required"`
-	Env          *env.Environment     `validate:"required"`
-	Mux          *http.ServeMux       `validate:"required"`
-	Sentry       *pkg.Sentry          `validate:"required"`
+	router    *Router
+	sentry    *pkg.Sentry
+	logs      *llogs.Driver
+	validator *pkg.Validator
+	env       *env.Environment
+	db        *database.Connection
 }
 
-func MakeApp(mux *http.ServeMux, app *App) *App {
-	app.Mux = mux
-
-	return app
-}
-
-func (app App) RegisterUsers() {
-	stack := middleware.MakeMiddlewareStack(app.Env, func(seed string) bool {
-		return app.AdminUser.IsAllowed(seed)
-	})
-
-	handler := user.RequestHandler{
-		Repository: user.MakeRepository(app.DbConnection, app.AdminUser),
-		Validator:  app.Validator,
+func MakeApp(env *env.Environment, validator *pkg.Validator) *App {
+	app := App{
+		env:       env,
+		validator: validator,
+		logs:      MakeLogs(env),
+		sentry:    MakeSentry(env),
+		db:        MakeDbConnection(env),
 	}
 
-	app.Mux.HandleFunc("POST /users", pkg.CreateHandle(
-		stack.Push(
-			handler.Create,
-			stack.AdminUser,
-		),
-	))
+	router := Router{
+		Env: env,
+		Mux: baseHttp.NewServeMux(),
+		Pipeline: middleware.Pipeline{
+			Env: env,
+		},
+	}
+
+	app.SetRouter(router)
+
+	return &app
+}
+
+func (a *App) Boot() {
+	if a.router == nil {
+		panic("Router is not set")
+	}
+
+	router := *a.router
+
+	router.Profile()
+	router.Experience()
+	router.Projects()
+	router.Social()
+	router.Talks()
 }
