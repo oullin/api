@@ -4,9 +4,11 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/oullin/boost"
 	"github.com/oullin/env"
+	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/http/middleware"
 	"log"
+	"log/slog"
 	baseHttp "net/http"
 	"os"
 )
@@ -34,27 +36,40 @@ func handleGetUser(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiErro
 }
 
 var environment *env.Environment
-
-//var validator *pkg.Validator
+var validator *pkg.Validator
 
 func init() {
-	secrets, _ := boost.Spark("./.env")
+	secrets, validate := boost.Spark("./.env")
 
 	environment = secrets
-	//validator = validate
+	validator = validate
 }
 
 func main() {
-	// Create a new ServeMux, which is the standard practice for new Go services.
+	dbConnection := boost.MakeDbConnection(environment)
+	logs := boost.MakeLogs(environment)
+	localSentry := boost.MakeSentry(environment)
+
+	defer (*logs).Close()
+	defer (*dbConnection).Close()
+
 	mux := baseHttp.NewServeMux()
+
+	_ = boost.MakeApp(mux, boost.App{
+		Validator:    validator,
+		Logs:         logs,
+		DbConnection: dbConnection,
+		Env:          environment,
+		Mux:          mux,
+		Sentry:       localSentry,
+	})
+
 	pipelines := middleware.Pipeline{
 		Env: environment,
 	}
 
 	tokenMid := middleware.MakeTokenMiddleware(environment.App.Credentials)
 
-	// Using the chain function makes adding new middlewares much cleaner.
-	// The execution order is left-to-right: authMiddleware, then tokenCheckMiddleware.
 	userHandler := http.MakeApiHandler(
 		pipelines.Chain(
 			handleGetUser,
@@ -65,12 +80,11 @@ func main() {
 
 	mux.HandleFunc("GET /profile", userHandler)
 
-	addr := ":8080"
-	log.Printf("Server starting on %s", addr)
-	log.Println("Ensure you have a 'store/profile.json' file relative to the executable.")
+	(*dbConnection).Ping()
+	slog.Info("Starting new server on :" + environment.Network.HttpPort)
 
-	// Start the HTTP server with the new mux.
-	if err := baseHttp.ListenAndServe(addr, mux); err != nil {
-		log.Fatalf("Could not start server: %s\n", err)
+	if err := baseHttp.ListenAndServe(environment.Network.GetHostURL(), mux); err != nil {
+		slog.Error("Error starting server", "error", err)
+		panic("Error starting server." + err.Error())
 	}
 }
