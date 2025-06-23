@@ -4,41 +4,44 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/http/middleware"
 	"github.com/oullin/pkg/llogs"
+	baseHttp "net/http"
 )
 
 type App struct {
-	env       *env.Environment
 	router    *Router
-	logs      *llogs.Driver
 	sentry    *pkg.Sentry
+	logs      *llogs.Driver
 	validator *pkg.Validator
+	env       *env.Environment
 	db        *database.Connection
 }
 
-func MakeApp(env *env.Environment, validator *pkg.Validator) App {
-	return App{
+func MakeApp(env *env.Environment, validator *pkg.Validator) *App {
+	app := App{
 		env:       env,
 		validator: validator,
-		db:        MakeDbConnection(env),
 		logs:      MakeLogs(env),
+		sentry:    MakeSentry(env),
+		db:        MakeDbConnection(env),
 	}
+
+	router := Router{
+		Env: env,
+		Mux: baseHttp.NewServeMux(),
+		Pipeline: middleware.Pipeline{
+			Env: env,
+		},
+	}
+
+	app.SetRouter(router)
+
+	return &app
 }
 
-func (a *App) CloseLogs() {
-	driver := *a.logs
-	driver.Close()
-}
+func (a *App) Boot() {
+	router := *a.router
 
-func (a *App) CloseDB() {
-	driver := *a.db
-	driver.Close()
-}
-
-func (a *App) GetEnv() *env.Environment {
-	return a.env
-}
-
-func (a *App) GetDB() *database.Connection {
-	return a.db
+	router.Profile()
 }
