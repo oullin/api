@@ -23,19 +23,11 @@ func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *
 	if err != nil {
 		slog.Error("Error reading profile file: %v", err)
 
-		return &http.ApiError{
-			Message: "Internal Server Error: could not read profile data",
-			Status:  baseHttp.StatusInternalServerError,
-		}
+		return http.InternalError("could not read profile data")
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(baseHttp.StatusOK)
-
-	_, err = w.Write(fixture)
-
-	if err != nil {
-		slog.Error("Error writing response: %v", err)
+	if err := writeJSON(fixture, w); err != nil {
+		return http.InternalError(err.Error())
 	}
 
 	return nil // A nil return indicates success.
