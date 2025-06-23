@@ -39,7 +39,7 @@ var environment *env.Environment
 var validator *pkg.Validator
 
 func init() {
-	secrets, validate := boost.Spark("./.env")
+	secrets, validate := boost.Ignite("./.env")
 
 	environment = secrets
 	validator = validate

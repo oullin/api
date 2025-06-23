@@ -9,10 +9,26 @@ import (
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
+
+type App struct {
+	Env          *env.Environment     `validate:"required"`
+	Mux          *http.ServeMux       `validate:"required"`
+	Logs         *llogs.Driver        `validate:"required"`
+	Sentry       *pkg.Sentry          `validate:"required"`
+	Validator    *pkg.Validator       `validate:"required"`
+	DbConnection *database.Connection `validate:"required"`
+}
+
+func MakeApp(mux *http.ServeMux, app App) App {
+	app.Mux = mux
+
+	return app
+}
 
 func MakeSentry(env *env.Environment) *pkg.Sentry {
 	cOptions := sentry.ClientOptions{

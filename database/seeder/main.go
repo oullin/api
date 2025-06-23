@@ -13,7 +13,7 @@ import (
 var environment *env.Environment
 
 func init() {
-	secrets, _ := boost.Spark("./.env")
+	secrets, _ := boost.Ignite("./.env")
 
 	environment = secrets
 }
