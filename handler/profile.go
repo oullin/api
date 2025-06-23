@@ -8,11 +8,17 @@ import (
 )
 
 type ProfileHandler struct {
-	Fixture string
+	content string
+}
+
+func MakeProfileHandler() ProfileHandler {
+	return ProfileHandler{
+		content: "./storage/fixture/profile.json",
+	}
 }
 
 func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	fixture, err := os.ReadFile(h.Fixture)
+	fixture, err := os.ReadFile(h.content)
 
 	if err != nil {
 		slog.Error("Error reading profile file: %v", err)

@@ -20,14 +20,12 @@ func MakeRouter(mux *baseHttp.ServeMux) *Router {
 	}
 }
 
-func (r *Router) Profile(fixture string) {
+func (r *Router) Profile() {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
 		r.Env.App.Credentials,
 	)
 
-	profileHandler := handler.ProfileHandler{
-		Fixture: fixture,
-	}
+	profileHandler := handler.MakeProfileHandler()
 
 	getHandler := http.MakeApiHandler(
 		r.Pipeline.Chain(

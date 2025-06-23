@@ -8,8 +8,6 @@ import (
 	baseHttp "net/http"
 )
 
-const file = "./storage/fixture/profile.json"
-
 var app boost.App
 
 func init() {
@@ -30,7 +28,7 @@ func main() {
 		},
 	}
 
-	router.Profile(file)
+	router.Profile()
 
 	app.GetDB().Ping()
 	slog.Info("Starting new server on :" + app.GetEnv().Network.HttpPort)
