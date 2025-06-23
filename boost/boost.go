@@ -62,9 +62,8 @@ func MakeEnv(values map[string]string, validate *pkg.Validator) *env.Environment
 	port, _ := strconv.Atoi(values["ENV_DB_PORT"])
 
 	token := auth.Token{
-		Username: strings.TrimSpace(values["ENV_APP_TOKEN_USERNAME"]),
-		Public:   strings.TrimSpace(values["ENV_APP_TOKEN_PUBLIC"]),
-		Private:  strings.TrimSpace(values["ENV_APP_TOKEN_PRIVATE"]),
+		Public:  strings.TrimSpace(values["ENV_APP_TOKEN_PUBLIC"]),
+		Private: strings.TrimSpace(values["ENV_APP_TOKEN_PRIVATE"]),
 	}
 
 	app := env.AppEnvironment{
