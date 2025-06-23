@@ -41,6 +41,10 @@ func MakeApp(env *env.Environment, validator *pkg.Validator) *App {
 }
 
 func (a *App) Boot() {
+	if a.router == nil {
+		panic("Router is not set")
+	}
+
 	router := *a.router
 
 	router.Profile()
