@@ -21,7 +21,7 @@ func (h ExperienceHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request
 	fixture, err := os.ReadFile(h.content)
 
 	if err != nil {
-		slog.Error("Error reading experience file: %v", err)
+		slog.Error("Error reading projects file", "error", err)
 
 		return http.InternalError("could not read experience data")
 	}

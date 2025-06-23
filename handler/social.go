@@ -21,7 +21,7 @@ func (h SocialHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *h
 	fixture, err := os.ReadFile(h.content)
 
 	if err != nil {
-		slog.Error("Error reading social file: %v", err)
+		slog.Error("Error reading projects file", "error", err)
 
 		return http.InternalError("could not read social data")
 	}

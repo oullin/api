@@ -21,7 +21,7 @@ func (h Talks) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiE
 	fixture, err := os.ReadFile(h.content)
 
 	if err != nil {
-		slog.Error("Error reading talks file: %v", err)
+		slog.Error("Error reading projects file", "error", err)
 
 		return http.InternalError("could not read talks data")
 	}
