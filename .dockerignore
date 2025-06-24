@@ -11,6 +11,7 @@ README.md
 .air.toml
 .editorconfig
 
+.ssh/
 .idea/
 docs/
 database/infra/
@@ -18,3 +19,4 @@ storage/media/
 storage/logs/
 tmp/
 bin/
+caddy/

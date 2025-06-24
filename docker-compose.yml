@@ -1,53 +1,79 @@
 networks:
-  gocanto:
-    name: gocanto
-    driver: bridge
+    caddy_net:
+        driver: bridge
+    gocanto:
+        name: gocanto
+        driver: bridge
 
 services:
-  postgres:
-    restart: always
-    image: postgres:17.4
-    container_name: gocanto-db
-    env_file:
-        - .env
-    networks:
-      - gocanto
-    environment:
-      # --- Postgres CLI env vars.
-      PGUSER: ${ENV_DB_USER_NAME}
-      PGDATABASE: ${ENV_DB_DATABASE_NAME}
-      PGPASSWORD: ${ENV_DB_USER_PASSWORD}
-      # --- Docker postgres-image env vars.
-      POSTGRES_USER: ${ENV_DB_USER_NAME}
-      POSTGRES_DB: ${ENV_DB_DATABASE_NAME}
-      POSTGRES_PASSWORD: ${ENV_DB_USER_PASSWORD}
-    ports:
-      - "${ENV_DB_PORT}:${ENV_DB_PORT}"
-    volumes:
-        - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt
-        - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
-        - ./database/infra/data:/var/lib/postgresql/data
-        - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf
-        - ./database/infra/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "20"
-        max-size: "10M"
+        # The Go application service
+        go-app:
+            # Build the image from the Dockerfile in the 'go-app' directory.
+            build:
+                context: .
+                dockerfile: ./docker/Dockerfile
+                args:
+                    - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}
 
-    command: >
-        postgres -c config_file=/etc/postgresql/postgresql.conf
+            # Name the container for easier identification.
+            container_name: go_proxy_app
+            env_file:
+                - .env
+            # Restart the container automatically unless it is manually stopped.
+            restart: unless-stopped
+            # Expose the port to the internal Docker network. Caddy will connect to this.
+            expose:
+                - '8080'
+            # Set environment variables for the Go application.
+            environment:
+                - PORT=8080
+            # Connect this service to our custom network.
+            networks:
+                - caddy_net
 
-    healthcheck:
-        interval: 10s
-        timeout: 5s
-        retries: 5
-        test: [
-            "CMD-SHELL",
-            "pg_isready",
-            "--username=${ENV_DB_USER_NAME}",
-            "--dbname=${ENV_DB_DATABASE_NAME}",
-            "--host=postgres",
-            "--port=${ENV_DB_PORT}",
-            "--version"
-        ]
+        postgres:
+            restart: always
+            image: postgres:17.4
+            container_name: gocanto-db
+            env_file:
+                - .env
+            networks:
+                - gocanto
+            environment:
+                # --- Postgres CLI env vars.
+                PGUSER: ${ENV_DB_USER_NAME}
+                PGDATABASE: ${ENV_DB_DATABASE_NAME}
+                PGPASSWORD: ${ENV_DB_USER_PASSWORD}
+                # --- Docker postgres-image env vars.
+                POSTGRES_USER: ${ENV_DB_USER_NAME}
+                POSTGRES_DB: ${ENV_DB_DATABASE_NAME}
+                POSTGRES_PASSWORD: ${ENV_DB_USER_PASSWORD}
+            ports:
+                - "${ENV_DB_PORT}:${ENV_DB_PORT}"
+            volumes:
+                - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt
+                - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
+                - ./database/infra/data:/var/lib/postgresql/data
+                - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf
+                - ./database/infra/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+            logging:
+                driver: "json-file"
+                options:
+                    max-file: "20"
+                    max-size: "10M"
+            command: >
+                postgres -c config_file=/etc/postgresql/postgresql.conf
+
+            healthcheck:
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                test: [
+                    "CMD-SHELL",
+                    "pg_isready",
+                    "--username=${ENV_DB_USER_NAME}",
+                    "--dbname=${ENV_DB_DATABASE_NAME}",
+                    "--host=postgres",
+                    "--port=${ENV_DB_PORT}",
+                    "--version"
+                ]

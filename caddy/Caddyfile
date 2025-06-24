@@ -1,0 +1,38 @@
+# Filename: caddy/Caddyfile
+# This is a production-ready Caddyfile.
+# For a real domain, replace "localhost" with "your-domain.com".
+# Caddy will automatically provision a Let's Encrypt certificate for you.
+{
+	# Global options block
+	# Enable logging. By default, logs are sent to stdout in JSON format,
+	# which is ideal for containerized environments.
+	log
+
+	# Enable OCSP stapling for better TLS performance and privacy.
+	ocsp_stapling off # Often needs tweaking in Docker, can be turned on if needed
+}
+
+localhost {
+	# Enable compression to reduce bandwidth usage.
+	# Gzip is broadly supported. Zstd is newer and more efficient.
+	encode gzip zstd
+
+	# Add security-related headers to protect against common attacks.
+	header {
+		# Enable HSTS to ensure browsers only connect via HTTPS.
+		Strict-Transport-Security "max-age=31536000;"
+		# Prevent clickjacking attacks.
+		X-Frame-Options "SAMEORIGIN"
+		# Prevent content type sniffing.
+		X-Content-Type-Options "nosniff"
+		# Enable browser's built-in XSS protection.
+		X-XSS-Protection "1; mode=block"
+		# Control which features and APIs can be used on the site.
+		Permissions-Policy "interest-cohort=()"
+	}
+
+	# Reverse proxy all requests to the Go application service.
+	# 'go-app' is the service name defined in docker-compose.yml.
+	# Docker's internal DNS will resolve 'go-app' to the Go container's IP.
+	reverse_proxy go-app:8080
+}

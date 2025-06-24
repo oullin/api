@@ -4,6 +4,12 @@
 database/infra/data
 tmp
 
+# --- [API]: SSH
+!.ssh/prd/.gitkeep
+!.ssh/dev/.gitkeep
+!.ssh/.gitkeep
+.ssh/prd/*.*
+
 # --- [API]: Bin
 bin
 !bin/.env
