@@ -1,3 +1,7 @@
+volumes:
+    caddy_data:
+    caddy_config:
+
 networks:
     caddy_net:
         driver: bridge
@@ -6,9 +10,28 @@ networks:
         driver: bridge
 
 services:
-        go-app:
+        caddy:
+            build:
+                context: ./caddy
+                dockerfile: Dockerfile
+            container_name: oullin_proxy
+            restart: unless-stopped
+            depends_on:
+                - api
+            ports:
+                - "8080:80"
+                - "8443:443"
+            volumes:
+                - caddy_data:/data
+                - caddy_config:/config
+            networks:
+                - caddy_net
+
+        api:
             env_file:
                 - .env
+            environment:
+                - ENV_DB_HOST="postgres"
             build:
                 context: .
                 dockerfile: ./docker/dockerfile-api
@@ -17,17 +40,21 @@ services:
                     - APP_HOST_PORT=${ENV_HTTP_PORT}
                     - APP_USER=${ENV_DOCKER_USER}
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
-            container_name: go_proxy_app
+            container_name: oullin_api
             restart: unless-stopped
+            depends_on:
+                postgres:
+                    condition: service_healthy
             expose:
                 - ${ENV_HTTP_PORT}
             networks:
                 - caddy_net
+                - gocanto
 
         postgres:
-            restart: always
+            restart: unless-stopped
             image: postgres:17.4
-            container_name: gocanto-db
+            container_name: oullin_db
             env_file:
                 - .env
             networks:

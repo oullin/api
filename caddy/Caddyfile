@@ -32,7 +32,7 @@ localhost {
 	}
 
 	# Reverse proxy all requests to the Go application service.
-	# 'go-app' is the service name defined in docker-compose.yml.
-	# Docker's internal DNS will resolve 'go-app' to the Go container's IP.
-	reverse_proxy go-app:8080
+	# 'api' is the service name defined in docker-compose.yml.
+	# Docker's internal DNS will resolve 'api' to the Go container's IP.
+	reverse_proxy api:8080
 }

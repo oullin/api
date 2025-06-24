@@ -48,3 +48,6 @@ build\:flush:
 
 build\:env:
 	cp $(___BIN___ENV___FILE__TEMPLATE) $(___BIN___ENV___FILE)
+
+build\:caddy:
+	docker compose up --build -d caddy
