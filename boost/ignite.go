@@ -6,14 +6,10 @@ import (
 	"github.com/oullin/pkg"
 )
 
-func Ignite(envPath string) (*env.Environment, *pkg.Validator) {
-	validate := pkg.GetDefaultValidator()
-
-	envMap, err := godotenv.Read(envPath)
-
-	if err != nil {
-		panic("failed to read the .env file: " + err.Error())
+func Ignite(envPath string, validate *pkg.Validator) *env.Environment {
+	if err := godotenv.Load(envPath); err != nil {
+		panic("failed to read the .env file/values: " + err.Error())
 	}
 
-	return MakeEnv(envMap, validate), validate
+	return MakeEnv(validate)
 }
