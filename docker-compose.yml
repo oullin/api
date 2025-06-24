@@ -1,3 +1,8 @@
+# Define the secret. Docker Compose will load the content from the specified file.
+secrets:
+    deploy_key:
+        file: ./.ssh/prd/key
+
 networks:
     caddy_net:
         driver: bridge
@@ -12,9 +17,8 @@ services:
             build:
                 context: .
                 dockerfile: ./docker/Dockerfile
-                args:
-                    - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}
-
+            secrets:
+                - deploy_key
             # Name the container for easier identification.
             container_name: go_proxy_app
             env_file:
@@ -30,6 +34,24 @@ services:
             # Connect this service to our custom network.
             networks:
                 - caddy_net
+
+        # The Caddy reverse proxy service
+        caddy:
+            # Build the image from the Dockerfile in the 'caddy' directory.
+            build:
+                context: ./caddy
+                dockerfile: ./caddy/Dockerfile
+            container_name: go_proxy_caddy
+            restart: unless-stopped
+            ports:
+                - "80:80"
+                - "443:443"
+            volumes:
+                - caddy_data:/data
+                - caddy_config:/config
+            networks:
+                - caddy_net
+                    -
 
         postgres:
             restart: always

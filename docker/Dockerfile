@@ -22,26 +22,20 @@ RUN git config --global url."ssh://git@github.com/".insteadOf "https://github.co
 # "Host key verification failed" errors.
 RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-# Declare a build argument for the SSH private key.
-# This key will be passed in during the build process.
-ARG SSH_PRIVATE_KEY
-
-# Write the provided SSH private key to the standard key location
-# and set the correct file permissions (600). This is critical for SSH security.
-RUN echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa && \
-    chmod 600 ~/.ssh/id_rsa
-
 # Copy the Go module files from the build context (project root).
 COPY go.mod go.sum ./
 
 # Copy the application source code.
 COPY main.go ./
 
-# Run go mod tidy to sync dependencies. It will now use the id_rsa file for auth.
-RUN go mod tidy
+# Run go mod tidy to sync dependencies.
+# The --mount=type=secret flag securely mounts the deploy_key file from the host
+# directly to the standard SSH key location inside the container.
+# This is the most secure way to handle private keys during a build.
+RUN --mount=type=secret,id=deploy_key,target=/root/.ssh/id_rsa,mode=0600 go mod tidy
 
 # Download dependencies listed in go.mod.
-RUN go mod download
+RUN --mount=type=secret,id=deploy_key,target=/root/.ssh/id_rsa,mode=0600 go mod download
 
 # Build the Go application.
 # -o /app/server creates the binary named 'server' in the /app directory.
