@@ -41,7 +41,6 @@ include ./config/makefile/db.mk
 include ./config/makefile/app.mk
 include ./config/makefile/logs.mk
 include ./config/makefile/build.mk
-include ./config/makefile/ssh.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -89,9 +88,5 @@ help:
 
 	@printf "$(BOLD)$(BLUE)Log Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)logs:fresh$(NC)    : Clear application logs.\n"
-
-	@printf "$(BOLD)$(BLUE)SSH Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)ssh:dev$(NC)       : Generate the ssh pairs keys for development.\n"
-	@printf "  $(BOLD)$(GREEN)ssh:prd$(NC)       : Generate the ssh pairs keys for production.\n"
 
 	@printf "$(NC)"
