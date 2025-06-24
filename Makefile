@@ -41,6 +41,7 @@ include ./config/makefile/db.mk
 include ./config/makefile/app.mk
 include ./config/makefile/logs.mk
 include ./config/makefile/build.mk
+include ./config/makefile/ssh.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
