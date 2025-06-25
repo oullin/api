@@ -1,0 +1,21 @@
+# Filename: caddy/Caddyfile.prod
+# Caddy will automatically provision a Let's Encrypt certificate.
+
+gocanto.dev {
+    # Enable compression to reduce bandwidth usage.
+    encode gzip zstd
+
+    # Add security-related headers to protect against common attacks.
+    header {
+       # Enable HSTS to ensure browsers only connect via HTTPS.
+       Strict-Transport-Security "max-age=31536000;"
+       # Prevent clickjacking attacks.
+       X-Frame-Options "SAMEORIGIN"
+       # Prevent content type sniffing.
+       X-Content-Type-Options "nosniff"
+    }
+
+    # Reverse proxy all requests to the Go application service.
+    # 'api' is the service name defined in docker-compose.yml.
+    reverse_proxy api:8080
+}

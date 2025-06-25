@@ -1,7 +1,10 @@
-.PHONY: build\:local build\:release
+.PHONY: build\:local build\:prod build\:release
 
 build\:local:
 	docker compose --profile local up --build -d
+
+build\:prod:
+	docker compose --profile prod up --build -d
 
 build\:release:
 	git tag v$(V)

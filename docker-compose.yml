@@ -11,10 +11,32 @@ networks:
         driver: bridge
 
 services:
+        caddy_prod:
+            build:
+                context: ./caddy
+                dockerfile: Dockerfile
+            # This service will only run when the 'prod' profile is active.
+            profiles: ["prod"]
+            container_name: oullin_proxy_prod
+            restart: unless-stopped
+            depends_on:
+                - api
+            ports:
+                - "80:80"
+                - "443:443"
+                - "443:443/udp" # Required for HTTP/3
+            volumes:
+                - caddy_data:/data
+                - caddy_config:/config
+                - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile
+            networks:
+                - caddy_net
+
         caddy_local:
             build:
                 context: ./caddy
                 dockerfile: Dockerfile
+            # This service will only run when the 'local' profile is active.
             profiles: ["local"]
             container_name: oullin_local_proxy
             restart: unless-stopped
