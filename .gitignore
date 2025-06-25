@@ -4,19 +4,6 @@
 database/infra/data
 tmp
 
-# --- [API]: Bin
-bin
-!bin/.env
-!bin/.gitkeep
-bin/storage/logs/*.*
-bin/storage/media/*.*
-bin/storage/media/posts/*.*
-bin/storage/media/users/*.*
-!bin/storage/logs/.gitkeep
-!bin/storage/media/.gitkeep
-!bin/storage/media/posts/.gitkeep
-!bin/storage/media/users/.gitkeep
-
 # --- [API]: Storage
 storage/logs/*.*
 storage/media/*.*

@@ -1,7 +1,7 @@
 package env
 
 type NetEnvironment struct {
-	HttpHost string `validate:"required,lowercase,min=8"`
+	HttpHost string `validate:"required,lowercase,min=7"`
 	HttpPort string `validate:"required,numeric,oneof=8080"`
 }
 

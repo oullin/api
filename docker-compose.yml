@@ -1,53 +1,132 @@
+volumes:
+    caddy_data:
+    caddy_config:
+
 networks:
-  gocanto:
-    name: gocanto
-    driver: bridge
+    caddy_net:
+        name: caddy_net
+        driver: bridge
+    oullin_net:
+        name: oullin_net
+        driver: bridge
 
 services:
-  postgres:
-    restart: always
-    image: postgres:17.4
-    container_name: gocanto-db
-    env_file:
-        - .env
-    networks:
-      - gocanto
-    environment:
-      # --- Postgres CLI env vars.
-      PGUSER: ${ENV_DB_USER_NAME}
-      PGDATABASE: ${ENV_DB_DATABASE_NAME}
-      PGPASSWORD: ${ENV_DB_USER_PASSWORD}
-      # --- Docker postgres-image env vars.
-      POSTGRES_USER: ${ENV_DB_USER_NAME}
-      POSTGRES_DB: ${ENV_DB_DATABASE_NAME}
-      POSTGRES_PASSWORD: ${ENV_DB_USER_PASSWORD}
-    ports:
-      - "${ENV_DB_PORT}:${ENV_DB_PORT}"
-    volumes:
-        - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt
-        - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
-        - ./database/infra/data:/var/lib/postgresql/data
-        - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf
-        - ./database/infra/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "20"
-        max-size: "10M"
+        caddy_prod:
+            build:
+                context: ./caddy
+                dockerfile: Dockerfile
+                args:
+                    - CADDY_VERSION=2.10.0
+            # This service will only run when the 'prod' profile is active.
+            profiles: ["prod"]
+            container_name: oullin_proxy_prod
+            restart: unless-stopped
+            depends_on:
+                - api
+            ports:
+                - "80:80"
+                - "443:443"
+                - "443:443/udp" # Required for HTTP/3
+            volumes:
+                - caddy_data:/data
+                - caddy_config:/config
+                - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile
+            networks:
+                - caddy_net
 
-    command: >
-        postgres -c config_file=/etc/postgresql/postgresql.conf
+        caddy_local:
+            build:
+                context: ./caddy
+                dockerfile: Dockerfile
+                args:
+                    - CADDY_VERSION=latest
+            # This service will only run when the 'local' profile is active.
+            profiles: ["local"]
+            container_name: oullin_local_proxy
+            restart: unless-stopped
+            depends_on:
+                - api
+            ports:
+                - "8080:80"
+                - "8443:443"
+            volumes:
+                - caddy_data:/data
+                - caddy_config:/config
+                - ./caddy/Caddyfile.local:/etc/caddy/Caddyfile
+            networks:
+                - caddy_net
 
-    healthcheck:
-        interval: 10s
-        timeout: 5s
-        retries: 5
-        test: [
-            "CMD-SHELL",
-            "pg_isready",
-            "--username=${ENV_DB_USER_NAME}",
-            "--dbname=${ENV_DB_DATABASE_NAME}",
-            "--host=postgres",
-            "--port=${ENV_DB_PORT}",
-            "--version"
-        ]
+        api:
+            env_file:
+                - .env
+            environment:
+                # This ensures the API connects to the correct database container.
+                ENV_DB_HOST: postgres
+                # This ensures the Go web server listens for connections from other
+                # containers (like Caddy), not just from within itself.
+                ENV_HTTP_HOST: 0.0.0.0
+            build:
+                context: .
+                dockerfile: ./docker/dockerfile-api
+                args:
+                    - APP_VERSION=v1.0.0-release
+                    - APP_HOST_PORT=${ENV_HTTP_PORT}
+                    - APP_USER=${ENV_DOCKER_USER}
+                    - APP_GROUP=${ENV_DOCKER_USER_GROUP}
+            container_name: oullin_api
+            restart: unless-stopped
+            depends_on:
+                postgres:
+                    condition: service_healthy
+            expose:
+                - ${ENV_HTTP_PORT}
+            networks:
+                - caddy_net
+                - oullin_net
+
+        postgres:
+            restart: unless-stopped
+            image: postgres:17.4
+            container_name: oullin_db
+            env_file:
+                - .env
+            networks:
+                - oullin_net
+            environment:
+                # --- Postgres CLI env vars.
+                PGUSER: ${ENV_DB_USER_NAME}
+                PGDATABASE: ${ENV_DB_DATABASE_NAME}
+                PGPASSWORD: ${ENV_DB_USER_PASSWORD}
+                # --- Docker postgres-image env vars.
+                POSTGRES_USER: ${ENV_DB_USER_NAME}
+                POSTGRES_DB: ${ENV_DB_DATABASE_NAME}
+                POSTGRES_PASSWORD: ${ENV_DB_USER_PASSWORD}
+            ports:
+                - "${ENV_DB_PORT}:${ENV_DB_PORT}"
+            volumes:
+                - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt
+                - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
+                - ./database/infra/data:/var/lib/postgresql/data
+                - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf
+                - ./database/infra/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+            logging:
+                driver: "json-file"
+                options:
+                    max-file: 20
+                    max-size: 10M
+            command: >
+                postgres -c config_file=/etc/postgresql/postgresql.conf
+
+            healthcheck:
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                test: [
+                    "CMD-SHELL",
+                    "pg_isready",
+                    "--username=${ENV_DB_USER_NAME}",
+                    "--dbname=${ENV_DB_DATABASE_NAME}",
+                    "--host=postgres",
+                    "--port=${ENV_DB_PORT}",
+                    "--version"
+                ]

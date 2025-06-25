@@ -5,6 +5,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/seeder/seeds"
 	"github.com/oullin/env"
+	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/cli"
 	"sync"
 	"time"
@@ -13,7 +14,7 @@ import (
 var environment *env.Environment
 
 func init() {
-	secrets, _ := boost.Ignite("./.env")
+	secrets := boost.Ignite("./.env", pkg.GetDefaultValidator())
 
 	environment = secrets
 }

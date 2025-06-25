@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/lib/pq"
 	"github.com/oullin/boost"
+	"github.com/oullin/pkg"
 	"log/slog"
 	baseHttp "net/http"
 )
@@ -10,7 +11,9 @@ import (
 var app *boost.App
 
 func init() {
-	secrets, validate := boost.Ignite("./.env")
+	validate := pkg.GetDefaultValidator()
+
+	secrets := boost.Ignite("./.env", validate)
 
 	app = boost.MakeApp(secrets, validate)
 }

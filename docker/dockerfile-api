@@ -1,0 +1,127 @@
+# API Docker File.
+
+# --- Build Arguments for Configuration ---
+# Defines variables that make this Dockerfile more configurable and reusable.
+# These can be overridden during the build process (e.g., via docker-compose).
+ARG GO_VERSION=1.24
+ARG ALPINE_VERSION=latest
+
+ARG APP_VERSION="0.0.0-dev"
+ARG BUILD_TAGS="posts,experience,profile,projects,social,talks,gus,gocanto"
+
+ARG BINARY_NAME=server
+ARG APP_HOST_PORT=8080
+ARG APP_USER=appuser
+ARG APP_GROUP=appgroup
+ARG APP_HOME=/home/${APP_USER}
+
+ARG BUILD_DIR=/app
+ARG STORAGE_DIR=storage
+ARG LOGS_DIR=logs
+ARG MEDIA_DIR=media
+ARG FIXTURES_DIR=fixture
+
+# --- Build Stage ---
+#     This stage, named 'builder', is responsible for compiling the Go application.
+#     It uses a Go-specific base image that includes the necessary toolchain.
+FROM golang:${GO_VERSION}-alpine AS builder
+
+# Forwards build-time arguments into this specific stage so they can be referenced.
+ARG BUILD_DIR
+ARG BINARY_NAME
+ARG APP_VERSION
+ARG BUILD_TAGS
+
+# Installs the timezone database package into the builder image.
+# This is necessary because the base 'alpine' image is minimal and does not
+# include this data by default. It is copied to the final image later.
+RUN apk add --no-cache tzdata
+
+# Sets the primary working directory for this stage of the build.
+WORKDIR ${BUILD_DIR}
+
+# Copies the Go module definition files into the builder.
+# This is done first to leverage Docker's layer caching. The subsequent
+# 'go mod download' step will only be re-run if these files have changed.
+COPY go.mod go.sum ./
+
+# Downloads the application's external dependencies as specified in the go.mod file.
+# The 'replace' directive in go.mod is used to resolve local packages, so this
+# command will not attempt to download them from the internet.
+RUN go mod download
+
+# Copies the rest of the application's source code into the builder.
+# This includes the main package and any local packages like 'boost'.
+COPY . .
+
+# Compiles the Go application into a single, statically-linked binary.
+# -tags: Applies build constraints, allowing for conditional compilation.
+# -o: Specifies the output path and name for the compiled binary.
+# -ldflags: Provides flags to the linker.
+#   -s: Strips the symbol table, reducing binary size.
+#   -w: Strips DWARF debugging information, further reducing size.
+#   -X: Injects a value into a string variable at build time. Here, it sets
+#       the application's version by targeting the 'Version' variable in the 'main' package.
+RUN CGO_ENABLED=0 go build -tags "${BUILD_TAGS}" -o ${BUILD_DIR}/${BINARY_NAME} -ldflags="-s -w -X main.Version=${APP_VERSION}" .
+
+# --- Final Stage
+#     This is the final, production-ready stage of the build.
+#     It uses a minimal 'alpine' base image to create a small and secure container.
+FROM alpine:${ALPINE_VERSION}
+
+# Forwards build-time arguments into this final stage so they can be referenced.
+ARG APP_USER
+ARG APP_GROUP
+ARG APP_HOME
+ARG BUILD_DIR
+ARG BINARY_NAME
+ARG STORAGE_DIR
+ARG LOGS_DIR
+ARG MEDIA_DIR
+ARG FIXTURES_DIR
+
+# Creates a dedicated, non-root user and group for the application.
+# Running the application as a non-root user is a critical security best practice.
+RUN addgroup -S ${APP_GROUP} && adduser -S ${APP_USER} -G ${APP_GROUP}
+
+# Sets the working directory for the final container.
+WORKDIR ${APP_HOME}
+
+# Creates the necessary storage directories inside the container.
+# These folders will be owned by the application user and can be used for runtime file generation.
+RUN mkdir -p ${STORAGE_DIR}/${LOGS_DIR} ${STORAGE_DIR}/${MEDIA_DIR}
+
+# Copies the 'fixture' files from the local project directory into the container.
+# This is useful for including seed data or other essential files with the application.
+COPY ${STORAGE_DIR}/${FIXTURES_DIR} ./${STORAGE_DIR}/${FIXTURES_DIR}/
+
+# Copies the compiled application binary from the 'builder' stage.
+# This is the core of the multi-stage build pattern, ensuring the final image
+# contains only the compiled application and not the Go toolchain or source code.
+COPY --from=builder ${BUILD_DIR}/${BINARY_NAME} .
+
+# Copies the timezone database from the 'builder' stage.
+# This ensures that time-related functions in the application work correctly.
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Copies the .env file into the container.
+# This allows the application to load its configuration from environment variables.
+# For this to work, '.env' must not be in the .dockerignore file.
+COPY .env .
+
+# Recursively sets the ownership of all files in the application's home directory.
+# This ensures the non-root application user has the correct permissions to execute the binary
+# and write to the storage directories.
+RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
+
+# Switches the context of the container to run as the non-root user.
+# Any subsequent commands (like the CMD) will be executed by this user.
+USER ${APP_USER}
+
+# Exposes the application's port from the container.
+# This does not publish the port; it serves as documentation for which port to map.
+EXPOSE ${APP_HOST_PORT}
+
+# Defines the default command to execute when the container starts.
+# This runs the compiled application binary.
+CMD ["./server"]

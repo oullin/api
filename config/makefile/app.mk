@@ -14,17 +14,17 @@ fresh:
 
 audit:
 	$(call external_deps,'.')
-	$(call external_deps,'./bin/...')
 	$(call external_deps,'./app/...')
 	$(call external_deps,'./database/...')
 	$(call external_deps,'./docs/...')
 
 watch:
 	# --- Works with (air).
-	# https://github.com/air-verse/air
+	#     https://github.com/air-verse/air
 	cd $(APP_PATH) && air
 
 install-air:
-	# https://github.com/air-verse/air
+	# --- Works with (air).
+	#     https://github.com/air-verse/air
 	@echo "Installing air ..."
 	@go install github.com/air-verse/air@latest

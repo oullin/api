@@ -5,12 +5,10 @@ import "fmt"
 type DBEnvironment struct {
 	UserName     string `validate:"required,lowercase,min=10"`
 	UserPassword string `validate:"required,min=10"`
-	DatabaseName string `validate:"required,lowercase,min=10"`
+	DatabaseName string `validate:"required,lowercase,min=5"`
 	Port         int    `validate:"required,numeric,gt=0"`
 	Host         string `validate:"required,lowercase,hostname"`
 	DriverName   string `validate:"required,lowercase,oneof=postgres"`
-	BinDir       string
-	URL          string `validate:"required,lowercase,startswith=postgres"`
 	SSLMode      string `validate:"required,lowercase,oneof=require"`
 	TimeZone     string `validate:"required"`
 }

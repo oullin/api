@@ -1,0 +1,24 @@
+# Filename: caddy/Caddyfile
+
+# This global options block explicitly disables Caddy's automatic HTTPS feature.
+# This is the most reliable way to ensure Caddy acts as a simple HTTP proxy.
+{
+    auto_https off
+}
+
+# This is a robust configuration for a containerized environment.
+# It tells Caddy to listen on its internal port 80 for any incoming hostname.
+# Docker Compose maps your host port (8080) to this container port.
+:80 {
+    # Define a logging format for easier debugging.
+    log {
+        output stdout
+        format console
+    }
+
+    # Reverse proxy all incoming requests to the 'api' service.
+    # The service name 'api' is resolved by Docker's internal DNS to the
+    # correct container IP on the 'caddy_net' network.
+    # The API container listens on port 8080 (from your ENV_HTTP_PORT).
+    reverse_proxy api:8080
+}
