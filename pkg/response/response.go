@@ -3,90 +3,55 @@ package response
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
-	"net/http"
+	baseHttp "net/http"
+	"strings"
 )
 
 type Response struct {
-	Code             int
-	Message          string
-	Err              error
-	ValidationErrors map[string]any
+	version string
+	etag    string
+	writer  baseHttp.ResponseWriter
+	request *baseHttp.Request
 }
 
-func MakeResponse(code int, message string, err error) *Response {
-	return &Response{
-		Code:             code,
-		Message:          message,
-		Err:              err,
-		ValidationErrors: make(map[string]any),
+func MakeFrom(version string, w baseHttp.ResponseWriter, r *baseHttp.Request) Response {
+	v := strings.TrimSpace(version)
+
+	return Response{
+		version: v,
+		writer:  w,
+		request: r,
+		etag:    fmt.Sprintf(`"%s"`, v),
 	}
 }
 
-func BadRequest(message string, err error) *Response {
-	return MakeResponse(http.StatusBadRequest, message, err)
+func (r *Response) Encode(payload any) error {
+	return json.NewEncoder(r.writer).Encode(payload)
 }
 
-func InternalServerError(message string, err error) *Response {
-	return MakeResponse(http.StatusInternalServerError, message, err)
+func (r *Response) HasCache() bool {
+	request := r.request
+
+	match := strings.TrimSpace(
+		request.Header.Get("If-None-Match"),
+	)
+
+	return match == r.etag
 }
 
-func Forbidden(message string, validationErrors map[string]any, err error) *Response {
-	return &Response{
-		Code:             http.StatusForbidden,
-		Message:          message,
-		Err:              err,
-		ValidationErrors: validationErrors,
-	}
+func (r *Response) SetHeaders() {
+	w := r.writer
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("ETag", r.etag)
 }
 
-func Unauthorized(message string, err error) *Response {
-	return &Response{
-		Code:             http.StatusUnauthorized,
-		Message:          message,
-		Err:              err,
-		ValidationErrors: make(map[string]any),
-	}
+func (r *Response) RespondWithNotModified() {
+	r.writer.WriteHeader(baseHttp.StatusNotModified)
 }
 
-func Unprocessable(message string, err error) *Response {
-	return &Response{
-		Code:             http.StatusUnprocessableEntity,
-		Message:          message,
-		Err:              err,
-		ValidationErrors: make(map[string]any),
-	}
-}
-
-func (e *Response) Error() string {
-	if e.Err != nil {
-		return fmt.Sprintf("%s: %v", e.Message, e.Err)
-	}
-
-	return e.Message
-}
-
-func (e *Response) Unwrap() error {
-	return e.Err
-}
-
-func (e *Response) Respond(w http.ResponseWriter) {
-	slog.Error("HTTP Error", "status", e.Code, "message", e.Message, "error", e.Err, "validation_errors", e.ValidationErrors)
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("X-Content-Type-Options", "nosniff") // Basic security header
-	w.WriteHeader(e.Code)
-
-	payload := map[string]any{
-		"message": e.Message,
-	}
-
-	if len(e.ValidationErrors) > 0 {
-		payload["errors"] = e.ValidationErrors
-	}
-
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		slog.Error("Error encoding error response", "encode_error", err, "original_error", e)
-		_, _ = fmt.Fprintf(w, `{"message":"Error generating error response"}`)
-	}
+func (r *Response) RespondOk() {
+	r.writer.WriteHeader(baseHttp.StatusOK)
 }

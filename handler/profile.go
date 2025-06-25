@@ -49,6 +49,7 @@ func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *
 	}
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("ETag", etag)
 	w.WriteHeader(baseHttp.StatusOK)
