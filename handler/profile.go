@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/oullin/handler/response"
 	"github.com/oullin/pkg/http"
 	"log"
@@ -34,7 +35,22 @@ func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *
 		return http.InternalError(err.Error())
 	}
 
+	version := data.Version
+	etag := fmt.Sprintf(`"%s"`, version)
+
+	if match := r.Header.Get("If-None-Match"); match != "" {
+		if match == etag {
+			// If the ETags match, the client's version is fresh.
+			// Send back a 304 Not Modified status and an empty body.
+			w.WriteHeader(baseHttp.StatusNotModified)
+
+			return nil
+		}
+	}
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("ETag", etag)
 	w.WriteHeader(baseHttp.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
