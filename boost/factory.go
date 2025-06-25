@@ -9,9 +9,7 @@ import (
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"log"
-	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -60,44 +58,44 @@ func MakeLogs(env *env.Environment) *llogs.Driver {
 func MakeEnv(validate *pkg.Validator) *env.Environment {
 	errorSufix := "Environment: "
 
-	port, _ := strconv.Atoi(os.Getenv("ENV_DB_PORT"))
+	port, _ := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))
 
 	token := auth.Token{
-		Public:  strings.TrimSpace(os.Getenv("ENV_APP_TOKEN_PUBLIC")),
-		Private: strings.TrimSpace(os.Getenv("ENV_APP_TOKEN_PRIVATE")),
+		Public:  env.GetEnvVar("ENV_APP_TOKEN_PUBLIC"),
+		Private: env.GetEnvVar("ENV_APP_TOKEN_PRIVATE"),
 	}
 
 	app := env.AppEnvironment{
-		Name:        strings.TrimSpace(os.Getenv("ENV_APP_NAME")),
-		Type:        strings.TrimSpace(os.Getenv("ENV_APP_ENV_TYPE")),
+		Name:        env.GetEnvVar("ENV_APP_NAME"),
+		Type:        env.GetEnvVar("ENV_APP_ENV_TYPE"),
 		Credentials: token,
 	}
 
 	db := env.DBEnvironment{
-		UserName:     strings.TrimSpace(os.Getenv("ENV_DB_USER_NAME")),
-		UserPassword: strings.TrimSpace(os.Getenv("ENV_DB_USER_PASSWORD")),
-		DatabaseName: strings.TrimSpace(os.Getenv("ENV_DB_DATABASE_NAME")),
+		UserName:     env.GetEnvVar("ENV_DB_USER_NAME"),
+		UserPassword: env.GetEnvVar("ENV_DB_USER_PASSWORD"),
+		DatabaseName: env.GetEnvVar("ENV_DB_DATABASE_NAME"),
 		Port:         port,
-		Host:         strings.TrimSpace(os.Getenv("ENV_DB_HOST")),
+		Host:         env.GetEnvVar("ENV_DB_HOST"),
 		DriverName:   database.DriverName,
-		SSLMode:      strings.TrimSpace(os.Getenv("ENV_DB_SSL_MODE")),
-		TimeZone:     strings.TrimSpace(os.Getenv("ENV_DB_TIMEZONE")),
+		SSLMode:      env.GetEnvVar("ENV_DB_SSL_MODE"),
+		TimeZone:     env.GetEnvVar("ENV_DB_TIMEZONE"),
 	}
 
 	logsCreds := env.LogsEnvironment{
-		Level:      strings.TrimSpace(os.Getenv("ENV_APP_LOG_LEVEL")),
-		Dir:        strings.TrimSpace(os.Getenv("ENV_APP_LOGS_DIR")),
-		DateFormat: strings.TrimSpace(os.Getenv("ENV_APP_LOGS_DATE_FORMAT")),
+		Level:      env.GetEnvVar("ENV_APP_LOG_LEVEL"),
+		Dir:        env.GetEnvVar("ENV_APP_LOGS_DIR"),
+		DateFormat: env.GetEnvVar("ENV_APP_LOGS_DATE_FORMAT"),
 	}
 
 	net := env.NetEnvironment{
-		HttpHost: strings.TrimSpace(os.Getenv("ENV_HTTP_HOST")),
-		HttpPort: strings.TrimSpace(os.Getenv("ENV_HTTP_PORT")),
+		HttpHost: env.GetEnvVar("ENV_HTTP_HOST"),
+		HttpPort: env.GetEnvVar("ENV_HTTP_PORT"),
 	}
 
 	sentryEnvironment := env.SentryEnvironment{
-		DSN: strings.TrimSpace(os.Getenv("ENV_SENTRY_DSN")),
-		CSP: strings.TrimSpace(os.Getenv("ENV_SENTRY_CSP")),
+		DSN: env.GetEnvVar("ENV_SENTRY_DSN"),
+		CSP: env.GetEnvVar("ENV_SENTRY_CSP"),
 	}
 
 	if _, err := validate.Rejects(app); err != nil {
