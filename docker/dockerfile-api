@@ -22,8 +22,8 @@ ARG MEDIA_DIR=media
 ARG FIXTURES_DIR=fixture
 
 # --- Build Stage ---
-# This stage, named 'builder', is responsible for compiling the Go application.
-# It uses a Go-specific base image that includes the necessary toolchain.
+#     This stage, named 'builder', is responsible for compiling the Go application.
+#     It uses a Go-specific base image that includes the necessary toolchain.
 FROM golang:${GO_VERSION}-alpine AS builder
 
 # Forwards build-time arguments into this specific stage so they can be referenced.
@@ -64,9 +64,9 @@ COPY . .
 #       the application's version by targeting the 'Version' variable in the 'main' package.
 RUN CGO_ENABLED=0 go build -tags "${BUILD_TAGS}" -o ${BUILD_DIR}/${BINARY_NAME} -ldflags="-s -w -X main.Version=${APP_VERSION}" .
 
-# --- Final Stage ---
-# This is the final, production-ready stage of the build.
-# It uses a minimal 'alpine' base image to create a small and secure container.
+# --- Final Stage
+#     This is the final, production-ready stage of the build.
+#     It uses a minimal 'alpine' base image to create a small and secure container.
 FROM alpine:${ALPINE_VERSION}
 
 # Forwards build-time arguments into this final stage so they can be referenced.
