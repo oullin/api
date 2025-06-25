@@ -1,7 +1,7 @@
-.PHONY: build\:app build\:release
+.PHONY: build\:local build\:release
 
-build\:app:
-	docker compose up --build -d caddy
+build\:local:
+	docker compose --profile local up --build -d
 
 build\:release:
 	git tag v$(V)

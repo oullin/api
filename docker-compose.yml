@@ -11,11 +11,12 @@ networks:
         driver: bridge
 
 services:
-        caddy:
+        caddy_local:
             build:
                 context: ./caddy
                 dockerfile: Dockerfile
-            container_name: oullin_proxy
+            profiles: ["local"]
+            container_name: oullin_local_proxy
             restart: unless-stopped
             depends_on:
                 - api
@@ -25,6 +26,7 @@ services:
             volumes:
                 - caddy_data:/data
                 - caddy_config:/config
+                - ./caddy/Caddyfile.local:/etc/caddy/Caddyfile
             networks:
                 - caddy_net
 

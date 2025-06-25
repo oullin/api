@@ -4,4 +4,4 @@ FROM caddy:latest
 
 # Copy your custom Caddyfile into the container.
 # This overwrites the default Caddyfile.
-COPY Caddyfile /etc/caddy/Caddyfile
+COPY Caddyfile.local /etc/caddy/Caddyfile
