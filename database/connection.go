@@ -25,7 +25,6 @@ func MakeConnection(env *env.Environment) (*Connection, error) {
 	}
 
 	return &Connection{
-		url:        dbEnv.URL,
 		driver:     driver,
 		driverName: dbEnv.DriverName,
 		env:        env,

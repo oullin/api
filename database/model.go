@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const DriverName = "postgres"
+
 var schemaTables = []string{
 	"users", "posts", "categories",
 	"post_categories", "tags", "post_tags",

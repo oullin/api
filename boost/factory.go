@@ -79,9 +79,7 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 		DatabaseName: strings.TrimSpace(os.Getenv("ENV_DB_DATABASE_NAME")),
 		Port:         port,
 		Host:         strings.TrimSpace(os.Getenv("ENV_DB_HOST")),
-		DriverName:   "postgres",
-		BinDir:       strings.TrimSpace(os.Getenv("EN_DB_BIN_DIR")),
-		URL:          strings.TrimSpace(os.Getenv("ENV_DB_URL")),
+		DriverName:   database.DriverName,
 		SSLMode:      strings.TrimSpace(os.Getenv("ENV_DB_SSL_MODE")),
 		TimeZone:     strings.TrimSpace(os.Getenv("ENV_DB_TIMEZONE")),
 	}

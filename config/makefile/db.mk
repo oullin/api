@@ -5,7 +5,7 @@
 
 # --- Docker
 DB_DOCKER_SERVICE_NAME := postgres
-DB_DOCKER_CONTAINER_NAME := gocanto-db
+DB_DOCKER_CONTAINER_NAME := oullin_db
 
 # --- Paths
 DB_SEEDER_ROOT_PATH := $(ROOT_PATH)/database/seeder
