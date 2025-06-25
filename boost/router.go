@@ -29,7 +29,7 @@ func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 }
 
 func (r *Router) Profile() {
-	abstract := handler.MakeProfileHandler()
+	abstract := handler.MakeProfileHandler("./storage/fixture/profile.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
