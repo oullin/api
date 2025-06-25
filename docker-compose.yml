@@ -4,9 +4,10 @@ volumes:
 
 networks:
     caddy_net:
+        name: caddy_net
         driver: bridge
-    gocanto:
-        name: gocanto
+    oullin_net:
+        name: oullin_net
         driver: bridge
 
 services:
@@ -31,7 +32,11 @@ services:
             env_file:
                 - .env
             environment:
-                - ENV_DB_HOST="postgres"
+                # This ensures the API connects to the correct database container.
+                ENV_DB_HOST: postgres
+                # This ensures the Go web server listens for connections from other
+                # containers (like Caddy), not just from within itself.
+                ENV_HTTP_HOST: 0.0.0.0
             build:
                 context: .
                 dockerfile: ./docker/dockerfile-api
@@ -49,7 +54,7 @@ services:
                 - ${ENV_HTTP_PORT}
             networks:
                 - caddy_net
-                - gocanto
+                - oullin_net
 
         postgres:
             restart: unless-stopped
@@ -58,7 +63,7 @@ services:
             env_file:
                 - .env
             networks:
-                - gocanto
+                - oullin_net
             environment:
                 # --- Postgres CLI env vars.
                 PGUSER: ${ENV_DB_USER_NAME}
@@ -79,8 +84,8 @@ services:
             logging:
                 driver: "json-file"
                 options:
-                    max-file: "20"
-                    max-size: "10M"
+                    max-file: 20
+                    max-size: 10M
             command: >
                 postgres -c config_file=/etc/postgresql/postgresql.conf
 
