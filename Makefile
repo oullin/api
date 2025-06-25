@@ -26,8 +26,6 @@ SOURCE                := go_bindata
 ROOT_PATH             := $(shell pwd)
 APP_PATH              := $(ROOT_PATH)/
 STORAGE_PATH          := $(ROOT_PATH)/storage
-BIN_PATH              := $(ROOT_PATH)/bin
-BIN_LOGS_PATH         := $(ROOT_PATH)/bin/storage/logs
 REPO_OWNER            := $(shell cd .. && basename "$$(pwd)")
 VERSION               := $(shell git describe --tags 2>/dev/null | cut -c 2-)
 
@@ -36,7 +34,6 @@ VERSION               := $(shell git describe --tags 2>/dev/null | cut -c 2-)
 
 include ./config/makefile/helpers.mk
 include ./config/makefile/env.mk
-
 include ./config/makefile/db.mk
 include ./config/makefile/app.mk
 include ./config/makefile/logs.mk
@@ -46,22 +43,18 @@ include ./config/makefile/build.mk
 # -------------------------------------------------------------------------------------------------------------------- #
 
 help:
-	@printf "$(BOLD)$(CYAN)Makefile Commands:$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Applications Options$(NC)\n"
 	@printf "$(WHITE)Usage:$(NC) make $(BOLD)$(YELLOW)<target>$(NC)\n\n"
 
 	@printf "$(BOLD)$(BLUE)General Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)fresh$(NC)         : Clean and reset various project components (logs, build, etc.).\n"
-	@printf "  $(BOLD)$(GREEN)audit$(NC)         : Run code audits and checks.\n"
-	@printf "  $(BOLD)$(GREEN)watch$(NC)         : Start a file watcher process.\n"
-	@printf "  $(BOLD)$(GREEN)format$(NC)        : Automatically format code.\n\n"
+	@printf "  $(BOLD)$(GREEN)fresh$(NC)            : Clean and reset various project components (logs, build, etc.).\n"
+	@printf "  $(BOLD)$(GREEN)audit$(NC)            : Run code audits and checks.\n"
+	@printf "  $(BOLD)$(GREEN)watch$(NC)            : Start a file watcher process.\n"
+	@printf "  $(BOLD)$(GREEN)format$(NC)           : Automatically format code.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)build:app$(NC)       : Build the main application executable.\n"
-	@printf "  $(BOLD)$(GREEN)build:app:linux$(NC) : Build the application specifically for Linux.\n"
-	@printf "  $(BOLD)$(GREEN)build:release$(NC)   : Build a release version of the application.\n"
-	@printf "  $(BOLD)$(GREEN)build:run$(NC)       : Build and run the application.\n"
-	@printf "  $(BOLD)$(GREEN)build:fresh$(NC)     : Build and run a freshly instance of the application.\n"
-	@printf "  $(BOLD)$(GREEN)build:flush$(NC)     : Clean build artifacts and then build the application.\n\n"
+	@printf "  $(BOLD)$(GREEN)build:api$(NC)        : Build the main application.\n"
+	@printf "  $(BOLD)$(GREEN)build:release$(NC)    : Build a release version of the application.\n"
 
 	@printf "$(BOLD)$(BLUE)Database Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)db:local$(NC)         : Set up or manage the local database environment.\n"
@@ -81,12 +74,12 @@ help:
 	@printf "  $(BOLD)$(GREEN)db:migrate:force$(NC) : Force database migrations to run.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Environment Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)env:check$(NC)     : Verify environment configuration.\n"
-	@printf "  $(BOLD)$(GREEN)env:fresh$(NC)     : Refresh environment settings.\n"
-	@printf "  $(BOLD)$(GREEN)env:init$(NC)      : Initialize environment settings.\n"
-	@printf "  $(BOLD)$(GREEN)env:print$(NC)     : Display current environment settings.\n\n"
+	@printf "  $(BOLD)$(GREEN)env:check$(NC)        : Verify environment configuration.\n"
+	@printf "  $(BOLD)$(GREEN)env:fresh$(NC)        : Refresh environment settings.\n"
+	@printf "  $(BOLD)$(GREEN)env:init$(NC)         : Initialize environment settings.\n"
+	@printf "  $(BOLD)$(GREEN)env:print$(NC)        : Display current environment settings.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Log Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)logs:fresh$(NC)    : Clear application logs.\n"
+	@printf "  $(BOLD)$(GREEN)logs:fresh$(NC)       : Clear application logs.\n"
 
 	@printf "$(NC)"

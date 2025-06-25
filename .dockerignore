@@ -13,5 +13,4 @@ database/infra/
 storage/media/
 storage/logs/
 tmp/
-bin/
 caddy/
