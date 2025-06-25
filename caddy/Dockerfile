@@ -6,7 +6,7 @@
 ARG CADDY_VERSION=2.10.0
 
 # Use the official Caddy image with the latest tag.
-FROM caddy:2.10.0
+FROM caddy:${CADDY_VERSION}
 
 # Copy your custom Caddyfile into the container.
 # This overwrites the default Caddyfile.
