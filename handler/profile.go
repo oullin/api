@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"encoding/json"
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
 	"log/slog"
 	baseHttp "net/http"
-	"os"
 )
 
 type ProfileHandler struct {
@@ -20,17 +19,12 @@ func MakeProfileHandler(file string) ProfileHandler {
 }
 
 func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	fixture, err := os.ReadFile(h.fixture)
+	data, err := pkg.ParseJsonFile[payload.ProfileResponse](h.fixture)
 
 	if err != nil {
 		slog.Error("Error reading projects file", "error", err)
 
 		return http.InternalError("could not read profile data")
-	}
-
-	var data payload.ProfileResponse
-	if err := json.Unmarshal(fixture, &data); err != nil {
-		return http.InternalError(err.Error())
 	}
 
 	resp := http.MakeResponseFrom(data.Version, w, r)
