@@ -1,34 +1,45 @@
 package handler
 
 import (
-	"github.com/oullin/pkg/http"
-	"log/slog"
-	baseHttp "net/http"
-	"os"
+    "github.com/oullin/handler/payload"
+    "github.com/oullin/pkg"
+    "github.com/oullin/pkg/http"
+    "log/slog"
+    baseHttp "net/http"
 )
 
 type ProjectsHandler struct {
-	content string
+    filePah string
 }
 
-func MakeProjectsHandler() ProjectsHandler {
-	return ProjectsHandler{
-		content: "./storage/fixture/projects.json",
-	}
+func MakeProjectsHandler(filePah string) ProjectsHandler {
+    return ProjectsHandler{
+        filePah: filePah,
+    }
 }
 
 func (h ProjectsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	fixture, err := os.ReadFile(h.content)
+    data, err := pkg.ParseJsonFile[payload.ProjectResponse](h.filePah)
 
-	if err != nil {
-		slog.Error("Error reading projects file", "error", err)
+    if err != nil {
+        slog.Error("Error reading projects file", "error", err)
 
-		return http.InternalError("could not read projects data")
-	}
+        return http.InternalError("could not read profile data")
+    }
 
-	if err := writeJSON(fixture, w); err != nil {
-		return http.InternalError(err.Error())
-	}
+    resp := http.MakeResponseFrom(data.Version, w, r)
 
-	return nil // A nil return indicates success.
+    if resp.HasCache() {
+        resp.RespondWithNotModified()
+
+        return nil
+    }
+
+    if err := resp.RespondOk(data); err != nil {
+        slog.Error("Error marshaling JSON for response", "error", err)
+
+        return nil
+    }
+
+    return nil // A nil return indicates success.
 }

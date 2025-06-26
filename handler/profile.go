@@ -9,7 +9,6 @@ import (
 )
 
 type ProfileHandler struct {
-	//The file containing the given handler endpoint information.
 	filePah string
 }
 

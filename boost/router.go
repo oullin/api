@@ -49,7 +49,7 @@ func (r *Router) Experience() {
 }
 
 func (r *Router) Projects() {
-	abstract := handler.MakeProjectsHandler()
+	abstract := handler.MakeProjectsHandler("./storage/fixture/projects.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
