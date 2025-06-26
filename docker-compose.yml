@@ -76,7 +76,7 @@ services:
             container_name: oullin_api
             restart: unless-stopped
             depends_on:
-                postgres:
+                api-db:
                     condition: service_healthy
             expose:
                 - ${ENV_HTTP_PORT}
@@ -84,7 +84,7 @@ services:
                 - caddy_net
                 - oullin_net
 
-        postgres:
+        api-db:
             restart: unless-stopped
             image: postgres:17.4
             container_name: oullin_db
