@@ -59,7 +59,7 @@ func (r *Router) Projects() {
 }
 
 func (r *Router) Social() {
-	abstract := handler.MakeSocialHandler()
+	abstract := handler.MakeSocialHandler("./storage/fixture/social.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
