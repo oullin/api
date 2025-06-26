@@ -1,33 +1,44 @@
 package handler
 
 import (
+	"github.com/oullin/handler/payload"
+	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
 	"log/slog"
 	baseHttp "net/http"
-	"os"
 )
 
 type Talks struct {
-	content string
+	filePah string
 }
 
-func MakeTalks() Talks {
+func MakeTalks(filePah string) Talks {
 	return Talks{
-		content: "./storage/fixture/talks.json",
+		filePah: filePah,
 	}
 }
 
 func (h Talks) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	fixture, err := os.ReadFile(h.content)
+	data, err := pkg.ParseJsonFile[payload.TalksResponse](h.filePah)
 
 	if err != nil {
 		slog.Error("Error reading projects file", "error", err)
 
-		return http.InternalError("could not read talks data")
+		return http.InternalError("could not read profile data")
 	}
 
-	if err := writeJSON(fixture, w); err != nil {
-		return http.InternalError(err.Error())
+	resp := http.MakeResponseFrom(data.Version, w, r)
+
+	if resp.HasCache() {
+		resp.RespondWithNotModified()
+
+		return nil
+	}
+
+	if err := resp.RespondOk(data); err != nil {
+		slog.Error("Error marshaling JSON for response", "error", err)
+
+		return nil
 	}
 
 	return nil // A nil return indicates success.

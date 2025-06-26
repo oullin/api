@@ -69,7 +69,7 @@ func (r *Router) Social() {
 }
 
 func (r *Router) Talks() {
-	abstract := handler.MakeTalks()
+	abstract := handler.MakeTalks("./storage/fixture/talks.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
