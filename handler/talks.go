@@ -12,7 +12,7 @@ type TalksHandler struct {
 	filePah string
 }
 
-func MakeTalks(filePah string) TalksHandler {
+func MakeTalksHandler(filePah string) TalksHandler {
 	return TalksHandler{
 		filePah: filePah,
 	}
