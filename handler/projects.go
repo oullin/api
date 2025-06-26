@@ -9,17 +9,17 @@ import (
 )
 
 type ProjectsHandler struct {
-	filePah string
+	filePath string
 }
 
-func MakeProjectsHandler(filePah string) ProjectsHandler {
+func MakeProjectsHandler(filePath string) ProjectsHandler {
 	return ProjectsHandler{
-		filePah: filePah,
+		filePath: filePath,
 	}
 }
 
 func (h ProjectsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.ProjectsResponse](h.filePah)
+	data, err := pkg.ParseJsonFile[payload.ProjectsResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading projects file", "error", err)

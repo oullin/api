@@ -9,17 +9,17 @@ import (
 )
 
 type SocialHandler struct {
-	filePah string
+	filePath string
 }
 
-func MakeSocialHandler(filePah string) SocialHandler {
+func MakeSocialHandler(filePath string) SocialHandler {
 	return SocialHandler{
-		filePah: filePah,
+		filePath: filePath,
 	}
 }
 
 func (h SocialHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.SocialResponse](h.filePah)
+	data, err := pkg.ParseJsonFile[payload.SocialResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading social file", "error", err)

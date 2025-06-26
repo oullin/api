@@ -9,17 +9,17 @@ import (
 )
 
 type ProfileHandler struct {
-	filePah string
+	filePath string
 }
 
-func MakeProfileHandler(filePah string) ProfileHandler {
+func MakeProfileHandler(filePath string) ProfileHandler {
 	return ProfileHandler{
-		filePah: filePah,
+		filePath: filePath,
 	}
 }
 
 func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.ProfileResponse](h.filePah)
+	data, err := pkg.ParseJsonFile[payload.ProfileResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading profile file", "error", err)

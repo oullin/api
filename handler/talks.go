@@ -9,17 +9,17 @@ import (
 )
 
 type TalksHandler struct {
-	filePah string
+	filePath string
 }
 
-func MakeTalksHandler(filePah string) TalksHandler {
+func MakeTalksHandler(filePath string) TalksHandler {
 	return TalksHandler{
-		filePah: filePah,
+		filePath: filePath,
 	}
 }
 
 func (h TalksHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.TalksResponse](h.filePah)
+	data, err := pkg.ParseJsonFile[payload.TalksResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading talks file", "error", err)

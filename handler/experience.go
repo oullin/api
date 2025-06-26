@@ -9,17 +9,17 @@ import (
 )
 
 type ExperienceHandler struct {
-	filePah string
+	filePath string
 }
 
-func MakeExperienceHandler(filePah string) ExperienceHandler {
+func MakeExperienceHandler(filePath string) ExperienceHandler {
 	return ExperienceHandler{
-		filePah: filePah,
+		filePath: filePath,
 	}
 }
 
 func (h ExperienceHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.ExperienceResponse](h.filePah)
+	data, err := pkg.ParseJsonFile[payload.ExperienceResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading experience file", "error", err)
