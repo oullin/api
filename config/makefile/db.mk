@@ -4,7 +4,7 @@
 .PHONY: db\:migrate db\:rollback db\:migrate\:create db\:migrate\:force
 
 # --- Docker
-DB_DOCKER_SERVICE_NAME := postgres
+DB_DOCKER_SERVICE_NAME := "api-db"
 DB_DOCKER_CONTAINER_NAME := oullin_db
 
 # --- Paths
