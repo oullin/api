@@ -39,7 +39,7 @@ func (r *Router) Profile() {
 }
 
 func (r *Router) Experience() {
-	abstract := handler.MakeExperienceHandler()
+	abstract := handler.MakeExperienceHandler("./storage/fixture/experience.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
