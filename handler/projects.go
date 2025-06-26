@@ -19,7 +19,7 @@ func MakeProjectsHandler(filePah string) ProjectsHandler {
 }
 
 func (h ProjectsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.ProjectResponse](h.filePah)
+	data, err := pkg.ParseJsonFile[payload.ProjectsResponse](h.filePah)
 
 	if err != nil {
 		slog.Error("Error reading projects file", "error", err)

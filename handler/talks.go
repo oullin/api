@@ -8,17 +8,17 @@ import (
 	baseHttp "net/http"
 )
 
-type Talks struct {
+type TalksHandler struct {
 	filePah string
 }
 
-func MakeTalks(filePah string) Talks {
-	return Talks{
+func MakeTalks(filePah string) TalksHandler {
+	return TalksHandler{
 		filePah: filePah,
 	}
 }
 
-func (h Talks) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h TalksHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	data, err := pkg.ParseJsonFile[payload.TalksResponse](h.filePah)
 
 	if err != nil {

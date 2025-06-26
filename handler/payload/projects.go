@@ -1,11 +1,11 @@
 package payload
 
-type ProjectResponse struct {
-	Version string        `json:"version"`
-	Data    []ProjectData `json:"data"`
+type ProjectsResponse struct {
+	Version string         `json:"version"`
+	Data    []ProjectsData `json:"data"`
 }
 
-type ProjectData struct {
+type ProjectsData struct {
 	UUID      string `json:"uuid"`
 	Language  string `json:"language"`
 	Title     string `json:"title"`
