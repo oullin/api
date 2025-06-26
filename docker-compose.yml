@@ -115,7 +115,7 @@ services:
                     max-file: 20
                     max-size: 10M
             command: >
-                postgres -c config_file=/etc/postgresql/postgresql.conf
+                sh -c "chown postgres:postgres /etc/ssl/private/server.key && chmod 600 /etc/ssl/private/server.key && exec docker-entrypoint.sh postgres"
 
             healthcheck:
                 interval: 10s
