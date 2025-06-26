@@ -59,7 +59,7 @@ db\:secure:
     make db:chmod
 
 db\:chmod:
-	sudo chmod 600 $(DB_INFRA_SERVER_KEY) && sudo chmod 600 $(DB_INFRA_SERVER_CRT)
+	sudo chmod 600 $(DB_INFRA_SERVER_KEY) && sudo chmod 644 $(DB_INFRA_SERVER_CRT)
 
 db\:secure\:show:
 	docker exec -it $(DB_DOCKER_CONTAINER_NAME) ls -l /etc/ssl/private/server.key && \
