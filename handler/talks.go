@@ -22,9 +22,9 @@ func (h TalksHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 	data, err := pkg.ParseJsonFile[payload.TalksResponse](h.filePah)
 
 	if err != nil {
-		slog.Error("Error reading projects file", "error", err)
+		slog.Error("Error reading talks file", "error", err)
 
-		return http.InternalError("could not read profile data")
+		return http.InternalError("could not read talks data")
 	}
 
 	resp := http.MakeResponseFrom(data.Version, w, r)
@@ -36,7 +36,7 @@ func (h TalksHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		slog.Error("Error marshaling JSON for response", "error", err)
+		slog.Error("Error marshaling JSON for talks response", "error", err)
 
 		return nil
 	}

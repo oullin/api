@@ -22,7 +22,7 @@ func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *
 	data, err := pkg.ParseJsonFile[payload.ProfileResponse](h.filePah)
 
 	if err != nil {
-		slog.Error("Error reading projects file", "error", err)
+		slog.Error("Error reading profile file", "error", err)
 
 		return http.InternalError("could not read profile data")
 	}
@@ -36,7 +36,7 @@ func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		slog.Error("Error marshaling JSON for response", "error", err)
+		slog.Error("Error marshaling JSON for profile response", "error", err)
 
 		return nil
 	}

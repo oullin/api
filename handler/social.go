@@ -22,9 +22,9 @@ func (h SocialHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *h
 	data, err := pkg.ParseJsonFile[payload.SocialResponse](h.filePah)
 
 	if err != nil {
-		slog.Error("Error reading projects file", "error", err)
+		slog.Error("Error reading social file", "error", err)
 
-		return http.InternalError("could not read profile data")
+		return http.InternalError("could not read social data")
 	}
 
 	resp := http.MakeResponseFrom(data.Version, w, r)
@@ -36,7 +36,7 @@ func (h SocialHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *h
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		slog.Error("Error marshaling JSON for response", "error", err)
+		slog.Error("Error marshaling JSON for social response", "error", err)
 
 		return nil
 	}
