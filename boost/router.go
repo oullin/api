@@ -29,7 +29,7 @@ func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 }
 
 func (r *Router) Profile() {
-	abstract := handler.MakeProfileHandler()
+	abstract := handler.MakeProfileHandler("./storage/fixture/profile.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
@@ -39,7 +39,7 @@ func (r *Router) Profile() {
 }
 
 func (r *Router) Experience() {
-	abstract := handler.MakeExperienceHandler()
+	abstract := handler.MakeExperienceHandler("./storage/fixture/experience.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
@@ -49,7 +49,7 @@ func (r *Router) Experience() {
 }
 
 func (r *Router) Projects() {
-	abstract := handler.MakeProjectsHandler()
+	abstract := handler.MakeProjectsHandler("./storage/fixture/projects.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
@@ -59,7 +59,7 @@ func (r *Router) Projects() {
 }
 
 func (r *Router) Social() {
-	abstract := handler.MakeSocialHandler()
+	abstract := handler.MakeSocialHandler("./storage/fixture/social.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
@@ -69,7 +69,7 @@ func (r *Router) Social() {
 }
 
 func (r *Router) Talks() {
-	abstract := handler.MakeTalks()
+	abstract := handler.MakeTalksHandler("./storage/fixture/talks.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,

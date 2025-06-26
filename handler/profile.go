@@ -1,33 +1,44 @@
 package handler
 
 import (
+	"github.com/oullin/handler/payload"
+	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
 	"log/slog"
 	baseHttp "net/http"
-	"os"
 )
 
 type ProfileHandler struct {
-	content string
+	filePath string
 }
 
-func MakeProfileHandler() ProfileHandler {
+func MakeProfileHandler(filePath string) ProfileHandler {
 	return ProfileHandler{
-		content: "./storage/fixture/profile.json",
+		filePath: filePath,
 	}
 }
 
 func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	fixture, err := os.ReadFile(h.content)
+	data, err := pkg.ParseJsonFile[payload.ProfileResponse](h.filePath)
 
 	if err != nil {
-		slog.Error("Error reading projects file", "error", err)
+		slog.Error("Error reading profile file", "error", err)
 
 		return http.InternalError("could not read profile data")
 	}
 
-	if err := writeJSON(fixture, w); err != nil {
-		return http.InternalError(err.Error())
+	resp := http.MakeResponseFrom(data.Version, w, r)
+
+	if resp.HasCache() {
+		resp.RespondWithNotModified()
+
+		return nil
+	}
+
+	if err := resp.RespondOk(data); err != nil {
+		slog.Error("Error marshaling JSON for profile response", "error", err)
+
+		return nil
 	}
 
 	return nil // A nil return indicates success.
