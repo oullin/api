@@ -9,17 +9,18 @@ import (
 )
 
 type ProfileHandler struct {
-	fixture string
+	//The file containing the given handler endpoint information.
+	filePah string
 }
 
-func MakeProfileHandler(file string) ProfileHandler {
+func MakeProfileHandler(filePah string) ProfileHandler {
 	return ProfileHandler{
-		fixture: file,
+		filePah: filePah,
 	}
 }
 
 func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.ProfileResponse](h.fixture)
+	data, err := pkg.ParseJsonFile[payload.ProfileResponse](h.filePah)
 
 	if err != nil {
 		slog.Error("Error reading projects file", "error", err)
