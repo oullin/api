@@ -48,7 +48,7 @@ db\:logs:
 
 db\:delete:
 	docker compose down $(DB_DOCKER_SERVICE_NAME) --remove-orphans && \
-	rm -rf $(DB_INFRA_DATA_PATH) && \
+	sudo rm -rf $(DB_INFRA_DATA_PATH) && \
 	docker ps
 
 db\:secure:
@@ -59,7 +59,7 @@ db\:secure:
     make db:chmod
 
 db\:chmod:
-	chmod 600 $(DB_INFRA_SERVER_KEY) && chmod 600 $(DB_INFRA_SERVER_CRT)
+	sudo chmod 600 $(DB_INFRA_SERVER_KEY) && sudo chmod 600 $(DB_INFRA_SERVER_CRT)
 
 db\:secure\:show:
 	docker exec -it $(DB_DOCKER_CONTAINER_NAME) ls -l /etc/ssl/private/server.key && \
