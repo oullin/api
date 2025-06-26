@@ -1,4 +1,4 @@
-package response
+package payload
 
 type ProfileResponse struct {
 	Version string      `json:"version"`
