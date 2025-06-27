@@ -1,7 +1,7 @@
 # --- Docker Services
 DB_DOCKER_SERVICE_NAME := api-db
 DB_DOCKER_CONTAINER_NAME := oullin_db
-DB_MIGRATE_SERVICE_NAME := db-migrate
+DB_MIGRATE_SERVICE_NAME := api-db-migrate
 
 # --- Paths
 # Define root paths for clarity. Assume ROOT_PATH is exported or defined.
