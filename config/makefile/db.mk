@@ -1,3 +1,6 @@
+.PHONY: db\:sh db\:up db\:down db\:logs db\:bash db\:fresh
+.PHONY: db\:secure db\:seed db\:migrate db\:migrate\:create db\:migrate\:force db\:rollback
+
 # --- Docker Services
 DB_DOCKER_SERVICE_NAME := api-db
 DB_DOCKER_CONTAINER_NAME := oullin_db
