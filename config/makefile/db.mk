@@ -8,11 +8,16 @@ DB_MIGRATE_SERVICE_NAME := db-migrate
 DB_SEEDER_ROOT_PATH := $(ROOT_PATH)/database/seeder
 DB_INFRA_ROOT_PATH := $(ROOT_PATH)/database/infra
 DB_INFRA_SSL_PATH := $(DB_INFRA_ROOT_PATH)/ssl
+DB_INFRA_SCRIPTS_PATH := $(DB_INFRA_ROOT_PATH)/scripts
 
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
 DB_INFRA_SERVER_CSR := $(DB_INFRA_SSL_PATH)/server.csr
 DB_INFRA_SERVER_KEY := $(DB_INFRA_SSL_PATH)/server.key
+
+db\:sh:
+	chmod +x $(DB_INFRA_SCRIPTS_PATH)/healthcheck.sh && \
+	chmod +x $(DB_INFRA_SCRIPTS_PATH)/run-migration.sh
 
 db\:up:
 	@echo "--> Starting database service..."

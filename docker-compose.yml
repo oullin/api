@@ -1,11 +1,11 @@
 # Define the source of the secrets on the host machine.
 secrets:
     postgres_user:
-        file: ./database/infra/secrets/postgres_user
+        file: ${POSTGRES_USER_SECRET_PATH:-./database/infra/secrets/postgres_user}
     postgres_password:
-        file: ./database/infra/secrets/postgres_password
+        file: ${POSTGRES_PASSWORD_SECRET_PATH:-./database/infra/secrets/postgres_password}
     postgres_db:
-        file: ./database/infra/secrets/postgres_db
+        file: ${POSTGRES_DB_SECRET_PATH:-./database/infra/secrets/postgres_db}
 
 volumes:
     caddy_data:
@@ -177,7 +177,7 @@ services:
             # --- The test simply executes our robust script. All complex logic is inside it.
             #     We use CMD instead of CMD-SHELL because our file is an executable.
             healthcheck:
-                test: [ "CMD", "/healthcheck.sh" ]
+                test: ["CMD", "/healthcheck.sh"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
