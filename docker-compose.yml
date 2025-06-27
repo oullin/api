@@ -97,6 +97,25 @@ services:
                 - caddy_net
                 - oullin_net
 
+        api-db-migrate:
+            image: migrate/migrate:v4.18.3
+            container_name: oullin_db_migrate
+            networks:
+                - oullin_net
+            volumes:
+                - ./database/infra/migrations:/migrations
+                - ./database/infra/scripts/run-migration.sh:/run-migration.sh
+            secrets:
+                - postgres_user
+                - postgres_password
+                - postgres_db
+            entrypoint: /run-migration.sh
+            command: ""
+            depends_on:
+                api-db:
+                    condition: service_healthy
+            restart: no
+
         api-db:
             # Ensure the database always restarts on server reboot or crash.
             restart: always

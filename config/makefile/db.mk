@@ -1,83 +1,97 @@
-# --- Metadata
-.PHONY: db\:local db\:up db\:ping db\:bash db\:fresh db\:logs
-.PHONY: db\:delete db\:secure db\:secure\:show db\:chmod db\:seed
-.PHONY: db\:migrate db\:rollback db\:migrate\:create db\:migrate\:force
 
-# --- Docker
-DB_DOCKER_SERVICE_NAME := "api-db"
+DB_DOCKER_SERVICE_NAME := api-db
 DB_DOCKER_CONTAINER_NAME := oullin_db
+DB_MIGRATE_SERVICE_NAME := db-migrate
 
 # --- Paths
+# Define root paths for clarity. Assume ROOT_PATH is exported or defined.
 DB_SEEDER_ROOT_PATH := $(ROOT_PATH)/database/seeder
 DB_INFRA_ROOT_PATH := $(ROOT_PATH)/database/infra
 DB_INFRA_SSL_PATH := $(DB_INFRA_ROOT_PATH)/ssl
-DB_INFRA_DATA_PATH := $(DB_INFRA_ROOT_PATH)/data
 
-# --- SSL
+# --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
 DB_INFRA_SERVER_CSR := $(DB_INFRA_SSL_PATH)/server.csr
 DB_INFRA_SERVER_KEY := $(DB_INFRA_SSL_PATH)/server.key
 
-# --- Migrations
-DB_MIGRATE_PATH := $(DB_INFRA_ROOT_PATH)/migrations
-DB_MIGRATE_VOL_MAP := $(DB_MIGRATE_PATH):$(DB_MIGRATE_PATH)
+db\:up:
+	@echo "--> Starting database service..."
+	docker compose up $(DB_DOCKER_SERVICE_NAME) -d
+
+db\:down:
+	@echo "--> Stopping database service..."
+	docker compose stop $(DB_DOCKER_SERVICE_NAME)
+
+db\:logs:
+	@echo "--> Tailing logs for $(DB_DOCKER_CONTAINER_NAME)..."
+	docker logs -f $(DB_DOCKER_CONTAINER_NAME)
+
+db\:bash:
+	@echo "--> Opening a bash shell in $(DB_DOCKER_CONTAINER_NAME)..."
+	docker exec -it $(DB_DOCKER_CONTAINER_NAME) bash
+
+
+# ==============================================================================
+# SECURE MIGRATION COMMANDS
+# These commands leverage the 'db-migrate' service defined in docker-compose.yml,
+# which uses a custom script and Docker Secrets for maximum security.
+# ==============================================================================
+
+db\:migrate:
+	@printf "\n--> Applying all available 'up' migrations...\n"
+	@docker-compose run --rm $(DB_MIGRATE_SERVICE_NAME) up
+	@printf "--> Migration finished.\n\n"
+
+db\:rollback:
+	@printf "\n--> Rolling back the last applied migration...\n"
+	# The 'down 1' arguments are passed directly to our secure entrypoint script.
+	@docker-compose run --rm $(DB_MIGRATE_SERVICE_NAME) down 1
+	@printf "--> Migration rollback finished.\n\n"
+
+db\:migrate\:create:
+	@echo "--> Creating new migration file named: $(name)"
+	# We override the service's default command to use 'create'.
+	# The arguments are passed to our secure entrypoint script via "$$@".
+	@docker-compose run --rm $(DB_MIGRATE_SERVICE_NAME) create -ext sql -dir /migrations -seq $(name)
+
+db\:migrate\:force:
+	@printf "\n--> Forcing migration to version $(version)...\n"
+	@docker-compose run --rm $(DB_MIGRATE_SERVICE_NAME) force $(version)
+	@printf "--> Force migration finished.\n\n"
+
+
+# ==============================================================================
+# SETUP & CONVENIENCE COMMANDS
+# ==============================================================================
+
+db\:fresh:
+	@echo "--> Recreating database from a fresh state (all data will be lost)..."
+	make db:delete
+	make db:up
+
+db\:delete:
+	@echo "--> Stopping services and PERMANENTLY DELETING associated volumes..."
+	# The -v flag is crucial here; it removes the named volumes, deleting all data.
+	docker compose down -v --remove-orphans
+
+db\:secure:
+	@echo "--> Generating new self-signed SSL certificates..."
+	rm -f $(DB_INFRA_SERVER_CRT) $(DB_INFRA_SERVER_CSR) $(DB_INFRA_SERVER_KEY)
+	openssl genpkey -algorithm RSA -out $(DB_INFRA_SERVER_KEY)
+	openssl req -new -key $(DB_INFRA_SERVER_KEY) -out $(DB_INFRA_SERVER_CSR) -subj "/CN=oullin-db-ssl"
+	openssl x509 -req -days 365 -in $(DB_INFRA_SERVER_CSR) -signkey $(DB_INFRA_SERVER_KEY) -out $(DB_INFRA_SERVER_CRT)
+	@echo "--> SSL certificates created. The container will set its own key permissions on startup."
+
+db\:seed:
+	@echo "--> Running database seeder..."
+	# This assumes your Go seeder can connect to the Dockerized database.
+	# Ensure your .env file points to the correct DB host and port.
+	go run $(DB_SEEDER_ROOT_PATH)/main.go
 
 db\:local:
-	# --- Works with your local PG installation.
+	@echo "--> Connecting to local PostgreSQL instance..."
+	# This command is for connecting to a non-Dockerized local DB, as per your original file.
+	# It is kept for convenience if you ever run Postgres outside of Docker.
 	cd  $(EN_DB_BIN_DIR) && \
 	./psql -h $(ENV_DB_HOST) -U $(ENV_DB_USER_NAME) -d $(ENV_DB_DATABASE_NAME) -p $(ENV_DB_PORT)
 
-db\:seed:
-	go run $(DB_SEEDER_ROOT_PATH)/main.go
-
-db\:up:
-	docker compose up $(DB_DOCKER_SERVICE_NAME) -d && \
-	make db:logs
-
-db\:ping:
-	docker port $(DB_DOCKER_CONTAINER_NAME)
-
-db\:bash:
-	docker exec -it $(DB_DOCKER_CONTAINER_NAME) bash
-
-db\:fresh:
-	make db:delete && make db:up
-
-db\:logs:
-	docker logs -f $(DB_DOCKER_CONTAINER_NAME)
-
-db\:delete:
-	docker compose down $(DB_DOCKER_SERVICE_NAME) --remove-orphans && \
-	sudo rm -rf $(DB_INFRA_DATA_PATH) && \
-	docker ps
-
-db\:secure:
-	rm -rf $(DB_INFRA_SERVER_CRT) && rm -rf $(DB_INFRA_SERVER_CSR) && rm -rf $(DB_INFRA_SERVER_KEY) && \
-	openssl genpkey -algorithm RSA -out $(DB_INFRA_SERVER_KEY) && \
-    openssl req -new -key $(DB_INFRA_SERVER_KEY) -out $(DB_INFRA_SERVER_CSR) && \
-    openssl x509 -req -days 365 -in $(DB_INFRA_SERVER_CSR) -signkey $(DB_INFRA_SERVER_KEY) -out $(DB_INFRA_SERVER_CRT) && \
-    make db:chmod
-
-db\:chmod:
-	sudo chmod 600 $(DB_INFRA_SERVER_KEY) && sudo chmod 644 $(DB_INFRA_SERVER_CRT)
-
-db\:secure\:show:
-	docker exec -it $(DB_DOCKER_CONTAINER_NAME) ls -l /etc/ssl/private/server.key && \
-	docker exec -it $(DB_DOCKER_CONTAINER_NAME) ls -l /etc/ssl/certs/server.crt
-
-db\:migrate:
-	@printf "\n$(BLUE)[DB]$(NC) Migration has started.\n"
-	@docker run -v $(DB_MIGRATE_VOL_MAP) --network $(ROOT_NETWORK) migrate/migrate -verbose -path=$(DB_MIGRATE_PATH) -database $(ENV_DB_URL) up
-	@printf "$(GREEN)[DB]$(NC) Migration has finished.\n\n"
-
-db\:rollback:
-	@printf "\n$(RED)[DB]$(NC) Migration rollback has started.\n"
-	@docker run -v $(DB_MIGRATE_VOL_MAP) --network $(ROOT_NETWORK) migrate/migrate -verbose -path=$(DB_MIGRATE_PATH) -database $(ENV_DB_URL) down 1
-	@printf "$(GREEN)[DB]$(NC) Migration rollback has finished.\n\n"
-
-# --- Migrations
-db\:migrate\:create:
-	docker run -v $(DB_MIGRATE_VOL_MAP) --network $(ROOT_NETWORK) migrate/migrate create -ext sql -dir $(DB_MIGRATE_PATH) -seq $(name)
-
-db\:migrate\:force:
-	docker run -v $(DB_MIGRATE_VOL_MAP) --network $(ROOT_NETWORK) migrate/migrate migrate -path $(DB_MIGRATE_PATH) -database $(ENV_DB_URL) force $(version)
