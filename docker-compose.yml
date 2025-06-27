@@ -1,3 +1,11 @@
+secrets:
+    postgres_user:
+        file: ./database/infra/secrets/postgres_user
+    postgres_password:
+        file: ./database/infra/secrets/postgres_password
+    postgres_db:
+        file: ./database/infra/secrets/postgres_db
+
 volumes:
     caddy_data:
     caddy_config:
@@ -103,6 +111,10 @@ services:
                 POSTGRES_PASSWORD: ${ENV_DB_USER_PASSWORD}
             ports:
                 - "${ENV_DB_PORT}:${ENV_DB_PORT}"
+            secrets:
+                - postgres_user
+                - postgres_password
+                - postgres_db
             volumes:
                 - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt
                 - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
