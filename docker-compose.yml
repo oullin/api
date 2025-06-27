@@ -74,7 +74,7 @@ services:
                 - .env
             environment:
                 # This ensures the API connects to the correct database container.
-                ENV_DB_HOST: postgres
+                ENV_DB_HOST: api-db
                 # This ensures the Go web server listens for connections from other
                 # containers (like Caddy), not just from within itself.
                 ENV_HTTP_HOST: 0.0.0.0
