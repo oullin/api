@@ -159,8 +159,9 @@ services:
                 - oullin_db_data:/var/lib/postgresql/data
                 # Mount SSL certs and config files as read-only (:ro) for security.
                 - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt:ro
-                - ./database/infra/ssl/server.key:/etc/ssl/private/server.key:ro
+                - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
                 - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+                - ./database/infra/scripts/healthcheck.sh:/healthcheck.sh:ro
 
             logging:
                 driver: "json-file"
@@ -173,11 +174,10 @@ services:
             command: >
                 sh -c "chown postgres:postgres /etc/ssl/private/server.key && chmod 600 /etc/ssl/private/server.key && exec docker-entrypoint.sh -c 'config_file=/etc/postgresql/postgresql.conf'"
 
-            # --- Healthcheck.
-            #     Docker will use this to verify whether the database is running and healthy
-            #     and will restart the container if it fails.
+            # --- The test simply executes our robust script. All complex logic is inside it.
+            #     We use CMD instead of CMD-SHELL because our file is an executable.
             healthcheck:
+                test: [ "CMD", "/healthcheck.sh" ]
                 interval: 10s
                 timeout: 5s
                 retries: 5
-                test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/db_user) -d $$(cat /run/secrets/db_name)"]
