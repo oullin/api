@@ -85,8 +85,8 @@ services:
                 - oullin_net
 
         api-db:
-            restart: unless-stopped
-            image: postgres:17.4
+            restart: always
+            image: postgres:17.4-alpine
             container_name: oullin_db
             env_file:
                 - .env
