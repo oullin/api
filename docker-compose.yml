@@ -1,3 +1,4 @@
+# Define the source of the secrets on the host machine.
 secrets:
     postgres_user:
         file: ./database/infra/secrets/postgres_user
@@ -9,6 +10,10 @@ secrets:
 volumes:
     caddy_data:
     caddy_config:
+    # --- DB: Define a named volume at the top level.
+    #     Docker will manage its lifecycle.
+    oullin_db_data:
+        driver: local
 
 networks:
     caddy_net:
@@ -93,52 +98,67 @@ services:
                 - oullin_net
 
         api-db:
+            # Ensure the database always restarts on server reboot or crash.
             restart: always
-            image: postgres:17.4-alpine
+
+            # --- Use this lightweight and more secure 'alpine' image.
+            #     A specific version (e.g., 16) is pinned to avoid unexpected updates.
+            image: postgres:17.3-alpine
             container_name: oullin_db
+
             env_file:
                 - .env
             networks:
                 - oullin_net
+
+            # --- Use Docker Secrets instead of .env files for credentials.
+            #     The given postgres image automatically reads from files specified by these _FILE variables.
             environment:
-                # --- Postgres CLI env vars.
-                PGUSER: ${ENV_DB_USER_NAME}
-                PGDATABASE: ${ENV_DB_DATABASE_NAME}
-                PGPASSWORD: ${ENV_DB_USER_PASSWORD}
-                # --- Docker postgres-image env vars.
-                POSTGRES_USER: ${ENV_DB_USER_NAME}
-                POSTGRES_DB: ${ENV_DB_DATABASE_NAME}
-                POSTGRES_PASSWORD: ${ENV_DB_USER_PASSWORD}
+                POSTGRES_USER_FILE: /run/secrets/postgres_user
+                POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+                POSTGRES_DB_FILE: /run/secrets/postgres_db
+                PGDATA: /var/lib/postgresql/data/pgdata
+
+            # --- Securing port binding.
+            #     Binds the port ONLY to my VPS's localhost (127.0.0.1).
+            #     This prevents any direct access to the public internet.
+            #     My applications running on the same VPS can connect to it.
+            #     The ':-5432' provides a fallback default port if ENV_DB_PORT is not set.
             ports:
-                - "${ENV_DB_PORT}:${ENV_DB_PORT}"
+                - "127.0.0.1:${ENV_DB_PORT:-5432}:5432"
+
+            # --- Define which secrets this service has access to.
+            #     These secrets are mounted securely in memory at /run/secrets/
             secrets:
                 - postgres_user
                 - postgres_password
                 - postgres_db
             volumes:
-                - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt
-                - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
-                - ./database/infra/data:/var/lib/postgresql/data
-                - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf
-                - ./database/infra/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+                # Use a Docker Named Volume for data persistence.
+                # This decouples my critical data from the host's file structure, making it
+                # more robust, portable, and managed entirely by Docker.
+                - oullin_db_data:/var/lib/postgresql/data
+                # Mount SSL certs and config files as read-only (:ro) for security.
+                - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt:ro
+                - ./database/infra/ssl/server.key:/etc/ssl/private/server.key:ro
+                - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+
             logging:
                 driver: "json-file"
                 options:
                     max-file: 20
                     max-size: 10M
-            command: >
-                sh -c "chown postgres:postgres /etc/ssl/private/server.key && chmod 600 /etc/ssl/private/server.key && exec docker-entrypoint.sh postgres"
 
+            # --- This command sets the key permissions and explicitly tells
+            #     Postgres to use my mounted configuration file for greater reliability.
+            command: >
+                sh -c "chown postgres:postgres /etc/ssl/private/server.key && chmod 600 /etc/ssl/private/server.key && exec docker-entrypoint.sh -c 'config_file=/etc/postgresql/postgresql.conf'"
+
+            # --- Healthcheck.
+            #     Docker will use this to verify whether the database is running and healthy
+            #     and will restart the container if it fails.
             healthcheck:
                 interval: 10s
                 timeout: 5s
                 retries: 5
-                test: [
-                    "CMD-SHELL",
-                    "pg_isready",
-                    "--username=${ENV_DB_USER_NAME}",
-                    "--dbname=${ENV_DB_DATABASE_NAME}",
-                    "--host=postgres",
-                    "--port=${ENV_DB_PORT}",
-                    "--version"
-                ]
+                test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/db_user) -d $$(cat /run/secrets/db_name)"]
