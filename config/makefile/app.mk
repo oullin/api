@@ -4,12 +4,14 @@ format:
 	gofmt -w -s .
 
 fresh:
-	rm -rf $(DB_INFRA_DATA_PATH) && \
 	docker compose down --remove-orphans && \
 	docker container prune -f && \
 	docker image prune -f && \
 	docker volume prune -f && \
 	docker network prune -f && \
+	docker system prune -a --volumes -f && \
+	docker ps -aq | xargs --no-run-if-empty docker stop && \
+	docker ps -aq | xargs --no-run-if-empty docker rm && \
 	docker ps
 
 audit:

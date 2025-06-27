@@ -1,7 +1,6 @@
 # --- [API]: Root
 .env
 .env.production
-database/infra/data
 tmp
 
 # --- [API]: Storage
