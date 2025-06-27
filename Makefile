@@ -38,12 +38,13 @@ include ./config/makefile/db.mk
 include ./config/makefile/app.mk
 include ./config/makefile/logs.mk
 include ./config/makefile/build.mk
+include ./config/makefile/infra.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
 help:
-	@printf "$(BOLD)$(CYAN)Applications Options$(NC)\n"
+	@printf "\n$(BOLD)$(CYAN)Applications Options$(NC)\n"
 	@printf "$(WHITE)Usage:$(NC) make $(BOLD)$(YELLOW)<target>$(NC)\n\n"
 
 	@printf "$(BOLD)$(BLUE)General Commands:$(NC)\n"
@@ -55,7 +56,7 @@ help:
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)build:local$(NC)      : Build the main application for development.\n"
 	@printf "  $(BOLD)$(GREEN)build:prod$(NC)       : Build the main application for production.\n"
-	@printf "  $(BOLD)$(GREEN)build:release$(NC)    : Build a release version of the application.\n"
+	@printf "  $(BOLD)$(GREEN)build:release$(NC)    : Build a release version of the application.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Database Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)db:local$(NC)         : Set up or manage the local database environment.\n"
@@ -81,6 +82,14 @@ help:
 	@printf "  $(BOLD)$(GREEN)env:print$(NC)        : Display current environment settings.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Log Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)logs:fresh$(NC)       : Clear application logs.\n"
+	@printf "  $(BOLD)$(GREEN)logs:fresh$(NC)       : Clear application logs.\n\n"
 
-	@printf "$(NC)"
+	@printf "$(BOLD)$(BLUE)Infrastructure Commands:$(NC)\n"
+	@printf "  $(BOLD)$(GREEN)supv:api:status$(NC)  : Shows the API service supervisor state.\n"
+	@printf "  $(BOLD)$(GREEN)supv:api:start$(NC)   : Start the API service supervisor.\n"
+	@printf "  $(BOLD)$(GREEN)supv:api:stop$(NC)    : Stop the API service supervisor.\n"
+	@printf "  $(BOLD)$(GREEN)supv:api:restart$(NC) : Restart the API service supervisor.\n"
+	@printf "  $(BOLD)$(GREEN)supv:api:logs$(NC)    : Show the the API service supervisor logs.\n"
+	@printf "  $(BOLD)$(GREEN)supv:api:logs-err$(NC): Show the the API service supervisor error logs.\n"
+
+	@printf "$(NC)\n"
