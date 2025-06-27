@@ -21,8 +21,8 @@ supv\:api\:restart:
 
 supv\:api\:logs:
 	@printf "\n$(YELLOW)[supervisor]$(NC) - $(CYAN)$(___API__SUPERVISOR) logs. (Press Ctrl+C to exit)$(NC)"
-	@sudo supervisorctl tail $(___API__SUPERVISOR) stdout
+	@sudo tail -f /var/log/supervisor/$(___API__SUPERVISOR).log
 
 supv\:api\:logs-err:
 	@printf "\n$(YELLOW)[supervisor]$(NC) - $(CYAN)$(___API__SUPERVISOR) error logs. (Press Ctrl+C to exit)$(NC)"
-	@sudo supervisorctl tail $(___API__SUPERVISOR) stderr
+	@sudo tail -f /var/log/supervisor/$(___API__SUPERVISOR).err.log
