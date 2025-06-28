@@ -1,7 +1,7 @@
 # Filename: caddy/Caddyfile.prod
 # Caddy will automatically provision a Let's Encrypt certificate.
 
-gocanto.dev {
+oullin.io {
     # Enable compression to reduce bandwidth usage.
     encode gzip zstd
 
