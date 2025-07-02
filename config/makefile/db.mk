@@ -7,11 +7,16 @@ DB_DOCKER_CONTAINER_NAME := oullin_db
 DB_MIGRATE_SERVICE_NAME := api-db-migrate
 
 # --- Paths
-# Define root paths for clarity. Assume ROOT_PATH is exported or defined.
+#     Define root paths for clarity. Assumes ROOT_PATH is exported or defined.
 DB_SEEDER_ROOT_PATH := $(ROOT_PATH)/database/seeder
 DB_INFRA_ROOT_PATH := $(ROOT_PATH)/database/infra
 DB_INFRA_SSL_PATH := $(DB_INFRA_ROOT_PATH)/ssl
 DB_INFRA_SCRIPTS_PATH := $(DB_INFRA_ROOT_PATH)/scripts
+# --- Secrets
+DB_INFRA_SECRETS_PATH   ?= $(DB_INFRA_ROOT_PATH)/secrets
+DB_SECRET_FILE_USERNAME := $(DB_INFRA_SECRETS_PATH)/postgres_user
+DB_SECRET_FILE_PASSWORD := $(DB_INFRA_SECRETS_PATH)/postgres_password
+DB_SECRET_FILE_DBNAME   := $(DB_INFRA_SECRETS_PATH)/postgres_db
 
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
@@ -54,6 +59,9 @@ db\:seed:
 # --- Migrations
 # -------------------------------------------------------------------------------------------------------------------- #
 db\:migrate:
+	POSTGRES_USER_SECRET_PATH=$(DB_SECRET_FILE_USERNAME) \
+	POSTGRES_PASSWORD_SECRET_PATH=$(DB_SECRET_FILE_PASSWORD) \
+	POSTGRES_DB_SECRET_PATH=$(DB_SECRET_FILE_DBNAME) \
 	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) up
 
 db\:rollback:
