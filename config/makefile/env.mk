@@ -36,6 +36,5 @@ env\:print:
 	@echo "APP ENV ......... : $(ENV_APP_ENV)		"
 	@echo "ROOT_NETWORK .... : $(ROOT_NETWORK)      "
 	@echo " --------------------------------------- "
-	@echo "ENV_DB_URL ...... : $(ENV_DB_URL)		"
 	@echo "DB_MIGRATE_PATH . : $(DB_MIGRATE_PATH)	"
 	@echo "DB_MIGRATE_VOL_MAP: $(DB_MIGRATE_VOL_MAP)"
