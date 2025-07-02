@@ -9,7 +9,7 @@ DB_PASSWORD=$(cat /run/secrets/postgres_password)
 DB_NAME=$(cat /run/secrets/postgres_db)
 
 # Construct the database URL using the values from the secrets
-DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@api-db:5432/${DB_NAME}?sslmode=disable"
+DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@api-db:5432/${DB_NAME}?sslmode=require"
 
 # Execute the migrate tool, passing the constructed URL and any other arguments
 # The "$@" passes along any arguments from the docker-compose command (like "up", "down 1", etc.)
