@@ -1,5 +1,7 @@
 .PHONY: build\:local build\:prod build\:release
 
+BUILD_VERSION := 0.0.2
+
 build\:local:
 	docker compose --profile local up --build -d
 
@@ -18,9 +20,9 @@ build\:prod:
 
 build\:release:
 	@printf "\n$(YELLOW)Tagging images to be released.$(NC)\n"
-	docker tag api-api ghcr.io/gocanto/oullin_api:0.0.2 && \
-	docker tag api-caddy_prod ghcr.io/gocanto/oullin_proxy:0.0.2
+	docker tag api-api ghcr.io/gocanto/oullin_api:$(BUILD_VERSION) && \
+	docker tag api-caddy_prod ghcr.io/gocanto/oullin_proxy:$(BUILD_VERSION)
 
 	@printf "\n$(CYAN)Pushing release to GitHub registry.$(NC)\n"
-	docker push ghcr.io/gocanto/oullin_api:0.0.2 && \
-	docker push ghcr.io/gocanto/oullin_proxy:0.0.2
+	docker push ghcr.io/gocanto/oullin_api:$(BUILD_VERSION) && \
+	docker push ghcr.io/gocanto/oullin_proxy:$(BUILD_VERSION)
