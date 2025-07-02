@@ -18,10 +18,10 @@ DB_SECRET_FILE_USERNAME := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_user
 DB_SECRET_FILE_PASSWORD := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_password
 DB_SECRET_FILE_DBNAME   := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_db
 
-EXPORT_DB_SECRETS = \
-    POSTGRES_USER_SECRET_PATH=$(POSTGRES_USER_SECRET_PATH) \
-    POSTGRES_PASSWORD_SECRET_PATH=$(POSTGRES_PASSWORD_SECRET_PATH) \
-    POSTGRES_DB_SECRET_PATH=$(POSTGRES_DB_SECRET_PATH)
+EXPORT_DB_CREDENTIALS = \
+    POSTGRES_USER_SECRET_PATH=$(DB_SECRET_FILE_USERNAME) \
+    POSTGRES_PASSWORD_SECRET_PATH=$(DB_SECRET_FILE_PASSWORD) \
+    POSTGRES_DB_SECRET_PATH=$(DB_SECRET_FILE_DBNAME)
 
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
@@ -64,7 +64,7 @@ db\:seed:
 # --- Migrations
 # -------------------------------------------------------------------------------------------------------------------- #
 db\:migrate:
-	$(EXPORT_DB_SECRETS)
+	$(EXPORT_DB_CREDENTIALS)
 	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) up
 
 db\:rollback:
