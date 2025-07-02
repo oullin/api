@@ -73,12 +73,6 @@ services:
             env_file:
                 - .env
             environment:
-                # --- These variables inject the database credentials directly into the
-                #     API container at runtime. This ensures the Go application uses the
-                #     same secure credentials that the 'api-db' service is configured with.
-                ENV_DB_USER_NAME: ${ENV_DB_USER_NAME}
-                ENV_DB_USER_PASSWORD: ${ENV_DB_USER_PASSWORD}
-                ENV_DB_DATABASE_NAME: ${ENV_DB_DATABASE_NAME}
                 # --- This ensures the Go web server listens for connections from other
                 #     containers (like Caddy), not just from within itself.
                 ENV_DB_HOST: api-db
@@ -93,6 +87,10 @@ services:
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
             container_name: oullin_api
             restart: unless-stopped
+            secrets:
+                - postgres_user
+                - postgres_password
+                - postgres_db
             depends_on:
                 api-db:
                     condition: service_healthy
