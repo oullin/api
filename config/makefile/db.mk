@@ -23,6 +23,7 @@ DB_SECRET_FILE_BLOCK ?= -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
                         -e POSTGRES_PASSWORD_SECRET_PATH=$(DB_SECRET_FILE_PASSWORD) \
                         -e POSTGRES_DB_SECRET_PATH=$(DB_SECRET_FILE_DBNAME)
 
+# --- Migrations
 DB_MIGRATE_URL=postgres://$(DB_DOCKER_SERVICE_NAME):5432/$(shell cat $(DB_SECRET_FILE_DBNAME))?sslmode=require
 
 DB_MIGRATE_DOCKER_ENV_FLAGS = -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
@@ -70,13 +71,13 @@ db\:seed:
 # --- Migrations
 # -------------------------------------------------------------------------------------------------------------------- #
 db\:migrate:
-	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) -path /migrations -database "$$DATABASE_URL" up
+	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) up
 
 db\:rollback:
-	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) -path /migrations -database "$$DATABASE_URL" down 1
+	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) down 1
 
 db\:migrate\:create:
 	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) create -ext sql -dir /migrations -seq $(name)
 
 db\:migrate\:force:
-	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) force $(version)
+	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) force $(version)
