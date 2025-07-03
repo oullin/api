@@ -20,10 +20,10 @@ DB_SECRET_FILE_USERNAME := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_user
 DB_SECRET_FILE_PASSWORD := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_password
 DB_SECRET_FILE_DBNAME   := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_db
 
-DB_SECRET_FILE_BLOCK ?= ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
-						POSTGRES_USER_SECRET_PATH=$(DB_SECRET_FILE_USERNAME) \
-                        POSTGRES_PASSWORD_SECRET_PATH=$(DB_SECRET_FILE_PASSWORD) \
-                        POSTGRES_DB_SECRET_PATH=$(DB_SECRET_FILE_DBNAME)
+DB_SECRET_FILE_BLOCK ?= -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
+						-e POSTGRES_USER_SECRET_PATH=$(DB_SECRET_FILE_USERNAME) \
+                        -e POSTGRES_PASSWORD_SECRET_PATH=$(DB_SECRET_FILE_PASSWORD) \
+                        -e POSTGRES_DB_SECRET_PATH=$(DB_SECRET_FILE_DBNAME)
 
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
@@ -61,7 +61,8 @@ db\:secure:
 
 db\:seed:
 	$(DB_SECRET_FILE_BLOCK) \
-	docker compose run --rm $(DB_API_RUNNER_SERVICE) go run ./database/seeder/main.go
+	docker compose run --rm $(DB_SECRET_FILE_BLOCK) $(DB_API_RUNNER_SERVICE) \
+	sh -c 'echo "---" && echo "DB Host inside container is: [$$ENV_DB_HOST]" && echo "---" && go run ./database/seeder/main.go'
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # --- Migrations
