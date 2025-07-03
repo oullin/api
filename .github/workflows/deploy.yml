@@ -64,7 +64,6 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT }}
           script: |
             set -e
             IMAGE_TAG=${{ needs.build-and-push.outputs.IMAGE_TAG }}
