@@ -18,6 +18,10 @@ DB_SECRET_FILE_USERNAME := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_user
 DB_SECRET_FILE_PASSWORD := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_password
 DB_SECRET_FILE_DBNAME   := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_db
 
+DB_SECRET_FILE_BLOCK ?= POSTGRES_USER_SECRET_PATH=$(DB_SECRET_FILE_USERNAME) \
+                        POSTGRES_PASSWORD_SECRET_PATH=$(DB_SECRET_FILE_PASSWORD) \
+                        POSTGRES_DB_SECRET_PATH=$(DB_SECRET_FILE_DBNAME)
+
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
 DB_INFRA_SERVER_CSR := $(DB_INFRA_SSL_PATH)/server.csr
@@ -53,6 +57,7 @@ db\:secure:
 	openssl x509 -req -days 365 -in $(DB_INFRA_SERVER_CSR) -signkey $(DB_INFRA_SERVER_KEY) -out $(DB_INFRA_SERVER_CRT)
 
 db\:seed:
+	$(DB_SECRET_FILE_BLOCK) \
 	go run $(DB_SEEDER_ROOT_PATH)/main.go
 
 # -------------------------------------------------------------------------------------------------------------------- #
