@@ -2,6 +2,8 @@
 .PHONY: db\:secure db\:seed db\:migrate db\:migrate\:create db\:migrate\:force db\:rollback
 
 # --- Docker Services
+DB_API_RUNNER_SERVICE = api-runner
+
 DB_DOCKER_SERVICE_NAME := api-db
 DB_DOCKER_CONTAINER_NAME := oullin_db
 DB_MIGRATE_SERVICE_NAME := api-db-migrate
@@ -58,7 +60,7 @@ db\:secure:
 
 db\:seed:
 	$(DB_SECRET_FILE_BLOCK) \
-	go run $(DB_SEEDER_ROOT_PATH)/main.go
+	docker compose run --rm $(DB_API_RUNNER_SERVICE) go run ./database/seeder/main.go
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # --- Migrations
