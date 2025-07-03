@@ -31,4 +31,4 @@ jobs:
         shell: bash
 
       - name: Build with Makefile
-        run: make build
+        run: make build:prod
