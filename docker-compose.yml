@@ -76,6 +76,8 @@ services:
           volumes:
             - .:/app
           working_dir: /app
+          networks:
+            - oullin_net
           secrets:
             - postgres_user
             - postgres_password
