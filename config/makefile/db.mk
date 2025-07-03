@@ -60,7 +60,6 @@ db\:secure:
 	openssl x509 -req -days 365 -in $(DB_INFRA_SERVER_CSR) -signkey $(DB_INFRA_SERVER_KEY) -out $(DB_INFRA_SERVER_CRT)
 
 db\:seed:
-	$(DB_SECRET_FILE_BLOCK) \
 	docker compose run --rm $(DB_SECRET_FILE_BLOCK) $(DB_API_RUNNER_SERVICE) \
 	sh -c 'echo "---" && echo "DB Host inside container is: [$$ENV_DB_HOST]" && echo "---" && go run ./database/seeder/main.go'
 
