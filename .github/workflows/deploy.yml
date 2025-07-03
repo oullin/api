@@ -32,3 +32,6 @@ jobs:
 
       - name: Build with Makefile
         run: make build:prod
+
+      - name: Release Artifacts
+        run: make build:release
