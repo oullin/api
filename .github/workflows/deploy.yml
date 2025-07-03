@@ -18,6 +18,9 @@ jobs:
         os: [ubuntu-24.04]
 
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout Repository
