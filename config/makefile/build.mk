@@ -1,6 +1,6 @@
 .PHONY: build\:local build\:prod build\:release
 
-BUILD_VERSION := 0.0.2
+BUILD_VERSION ?= latest
 
 build\:local:
 	docker compose --profile local up --build -d

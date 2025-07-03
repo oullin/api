@@ -1,7 +1,6 @@
 # --- .github/workflows/deploy.yml
 #     This GitHub Actions workflow automates the deployment of the Go application.
-#     It builds the application, then securely deploys the binary and Makefile
-#     to a remote VPS and restarts a given supervisor service.
+#     It builds the application, then securely deploys the binary to a remote VPS.
 
 name: VPS
 
@@ -12,7 +11,7 @@ on:
     branches: [main]
 
 jobs:
-  deployment:
+  build-and-push:
     strategy:
       matrix:
         os: [ubuntu-24.04]
@@ -44,4 +43,33 @@ jobs:
           password: ${{ secrets.GH_TOKEN }}
 
       - name: Release Artifacts
-        run: make build:release
+        run: make build:release BUILD_VERSION=${{ steps.set-tag.outputs.IMAGE_TAG }}
+
+  deploy-to-vps:
+    name: Deploy to VPS
+    needs: build-and-push
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: SSH and Pull Images on VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          script: |
+            set -e
+            IMAGE_TAG=${{ needs.build-and-push.outputs.IMAGE_TAG }}
+
+            echo "🔑 Logging into GitHub Container Registry ..."
+            echo ${{ secrets.GH_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "🚚 Pulling latest images with tag: $IMAGE_TAG"
+            docker pull ghcr.io/gocanto/oullin_api:$IMAGE_TAG
+            docker pull ghcr.io/gocanto/oullin_proxy:$IMAGE_TAG
+
+            echo "🧹 Pruning old, unused Docker images ..."
+            docker image prune -af
+
+            echo "✅ Latest images pulled successfully to VPS!"
