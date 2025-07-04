@@ -1,5 +1,5 @@
 .PHONY: db\:sh db\:up db\:down db\:logs db\:bash db\:fresh
-.PHONY: db\:secure db\:seed db\:migrate db\:migrate\:create db\:migrate\:force db\:rollback
+.PHONY: db\:secure db\:seed db\:migrate db\:migrate\:create db\:migrate\:force db\:rollback db\:chmod
 
 # --- Docker Services
 DB_API_RUNNER_SERVICE := api-runner
@@ -18,17 +18,9 @@ DB_SECRET_FILE_USERNAME := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_user
 DB_SECRET_FILE_PASSWORD := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_password
 DB_SECRET_FILE_DBNAME   := $(ENV_DB_INFRA_SECRETS_PATH)/postgres_db
 
-DB_SECRET_FILE_BLOCK ?= -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
-						-e POSTGRES_USER_SECRET_PATH=$(DB_SECRET_FILE_USERNAME) \
-                        -e POSTGRES_PASSWORD_SECRET_PATH=$(DB_SECRET_FILE_PASSWORD) \
-                        -e POSTGRES_DB_SECRET_PATH=$(DB_SECRET_FILE_DBNAME)
-
 # --- Migrations
-DB_MIGRATE_URL=postgres://$(DB_DOCKER_SERVICE_NAME):5432/$(shell cat $(DB_SECRET_FILE_DBNAME))?sslmode=require
-
 DB_MIGRATE_DOCKER_ENV_FLAGS = -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
-                              -e ENV_DB_SSL_MODE=require \
-                              -e DATABASE_URL=$(DB_MIGRATE_URL)
+                              -e ENV_DB_SSL_MODE=require
 
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
@@ -57,6 +49,9 @@ db\:fresh:
 
 db\:delete:
 	docker compose down -v --remove-orphans
+
+db\:chmod:
+	chmod 600 $(DB_INFRA_SERVER_KEY)
 
 db\:secure:
 	rm -f $(DB_INFRA_SERVER_CRT) $(DB_INFRA_SERVER_CSR) $(DB_INFRA_SERVER_KEY)

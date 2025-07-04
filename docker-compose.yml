@@ -193,11 +193,6 @@ services:
                     max-file: 20
                     max-size: 10M
 
-            # --- This command sets the key permissions and explicitly tells
-            #     Postgres to use my mounted configuration file for greater reliability.
-            command: >
-                sh -c "chown postgres:postgres /etc/ssl/private/server.key && chmod 600 /etc/ssl/private/server.key && exec docker-entrypoint.sh -c 'config_file=/etc/postgresql/postgresql.conf'"
-
             # --- The test simply executes our robust script. All complex logic is inside it.
             #     We use CMD instead of CMD-SHELL because our file is an executable.
             healthcheck:
