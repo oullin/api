@@ -71,13 +71,13 @@ db\:seed:
 # --- Migrations
 # -------------------------------------------------------------------------------------------------------------------- #
 db\:migrate:
-	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) up
+	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) up
 
 db\:rollback:
-	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) down 1
+	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) down 1
 
 db\:migrate\:create:
 	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) create -ext sql -dir /migrations -seq $(name)
 
 db\:migrate\:force:
-	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_MIGRATE_SERVICE_NAME) force $(version)
+	docker compose run --rm $(DB_MIGRATE_SERVICE_NAME) force $(version)
