@@ -186,6 +186,7 @@ services:
                 - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
                 - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
                 - ./database/infra/scripts/healthcheck.sh:/healthcheck.sh:ro
+            command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
             logging:
                 driver: "json-file"
