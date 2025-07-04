@@ -9,6 +9,8 @@ storage/media/*.*
 storage/media/posts/*.*
 storage/media/users/*.*
 !storage/logs/.gitkeep
+!storage/logs/caddy
+!storage/logs/caddy/.gitkeep
 !storage/media/.gitkeep
 !storage/media/posts/.gitkeep
 !storage/media/users/.gitkeep
