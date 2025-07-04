@@ -46,6 +46,7 @@ services:
                 - caddy_data:/data
                 - caddy_config:/config
                 - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile
+                - ${CADDY_LOGS_PATH}:/var/log/caddy
             networks:
                 - caddy_net
 

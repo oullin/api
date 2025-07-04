@@ -17,7 +17,22 @@ oullin.io {
        Referrer-Policy "strict-origin-when-cross-origin"
     }
 
+    log {
+		output file /var/log/caddy/oullin.io.log {
+			roll_size 10mb  # Rotate logs after they reach 10MB
+			roll_keep 5     # Keep the last 5 rotated log files
+		}
+
+		format json
+	}
+
     # Reverse proxy all requests to the Go application service.
     # 'api' is the service name defined in docker-compose.yml.
-    reverse_proxy api:8080
+    reverse_proxy api:8080 {
+		# Set timeouts to prevent slow backends from holding up resources.
+		transport http {
+			dial_timeout 10s
+			response_header_timeout 30s
+		}
+	}
 }
