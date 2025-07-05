@@ -1,11 +1,11 @@
 # Define the source of the secrets on the host machine.
 secrets:
-    postgres_user:
-        file: ${POSTGRES_USER_SECRET_PATH:-./database/infra/secrets/postgres_user}
-    postgres_password:
-        file: ${POSTGRES_PASSWORD_SECRET_PATH:-./database/infra/secrets/postgres_password}
-    postgres_db:
-        file: ${POSTGRES_DB_SECRET_PATH:-./database/infra/secrets/postgres_db}
+    pg_username:
+        file: ${DB_SECRET_USERNAME:-./database/infra/secrets/pg_username}
+    pg_password:
+        file: ${DB_SECRET_PASSWORD:-./database/infra/secrets/pg_password}
+    pg_dbname:
+        file: ${DB_SECRET_DBNAME:-./database/infra/secrets/pg_dbname}
 
 volumes:
     caddy_data:
@@ -83,9 +83,9 @@ services:
           networks:
             - oullin_net
           secrets:
-            - postgres_user
-            - postgres_password
-            - postgres_db
+            - pg_username
+            - pg_password
+            - pg_dbname
           depends_on:
             api-db:
               condition: service_healthy
@@ -109,9 +109,9 @@ services:
             container_name: oullin_api
             restart: unless-stopped
             secrets:
-                - postgres_user
-                - postgres_password
-                - postgres_db
+                - pg_username
+                - pg_password
+                - pg_dbname
             depends_on:
                 api-db:
                     condition: service_healthy
@@ -130,9 +130,9 @@ services:
                 - ./database/infra/migrations:/migrations
                 - ./database/infra/scripts/run-migration.sh:/run-migration.sh
             secrets:
-                - postgres_user
-                - postgres_password
-                - postgres_db
+                - pg_username
+                - pg_password
+                - pg_dbname
             entrypoint: /run-migration.sh
             command: ""
             depends_on:
@@ -157,9 +157,9 @@ services:
             # --- Use Docker Secrets instead of .env files for credentials.
             #     The given postgres image automatically reads from files specified by these _FILE variables.
             environment:
-                POSTGRES_USER_FILE: /run/secrets/postgres_user
-                POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
-                POSTGRES_DB_FILE: /run/secrets/postgres_db
+                POSTGRES_USER_FILE: /run/secrets/pg_username
+                POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+                POSTGRES_DB_FILE: /run/secrets/pg_dbname
                 PGDATA: /var/lib/postgresql/data/pgdata
 
             # --- Securing port binding.
@@ -173,19 +173,21 @@ services:
             # --- Define which secrets this service has access to.
             #     These secrets are mounted securely in memory at /run/secrets/
             secrets:
-                - postgres_user
-                - postgres_password
-                - postgres_db
+                - pg_username
+                - pg_password
+                - pg_dbname
             volumes:
                 # Use a Docker Named Volume for data persistence.
                 # This decouples my critical data from the host's file structure, making it
                 # more robust, portable, and managed entirely by Docker.
                 - oullin_db_data:/var/lib/postgresql/data
+
                 # Mount SSL certs and config files as read-only (:ro) for security.
                 - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt:ro
                 - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
                 - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
                 - ./database/infra/scripts/healthcheck.sh:/healthcheck.sh:ro
+
             command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
             logging:
