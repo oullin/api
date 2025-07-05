@@ -27,6 +27,7 @@ networks:
 
 services:
         caddy_prod:
+            image: api-caddy_prod
             build:
                 context: ./caddy
                 dockerfile: Dockerfile
@@ -91,6 +92,7 @@ services:
               condition: service_healthy
 
         api:
+            image: api-api
             env_file:
                 - .env
             environment:
