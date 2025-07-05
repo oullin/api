@@ -11,12 +11,9 @@ build\:prod:
 	# --- The following lines take the variables passed to 'make' and export them
 	#     into the shell environment for only the docker-compose command.
 	#     These variable names now EXACTLY match what the Go application expects.
-	@POSTGRES_USER_SECRET_PATH="$(POSTGRES_USER_SECRET_PATH)" \
-	POSTGRES_PASSWORD_SECRET_PATH="$(POSTGRES_PASSWORD_SECRET_PATH)" \
-	POSTGRES_DB_SECRET_PATH="$(POSTGRES_DB_SECRET_PATH)" \
-	ENV_DB_USER_NAME="$(ENV_DB_USER_NAME)" \
-	ENV_DB_USER_PASSWORD="$(ENV_DB_USER_PASSWORD)" \
-	ENV_DB_DATABASE_NAME="$(ENV_DB_DATABASE_NAME)" \
+	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
+	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
+	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
 	docker compose --profile prod up --build -d
 
 build\:release:
