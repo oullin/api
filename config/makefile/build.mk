@@ -14,10 +14,7 @@ build\:prod:
 	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
 	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
 	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-	ENV_DB_USER_NAME="$(ENV_DB_USER_NAME)" \
-	ENV_DB_USER_PASSWORD="$(ENV_DB_USER_PASSWORD)" \
-	ENV_DB_DATABASE_NAME="$(ENV_DB_DATABASE_NAME)" \
-	docker compose --profile prod up --build -d && docker compose logs oullin_db
+	docker compose --profile prod up --build -d
 
 build\:release:
 	@printf "\n$(YELLOW)Tagging images to be released.$(NC)\n"
