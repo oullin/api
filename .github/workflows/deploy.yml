@@ -44,6 +44,22 @@ jobs:
         run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
         shell: bash
 
+      - name: 🧐 Verify .env file content
+        run: |
+          echo "--- .env file content ---"
+          cat .env
+          echo "-------------------------"
+
+      - name: 🌳 Verify directory structure
+        run: |
+          echo "--- Current Directory ---"
+          pwd
+          echo "--- Listing storage/logs ---"
+          ls -la ./storage/logs
+
+      - name: ⚙️ Verify Docker Compose config
+        run: docker compose --profile prod config
+
       - name: Build with Makefile
         run: make build:prod
 
