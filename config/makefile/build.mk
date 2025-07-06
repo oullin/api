@@ -1,4 +1,4 @@
-.PHONY: build\:local build\:prod build\:release
+.PHONY: build\:local build\:prod build\:release build\:deploy
 
 BUILD_VERSION ?= latest
 BUILD_PACKAGE_OWNER := oullin
@@ -6,18 +6,24 @@ BUILD_PACKAGE_OWNER := oullin
 build\:local:
 	docker compose --profile local up --build -d
 
+build\:ci:
+	@printf "\n$(CYAN)Building production images for CI$(NC)\n"
+	# This 'build' command only builds the images; it does not run them.
+	@docker compose --profile prod build
+
+# --- Deprecated
+#     We should always deploy builds from the CI and not build again in servers.
 build\:prod:
-	@printf "\n$(CYAN)docker compose --profile prod up --build -d$(NC)\n"
-	# --- The following lines take the variables passed to 'make' and export them
-	#     into the shell environment for only the docker-compose command.
-	#     These variable names now EXACTLY match what the Go application expects.
-	@POSTGRES_USER_SECRET_PATH="$(POSTGRES_USER_SECRET_PATH)" \
-	POSTGRES_PASSWORD_SECRET_PATH="$(POSTGRES_PASSWORD_SECRET_PATH)" \
-	POSTGRES_DB_SECRET_PATH="$(POSTGRES_DB_SECRET_PATH)" \
-	ENV_DB_USER_NAME="$(ENV_DB_USER_NAME)" \
-	ENV_DB_USER_PASSWORD="$(ENV_DB_USER_PASSWORD)" \
-	ENV_DB_DATABASE_NAME="$(ENV_DB_DATABASE_NAME)" \
+	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
+	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
+	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
 	docker compose --profile prod up --build -d
+
+build\:deploy:
+	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
+	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
+	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
+	docker compose --profile prod up -d
 
 build\:release:
 	@printf "\n$(YELLOW)Tagging images to be released.$(NC)\n"

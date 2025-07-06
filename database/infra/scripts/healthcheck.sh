@@ -4,13 +4,13 @@
 set -e
 
 # Read the secrets into variables. This is more robust than direct command substitution.
-DB_USER=$(cat /run/secrets/postgres_user)
-DB_NAME=$(cat /run/secrets/postgres_db)
+DB_USER=$(cat /run/secrets/pg_username)
+DB_NAME=$(cat /run/secrets/pg_dbname)
 
 # Explicitly check if the user variable is empty. If it is, fail immediately.
 # This prevents the "role -d does not exist" error.
 if [ -z "$DB_USER" ]; then
-  echo "Healthcheck Error: The postgres_user secret is empty or could not be read." >&2
+  echo "Healthcheck Error: The pg_username secret is empty or could not be read." >&2
   exit 1
 fi
 
