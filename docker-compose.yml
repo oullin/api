@@ -110,13 +110,13 @@ services:
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
             container_name: oullin_api
             restart: unless-stopped
-#            secrets:
-#                - pg_username
-#                - pg_password
-#                - pg_dbname
-#            depends_on:
-#                api-db:
-#                    condition: service_healthy
+            secrets:
+                - pg_username
+                - pg_password
+                - pg_dbname
+            depends_on:
+                api-db:
+                    condition: service_healthy
             expose:
                 - ${ENV_HTTP_PORT}
             networks:
