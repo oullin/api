@@ -55,9 +55,9 @@ help:
 	@printf "  $(BOLD)$(GREEN)format$(NC)           : Automatically format code.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)build:local$(NC)      : Build the main application for development.\n"
-	@printf "  $(BOLD)$(GREEN)build:prod$(NC)       : Build the main application for production.\n"
-	@printf "  $(BOLD)$(GREEN)build:release$(NC)    : Build a release version of the application.\n\n"
+	@printf "  $(BOLD)$(GREEN)build-local$(NC)      : Build the main application for development.\n"
+	@printf "  $(BOLD)$(GREEN)build-ci$(NC)         : Build the main application for the CI.\n"
+	@printf "  $(BOLD)$(GREEN)build-release$(NC)    : Build a release version of the application.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Database Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)db:local$(NC)         : Set up or manage the local database environment.\n"
