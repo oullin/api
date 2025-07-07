@@ -23,7 +23,7 @@ build-deploy:
 	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
 	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
 	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-	docker compose --profile prod up -d
+	docker compose --env-file ./.env --profile prod up -d
 
 build-release:
 	@printf "\n$(YELLOW)Tagging images to be released.$(NC)\n"
