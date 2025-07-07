@@ -1,4 +1,4 @@
-.PHONY: build-local build-prod build-release build-deploy
+.PHONY: build-local build-ci build-prod build-release build-deploy
 
 BUILD_VERSION ?= latest
 BUILD_PACKAGE_OWNER := oullin
