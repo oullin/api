@@ -20,6 +20,12 @@ ARG FIXTURES_DIR=fixture
 # --- Build Stage
 FROM golang:${GO_VERSION}-alpine AS builder
 
+# Tell Go to keep its module & build caches under /app
+ENV GOPATH=/${BUILD_DIR}/.gopath
+ENV GOMODCACHE=/${BUILD_DIR}/.gopath/pkg/mod
+ENV GOCACHE=/${BUILD_DIR}/.gocache
+RUN mkdir -p /${BUILD_DIR}/.gopath/pkg/mod /app/.gocache
+
 # Forwards build-time arguments into this specific stage so they can be referenced.
 ARG BUILD_DIR
 ARG BINARY_NAME
