@@ -72,9 +72,9 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 	}
 
 	db := env.DBEnvironment{
-		UserName:     env.GetSecretOrEnv("postgres_user", "ENV_DB_USER_NAME"),
-		UserPassword: env.GetSecretOrEnv("postgres_password", "ENV_DB_USER_PASSWORD"),
-		DatabaseName: env.GetSecretOrEnv("postgres_db", "ENV_DB_DATABASE_NAME"),
+		UserName:     env.GetSecretOrEnv("pg_username", "ENV_DB_USER_NAME"),
+		UserPassword: env.GetSecretOrEnv("pg_password", "ENV_DB_USER_PASSWORD"),
+		DatabaseName: env.GetSecretOrEnv("pg_dbname", "ENV_DB_DATABASE_NAME"),
 		Port:         port,
 		Host:         env.GetEnvVar("ENV_DB_HOST"),
 		DriverName:   database.DriverName,
