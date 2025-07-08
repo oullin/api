@@ -93,6 +93,8 @@ services:
 
         api:
             image: api-api
+            security_opt:
+              - apparmor:unconfined
             env_file:
                 - .env
             environment:
