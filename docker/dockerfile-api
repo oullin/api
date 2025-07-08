@@ -51,12 +51,12 @@ RUN CGO_ENABLED=0 go build -tags "${BUILD_TAGS}" -o ${BUILD_DIR}/${BINARY_NAME} 
 
 # --- Final Stage
 FROM alpine:${ALPINE_VERSION}
-USER root
+#USER root
 
 # Forwards build-time arguments into this final stage so they can be referenced.
 ARG APP_USER
 ARG APP_GROUP
-ARG APP_HOME
+#ARG APP_HOME
 ARG BUILD_DIR
 ARG BINARY_NAME
 ARG STORAGE_DIR
@@ -66,34 +66,30 @@ ARG FIXTURES_DIR
 ARG APP_HOST_PORT
 
 # Creates a dedicated, non-root user and group to run the application with.
-RUN addgroup -S ${APP_GROUP} \
-    && adduser -S ${APP_USER} -G ${APP_GROUP} -h ${APP_HOME}
+#RUN addgroup -S ${APP_GROUP} && adduser -S ${APP_USER} -G ${APP_GROUP} -h ${APP_HOME}
 
 # Make sure the home exists & switch into it.
-WORKDIR ${APP_HOME}
+WORKDIR /app
 
 # Creates the necessary storage directories inside the container.
 RUN mkdir -p ${STORAGE_DIR}/${LOGS_DIR} ${STORAGE_DIR}/${MEDIA_DIR}
+RUN mkdir -p ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}
 
 # Copies the 'fixture' files from the local project directory into the container.
-COPY --chown=${APP_USER}:${APP_GROUP} \
-     ${STORAGE_DIR}/${FIXTURES_DIR} \
-     ./${STORAGE_DIR}/${FIXTURES_DIR}/
+COPY ${STORAGE_DIR}/${FIXTURES_DIR} ./${STORAGE_DIR}/${FIXTURES_DIR}/
 
 # Copies the compiled application binary from the 'builder' stage.
-COPY --from=builder \
-	 --chown=${APP_USER}:${APP_GROUP} \
-	 ${BUILD_DIR}/${BINARY_NAME} \
-	 .
+COPY --from=builder ${BUILD_DIR}/${BINARY_NAME} /${BUILD_DIR}/${BINARY_NAME}
 
 # Install timezone data so Go’s time.* calls work correctly.
 RUN apk add --no-cache tzdata
 
 # Recursively sets the ownership of all files in the application's home directory.
-RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
+#RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
 
-USER ${APP_USER}
+#USER ${APP_USER}
 
 EXPOSE ${APP_HOST_PORT}
 
-CMD ["./server"]
+#CMD ["./server"]
+CMD ["/app/${BINARY_NAME}"]
