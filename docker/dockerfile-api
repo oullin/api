@@ -20,18 +20,19 @@ ARG FIXTURES_DIR=fixture
 # --- Build Stage
 FROM golang:${GO_VERSION}-alpine AS builder
 
+# --- Docker Args always go before ENV vars.
+#     Forwards build-time arguments into this specific stage so they can be referenced.
+ARG BUILD_DIR
+ARG BINARY_NAME
+ARG APP_VERSION
+ARG BUILD_TAGS
+
 # --- Go env vars.
 #     Tell Go to keep its module & build caches under /app
 ENV GOPATH=${BUILD_DIR}/.gopath
 ENV GOMODCACHE=${BUILD_DIR}/.gopath/pkg/mod
 ENV GOCACHE=${BUILD_DIR}/.gocache
 RUN mkdir -p ${GOMODCACHE} ${GOCACHE}
-
-# Forwards build-time arguments into this specific stage so they can be referenced.
-ARG BUILD_DIR
-ARG BINARY_NAME
-ARG APP_VERSION
-ARG BUILD_TAGS
 
 # Sets the primary working directory for this stage of the build.
 WORKDIR ${BUILD_DIR}
