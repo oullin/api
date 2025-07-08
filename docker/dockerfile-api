@@ -34,6 +34,9 @@ ENV GOMODCACHE=${BUILD_DIR}/.gopath/pkg/mod
 ENV GOCACHE=${BUILD_DIR}/.gocache
 RUN mkdir -p ${GOMODCACHE} ${GOCACHE}
 
+# Install timezone data so Go’s time.* calls work correctly.
+RUN apk add --no-cache tzdata
+
 # Sets the primary working directory for this stage of the build.
 WORKDIR ${BUILD_DIR}
 
@@ -89,8 +92,9 @@ COPY ${STORAGE_DIR}/${FIXTURES_DIR} ./${STORAGE_DIR}/${FIXTURES_DIR}/
 # Copies the compiled application binary from the 'builder' stage.
 COPY --from=builder ${BUILD_DIR}/${BINARY_NAME} /${BUILD_DIR}/${BINARY_NAME}
 
-# Install timezone data so Go’s time.* calls work correctly.
-RUN apk add --no-cache tzdata
+# Copy timezone data from builder so Go’s time.* calls work correctly.
+#RUN apk add --no-cache tzdata
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 # Recursively sets the ownership of all files in the application's home directory.
 #RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
