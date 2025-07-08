@@ -80,6 +80,7 @@ services:
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
+            - /usr/share/zoneinfo:/usr/share/zoneinfo:ro
           working_dir: /app
           networks:
             - oullin_net
