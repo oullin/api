@@ -79,43 +79,42 @@ ARG STORAGE_DIR
 ARG LOGS_DIR
 ARG MEDIA_DIR
 ARG FIXTURES_DIR
+ARG APP_HOST_PORT
 
 # Creates a dedicated, non-root user and group for the application.
 # Running the application as a non-root user is a critical security best practice.
-RUN addgroup -S ${APP_GROUP} && adduser -S ${APP_USER} -G ${APP_GROUP}
+RUN addgroup -S ${APP_GROUP} \
+    && adduser -S ${APP_USER} -G ${APP_GROUP} -h ${APP_HOME}
 
-# Sets the working directory for the final container.
+# Make sure the home exists & switch into it.
 WORKDIR ${APP_HOME}
 
 # Creates the necessary storage directories inside the container.
-# These folders will be owned by the application user and can be used for runtime file generation.
 RUN mkdir -p ${STORAGE_DIR}/${LOGS_DIR} ${STORAGE_DIR}/${MEDIA_DIR}
 
 # Copies the 'fixture' files from the local project directory into the container.
-# This is useful for including seed data or other essential files with the application.
-COPY ${STORAGE_DIR}/${FIXTURES_DIR} ./${STORAGE_DIR}/${FIXTURES_DIR}/
+COPY --chown=${APP_USER}:${APP_GROUP} \
+     ${STORAGE_DIR}/${FIXTURES_DIR} \
+     ./${STORAGE_DIR}/${FIXTURES_DIR}/
 
 # Copies the compiled application binary from the 'builder' stage.
 # This is the core of the multi-stage build pattern, ensuring the final image
 # contains only the compiled application and not the Go toolchain or source code.
-COPY --from=builder ${BUILD_DIR}/${BINARY_NAME} .
+COPY --from=builder \
+	 --chown=${APP_USER}:${APP_GROUP} \
+	 ${BUILD_DIR}/${BINARY_NAME} \
+	 .
 
 # Copies the timezone database from the 'builder' stage.
 # This ensures that time-related functions in the application work correctly.
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-
-# Copies the .env file into the container.
-# This allows the application to load its configuration from environment variables.
-# For this to work, '.env' must not be in the .dockerignore file.
-COPY .env .
 
 # Recursively sets the ownership of all files in the application's home directory.
 # This ensures the non-root application user has the correct permissions to execute the binary
 # and write to the storage directories.
 RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
 
-# Switches the context of the container to run as the non-root user.
-# Any subsequent commands (like the CMD) will be executed by this user.
+# Switch to the non-root user.
 USER ${APP_USER}
 
 # Exposes the application's port from the container.
