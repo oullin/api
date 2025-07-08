@@ -25,6 +25,7 @@ ARG FIXTURES_DIR=fixture
 #     This stage, named 'builder', is responsible for compiling the Go application.
 #     It uses a Go-specific base image that includes the necessary toolchain.
 FROM golang:${GO_VERSION}-alpine AS builder
+USER root
 
 # Forwards build-time arguments into this specific stage so they can be referenced.
 ARG BUILD_DIR
@@ -68,6 +69,7 @@ RUN CGO_ENABLED=0 go build -tags "${BUILD_TAGS}" -o ${BUILD_DIR}/${BINARY_NAME} 
 #     This is the final, production-ready stage of the build.
 #     It uses a minimal 'alpine' base image to create a small and secure container.
 FROM alpine:${ALPINE_VERSION}
+USER root
 
 # Forwards build-time arguments into this final stage so they can be referenced.
 ARG APP_USER
