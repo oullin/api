@@ -145,6 +145,8 @@ services:
         api-db:
             # Ensure the database always restarts on server reboot or crash.
             restart: always
+            security_opt:
+              - apparmor:unconfined
 
             # --- Use this lightweight and more secure 'alpine' image.
             #     A specific version (e.g., 16) is pinned to avoid unexpected updates.
