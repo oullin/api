@@ -1,8 +1,8 @@
 # --- Build Arguments
-ARG APP_VERSION="0.0.0.1"
+ARG APP_VERSION=0.0.0.1
 ARG BUILD_TAGS="posts,experience,profile,projects,social,talks,gus,gocanto"
 
-ARG BINARY_NAME=server
+ARG BINARY_NAME=oullin_api
 
 ARG APP_HOST_PORT=8080
 ARG APP_USER=appuser
@@ -57,7 +57,6 @@ RUN CGO_ENABLED=0 go build -tags "${BUILD_TAGS}" -o ${APP_DIR}/${BINARY_NAME} -l
 
 # --- Final Stage
 FROM alpine:latest
-
 # Forwards build-time arguments into this final stage so they can be referenced.
 #ARG APP_USER
 #ARG APP_GROUP
@@ -77,11 +76,16 @@ RUN apk add --no-cache tzdata
 ENV TZ=Asia/Singapore
 
 # Make sure the home exists & switch into it.
-WORKDIR /app
+WORKDIR ${APP_DIR}
 
 # Creates the necessary storage directories inside the container.
-RUN mkdir -p ${STORAGE_DIR}/${LOGS_DIR} ${STORAGE_DIR}/${MEDIA_DIR}
-RUN mkdir -p ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}
+RUN mkdir -p \
+    ${STORAGE_DIR}/${LOGS_DIR} \
+    ${STORAGE_DIR}/${MEDIA_DIR} \
+
+RUN mkdir -p \
+    ${STORAGE_DIR}/${FIXTURES_DIR} \
+    ${STORAGE_DIR}/${FIXTURES_DIR}
 
 # Copies the 'fixture' files from the local project directory into the container.
 COPY ${STORAGE_DIR}/${FIXTURES_DIR} ./${STORAGE_DIR}/${FIXTURES_DIR}/
@@ -97,4 +101,4 @@ RUN chmod +x ${APP_DIR}/${BINARY_NAME}
 
 EXPOSE ${APP_HOST_PORT}
 
-ENTRYPOINT ["/app/server"]
+ENTRYPOINT ["/bin/sh","-c","exec ${APP_DIR}/${BINARY_NAME}"]
