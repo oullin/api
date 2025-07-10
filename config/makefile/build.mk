@@ -2,6 +2,8 @@
 
 BUILD_VERSION ?= latest
 BUILD_PACKAGE_OWNER := oullin
+DB_INFRA_ROOT_PATH ?= $(ROOT_PATH)/database/infra
+DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
 
 build-local:
 	docker compose --profile local up --build -d
@@ -22,7 +24,9 @@ build-prod:
 build-deploy:
 	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
 	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
+	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)"
+	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/postgres-entrypoint.sh" && \
+	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/run-migration.sh" && \
 	docker compose --env-file ./.env --profile prod up -d
 
 build-release:

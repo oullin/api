@@ -9,9 +9,9 @@ DB_MIGRATE_SERVICE_NAME := api-db-migrate
 
 # --- Paths
 #     Define root paths for clarity. Assumes ROOT_PATH is exported or defined.
-DB_INFRA_ROOT_PATH := $(ROOT_PATH)/database/infra
+DB_INFRA_ROOT_PATH ?= $(ROOT_PATH)/database/infra
 DB_INFRA_SSL_PATH := $(DB_INFRA_ROOT_PATH)/ssl
-DB_INFRA_SCRIPTS_PATH := $(DB_INFRA_ROOT_PATH)/scripts
+DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
 
 # --- Migrations
 DB_MIGRATE_DOCKER_ENV_FLAGS = -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
@@ -46,6 +46,11 @@ db\:delete:
 	docker compose down -v --remove-orphans
 
 db\:chmod:
+	#ostgreSQL has a strict rule for security. The SSL private key file (server.key) cannot be owned by a regular user.
+	# When you mount the file from your host server, the file inside the container is still owned by your user (gocanto),
+    # not by root or the postgres user. PostgreSQL sees this as a security risk and refuses to start.
+	#sudo chown root:root ./database/infra/ssl/server.key
+	#sudo chmod 600 ./database/infra/ssl/server.key
 	chmod 600 $(DB_INFRA_SERVER_KEY)
 
 db\:secure:

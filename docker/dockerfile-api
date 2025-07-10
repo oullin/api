@@ -79,6 +79,9 @@ ARG APP_HOST_PORT
 # Creates a dedicated, non-root user and group to run the application with.
 #RUN addgroup -S ${APP_GROUP} && adduser -S ${APP_USER} -G ${APP_GROUP} -h ${APP_HOME}
 
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Singapore
+
 # Make sure the home exists & switch into it.
 WORKDIR /app
 
@@ -90,7 +93,8 @@ RUN mkdir -p ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}
 COPY ${STORAGE_DIR}/${FIXTURES_DIR} ./${STORAGE_DIR}/${FIXTURES_DIR}/
 
 # Copies the compiled application binary from the 'builder' stage.
-COPY --from=builder ${BUILD_DIR}/${BINARY_NAME} /${BUILD_DIR}/${BINARY_NAME}
+COPY --from=builder ${BUILD_DIR}/${BINARY_NAME} ${BUILD_DIR}/
+RUN chmod +x ${BUILD_DIR}/${BINARY_NAME}
 
 # Copy timezone data from builder so Go’s time.* calls work correctly.
 #RUN apk add --no-cache tzdata
@@ -104,4 +108,5 @@ COPY --from=builder ${BUILD_DIR}/${BINARY_NAME} /${BUILD_DIR}/${BINARY_NAME}
 EXPOSE ${APP_HOST_PORT}
 
 #CMD ["./server"]
-CMD ["/app/${BINARY_NAME}"]
+#CMD ["/app/${BINARY_NAME}"]
+ENTRYPOINT ["/app/server"]

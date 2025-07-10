@@ -1,4 +1,4 @@
-# Define the source of the secrets on the host machine.
+# DB: Define the source of the secrets on the host machine.
 secrets:
     pg_username:
         file: ${DB_SECRET_USERNAME:-./database/infra/secrets/pg_username}
@@ -12,6 +12,7 @@ volumes:
     caddy_config:
     go_mod_cache:
         driver: local
+
     # --- DB: Define a named volume at the top level.
     #     Docker will manage its lifecycle.
     oullin_db_data:
@@ -33,7 +34,7 @@ services:
                 dockerfile: Dockerfile
                 args:
                     - CADDY_VERSION=2.10.0
-            # This service will only run when the 'prod' profile is active.
+
             profiles: ["prod"]
             container_name: oullin_proxy_prod
             restart: unless-stopped
@@ -57,7 +58,7 @@ services:
                 dockerfile: Dockerfile
                 args:
                     - CADDY_VERSION=latest
-            # This service will only run when the 'local' profile is active.
+
             profiles: ["local"]
             container_name: oullin_local_proxy
             restart: unless-stopped
@@ -80,7 +81,6 @@ services:
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
-            - /usr/share/zoneinfo:/usr/share/zoneinfo:ro
           working_dir: /app
           networks:
             - oullin_net
@@ -93,9 +93,14 @@ services:
               condition: service_healthy
 
         api:
+            user: root
+            security_opt:
+              - apparmor:unconfined
             image: api-api
             env_file:
                 - .env
+            volumes:
+              - ./.env:/app/.env:ro
             environment:
                 # --- This ensures the Go web server listens for connections from other
                 #     containers (like Caddy), not just from within itself.
@@ -144,11 +149,20 @@ services:
             restart: no
 
         api-db:
+            # --- Hostinger's Ubuntu VPS hyper-restrictive environments do not allow PostgreSQL containers to behave
+            #     predictably. So this option here is a workaround to bypass the apparmor hell configuration that
+            #     did not work in spite of days of tries.
+            security_opt:
+              - apparmor:unconfined
+
+            # --- The container needs to start as root for just a moment to run the chown command and fix the
+            #     permissions on the data folder. Immediately after fixing the permissions, our custom
+            #     entrypoint script switches to the normal, non-root postgres user to run the actual database.
+            user: root
+
             # Ensure the database always restarts on server reboot or crash.
             restart: always
 
-            # --- Use this lightweight and more secure 'alpine' image.
-            #     A specific version (e.g., 16) is pinned to avoid unexpected updates.
             image: postgres:17.3-alpine
             container_name: oullin_db
 
@@ -158,7 +172,7 @@ services:
                 - oullin_net
 
             # --- Use Docker Secrets instead of .env files for credentials.
-            #     The given postgres image automatically reads from files specified by these _FILE variables.
+            #     Docker automatically reads from files specified by these _FILE variables.
             environment:
                 POSTGRES_USER_FILE: /run/secrets/pg_username
                 POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
@@ -167,31 +181,30 @@ services:
 
             # --- Securing port binding.
             #     Binds the port ONLY to my VPS's localhost (127.0.0.1).
-            #     This prevents any direct access to the public internet.
-            #     My applications running on the same VPS can connect to it.
-            #     The ':-5432' provides a fallback default port if ENV_DB_PORT is not set.
+            #
+            #     This prevents any direct access to the public internet. My applications running on the same VPS
+            #     can connect to it. The ':-5432' provides a fallback default port if ENV_DB_PORT is not set.
             ports:
                 - "127.0.0.1:${ENV_DB_PORT:-5432}:5432"
 
-            # --- Define which secrets this service has access to.
-            #     These secrets are mounted securely in memory at /run/secrets/
             secrets:
                 - pg_username
                 - pg_password
                 - pg_dbname
             volumes:
-                # Use a Docker Named Volume for data persistence.
-                # This decouples my critical data from the host's file structure, making it
-                # more robust, portable, and managed entirely by Docker.
+                # --- Docker Named Volume for data persistence.
+                #     This decouples critical data from the host's file structure, making it more robust & portable.
                 - oullin_db_data:/var/lib/postgresql/data
 
-                # Mount SSL certs and config files as read-only (:ro) for security.
-                - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt:ro
+                - ./database/infra/ssl/server.crt:/etc/ssl/certs/server.crt
                 - ./database/infra/ssl/server.key:/etc/ssl/private/server.key
+
+                # --- PostgreSQL setup scripts and configuration files as read-only (:ro) for security.
                 - ./database/infra/config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
                 - ./database/infra/scripts/healthcheck.sh:/healthcheck.sh:ro
+                - ./database/infra/scripts/postgres-entrypoint.sh:/postgres-entrypoint.sh
 
-            command: postgres -c config_file=/etc/postgresql/postgresql.conf
+            entrypoint: ["/postgres-entrypoint.sh"]
 
             logging:
                 driver: "json-file"
@@ -199,8 +212,6 @@ services:
                     max-file: 20
                     max-size: 10M
 
-            # --- The test simply executes our robust script. All complex logic is inside it.
-            #     We use CMD instead of CMD-SHELL because our file is an executable.
             healthcheck:
                 test: ["CMD", "/healthcheck.sh"]
                 interval: 10s
