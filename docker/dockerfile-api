@@ -57,10 +57,11 @@ RUN CGO_ENABLED=0 go build -tags "${BUILD_TAGS}" -o ${APP_DIR}/${BINARY_NAME} -l
 
 # --- Final Stage
 FROM alpine:latest
+
 # Forwards build-time arguments into this final stage so they can be referenced.
-#ARG APP_USER
-#ARG APP_GROUP
-#ARG APP_HOME
+ARG APP_USER
+ARG APP_GROUP
+ARG APP_HOME
 ARG APP_DIR
 ARG BINARY_NAME
 ARG STORAGE_DIR
@@ -70,7 +71,10 @@ ARG FIXTURES_DIR
 ARG APP_HOST_PORT
 
 # Creates a dedicated, non-root user and group to run the application with.
-#RUN addgroup -S ${APP_GROUP} && adduser -S ${APP_USER} -G ${APP_GROUP} -h ${APP_HOME}
+RUN mkdir -p ${APP_HOME} \
+	&& addgroup -S ${APP_GROUP} \
+	&& adduser  -S ${APP_USER} -G ${APP_GROUP} -h ${APP_HOME} ${APP_USER}
+
 
 RUN apk add --no-cache tzdata
 ENV TZ=Asia/Singapore
@@ -95,9 +99,10 @@ COPY --from=builder ${APP_DIR}/${BINARY_NAME} ${APP_DIR}/
 RUN chmod +x ${APP_DIR}/${BINARY_NAME}
 
 # Recursively sets the ownership of all files in the application's home directory.
-#RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
+RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
+RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_DIR}
 
-#USER ${APP_USER}
+USER ${APP_USER}:${APP_GROUP}
 
 EXPOSE ${APP_HOST_PORT}
 
