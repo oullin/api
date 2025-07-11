@@ -3,6 +3,8 @@
 .env.production
 tmp
 
+database/infra/data
+
 # --- [API]: Storage
 storage/logs/*.*
 storage/media/*.*
