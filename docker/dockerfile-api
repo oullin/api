@@ -1,64 +1,83 @@
-# --- Build Arguments
+#
+# ----------------------------------------------------------------------------------------------------------------------
+#                                    GLOBAL BUILD ARGUMENTS
+# ----------------------------------------------------------------------------------------------------------------------
+#
+# These args can be overridden at build time with `--build-arg NAME=value`.
+# Otherwise, you could use you docker-compose file to achive the same purpose.
+#
+# ----------------------------------------------------------------------------------------------------------------------
+#
+
 ARG APP_VERSION=0.0.0.1
 ARG BUILD_TAGS="posts,experience,profile,projects,social,talks,gus,gocanto"
-
 ARG BINARY_NAME=oullin_api
 
-ARG APP_HOST_PORT=8080
+# Non-root user/group settings.
 ARG APP_USER=appuser
 ARG APP_GROUP=appgroup
 ARG APP_HOME=/home/${APP_USER}
+
+# Container runtime port.
+ARG APP_HOST_PORT=8080
+
+# Application directory inside container.
 ARG APP_DIR=/app
 
+# Storage directories (relative to APP_DIR).
 ARG STORAGE_DIR=storage
 ARG LOGS_DIR=logs
 ARG MEDIA_DIR=media
 ARG FIXTURES_DIR=fixture
 
-# --- Build Stage
+# ----------------------------------------------------------------------------------------------------------------------
+#                                           BUILDER STAGE
+# ----------------------------------------------------------------------------------------------------------------------
 FROM golang:1.24-alpine AS builder
 
-# --- Docker Args always go before ENV vars.
-#     Forwards build-time arguments into this specific stage so they can be referenced.
+# Bring in the build args needed in this stage.
 ARG APP_DIR
 ARG BINARY_NAME
 ARG APP_VERSION
 ARG BUILD_TAGS
 
-# --- Go env vars.
-#     Tell Go to keep its module & build caches under /app
+# Configure Go build cache and module cache under our APP_DIR.
 ENV GOPATH=${APP_DIR}/.gopath
 ENV GOMODCACHE=${APP_DIR}/.gopath/pkg/mod
 ENV GOCACHE=${APP_DIR}/.gocache
+
+# Create the Go module & build cache directories.
 RUN mkdir -p ${GOMODCACHE} ${GOCACHE}
 
-# Sets the primary working directory for this stage of the build.
+# Set the working directory for the build.
 WORKDIR ${APP_DIR}
 
-# Copies the Go module definition files into the builder.
-# This is done first to leverage Docker's layer caching. The subsequent
-# 'go mod download' step will only be re-run if these files have changed.
+# Copy Go module files and download dependencies.
 COPY go.mod go.sum ./
-
 RUN go mod download
 
-# Copies the rest of the application's source code into the builder.
+# Copy remaining source code into the builder.
 COPY . .
 
-# Compiles the Go application into a single, statically-linked binary.
-# -tags: Applies build constraints, allowing for conditional compilation.
-# -o: Specifies the output path and name for the compiled binary.
-# -ldflags: Provides flags to the linker.
-#   -s: Strips the symbol table, reducing binary size.
-#   -w: Strips DWARF debugging information, further reducing size.
-#   -X: Injects a value into a string variable at build time. Here, it sets
-#       the application's version by targeting the 'Version' variable in the 'main' package.
-RUN CGO_ENABLED=0 go build -tags "${BUILD_TAGS}" -o ${APP_DIR}/${BINARY_NAME} -ldflags="-s -w -X main.Version=${APP_VERSION}" .
+# Compile a statically-linked binary.
+#
+#       * CGO_ENABLED=0: disable CGO for static builds.
+#       * -tags: apply build tags.
+#       * -o: output binaries path/name.
+#       * -ldflags: strip symbols and inject version.
+#
+RUN CGO_ENABLED=0 go build \
+    -tags "${BUILD_TAGS}" \
+    -o ${APP_DIR}/${BINARY_NAME} \
+    -ldflags="-s -w -X main.Version=${APP_VERSION}" \
+    .
 
-# --- Final Stage
+# ----------------------------------------------------------------------------------------------------------------------
+#                                           FINAL STAGE
+# ----------------------------------------------------------------------------------------------------------------------
 FROM alpine:latest
 
-# Forwards build-time arguments into this final stage so they can be referenced.
+# Bring in the runtime args.
 ARG APP_USER
 ARG APP_GROUP
 ARG APP_HOME
@@ -70,40 +89,51 @@ ARG MEDIA_DIR
 ARG FIXTURES_DIR
 ARG APP_HOST_PORT
 
-# Creates a dedicated, non-root user and group to run the application with.
-RUN mkdir -p ${APP_HOME} \
-	&& addgroup -S ${APP_GROUP} \
-	&& adduser  -S ${APP_USER} -G ${APP_GROUP} -h ${APP_HOME} ${APP_USER}
-
-
+# Install timezone data so Go’s time.* functions work correctly.
 RUN apk add --no-cache tzdata
 ENV TZ=Asia/Singapore
 
-# Make sure the home exists & switch into it.
+# Create the system group for our non-root user.
+RUN addgroup -S ${APP_GROUP}
+
+# Create the system user, assign to group, set its home.
+RUN adduser -S ${APP_USER} \
+	-G ${APP_GROUP} \
+	-h ${APP_HOME} \
+	${APP_USER}
+
+# Ensure the user’s home directory actually exists.
+RUN mkdir -p ${APP_HOME}
+
+# Switch to the application directory (implicitly creates it if missing).
 WORKDIR ${APP_DIR}
 
-# Creates the necessary storage directories inside the container.
-RUN mkdir -p \
-    ${STORAGE_DIR}/${LOGS_DIR} \
-    ${STORAGE_DIR}/${MEDIA_DIR} \
+# Create storage subdirectories under the APP_DIR.
+#
+#       * logs/: for application logs
+#       * media/: for uploaded/static media
+#       * fixture/: for static fixtures data
+#
+RUN mkdir -p ${STORAGE_DIR}/${LOGS_DIR}
+RUN mkdir -p ${STORAGE_DIR}/${MEDIA_DIR}
+RUN mkdir -p ${STORAGE_DIR}/${FIXTURES_DIR}
 
-RUN mkdir -p \
-    ${STORAGE_DIR}/${FIXTURES_DIR} \
-    ${STORAGE_DIR}/${FIXTURES_DIR}
+# Copy fixture files from builder stage.
+COPY --from=builder ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}/
 
-# Copies the 'fixture' files from the local project directory into the container.
-COPY ${STORAGE_DIR}/${FIXTURES_DIR} ./${STORAGE_DIR}/${FIXTURES_DIR}/
-
-# Copies the compiled application binary from the 'builder' stage.
+# Copy the compiled binary and mark it executable.
 COPY --from=builder ${APP_DIR}/${BINARY_NAME} ${APP_DIR}/
 RUN chmod +x ${APP_DIR}/${BINARY_NAME}
 
-# Recursively sets the ownership of all files in the application's home directory.
+# Give ownership of home and app directories to our non-root user.
 RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
 RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_DIR}
 
+# Switch to non-root user for all subsequent container processes.
 USER ${APP_USER}:${APP_GROUP}
 
+# Expose the application port.
 EXPOSE ${APP_HOST_PORT}
 
-ENTRYPOINT ["/bin/sh","-c","exec ${APP_DIR}/${BINARY_NAME}"]
+# Launch the binary (shell-form so that environment variables are expanded).
+ENTRYPOINT ["/bin/sh", "-c", "exec ${APP_DIR}/${BINARY_NAME}"]
