@@ -33,7 +33,6 @@ env\:fresh:
 env\:print:
 	@echo "APP NAME ........ : $(ENV_APP_NAME)		"
 	@echo "APP TYPE ........ : $(ENV_APP_ENV_TYPE)	"
-	@echo "APP ENV ......... : $(ENV_APP_ENV)		"
 	@echo "ROOT_NETWORK .... : $(ROOT_NETWORK)      "
 	@echo " --------------------------------------- "
 	@echo "DB_MIGRATE_PATH . : $(DB_MIGRATE_PATH)	"
