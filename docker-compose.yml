@@ -110,10 +110,12 @@ services:
                 context: .
                 dockerfile: ./docker/dockerfile-api
                 args:
-                    - APP_VERSION=v1.0.0-release
+                    - APP_VERSION=0.0.0.1
                     - APP_HOST_PORT=${ENV_HTTP_PORT}
                     - APP_USER=${ENV_DOCKER_USER}
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
+                    - APP_DIR=/app
+                    - BINARY_NAME=oullin_api
             container_name: oullin_api
             restart: unless-stopped
             secrets:
