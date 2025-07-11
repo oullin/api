@@ -132,6 +132,8 @@ RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_DIR}
 # Switch to non-root user for all subsequent container processes.
 USER ${APP_USER}:${APP_GROUP}
 
+# Arguments do not exist at container runtime, so ${APP_DIR} and ${BINARY_NAME} are empty when the entryoint is called.
+# Therefore, we need to send those values as environment variables for the shell to pick them up at runtime.
 ENV APP_DIR=${APP_DIR}
 ENV BINARY_NAME=${BINARY_NAME}
 
