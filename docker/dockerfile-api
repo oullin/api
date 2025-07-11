@@ -132,6 +132,9 @@ RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_DIR}
 # Switch to non-root user for all subsequent container processes.
 USER ${APP_USER}:${APP_GROUP}
 
+ENV APP_DIR=${APP_DIR}
+ENV BINARY_NAME=${BINARY_NAME}
+
 # Expose the application port.
 EXPOSE ${APP_HOST_PORT}
 
