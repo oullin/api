@@ -46,12 +46,8 @@ db\:delete:
 	docker compose down -v --remove-orphans
 
 db\:chmod:
-	#ostgreSQL has a strict rule for security. The SSL private key file (server.key) cannot be owned by a regular user.
-	# When you mount the file from your host server, the file inside the container is still owned by your user (gocanto),
-    # not by root or the postgres user. PostgreSQL sees this as a security risk and refuses to start.
-	#sudo chown root:root ./database/infra/ssl/server.key
-	#sudo chmod 600 ./database/infra/ssl/server.key
-	chmod 600 $(DB_INFRA_SERVER_KEY)
+	sudo chmod 600 $(DB_INFRA_SERVER_KEY)
+	sudo chmod 644 $(DB_INFRA_SERVER_CRT)
 
 db\:secure:
 	rm -f $(DB_INFRA_SERVER_CRT) $(DB_INFRA_SERVER_CSR) $(DB_INFRA_SERVER_KEY)
