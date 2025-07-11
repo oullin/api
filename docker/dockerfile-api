@@ -119,7 +119,7 @@ RUN mkdir -p ${STORAGE_DIR}/${MEDIA_DIR}
 RUN mkdir -p ${STORAGE_DIR}/${FIXTURES_DIR}
 
 # Copy fixture files from builder stage.
-COPY --from=builder ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}/
+COPY ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}/
 
 # Copy the compiled binary and mark it executable.
 COPY --from=builder ${APP_DIR}/${BINARY_NAME} ${APP_DIR}/
