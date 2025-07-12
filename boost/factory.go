@@ -56,7 +56,7 @@ func MakeLogs(env *env.Environment) *llogs.Driver {
 }
 
 func MakeEnv(validate *pkg.Validator) *env.Environment {
-	errorSufix := "Environment: "
+	errorSuffix := "Environment: "
 
 	port, _ := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))
 
@@ -99,27 +99,27 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 	}
 
 	if _, err := validate.Rejects(app); err != nil {
-		panic(errorSufix + "invalid [APP] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(db); err != nil {
-		panic(errorSufix + "invalid [Sql] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [Sql] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(token); err != nil {
-		panic(errorSufix + "invalid [token] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [token] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {
-		panic(errorSufix + "invalid [logs Creds] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [logs Creds] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(net); err != nil {
-		panic(errorSufix + "invalid [NETWORK] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [NETWORK] model: " + validate.GetErrorsAsJason())
 	}
 
 	if _, err := validate.Rejects(sentryEnvironment); err != nil {
-		panic(errorSufix + "invalid [SENTRY] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [SENTRY] model: " + validate.GetErrorsAsJason())
 	}
 
 	blog := &env.Environment{
@@ -131,7 +131,7 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 	}
 
 	if _, err := validate.Rejects(blog); err != nil {
-		panic(errorSufix + "invalid blog [ENVIRONMENT] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid blog [ENVIRONMENT] model: " + validate.GetErrorsAsJason())
 	}
 
 	return blog
