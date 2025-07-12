@@ -80,8 +80,12 @@ services:
           image: golang:1.24-alpine
           volumes:
             - .:/app
+            - ./.env:/.env:ro
             - go_mod_cache:/go/pkg/mod
           working_dir: /app
+          environment:
+              ENV_DB_HOST: api-db
+              ENV_DB_PORT: ${ENV_DB_PORT:-5432}
           networks:
             - oullin_net
           secrets:
