@@ -8,7 +8,6 @@ import (
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/cli"
-	"os"
 	"time"
 )
 
@@ -25,15 +24,15 @@ func init() {
 func main() {
 	cli.ClearScreen()
 
-	if err := guard.CaptureInput(); err != nil {
-		cli.Errorln(err.Error())
-		return
-	}
-
-	if guard.Rejects() {
-		cli.Errorln("Invalid credentials")
-		os.Exit(1)
-	}
+	//if err := guard.CaptureInput(); err != nil {
+	//	cli.Errorln(err.Error())
+	//	return
+	//}
+	//
+	//if guard.Rejects() {
+	//	cli.Errorln("Invalid credentials")
+	//	os.Exit(1)
+	//}
 
 	menu := panel.MakeMenu()
 
