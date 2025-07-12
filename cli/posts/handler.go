@@ -33,7 +33,7 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 		Excerpt:     payload.Excerpt,
 		Content:     payload.Content,
 		ImageURL:    payload.ImageURL,
-		Categories:  h.ParseCategory(payload),
+		Categories:  h.ParseCategories(payload),
 		Tags:        h.ParseTags(payload),
 	}
 
@@ -50,18 +50,18 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 	return nil
 }
 
-// ParseCategory: Category is given like so (leadership:)
-func (h Handler) ParseCategory(payload *markdown.Post) []database.CategoriesAttrs {
+func (h Handler) ParseCategories(payload *markdown.Post) []database.CategoriesAttrs {
 	var categories []database.CategoriesAttrs
 
-	parts := strings.Split(payload.Category, ":")
+	parts := strings.Split(payload.Categories, ",")
 
-	slice := append(categories, database.CategoriesAttrs{
-		Slug: strings.Trim(parts[0], " "),
-		Name: strings.Trim(parts[1], " "),
-	})
+	for _, part := range parts {
+		categories = append(categories, database.CategoriesAttrs{
+			Slug: strings.Trim(part, " "),
+		})
+	}
 
-	return slice
+	return categories
 }
 
 func (h Handler) ParseTags(payload *markdown.Post) []database.TagAttrs {
