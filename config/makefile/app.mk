@@ -33,7 +33,7 @@ install-air:
 
 run-cli:
 	@if [ -z "$(DB_SECRET_USERNAME)" ] || [ -z "$(DB_SECRET_PASSWORD)" ] || [ -z "$(DB_SECRET_DBNAME)" ]; then \
-    	  printf "\n$(RED)⚠️ Usage: make app-cli \n$(NC)"; \
+    	  printf "\n$(RED)⚠️ Usage: make run-cli \n$(NC)"; \
     	  printf "         DB_SECRET_USERNAME=/path/to/pg_username\n"; \
     	  printf "         DB_SECRET_PASSWORD=/path/to/pg_password\n"; \
     	  printf "         DB_SECRET_DBNAME=/path/to/pg_dbname\n\n"; \
