@@ -5,6 +5,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/markdown"
+	"strings"
 	"time"
 )
 
@@ -36,6 +37,10 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 		Tags:        h.ParseTags(payload),
 	}
 
+	fmt.Printf("attrs: %v+n\n", attrs.Categories)
+
+	panic("here ....")
+
 	if _, err = h.Posts.Create(attrs); err != nil {
 		return fmt.Errorf("handler: error persiting the post [%s]: %s", attrs.Title, err.Error())
 	}
@@ -48,13 +53,15 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 func (h Handler) ParseCategories(payload *markdown.Post) []database.CategoriesAttrs {
 	var categories []database.CategoriesAttrs
 
-	slice := append(categories, database.CategoriesAttrs{
-		Slug:        payload.CategorySlug,
-		Name:        payload.Category,
-		Description: "",
-	})
+	parts := strings.Split(payload.Categories, ",")
 
-	return slice
+	for _, part := range parts {
+		categories = append(categories, database.CategoriesAttrs{
+			Slug: strings.Trim(part, " "),
+		})
+	}
+
+	return categories
 }
 
 func (h Handler) ParseTags(payload *markdown.Post) []database.TagAttrs {
