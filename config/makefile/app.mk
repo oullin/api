@@ -47,4 +47,4 @@ run-cli:
     	DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
     	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
     	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-    	docker compose run --rm api-runner go run $(ROOT_PATH)/cli/main.go
+    	docker compose run --rm api-runner go run ./cli/main.go
