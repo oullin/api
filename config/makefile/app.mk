@@ -1,4 +1,4 @@
-.PHONY: fresh audit watch format
+.PHONY: fresh audit watch format run-cli
 
 format:
 	gofmt -w -s .
