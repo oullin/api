@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/env"
 	"github.com/oullin/pkg/gorm"
 )
 
 type Posts struct {
 	DB         *database.Connection
-	Env        *env.Environment
 	Categories *Categories
 	Tags       *Tags
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/env"
 	"github.com/oullin/pkg/gorm"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -12,8 +11,7 @@ import (
 )
 
 type Tags struct {
-	DB  *database.Connection
-	Env *env.Environment
+	DB *database.Connection
 }
 
 func (t Tags) FindOrCreate(slug string) (*database.Tag, error) {
