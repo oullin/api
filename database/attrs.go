@@ -11,6 +11,7 @@ type UsersAttrs struct {
 }
 
 type CategoriesAttrs struct {
+	Id          uint64
 	Slug        string
 	Name        string
 	Description string

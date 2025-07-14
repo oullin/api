@@ -42,11 +42,6 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 		Tags:        h.ParseTags(payload),
 	}
 
-	fmt.Printf("categories: %v\n", attrs.Categories)
-	fmt.Printf("tags: %v\n", h.ParseTags(payload))
-
-	panic("here ....")
-
 	if _, err = h.Posts.Create(attrs); err != nil {
 		return fmt.Errorf("handler: error persiting the post [%s]: %s", attrs.Title, err.Error())
 	}
@@ -61,11 +56,14 @@ func (h Handler) ParseCategories(payload *markdown.Post) []database.CategoriesAt
 	parts := strings.Split(payload.Categories, ",")
 
 	for _, category := range parts {
-		cat := strings.TrimSpace(category)
+		slug := strings.TrimSpace(strings.ToLower(category))
 
-		if cat != "" {
+		if item := h.Categories.FindBy(slug); item != nil {
 			categories = append(categories, database.CategoriesAttrs{
-				Slug: cat,
+				Slug:        item.Slug,
+				Name:        item.Name,
+				Id:          item.ID,
+				Description: item.Description,
 			})
 		}
 	}
@@ -78,8 +76,8 @@ func (h Handler) ParseTags(payload *markdown.Post) []database.TagAttrs {
 
 	for _, tag := range payload.Tags {
 		slice = append(slice, database.TagAttrs{
-			Slug: tag,
-			Name: tag,
+			Slug: strings.TrimSpace(strings.ToLower(tag)),
+			Name: strings.TrimSpace(strings.ToLower(tag)),
 		})
 	}
 
