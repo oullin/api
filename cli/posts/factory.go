@@ -23,19 +23,15 @@ type Handler struct {
 func MakeHandler(input *Input, client *pkg.Client, env *env.Environment) Handler {
 	db := boost.MakeDbConnection(env)
 
+	tags := &repository.Tags{DB: db}
+	categories := &repository.Categories{DB: db}
+
 	return Handler{
 		Input:       input,
-		Client:      client,
 		IsDebugging: false,
-		Posts: &repository.Posts{
-			DB: db,
-			Categories: &repository.Categories{
-				DB: db,
-			},
-		},
-		Users: &repository.Users{
-			DB: db,
-		},
+		Client:      client,
+		Users:       &repository.Users{DB: db},
+		Posts:       &repository.Posts{DB: db, Categories: categories, Tags: tags},
 	}
 }
 
@@ -81,8 +77,7 @@ func (h Handler) RenderArticle(post *markdown.Post) {
 	fmt.Printf("Author: %s\n", post.Author)
 	fmt.Printf("Image URL: %s\n", post.ImageURL)
 	fmt.Printf("Image Alt: %s\n", post.ImageAlt)
-	fmt.Printf("Category: %s\n", post.Category)
-	fmt.Printf("Category Slug: %s\n", post.CategorySlug)
+	fmt.Printf("Categories: %s\n", post.Categories)
 	fmt.Printf("Tags Alt: %s\n", post.Tags)
 	fmt.Println("\n--- Content ---")
 	fmt.Println(post.Content)

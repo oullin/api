@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/env"
 	"github.com/oullin/pkg/gorm"
 	"strings"
 )
 
 type Categories struct {
-	DB  *database.Connection
-	Env *env.Environment
+	DB *database.Connection
 }
 
 func (c Categories) FindBy(slug string) *database.Category {

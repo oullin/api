@@ -11,12 +11,14 @@ type UsersAttrs struct {
 }
 
 type CategoriesAttrs struct {
+	Id          uint64
 	Slug        string
 	Name        string
 	Description string
 }
 
 type TagAttrs struct {
+	Id   uint64
 	Slug string
 	Name string
 }

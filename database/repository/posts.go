@@ -4,15 +4,27 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/env"
 	"github.com/oullin/pkg/gorm"
-	baseGorm "gorm.io/gorm"
 )
 
 type Posts struct {
 	DB         *database.Connection
-	Env        *env.Environment
 	Categories *Categories
+	Tags       *Tags
+}
+
+func (p Posts) FindCategoryBy(slug string) *database.Category {
+	return p.Categories.FindBy(slug)
+}
+
+func (p Posts) FindTagBy(slug string) *database.Tag {
+	tag, err := p.Tags.FindOrCreate(slug)
+
+	if err != nil {
+		return nil
+	}
+
+	return tag
 }
 
 func (p Posts) Create(attrs database.PostsAttrs) (*database.Post, error) {
@@ -27,24 +39,47 @@ func (p Posts) Create(attrs database.PostsAttrs) (*database.Post, error) {
 		PublishedAt:   attrs.PublishedAt,
 	}
 
-	err := p.DB.Transaction(func(db *baseGorm.DB) error {
-		// --- Post.
-		if result := db.Create(&post); gorm.HasDbIssues(result.Error) {
-			return fmt.Errorf("issue creating posts: %s", result.Error)
-		}
+	if result := p.DB.Sql().Create(&post); gorm.HasDbIssues(result.Error) {
+		return nil, fmt.Errorf("issue creating posts: %s", result.Error)
+	}
 
-		// --- Categories.
-		if _, err := p.Categories.CreateOrUpdate(post, attrs); err != nil {
-			return fmt.Errorf("issue creating the given post [%s] category: %s", attrs.Slug, err.Error())
-		}
+	if err := p.LinkCategories(post, attrs.Categories); err != nil {
+		return nil, fmt.Errorf("issue creating the given post [%s] category: %s", attrs.Slug, err.Error())
+	}
 
-		// --- Returning [nil] commits the whole transaction.
-		return nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("error creating posts [%s]: %s", attrs.Title, err.Error())
+	if err := p.LinkTags(post, attrs.Tags); err != nil {
+		return nil, fmt.Errorf("issue creating the given post [%s] tags: %s", attrs.Slug, err.Error())
 	}
 
 	return &post, nil
+}
+
+func (p Posts) LinkCategories(post database.Post, categories []database.CategoriesAttrs) error {
+	for _, category := range categories {
+		trace := database.PostCategory{
+			CategoryID: category.Id,
+			PostID:     post.ID,
+		}
+
+		if result := p.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
+			return fmt.Errorf("error linking categories [%s:%s]: %s", category.Name, post.Title, result.Error)
+		}
+	}
+
+	return nil
+}
+
+func (p Posts) LinkTags(post database.Post, tags []database.TagAttrs) error {
+	for _, tag := range tags {
+		trace := database.PostTag{
+			TagID:  tag.Id,
+			PostID: post.ID,
+		}
+
+		if result := p.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
+			return fmt.Errorf("error linking tags [%s:%s]: %s", tag.Name, post.Title, result.Error)
+		}
+	}
+
+	return nil
 }

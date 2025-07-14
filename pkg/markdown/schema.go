@@ -11,17 +11,16 @@ type FrontMatter struct {
 	Excerpt     string   `yaml:"excerpt"`
 	Slug        string   `yaml:"slug"`
 	Author      string   `yaml:"author"`
-	Category    string   `yaml:"category"`
+	Categories  string   `yaml:"categories"`
 	PublishedAt string   `yaml:"published_at"`
 	Tags        []string `yaml:"tags"`
 }
 
 type Post struct {
 	FrontMatter
-	ImageURL     string
-	ImageAlt     string
-	Content      string
-	CategorySlug string
+	ImageURL string
+	ImageAlt string
+	Content  string
 }
 
 type Parser struct {

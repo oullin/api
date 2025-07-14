@@ -85,25 +85,5 @@ func Parse(data string) (*Post, error) {
 		post.Content = body
 	}
 
-	parseCategory(&post)
-
 	return &post, nil
-}
-
-func parseCategory(post *Post) {
-	category := post.FrontMatter.Category
-	parts := strings.Split(category, ":")
-
-	post.Category = parts[1]
-	post.CategorySlug = parts[0]
-
-	if len(parts) >= 2 {
-		post.Category = parts[1]
-		post.CategorySlug = parts[0]
-
-		return
-	}
-
-	post.Category = category
-	post.Slug = strings.ToLower(category)
 }
