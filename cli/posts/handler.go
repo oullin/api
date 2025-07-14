@@ -25,6 +25,11 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 		return fmt.Errorf("handler: the given published_at [%s] date is invalid", payload.PublishedAt)
 	}
 
+	categories := h.ParseCategories(payload)
+	if len(categories) == 0 {
+		return fmt.Errorf("handler: the given categories [%v] are empty", payload.Categories)
+	}
+
 	attrs := database.PostsAttrs{
 		AuthorID:    author.ID,
 		PublishedAt: publishedAt,
@@ -33,11 +38,12 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 		Excerpt:     payload.Excerpt,
 		Content:     payload.Content,
 		ImageURL:    payload.ImageURL,
-		Categories:  h.ParseCategories(payload),
+		Categories:  categories,
 		Tags:        h.ParseTags(payload),
 	}
 
-	fmt.Printf("attrs: %v+n\n", attrs.Categories)
+	fmt.Printf("categories: %v\n", attrs.Categories)
+	fmt.Printf("tags: %v\n", h.ParseTags(payload))
 
 	panic("here ....")
 
@@ -52,13 +58,16 @@ func (h Handler) HandlePost(payload *markdown.Post) error {
 
 func (h Handler) ParseCategories(payload *markdown.Post) []database.CategoriesAttrs {
 	var categories []database.CategoriesAttrs
-
 	parts := strings.Split(payload.Categories, ",")
 
-	for _, part := range parts {
-		categories = append(categories, database.CategoriesAttrs{
-			Slug: strings.Trim(part, " "),
-		})
+	for _, category := range parts {
+		cat := strings.TrimSpace(category)
+
+		if cat != "" {
+			categories = append(categories, database.CategoriesAttrs{
+				Slug: cat,
+			})
+		}
 	}
 
 	return categories
