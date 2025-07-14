@@ -18,6 +18,7 @@ type CategoriesAttrs struct {
 }
 
 type TagAttrs struct {
+	Id   uint64
 	Slug string
 	Name string
 }

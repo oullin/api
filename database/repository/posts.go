@@ -12,6 +12,15 @@ type Posts struct {
 	DB         *database.Connection
 	Env        *env.Environment
 	Categories *Categories
+	Tags       *Tags
+}
+
+func (p Posts) FindCategoryBy(slug string) *database.Category {
+	return p.Categories.FindBy(slug)
+}
+
+func (p Posts) FindTagBy(slug string) *database.Tag {
+	return p.Tags.FindBy(slug)
 }
 
 func (p Posts) Create(attrs database.PostsAttrs) (*database.Post, error) {
@@ -34,7 +43,9 @@ func (p Posts) Create(attrs database.PostsAttrs) (*database.Post, error) {
 		return nil, fmt.Errorf("issue creating the given post [%s] category: %s", attrs.Slug, err.Error())
 	}
 
-	//@todo Add tags tracking
+	if err := p.LinkTags(post, attrs.Tags); err != nil {
+		return nil, fmt.Errorf("issue creating the given post [%s] tags: %s", attrs.Slug, err.Error())
+	}
 
 	return &post, nil
 }
@@ -48,6 +59,21 @@ func (p Posts) LinkCategories(post database.Post, categories []database.Categori
 
 		if result := p.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
 			return fmt.Errorf("error linking categories [%s:%s]: %s", category.Name, post.Title, result.Error)
+		}
+	}
+
+	return nil
+}
+
+func (p Posts) LinkTags(post database.Post, tags []database.TagAttrs) error {
+	for _, tag := range tags {
+		trace := database.PostTag{
+			TagID:  tag.Id,
+			PostID: post.ID,
+		}
+
+		if result := p.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
+			return fmt.Errorf("error linking tags [%s:%s]: %s", tag.Name, post.Title, result.Error)
 		}
 	}
 

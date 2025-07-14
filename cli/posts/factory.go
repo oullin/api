@@ -17,21 +17,21 @@ type Handler struct {
 	Client      *pkg.Client
 	Posts       *repository.Posts
 	Users       *repository.Users
-	Categories  *repository.Categories
 	IsDebugging bool
 }
 
 func MakeHandler(input *Input, client *pkg.Client, env *env.Environment) Handler {
 	db := boost.MakeDbConnection(env)
-	categoriesRepository := &repository.Categories{DB: db}
+
+	tags := &repository.Tags{DB: db}
+	categories := &repository.Categories{DB: db}
 
 	return Handler{
 		Input:       input,
-		Client:      client,
 		IsDebugging: false,
-		Categories:  categoriesRepository,
-		Posts:       &repository.Posts{DB: db, Categories: categoriesRepository},
+		Client:      client,
 		Users:       &repository.Users{DB: db},
+		Posts:       &repository.Posts{DB: db, Categories: categories, Tags: tags},
 	}
 }
 
