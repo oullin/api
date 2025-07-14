@@ -20,7 +20,13 @@ func (p Posts) FindCategoryBy(slug string) *database.Category {
 }
 
 func (p Posts) FindTagBy(slug string) *database.Tag {
-	return p.Tags.FindBy(slug)
+	tag, err := p.Tags.FindOrCreate(slug)
+
+	if err != nil {
+		return nil
+	}
+
+	return tag
 }
 
 func (p Posts) Create(attrs database.PostsAttrs) (*database.Post, error) {

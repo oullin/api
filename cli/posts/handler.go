@@ -73,10 +73,9 @@ func (h Handler) ParseCategories(payload *markdown.Post) []database.CategoriesAt
 
 func (h Handler) ParseTags(payload *markdown.Post) []database.TagAttrs {
 	var tags []database.TagAttrs
-	parts := strings.Split(payload.Categories, ",")
 
-	for _, category := range parts {
-		slug := strings.TrimSpace(strings.ToLower(category))
+	for _, tag := range payload.Tags {
+		slug := strings.TrimSpace(strings.ToLower(tag))
 
 		if item := h.Posts.FindTagBy(slug); item != nil {
 			tags = append(tags, database.TagAttrs{
