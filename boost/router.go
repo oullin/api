@@ -77,3 +77,23 @@ func (r *Router) Talks() {
 
 	r.Mux.HandleFunc("GET /talks", resolver)
 }
+
+func (r *Router) Education() {
+	abstract := handler.MakeEducationHandler("./storage/fixture/education.json")
+
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("GET /education", resolver)
+}
+
+func (r *Router) Recommendations() {
+	abstract := handler.MakeTalksHandler("./storage/fixture/recommendations.json")
+
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("GET /recommendations", resolver)
+}
