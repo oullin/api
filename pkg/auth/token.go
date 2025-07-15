@@ -17,20 +17,21 @@ func (t Token) IsInvalid(seed string) bool {
 
 func (t Token) IsValid(seed string) bool {
 	token := strings.TrimSpace(t.Public)
-	salt := strings.TrimSpace(t.Private)
 	externalSalt := strings.TrimSpace(seed)
 
-	if salt != externalSalt {
+	if token != externalSalt {
 		return false
 	}
 
+	salt := strings.TrimSpace(t.Private)
+
 	hash := sha256.New()
-	hash.Write([]byte(externalSalt))
+	hash.Write([]byte(salt))
 	bytes := hash.Sum(hash.Sum(nil))
 
 	encodeToString := strings.TrimSpace(
 		hex.EncodeToString(bytes),
 	)
 
-	return token == encodeToString
+	return salt == encodeToString
 }
