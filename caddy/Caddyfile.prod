@@ -35,8 +35,8 @@ oullin.io {
 		header_up Host {host}
 
 		# Forward the client-sent auth headers
-		header_up X-API-Username {>X-API-Username}
-		header_up X-API-Key {>X-API-Key}
+		header_up X-API-Username {http.request.header.X-API-Username}
+		header_up X-API-Key {http.request.header.X-API-Key}
 
 		# *** DEBUG: echo back to client what Caddy actually saw ***
 		header_down X-Debug-Username {http.request.header.X-API-Username}
