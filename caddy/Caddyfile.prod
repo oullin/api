@@ -2,34 +2,47 @@
 # Caddy will automatically provision a Let's Encrypt certificate.
 
 oullin.io {
-    # Enable compression to reduce bandwidth usage.
-    encode gzip zstd
+	# Enable compression to reduce bandwidth usage.
+	encode gzip zstd
 
-    # Add security-related headers to protect against common attacks.
-    header {
-       # Enable HSTS to ensure browsers only connect via HTTPS.
-       Strict-Transport-Security "max-age=31536000;"
-       # Prevent clickjacking attacks.
-       X-Frame-Options "SAMEORIGIN"
-       # Prevent content type sniffing.
-       X-Content-Type-Options "nosniff"
-       # Enhances user privacy.
-       Referrer-Policy "strict-origin-when-cross-origin"
-    }
+	# Add security-related headers to protect against common attacks.
+	header {
+		# Enable HSTS to ensure browsers only connect via HTTPS.
+		Strict-Transport-Security "max-age=31536000;"
+		# Prevent clickjacking attacks.
+		X-Frame-Options "SAMEORIGIN"
+		# Prevent content type sniffing.
+		X-Content-Type-Options "nosniff"
+		# Enhances user privacy.
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
 
-    log {
+	log {
 		output file /var/log/caddy/oullin.io.log {
-			roll_size 10mb  # Rotate logs after they reach 10MB
-			roll_keep 5     # Keep the last 5 rotated log files
+			roll_size 10mb # Rotate logs after they reach 10MB
+			roll_keep 5 # Keep the last 5 rotated log files
 		}
 
 		format json
 	}
 
-    # Reverse proxy all requests to the Go application service.
-    # 'api' is the service name defined in docker-compose.yml.
-    reverse_proxy api:8080 {
-		# Set timeouts to prevent slow backends from holding up resources.
+	# Reverse-proxy all requests to the Go API, forwarding Host + auth headers
+	reverse_proxy {
+		# Tell Caddy which upstream to send to
+		to api:8080
+
+		# Preserve the original Host header
+		header_up Host {host}
+
+		# Forward the client-sent auth headers
+		header_up X-API-Username {>X-API-Username}
+		header_up X-API-Key {>X-API-Key}
+
+		# *** DEBUG: echo back to client what Caddy actually saw ***
+		header_down X-Debug-Username {http.request.header.X-API-Username}
+		header_down X-Debug-Key {http.request.header.X-API-Key}
+
+		# Transport timeouts
 		transport http {
 			dial_timeout 10s
 			response_header_timeout 30s
