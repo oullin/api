@@ -81,6 +81,10 @@ jobs:
             docker pull ghcr.io/oullin/oullin_api:$IMAGE_TAG
             docker pull ghcr.io/oullin/oullin_proxy:$IMAGE_TAG
 
+            echo "🏷️ Retagging for Compose…"
+            docker tag ghcr.io/oullin/oullin_api:$IMAGE_TAG    api-api:latest
+            docker tag ghcr.io/oullin/oullin_proxy:$IMAGE_TAG  api-caddy_prod:latest
+
             echo "🧹 Pruning old, unused Docker images ..."
             docker image prune -af
 
