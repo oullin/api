@@ -89,7 +89,7 @@ func (r *Router) Education() {
 }
 
 func (r *Router) Recommendations() {
-	abstract := handler.MakeTalksHandler("./storage/fixture/recommendations.json")
+	abstract := handler.MakeRecommendationsHandler("./storage/fixture/recommendations.json")
 
 	resolver := r.PipelineFor(
 		abstract.Handle,
