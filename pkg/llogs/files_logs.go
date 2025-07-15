@@ -19,6 +19,8 @@ func MakeFilesLogs(env *env.Environment) (Driver, error) {
 	manager := FilesLogs{}
 	manager.env = env
 
+	fmt.Println("===>", manager.DefaultPath())
+
 	manager.path = manager.DefaultPath()
 	resource, err := os.OpenFile(manager.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 

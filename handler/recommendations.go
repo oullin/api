@@ -19,7 +19,7 @@ func MakeRecommendationsHandler(filePath string) RecommendationsHandler {
 }
 
 func (h RecommendationsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.TalksResponse](h.filePath)
+	data, err := pkg.ParseJsonFile[payload.RecommendationsResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading recommendations file", "error", err)

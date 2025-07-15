@@ -52,4 +52,6 @@ func (a *App) Boot() {
 	router.Projects()
 	router.Social()
 	router.Talks()
+	router.Education()
+	router.Recommendations()
 }
