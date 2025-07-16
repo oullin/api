@@ -37,45 +37,19 @@ func main() {
 
 		switch menu.GetChoice() {
 		case 1:
-			input, err := menu.CapturePostURL()
-
-			if err != nil {
-				cli.Errorln(err.Error())
-				continue
-			}
-
-			httpClient := pkg.MakeDefaultClient(nil)
-			handler := posts.MakeHandler(input, httpClient, dbConn)
-
-			if _, err := handler.NotParsed(); err != nil {
+			if err = createBlogPost(menu); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
 
 			return
 		case 2:
-			//input, err := menu.CaptureAccountName()
-
-			//if err != nil {
-			//	cli.Errorln(err.Error())
-			//	continue
-			//}
-			//
-			//handler := accounts.MakeHandler(dbConn)
-			//
-			//if err := handler.CreateAccount(input); err != nil {
-			//	cli.Errorln(err.Error())
-			//	continue
-			//}
-
 			if err = createNewAccount(menu); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
 
 			return
-
-			//generateToken()\\\
 		case 3:
 			timeParse()
 		case 0:
@@ -89,6 +63,23 @@ func main() {
 
 		menu.PrintLine()
 	}
+}
+
+func createBlogPost(menu panel.Menu) error {
+	input, err := menu.CapturePostURL()
+
+	if err != nil {
+		return err
+	}
+
+	httpClient := pkg.MakeDefaultClient(nil)
+	handler := posts.MakeHandler(input, httpClient, dbConn)
+
+	if _, err = handler.NotParsed(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createNewAccount(menu panel.Menu) error {
