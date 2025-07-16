@@ -8,7 +8,9 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
+	"os"
 )
 
 var environment *env.Environment
@@ -47,6 +49,15 @@ func main() {
 				cli.Errorln(err.Error())
 				continue
 			}
+
+			return
+		case 3:
+			signature := auth.CreateSignatureFrom(
+				os.Getenv("ENV_LOCAL_TOKEN_ACCOUNT"),
+				os.Getenv("ENV_LOCAL_TOKEN_SECRET"),
+			)
+
+			cli.Successln("Signature: " + signature)
 
 			return
 		case 0:

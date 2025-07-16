@@ -37,7 +37,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 		}
 
 		if err := auth.ValidateTokenFormat(publicToken); err != nil {
-			return t.getInvalidTokenFormatError(publicToken)
+			return t.getInvalidTokenFormatError(publicToken, err)
 		}
 
 		if t.shallReject(accountName, signature) {
@@ -81,9 +81,9 @@ func (t TokenCheckMiddleware) getInvalidRequestError(accountName, publicToken, s
 	}
 }
 
-func (t TokenCheckMiddleware) getInvalidTokenFormatError(publicToken string) *http.ApiError {
+func (t TokenCheckMiddleware) getInvalidTokenFormatError(publicToken string, err error) *http.ApiError {
 	return &http.ApiError{
-		Message: fmt.Sprintf("invalid token format: [token: %s]", auth.SafeDisplay(publicToken)),
+		Message: fmt.Sprintf("invalid token format [token: %s]: %v", auth.SafeDisplay(publicToken), err),
 		Status:  baseHttp.StatusForbidden,
 	}
 }

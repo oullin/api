@@ -61,8 +61,8 @@ func ValidateTokenFormat(seed string) error {
 		return fmt.Errorf("token not found or invalid")
 	}
 
-	if !strings.HasPrefix(token, PublicKeyPrefix) || !strings.HasPrefix(token, SecretKeyPrefix) {
-		return fmt.Errorf("invalid token prefix")
+	if strings.HasPrefix(token, PublicKeyPrefix) || strings.HasPrefix(token, SecretKeyPrefix) {
+		return nil
 	}
 
 	return fmt.Errorf("the given token [%s] is not valid", token)

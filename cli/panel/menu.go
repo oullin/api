@@ -89,6 +89,8 @@ func (p *Menu) Print() {
 	p.PrintOption("                   ", inner)
 	p.PrintOption("2) Create new account", inner)
 	p.PrintOption("                   ", inner)
+	p.PrintOption("3) Create account HTTP signature", inner)
+	p.PrintOption("                   ", inner)
 	p.PrintOption("0) Exit", inner)
 
 	fmt.Println(footer + cli.Reset)
