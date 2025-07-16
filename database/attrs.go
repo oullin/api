@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+type APIKeyAttr struct {
+	AccountName string
+	PublicKey   string
+	SecretKey   string
+}
+
 type UsersAttrs struct {
 	Username string
 	Name     string

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"slices"
 	"time"
@@ -12,7 +13,7 @@ var schemaTables = []string{
 	"users", "posts", "categories",
 	"post_categories", "tags", "post_tags",
 	"post_views", "post_views", "comments",
-	"likes", "newsletters",
+	"likes", "newsletters", "api_keys",
 }
 
 func GetSchemaTables() []string {
@@ -21,6 +22,17 @@ func GetSchemaTables() []string {
 
 func isValidTable(seed string) bool {
 	return slices.Contains(schemaTables, seed)
+}
+
+type APIKey struct {
+	ID          int64     `gorm:"primaryKey"`
+	UUID        uuid.UUID `gorm:"type:uuid;unique;not null"`
+	AccountName string    `gorm:"column:account_name;size:50;not null;unique;uniqueIndex:uq_account_keys"`
+	PublicKey   string    `gorm:"column:public_key;size:50;not null;unique;index;uniqueIndex:uq_account_keys"`
+	SecretKey   string    `gorm:"column:secret_key;size:50;not null;unique;index;uniqueIndex:uq_account_keys"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type User struct {
