@@ -7,7 +7,6 @@ const production = "production"
 type AppEnvironment struct {
 	Name string `validate:"required,min=4"`
 	Type string `validate:"required,lowercase,oneof=local production staging"`
-	//Credentials auth.Token `validate:"required"`
 }
 
 func (e AppEnvironment) IsProduction() bool {

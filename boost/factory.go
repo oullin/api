@@ -59,15 +59,9 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 
 	port, _ := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))
 
-	//token := auth.Token{
-	//	Public:  env.GetEnvVar("ENV_APP_TOKEN_PUBLIC"),
-	//	Private: env.GetEnvVar("ENV_APP_TOKEN_PRIVATE"),
-	//}
-
 	app := env.AppEnvironment{
 		Name: env.GetEnvVar("ENV_APP_NAME"),
 		Type: env.GetEnvVar("ENV_APP_ENV_TYPE"),
-		//Credentials: token,
 	}
 
 	db := env.DBEnvironment{
@@ -104,10 +98,6 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 	if _, err := validate.Rejects(db); err != nil {
 		panic(errorSuffix + "invalid [Sql] model: " + validate.GetErrorsAsJason())
 	}
-
-	//if _, err := validate.Rejects(token); err != nil {
-	//	panic(errorSuffix + "invalid [token] model: " + validate.GetErrorsAsJason())
-	//}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {
 		panic(errorSuffix + "invalid [logs Creds] model: " + validate.GetErrorsAsJason())
