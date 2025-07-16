@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/auth"
+	"github.com/oullin/pkg/cli"
 )
 
 func (h Handler) CreateAccount(accountName string) error {
@@ -22,6 +23,8 @@ func (h Handler) CreateAccount(accountName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create account: %v", err)
 	}
+
+	cli.Successln("Account created successfully")
 
 	return nil
 }
