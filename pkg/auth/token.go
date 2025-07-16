@@ -12,6 +12,10 @@ import (
 func SetupNewAccount(accountName string, TokenLength int) (*Token, error) {
 	token := Token{}
 
+	if len(accountName) < AccountNameMinLength {
+		return nil, fmt.Errorf("account name must be at least %d characters", AccountNameMinLength)
+	}
+
 	pk, err := generateSecureToken(TokenLength)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate public key: %w", err)

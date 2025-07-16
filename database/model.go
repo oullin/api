@@ -11,7 +11,7 @@ const DriverName = "postgres"
 var schemaTables = []string{
 	"users", "posts", "categories",
 	"post_categories", "tags", "post_tags",
-	"post_views", "post_views", "comments",
+	"post_views", "comments",
 	"likes", "newsletters", "api_keys",
 }
 
