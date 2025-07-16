@@ -1,4 +1,6 @@
-.PHONY: fresh audit watch format run-cli
+.PHONY: fresh audit watch format run-cli validate-caddy
+
+APP_CADDY_CONFIG_FILE ?= caddy/Caddyfile.prod
 
 format:
 	gofmt -w -s .
@@ -48,3 +50,9 @@ run-cli:
     	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
     	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
     	docker compose run --rm api-runner go run ./cli/main.go
+
+# --- Mac:
+#     Needs to be locally installed: https://formulae.brew.sh/formula/caddy
+validate-caddy:
+	caddy fmt --overwrite $(APP_CADDY_CONFIG_FILE)
+	caddy validate --config $(APP_CADDY_CONFIG_FILE)
