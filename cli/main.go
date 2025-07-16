@@ -1,38 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"github.com/oullin/boost"
+	"github.com/oullin/cli/accounts"
 	"github.com/oullin/cli/panel"
 	"github.com/oullin/cli/posts"
+	"github.com/oullin/database"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/cli"
 	"time"
 )
 
-// var guard gate.Guard
 var environment *env.Environment
+var dbConn *database.Connection
 
 func init() {
 	secrets := boost.Ignite("./../.env", pkg.GetDefaultValidator())
 
 	environment = secrets
-	//guard = gate.MakeGuard(environment.App.Credentials)
+	dbConn = boost.MakeDbConnection(environment)
 }
 
 func main() {
 	cli.ClearScreen()
-
-	//if err := guard.CaptureInput(); err != nil {
-	//	cli.Errorln(err.Error())
-	//	return
-	//}
-	//
-	//if guard.Rejects() {
-	//	cli.Errorln("Invalid credentials")
-	//	os.Exit(1)
-	//}
 
 	menu := panel.MakeMenu()
 
@@ -54,7 +45,7 @@ func main() {
 			}
 
 			httpClient := pkg.MakeDefaultClient(nil)
-			handler := posts.MakeHandler(input, httpClient, environment)
+			handler := posts.MakeHandler(input, httpClient, dbConn)
 
 			if _, err := handler.NotParsed(); err != nil {
 				cli.Errorln(err.Error())
@@ -63,7 +54,28 @@ func main() {
 
 			return
 		case 2:
-			generateToken()
+			//input, err := menu.CaptureAccountName()
+
+			//if err != nil {
+			//	cli.Errorln(err.Error())
+			//	continue
+			//}
+			//
+			//handler := accounts.MakeHandler(dbConn)
+			//
+			//if err := handler.CreateAccount(input); err != nil {
+			//	cli.Errorln(err.Error())
+			//	continue
+			//}
+
+			if err = createNewAccount(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+
+			//generateToken()\\\
 		case 3:
 			timeParse()
 		case 0:
@@ -79,15 +91,28 @@ func main() {
 	}
 }
 
-func generateToken() {
-	fmt.Println("Generating token...")
+func createNewAccount(menu panel.Menu) error {
+	var err error
+	var account string
+
+	if account, err = menu.CaptureAccountName(); err != nil {
+		return err
+	}
+
+	handler := accounts.MakeHandler(dbConn)
+
+	if err = handler.CreateAccount(account); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func showTime() {
-	now := time.Now().Format("2006-01-02 15:04:05")
-
-	cli.Cyanln("\nThe current time is: " + now)
-}
+//func showTime() {
+//	now := time.Now().Format("2006-01-02 15:04:05")
+//
+//	cli.Cyanln("\nThe current time is: " + now)
+//}
 
 func timeParse() {
 	s := pkg.MakeStringable("2025-04-12")

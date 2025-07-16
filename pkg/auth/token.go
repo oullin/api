@@ -22,7 +22,7 @@ func SetupNewAccount(accountName string, TokenLength int) (*Token, error) {
 	}
 
 	token.PublicKey = pk
-	token.PrivateKey = sk
+	token.SecretKey = sk
 	token.Length = TokenLength
 	token.AccountName = accountName
 

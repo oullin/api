@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/oullin/cli/posts"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
 	"golang.org/x/term"
 	"net/url"
@@ -115,6 +116,23 @@ func (p *Menu) CenterText(s string, width int) string {
 	right := pad - left
 
 	return strings.Repeat(" ", left) + s + strings.Repeat(" ", right)
+}
+
+func (p *Menu) CaptureAccountName() (string, error) {
+	fmt.Print("Enter the account name: ")
+
+	account, err := p.Reader.ReadString('\n')
+
+	if err != nil {
+		return "", fmt.Errorf("%sError reading the account name: %v %s", cli.RedColour, err, cli.Reset)
+	}
+
+	account = strings.TrimSpace(account)
+	if account == "" || len(account) < auth.AccountNameMinLength {
+		return "", fmt.Errorf("%sError: no account name provided or has an invalid length: %s", cli.RedColour, cli.Reset)
+	}
+
+	return account, nil
 }
 
 func (p *Menu) CapturePostURL() (*posts.Input, error) {

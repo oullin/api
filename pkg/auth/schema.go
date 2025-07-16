@@ -1,17 +1,18 @@
 package auth
 
 const (
-	PublicKeyPrefix = "pk_"
-	SecretKeyPrefix = "sk_"
-	LevelPublic     = "public"
-	LevelSecret     = "secret"
-	TokenMinLength  = 16
+	PublicKeyPrefix      = "pk_"
+	SecretKeyPrefix      = "sk_"
+	LevelPublic          = "public"
+	LevelSecret          = "secret"
+	TokenMinLength       = 16
+	AccountNameMinLength = 5
 )
 
 type Token struct {
 	AccountName string `validate:"required,min=5"`
 	PublicKey   string `validate:"required,len=16"`
-	PrivateKey  string `validate:"required,len=16"`
+	SecretKey   string `validate:"required,len=16"`
 	Length      int    `validate:"required"`
 }
 
