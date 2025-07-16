@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -49,24 +50,56 @@ func generateSecureToken(length int) (string, error) {
 	return hex.EncodeToString(hashBytes), nil
 }
 
-func ValidateBearerToken(seed string) (*ValidatedToken, error) {
-	validated := ValidatedToken{
-		Token: strings.TrimSpace(seed),
+func ValidateTokenFormat(seed string) error {
+	token := strings.TrimSpace(seed)
+
+	if token == "" || len(token) < TokenMinLength {
+		return fmt.Errorf("token not found or invalid")
 	}
 
-	if validated.Token == "" {
-		return nil, fmt.Errorf("token not found or invalid")
+	if !strings.HasPrefix(token, PublicKeyPrefix) || !strings.HasPrefix(token, SecretKeyPrefix) {
+		return fmt.Errorf("invalid token prefix")
 	}
 
-	if strings.HasPrefix(validated.Token, PublicKeyPrefix) {
-		validated.AuthLevel = strings.TrimSpace(LevelPublic)
-		return &validated, nil
+	return fmt.Errorf("the given token [%s] is not valid", token)
+}
+
+func CreateSignatureFrom(message, secretKey string) string {
+	mac := hmac.New(sha256.New, []byte(secretKey))
+	mac.Write([]byte(message))
+
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+func SafeDisplay(secret string) string {
+	var prefixLen int
+	visibleChars := 8
+
+	if strings.HasPrefix(secret, PublicKeyPrefix) {
+		prefixLen = len(PublicKeyPrefix)
+	} else {
+		prefixLen = len(SecretKeyPrefix)
 	}
 
-	if strings.HasPrefix(validated.Token, SecretKeyPrefix) {
-		validated.AuthLevel = strings.TrimSpace(LevelSecret)
-		return &validated, nil
+	if len(secret) <= prefixLen+visibleChars {
+		return secret
 	}
 
-	return nil, fmt.Errorf("the given token [%s] is not valid", validated.Token)
+	return secret[:prefixLen+visibleChars] + "..."
+}
+
+func (t Token) HasInValidSignature(receivedSignature string) bool {
+	return !t.HasValidSignature(receivedSignature)
+}
+
+func (t Token) HasValidSignature(receivedSignature string) bool {
+	signature := CreateSignatureFrom(
+		t.AccountName,
+		t.SecretKey,
+	)
+
+	return hmac.Equal(
+		[]byte(signature),
+		[]byte(receivedSignature),
+	)
 }
