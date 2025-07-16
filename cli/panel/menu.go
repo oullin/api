@@ -86,8 +86,9 @@ func (p *Menu) Print() {
 	fmt.Println(divider)
 
 	p.PrintOption("1) Parse Blog Posts", inner)
+	p.PrintOption("                   ", inner)
 	p.PrintOption("2) Create new account", inner)
-	p.PrintOption("3) Show Date", inner)
+	p.PrintOption("                   ", inner)
 	p.PrintOption("0) Exit", inner)
 
 	fmt.Println(footer + cli.Reset)

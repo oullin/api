@@ -9,7 +9,6 @@ import (
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/cli"
-	"time"
 )
 
 var environment *env.Environment
@@ -50,8 +49,6 @@ func main() {
 			}
 
 			return
-		case 3:
-			timeParse()
 		case 0:
 			cli.Successln("Goodbye!")
 			return
@@ -97,14 +94,4 @@ func createNewAccount(menu panel.Menu) error {
 	}
 
 	return nil
-}
-
-func timeParse() {
-	s := pkg.MakeStringable("2025-04-12")
-
-	if seed, err := s.ToDatetime(); err != nil {
-		panic(err)
-	} else {
-		cli.Magentaln(seed.Format(time.DateTime))
-	}
 }
