@@ -23,7 +23,7 @@ func (u Users) FindBy(username string) *database.User {
 		return nil
 	}
 
-	if strings.Trim(user.UUID, " ") != "" {
+	if result.RowsAffected > 0 {
 		return &user
 	}
 

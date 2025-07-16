@@ -43,7 +43,7 @@ func (a ApiKeys) FindBy(accountName string) *database.APIKey {
 		return nil
 	}
 
-	if strings.Trim(key.UUID, " ") != "" {
+	if result.RowsAffected > 0 {
 		return &key
 	}
 

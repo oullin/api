@@ -40,7 +40,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return t.getInvalidTokenFormatError(publicToken, err)
 		}
 
-		if t.shallReject(accountName, signature) {
+		if t.shallReject(accountName, publicToken, signature) {
 			return t.getUnauthenticatedError(accountName, publicToken, signature)
 		}
 
@@ -50,10 +50,14 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	}
 }
 
-func (t TokenCheckMiddleware) shallReject(accountName, signature string) bool {
+func (t TokenCheckMiddleware) shallReject(accountName, publicToken, signature string) bool {
 	var item *database.APIKey
 
 	if item = t.ApiKeys.FindBy(accountName); item == nil {
+		return true
+	}
+
+	if strings.TrimSpace(item.PublicKey) != strings.TrimSpace(publicToken) {
 		return true
 	}
 

@@ -45,7 +45,7 @@ func (t Tags) FindBy(slug string) *database.Tag {
 		return nil
 	}
 
-	if strings.Trim(tag.UUID, " ") != "" {
+	if result.RowsAffected > 0 {
 		return &tag
 	}
 

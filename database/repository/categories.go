@@ -23,7 +23,7 @@ func (c Categories) FindBy(slug string) *database.Category {
 		return nil
 	}
 
-	if strings.Trim(category.UUID, " ") != "" {
+	if result.RowsAffected > 0 {
 		return &category
 	}
 
