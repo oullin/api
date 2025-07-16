@@ -2,6 +2,7 @@ package boost
 
 import (
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http/middleware"
@@ -19,19 +20,22 @@ type App struct {
 }
 
 func MakeApp(env *env.Environment, validator *pkg.Validator) *App {
+	db := MakeDbConnection(env)
+
 	app := App{
 		env:       env,
 		validator: validator,
 		logs:      MakeLogs(env),
 		sentry:    MakeSentry(env),
-		db:        MakeDbConnection(env),
+		db:        db,
 	}
 
 	router := Router{
 		Env: env,
 		Mux: baseHttp.NewServeMux(),
 		Pipeline: middleware.Pipeline{
-			Env: env,
+			Env:     env,
+			ApiKeys: &repository.ApiKeys{DB: db},
 		},
 	}
 
