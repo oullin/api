@@ -60,8 +60,9 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 	port, _ := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))
 
 	app := env.AppEnvironment{
-		Name: env.GetEnvVar("ENV_APP_NAME"),
-		Type: env.GetEnvVar("ENV_APP_ENV_TYPE"),
+		Name:      env.GetEnvVar("ENV_APP_NAME"),
+		Type:      env.GetEnvVar("ENV_APP_ENV_TYPE"),
+		MasterKey: env.GetEnvVar("ENV_APP_MASTER_KEY"),
 	}
 
 	db := env.DBEnvironment{

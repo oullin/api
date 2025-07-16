@@ -9,40 +9,59 @@ import (
 	"strings"
 )
 
-func SetupNewAccount(accountName string, TokenLength int) (*Token, error) {
+type TokenHandler struct {
+	EncryptionKey        []byte
+	TokenMinLength       int
+	AccountNameMinLength int
+}
+
+func MakeTokenHandler(encryptionKey []byte, accountNameMinLength, tokenMinLength int) (*TokenHandler, error) {
+	if tokenMinLength < TokenMinLength {
+		return nil, fmt.Errorf("the token length should be at least %d", TokenMinLength)
+	}
+
+	if accountNameMinLength < AccountNameMinLength {
+		return nil, fmt.Errorf("the token length should be at least %d", AccountNameMinLength)
+	}
+
+	return &TokenHandler{
+		EncryptionKey:        encryptionKey,
+		TokenMinLength:       tokenMinLength,
+		AccountNameMinLength: accountNameMinLength,
+	}, nil
+}
+
+func (t *TokenHandler) SetupNewAccount(accountName string) (*Token, error) {
 	token := Token{}
 
 	if len(accountName) < AccountNameMinLength {
 		return nil, fmt.Errorf("account name must be at least %d characters", AccountNameMinLength)
 	}
 
-	pk, err := generateSecureToken(TokenLength)
+	pk, err := t.generateSecureToken(PublicKeyPrefix)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate public key: %w", err)
 	}
 
-	sk, err := generateSecureToken(TokenLength)
+	sk, err := t.generateSecureToken(SecretKeyPrefix)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate secret key: %w", err)
 	}
 
-	token.PublicKey = PublicKeyPrefix + pk
-	token.SecretKey = SecretKeyPrefix + sk
-	token.Length = TokenLength
 	token.AccountName = accountName
+	token.PublicKey = pk.PlainText
+	token.EncryptedPublicKey = pk.EncryptedText
+	token.SecretKey = sk.PlainText
+	token.EncryptedSecretKey = sk.EncryptedText
 
 	return &token, nil
 }
 
-func generateSecureToken(length int) (string, error) {
-	if length < TokenMinLength {
-		return "", fmt.Errorf("the token length should be >= %d", length)
-	}
-
-	salt := make([]byte, length)
+func (t *TokenHandler) generateSecureToken(prefix string) (*SecureToken, error) {
+	salt := make([]byte, t.TokenMinLength)
 
 	if _, err := rand.Read(salt); err != nil {
-		return "", fmt.Errorf("failed to generate secure tokens salt: %v", err)
+		return nil, fmt.Errorf("failed to generate secure tokens salt: %v", err)
 	}
 
 	hasher := sha256.New()
@@ -51,7 +70,17 @@ func generateSecureToken(length int) (string, error) {
 	// Get the resulting hash and encode it as a hex string.
 	hashBytes := hasher.Sum(nil)
 
-	return hex.EncodeToString(hashBytes), nil
+	text := prefix + hex.EncodeToString(hashBytes)
+	encryptedText, err := Encrypt([]byte(text), t.EncryptionKey)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to Encrypt: %w", err)
+	}
+
+	return &SecureToken{
+		PlainText:     text,
+		EncryptedText: encryptedText,
+	}, nil
 }
 
 func ValidateTokenFormat(seed string) error {

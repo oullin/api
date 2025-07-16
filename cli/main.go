@@ -98,7 +98,7 @@ func createNewAccount(menu panel.Menu) error {
 		return err
 	}
 
-	handler := accounts.MakeHandler(dbConn)
+	handler := accounts.MakeHandler(dbConn, environment)
 
 	if err = handler.CreateAccount(account); err != nil {
 		return err

@@ -8,8 +8,14 @@ const (
 )
 
 type Token struct {
-	AccountName string `validate:"required,min=5"`
-	PublicKey   string `validate:"required"`
-	SecretKey   string `validate:"required"`
-	Length      int    `validate:"required"`
+	AccountName        string
+	PublicKey          string
+	EncryptedPublicKey []byte
+	SecretKey          string
+	EncryptedSecretKey []byte
+}
+
+type SecureToken struct {
+	PlainText     string
+	EncryptedText []byte
 }
