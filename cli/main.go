@@ -108,12 +108,6 @@ func createNewAccount(menu panel.Menu) error {
 	return nil
 }
 
-//func showTime() {
-//	now := time.Now().Format("2006-01-02 15:04:05")
-//
-//	cli.Cyanln("\nThe current time is: " + now)
-//}
-
 func timeParse() {
 	s := pkg.MakeStringable("2025-04-12")
 

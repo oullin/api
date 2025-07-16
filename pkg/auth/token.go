@@ -21,8 +21,8 @@ func SetupNewAccount(accountName string, TokenLength int) (*Token, error) {
 		return nil, fmt.Errorf("failed to generate secret key: %w", err)
 	}
 
-	token.PublicKey = pk
-	token.SecretKey = sk
+	token.PublicKey = PublicKeyPrefix + pk
+	token.SecretKey = SecretKeyPrefix + sk
 	token.Length = TokenLength
 	token.AccountName = accountName
 
