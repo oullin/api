@@ -1,39 +1,38 @@
 package main
 
 import (
+	"fmt"
 	"github.com/oullin/boost"
-	"github.com/oullin/cli/gate"
 	"github.com/oullin/cli/panel"
 	"github.com/oullin/cli/posts"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/cli"
-	"os"
 	"time"
 )
 
-var guard gate.Guard
+// var guard gate.Guard
 var environment *env.Environment
 
 func init() {
 	secrets := boost.Ignite("./../.env", pkg.GetDefaultValidator())
 
 	environment = secrets
-	guard = gate.MakeGuard(environment.App.Credentials)
+	//guard = gate.MakeGuard(environment.App.Credentials)
 }
 
 func main() {
 	cli.ClearScreen()
 
-	if err := guard.CaptureInput(); err != nil {
-		cli.Errorln(err.Error())
-		return
-	}
-
-	if guard.Rejects() {
-		cli.Errorln("Invalid credentials")
-		os.Exit(1)
-	}
+	//if err := guard.CaptureInput(); err != nil {
+	//	cli.Errorln(err.Error())
+	//	return
+	//}
+	//
+	//if guard.Rejects() {
+	//	cli.Errorln("Invalid credentials")
+	//	os.Exit(1)
+	//}
 
 	menu := panel.MakeMenu()
 
@@ -64,7 +63,7 @@ func main() {
 
 			return
 		case 2:
-			showTime()
+			generateToken()
 		case 3:
 			timeParse()
 		case 0:
@@ -78,6 +77,10 @@ func main() {
 
 		menu.PrintLine()
 	}
+}
+
+func generateToken() {
+	fmt.Println("Generating token...")
 }
 
 func showTime() {

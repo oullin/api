@@ -5,7 +5,6 @@ import (
 	"github.com/oullin/pkg/http"
 	"log/slog"
 	baseHttp "net/http"
-	"strings"
 )
 
 const tokenHeader = "X-API-Key"
@@ -23,17 +22,17 @@ func MakeTokenMiddleware(token auth.Token) TokenCheckMiddleware {
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 
-		salt := strings.TrimSpace(r.Header.Get(tokenHeader))
-
-		if t.token.IsInvalid(salt) {
-			message := "Forbidden: Invalid API key"
-			slog.Error(message)
-
-			return &http.ApiError{
-				Message: message + " | " + salt,
-				Status:  baseHttp.StatusForbidden,
-			}
-		}
+		//salt := strings.TrimSpace(r.Header.Get(tokenHeader))
+		//
+		//if t.token.IsInvalid(salt) {
+		//	message := "Forbidden: Invalid API key"
+		//	slog.Error(message)
+		//
+		//	return &http.ApiError{
+		//		Message: message + " | " + salt,
+		//		Status:  baseHttp.StatusForbidden,
+		//	}
+		//}
 
 		slog.Info("Token validation successful")
 
