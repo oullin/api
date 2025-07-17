@@ -51,8 +51,38 @@ func (h Handler) ReadAccount(accountName string) error {
 	cli.Blueln("   > " + fmt.Sprintf("Public Key: %s", auth.SafeDisplay(token.PublicKey)))
 	cli.Blueln("   > " + fmt.Sprintf("Secret Key: %s", auth.SafeDisplay(token.SecretKey)))
 	cli.Warningln("----- Encrypted Values -----")
-	cli.Blueln("   > " + fmt.Sprintf("Public Key: %x", token.EncryptedPublicKey))
-	cli.Blueln("   > " + fmt.Sprintf("Secret Key: %x", token.EncryptedSecretKey))
+	cli.Magentaln("   > " + fmt.Sprintf("Public Key: %x", token.EncryptedPublicKey))
+	cli.Magentaln("   > " + fmt.Sprintf("Secret Key: %x", token.EncryptedSecretKey))
+	fmt.Println(" ")
+
+	return nil
+}
+
+func (h Handler) CreateSignature(accountName string) error {
+	item := h.Tokens.FindBy(accountName)
+
+	if item == nil {
+		return fmt.Errorf("the given account [%s] was not found", accountName)
+	}
+
+	token, err := h.TokenHandler.DecodeTokensFor(
+		item.AccountName,
+		item.SecretKey,
+		item.PublicKey,
+	)
+
+	if err != nil {
+		return fmt.Errorf("could not decode the given account [%s] keys: %v", item.AccountName, err)
+	}
+
+	signature := auth.CreateSignatureFrom(token.PublicKey, token.SecretKey)
+
+	cli.Successln("\nThe given account has been found successfully!\n")
+	cli.Blueln("   > " + fmt.Sprintf("Account name: %s", token.AccountName))
+	cli.Blueln("   > " + fmt.Sprintf("Public Key: %s", auth.SafeDisplay(token.PublicKey)))
+	cli.Blueln("   > " + fmt.Sprintf("Secret Key: %s", auth.SafeDisplay(token.SecretKey)))
+	cli.Warningln("----- Encrypted Values -----")
+	cli.Magentaln("   > " + fmt.Sprintf("Signature: %s", signature))
 	fmt.Println(" ")
 
 	return nil

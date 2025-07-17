@@ -11,7 +11,6 @@ import (
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
-	"os"
 )
 
 var environment *env.Environment
@@ -59,14 +58,11 @@ func main() {
 			}
 
 			return
-
 		case 4:
-			signature := auth.CreateSignatureFrom(
-				os.Getenv("ENV_LOCAL_TOKEN_ACCOUNT"),
-				os.Getenv("ENV_LOCAL_TOKEN_SECRET"),
-			)
-
-			cli.Successln("Signature: " + signature)
+			if err = generateApiAccountsHTTPSignature(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
 
 			return
 		case 5:
@@ -140,6 +136,26 @@ func showApiAccount(menu panel.Menu) error {
 	}
 
 	if err = handler.ReadAccount(account); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateApiAccountsHTTPSignature(menu panel.Menu) error {
+	var err error
+	var account string
+	var handler *accounts.Handler
+
+	if account, err = menu.CaptureAccountName(); err != nil {
+		return err
+	}
+
+	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+		return err
+	}
+
+	if err = handler.CreateSignature(account); err != nil {
 		return err
 	}
 

@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"strings"
 )
 
 type TokenHandler struct {
@@ -105,44 +104,6 @@ func (t *TokenHandler) generateSecureToken(prefix string) (*SecureToken, error) 
 		PlainText:     text,
 		EncryptedText: encryptedText,
 	}, nil
-}
-
-func ValidateTokenFormat(seed string) error {
-	token := strings.TrimSpace(seed)
-
-	if token == "" || len(token) < TokenMinLength {
-		return fmt.Errorf("token not found or invalid")
-	}
-
-	if strings.HasPrefix(token, PublicKeyPrefix) || strings.HasPrefix(token, SecretKeyPrefix) {
-		return nil
-	}
-
-	return fmt.Errorf("the given token [%s] is not valid", token)
-}
-
-func CreateSignatureFrom(message, secretKey string) string {
-	mac := hmac.New(sha256.New, []byte(secretKey))
-	mac.Write([]byte(message))
-
-	return hex.EncodeToString(mac.Sum(nil))
-}
-
-func SafeDisplay(secret string) string {
-	var prefixLen int
-	visibleChars := 10
-
-	if strings.HasPrefix(secret, PublicKeyPrefix) {
-		prefixLen = len(PublicKeyPrefix)
-	} else {
-		prefixLen = len(SecretKeyPrefix)
-	}
-
-	if len(secret) <= prefixLen+visibleChars {
-		return secret
-	}
-
-	return secret[:prefixLen+visibleChars] + "..."
 }
 
 func (t Token) HasInValidSignature(receivedSignature string) bool {

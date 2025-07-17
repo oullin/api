@@ -3,9 +3,13 @@ package auth
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 )
 
 func GenerateAESKey() ([]byte, error) {
@@ -71,4 +75,25 @@ func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	}
 
 	return plaintext, nil
+}
+
+func CreateSignatureFrom(message, secretKey string) string {
+	mac := hmac.New(sha256.New, []byte(secretKey))
+	mac.Write([]byte(message))
+
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+func ValidateTokenFormat(seed string) error {
+	token := strings.TrimSpace(seed)
+
+	if token == "" || len(token) < TokenMinLength {
+		return fmt.Errorf("token not found or invalid")
+	}
+
+	if strings.HasPrefix(token, PublicKeyPrefix) || strings.HasPrefix(token, SecretKeyPrefix) {
+		return nil
+	}
+
+	return fmt.Errorf("the given token [%s] is not valid", token)
 }
