@@ -1,4 +1,4 @@
-.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart
+.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force
 
 BUILD_VERSION ?= latest
 BUILD_PACKAGE_OWNER := oullin
@@ -41,3 +41,6 @@ build-release:
 	@printf "\n$(CYAN)Pushing release to GitHub registry.$(NC)\n"
 	docker push ghcr.io/$(BUILD_PACKAGE_OWNER)/oullin_api:$(BUILD_VERSION) && \
 	docker push ghcr.io/$(BUILD_PACKAGE_OWNER)/oullin_proxy:$(BUILD_VERSION)
+
+build-prod-force:
+	docker compose --env-file ./.env --profile prod up -d --force-recreate caddy_prod
