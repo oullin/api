@@ -48,8 +48,8 @@ func (h Handler) ReadAccount(accountName string) error {
 
 	cli.Successln("\nThe given account has been found successfully!\n")
 	cli.Blueln("   > " + fmt.Sprintf("Account name: %s", token.AccountName))
-	cli.Blueln("   > " + fmt.Sprintf("Public Key: %s", auth.SafeDisplay(token.PublicKey)))
-	cli.Blueln("   > " + fmt.Sprintf("Secret Key: %s", auth.SafeDisplay(token.SecretKey)))
+	cli.Blueln("   > " + fmt.Sprintf("Public Key: %s", token.PublicKey))
+	cli.Blueln("   > " + fmt.Sprintf("Secret Key: %s", token.SecretKey))
 	cli.Blueln("   > " + fmt.Sprintf("API Signature: %s", auth.CreateSignatureFrom(token.AccountName, token.SecretKey)))
 	cli.Warningln("----- Encrypted Values -----")
 	cli.Magentaln("   > " + fmt.Sprintf("Public Key: %x", token.EncryptedPublicKey))
