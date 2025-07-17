@@ -8,6 +8,16 @@ import (
 	"io"
 )
 
+func GenerateAESKey() ([]byte, error) {
+	key := make([]byte, EncryptionKeyLength)
+
+	if _, err := rand.Read(key); err != nil {
+		return nil, fmt.Errorf("failed to generate random key: %w", err)
+	}
+
+	return key, nil
+}
+
 func Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {

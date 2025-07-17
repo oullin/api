@@ -15,7 +15,11 @@ type TokenHandler struct {
 	AccountNameMinLength int
 }
 
-func MakeTokenHandler(encryptionKey []byte, accountNameMinLength, tokenMinLength int) (*TokenHandler, error) {
+func MakeTokensHandler(encryptionKey []byte, accountNameMinLength, tokenMinLength int) (*TokenHandler, error) {
+	if len(encryptionKey) != EncryptionKeyLength {
+		return nil, fmt.Errorf("encryption key length must be equal to %d bytes", EncryptionKeyLength)
+	}
+
 	if tokenMinLength < TokenMinLength {
 		return nil, fmt.Errorf("the token length should be at least %d", TokenMinLength)
 	}
@@ -31,30 +35,50 @@ func MakeTokenHandler(encryptionKey []byte, accountNameMinLength, tokenMinLength
 	}, nil
 }
 
+func (t *TokenHandler) DecodeTokensFor(accountName string, secret, public []byte) (*Token, error) {
+	var err error
+	var publicKey, secretKey []byte
+
+	if publicKey, err = Decrypt(public, t.EncryptionKey); err != nil {
+		return nil, fmt.Errorf("unable to decrypt public key: %w", err)
+	}
+
+	if secretKey, err = Decrypt(secret, t.EncryptionKey); err != nil {
+		return nil, fmt.Errorf("unable to decrypt secret key: %w", err)
+	}
+
+	return &Token{
+		AccountName:        accountName,
+		PublicKey:          string(publicKey),
+		EncryptedPublicKey: public,
+		SecretKey:          string(secretKey),
+		EncryptedSecretKey: secret,
+	}, nil
+}
+
 func (t *TokenHandler) SetupNewAccount(accountName string) (*Token, error) {
-	token := Token{}
+	var err error
+	var pk, sk *SecureToken
 
 	if len(accountName) < AccountNameMinLength {
 		return nil, fmt.Errorf("account name must be at least %d characters", AccountNameMinLength)
 	}
 
-	pk, err := t.generateSecureToken(PublicKeyPrefix)
-	if err != nil {
+	if pk, err = t.generateSecureToken(PublicKeyPrefix); err != nil {
 		return nil, fmt.Errorf("failed to generate public key: %w", err)
 	}
 
-	sk, err := t.generateSecureToken(SecretKeyPrefix)
-	if err != nil {
+	if sk, err = t.generateSecureToken(SecretKeyPrefix); err != nil {
 		return nil, fmt.Errorf("failed to generate secret key: %w", err)
 	}
 
-	token.AccountName = accountName
-	token.PublicKey = pk.PlainText
-	token.EncryptedPublicKey = pk.EncryptedText
-	token.SecretKey = sk.PlainText
-	token.EncryptedSecretKey = sk.EncryptedText
-
-	return &token, nil
+	return &Token{
+		AccountName:        accountName,
+		PublicKey:          pk.PlainText,
+		EncryptedPublicKey: pk.EncryptedText,
+		SecretKey:          sk.PlainText,
+		EncryptedSecretKey: sk.EncryptedText,
+	}, nil
 }
 
 func (t *TokenHandler) generateSecureToken(prefix string) (*SecureToken, error) {
@@ -106,7 +130,7 @@ func CreateSignatureFrom(message, secretKey string) string {
 
 func SafeDisplay(secret string) string {
 	var prefixLen int
-	visibleChars := 8
+	visibleChars := 10
 
 	if strings.HasPrefix(secret, PublicKeyPrefix) {
 		prefixLen = len(PublicKeyPrefix)

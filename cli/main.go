@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/oullin/boost"
 	"github.com/oullin/cli/accounts"
 	"github.com/oullin/cli/panel"
@@ -45,19 +46,34 @@ func main() {
 
 			return
 		case 2:
-			if err = createNewAccount(menu); err != nil {
+			if err = createNewApiAccount(menu); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
 
 			return
 		case 3:
+			if err = showApiAccount(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+
+		case 4:
 			signature := auth.CreateSignatureFrom(
 				os.Getenv("ENV_LOCAL_TOKEN_ACCOUNT"),
 				os.Getenv("ENV_LOCAL_TOKEN_SECRET"),
 			)
 
 			cli.Successln("Signature: " + signature)
+
+			return
+		case 5:
+			if err = generateAppEncryptionKey(); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
 
 			return
 		case 0:
@@ -90,19 +106,57 @@ func createBlogPost(menu panel.Menu) error {
 	return nil
 }
 
-func createNewAccount(menu panel.Menu) error {
+func createNewApiAccount(menu panel.Menu) error {
 	var err error
 	var account string
+	var handler *accounts.Handler
 
 	if account, err = menu.CaptureAccountName(); err != nil {
 		return err
 	}
 
-	handler := accounts.MakeHandler(dbConn, environment)
+	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+		return err
+	}
 
 	if err = handler.CreateAccount(account); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func showApiAccount(menu panel.Menu) error {
+	var err error
+	var account string
+	var handler *accounts.Handler
+
+	if account, err = menu.CaptureAccountName(); err != nil {
+		return err
+	}
+
+	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+		return err
+	}
+
+	if handler.ReadAccount(account) != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateAppEncryptionKey() error {
+	var err error
+	var key []byte
+
+	if key, err = auth.GenerateAESKey(); err != nil {
+		return err
+	}
+
+	cli.Successln("\n  The key was generated successfully.")
+	cli.Magentaln(fmt.Sprintf("  > key: %x", key))
+	fmt.Println(" ")
 
 	return nil
 }

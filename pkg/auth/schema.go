@@ -5,6 +5,7 @@ const (
 	SecretKeyPrefix      = "sk_"
 	TokenMinLength       = 16
 	AccountNameMinLength = 5
+	EncryptionKeyLength  = 32
 )
 
 type Token struct {

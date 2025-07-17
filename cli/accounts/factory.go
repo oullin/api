@@ -1,6 +1,7 @@
 package accounts
 
 import (
+	"fmt"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/env"
@@ -8,19 +9,27 @@ import (
 )
 
 type Handler struct {
-	Env         *env.Environment
-	Tokens      *repository.ApiKeys
-	TokenLength int
-	IsDebugging bool
+	IsDebugging  bool
+	Env          *env.Environment
+	Tokens       *repository.ApiKeys
+	TokenHandler *auth.TokenHandler
 }
 
-func MakeHandler(db *database.Connection, env *env.Environment) Handler {
-	tokens := repository.ApiKeys{DB: db}
+func MakeHandler(db *database.Connection, env *env.Environment) (*Handler, error) {
+	tokenHandler, err := auth.MakeTokensHandler(
+		[]byte(env.App.MasterKey),
+		auth.AccountNameMinLength,
+		auth.TokenMinLength,
+	)
 
-	return Handler{
-		Env:         env,
-		IsDebugging: false,
-		Tokens:      &tokens,
-		TokenLength: auth.TokenMinLength,
+	if err != nil {
+		return nil, fmt.Errorf("failed to make token handler: %v", err)
 	}
+
+	return &Handler{
+		Env:          env,
+		IsDebugging:  false,
+		Tokens:       &repository.ApiKeys{DB: db},
+		TokenHandler: tokenHandler,
+	}, nil
 }
