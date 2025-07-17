@@ -3,12 +3,14 @@ package middleware
 import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/env"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http"
 )
 
 type Pipeline struct {
-	Env     *env.Environment
-	ApiKeys *repository.ApiKeys
+	Env          *env.Environment
+	ApiKeys      *repository.ApiKeys
+	TokenHandler *auth.TokenHandler
 }
 
 // Chain applies a list of middleware handlers to a final ApiHandler.

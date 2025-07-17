@@ -18,8 +18,6 @@ type Handler struct {
 func MakeHandler(db *database.Connection, env *env.Environment) (*Handler, error) {
 	tokenHandler, err := auth.MakeTokensHandler(
 		[]byte(env.App.MasterKey),
-		auth.AccountNameMinLength,
-		auth.TokenMinLength,
 	)
 
 	if err != nil {

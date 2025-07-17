@@ -14,23 +14,15 @@ type TokenHandler struct {
 	AccountNameMinLength int
 }
 
-func MakeTokensHandler(encryptionKey []byte, accountNameMinLength, tokenMinLength int) (*TokenHandler, error) {
+func MakeTokensHandler(encryptionKey []byte) (*TokenHandler, error) {
 	if len(encryptionKey) != EncryptionKeyLength {
 		return nil, fmt.Errorf("encryption key length must be equal to %d bytes", EncryptionKeyLength)
 	}
 
-	if tokenMinLength < TokenMinLength {
-		return nil, fmt.Errorf("the token length should be at least %d", TokenMinLength)
-	}
-
-	if accountNameMinLength < AccountNameMinLength {
-		return nil, fmt.Errorf("the account name length should be at least %d", AccountNameMinLength)
-	}
-
 	return &TokenHandler{
 		EncryptionKey:        encryptionKey,
-		TokenMinLength:       tokenMinLength,
-		AccountNameMinLength: accountNameMinLength,
+		TokenMinLength:       TokenMinLength,
+		AccountNameMinLength: AccountNameMinLength,
 	}, nil
 }
 

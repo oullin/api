@@ -16,6 +16,7 @@ type Router struct {
 
 func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
+		r.Pipeline.TokenHandler,
 		r.Pipeline.ApiKeys,
 	)
 

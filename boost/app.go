@@ -1,10 +1,12 @@
 package boost
 
 import (
+	"fmt"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http/middleware"
 	"github.com/oullin/pkg/llogs"
 	baseHttp "net/http"
@@ -19,7 +21,15 @@ type App struct {
 	db        *database.Connection
 }
 
-func MakeApp(env *env.Environment, validator *pkg.Validator) *App {
+func MakeApp(env *env.Environment, validator *pkg.Validator) (*App, error) {
+	tokenHandler, err := auth.MakeTokensHandler(
+		[]byte(env.App.MasterKey),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("bootstrapping error > could not create a token handler: %w", err)
+	}
+
 	db := MakeDbConnection(env)
 
 	app := App{
@@ -34,19 +44,20 @@ func MakeApp(env *env.Environment, validator *pkg.Validator) *App {
 		Env: env,
 		Mux: baseHttp.NewServeMux(),
 		Pipeline: middleware.Pipeline{
-			Env:     env,
-			ApiKeys: &repository.ApiKeys{DB: db},
+			Env:          env,
+			ApiKeys:      &repository.ApiKeys{DB: db},
+			TokenHandler: tokenHandler,
 		},
 	}
 
 	app.SetRouter(router)
 
-	return &app
+	return &app, nil
 }
 
 func (a *App) Boot() {
-	if a.router == nil {
-		panic("Router is not set")
+	if a == nil || a.router == nil {
+		panic("bootstrapping error > Invalid setup")
 	}
 
 	router := *a.router
