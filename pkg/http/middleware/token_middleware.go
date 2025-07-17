@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http"
@@ -52,26 +53,35 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 }
 
 func (t TokenCheckMiddleware) shallReject(accountName, publicToken, signature string) bool {
-	return false
-	//var item *database.APIKey
-	//
-	//if item = t.ApiKeys.FindBy(accountName); item == nil {
-	//	return true
-	//}
-	//
-	//if strings.TrimSpace(item.PublicKey) != strings.TrimSpace(publicToken) {
-	//	return true
-	//}
-	//
-	//token := auth.Token{
-	//	AccountName: item.AccountName,
-	//	SecretKey:   item.SecretKey,
-	//	PublicKey:   item.PublicKey,
-	//	Length:      len(item.PublicKey),
-	//}
-	//
-	//return token.HasInValidSignature(signature)
+	var item *database.APIKey
+
+	if item = t.ApiKeys.FindBy(accountName); item == nil {
+		return true
+	}
+
+	token, err := t.TokenHandler.DecodeTokensFor(
+		item.AccountName,
+		item.SecretKey,
+		item.PublicKey,
+	)
+
+	if err != nil {
+		slog.Error(fmt.Sprintf("could not decode the given account [%s] keys: %v", item.AccountName, err))
+
+		return true
+	}
+
+	if strings.TrimSpace(token.PublicKey) != strings.TrimSpace(publicToken) {
+		slog.Error(fmt.Sprintf("the given public token does not match tour records [%s]: %v", item.AccountName, err))
+
+		return true
+	}
+
+	localSignature := auth.CreateSignatureFrom(token.AccountName, token.SecretKey)
+
+	return signature != localSignature
 }
+
 func (t TokenCheckMiddleware) getInvalidRequestError(accountName, publicToken, signature string) *http.ApiError {
 	message := fmt.Sprintf(
 		"invalid request. Please, provide a valid token, signature and accout name headers. [account: %s, public token: %s, signature: %s]",
@@ -98,7 +108,7 @@ func (t TokenCheckMiddleware) getUnauthenticatedError(accountName, publicToken, 
 		"Unauthenticated, please check your credentials and signature headers: [token: %s, account name: %s, signature: %s]",
 		auth.SafeDisplay(publicToken),
 		accountName,
-		auth.SafeDisplay(signature),
+		signature,
 	)
 
 	return &http.ApiError{
