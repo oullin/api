@@ -139,7 +139,7 @@ func showApiAccount(menu panel.Menu) error {
 		return err
 	}
 
-	if handler.ReadAccount(account) != nil {
+	if err = handler.ReadAccount(account); err != nil {
 		return err
 	}
 

@@ -25,7 +25,7 @@ func MakeTokensHandler(encryptionKey []byte, accountNameMinLength, tokenMinLengt
 	}
 
 	if accountNameMinLength < AccountNameMinLength {
-		return nil, fmt.Errorf("the token length should be at least %d", AccountNameMinLength)
+		return nil, fmt.Errorf("the account name length should be at least %d", AccountNameMinLength)
 	}
 
 	return &TokenHandler{
