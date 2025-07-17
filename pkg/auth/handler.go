@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -96,20 +95,4 @@ func (t *TokenHandler) generateSecureToken(prefix string) (*SecureToken, error) 
 		PlainText:     text,
 		EncryptedText: encryptedText,
 	}, nil
-}
-
-func (t Token) HasInValidSignature(receivedSignature string) bool {
-	return !t.HasValidSignature(receivedSignature)
-}
-
-func (t Token) HasValidSignature(receivedSignature string) bool {
-	signature := CreateSignatureFrom(
-		t.AccountName,
-		t.SecretKey,
-	)
-
-	return hmac.Equal(
-		[]byte(signature),
-		[]byte(receivedSignature),
-	)
 }
