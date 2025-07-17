@@ -170,8 +170,12 @@ func generateAppEncryptionKey() error {
 		return err
 	}
 
+	decoded := fmt.Sprintf("%x", key)
+
 	cli.Successln("\n  The key was generated successfully.")
-	cli.Magentaln(fmt.Sprintf("  > key: %x", key))
+	cli.Magentaln(fmt.Sprintf("  > Full key: %s", decoded))
+	cli.Cyanln(fmt.Sprintf("  > First half : %s", decoded[:32]))
+	cli.Cyanln(fmt.Sprintf("  > Second half: %s", decoded[32:]))
 	fmt.Println(" ")
 
 	return nil
