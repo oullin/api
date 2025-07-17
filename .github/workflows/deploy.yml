@@ -81,7 +81,19 @@ jobs:
             docker pull ghcr.io/oullin/oullin_api:$IMAGE_TAG
             docker pull ghcr.io/oullin/oullin_proxy:$IMAGE_TAG
 
+            echo "----- Images before re-tag -----"
+            docker images | grep api-api
+            echo "-------------------------------"
+
+            echo "🏷️ Retagging for Compose…"
+            docker tag ghcr.io/oullin/oullin_api:$IMAGE_TAG    api-api:latest
+            docker tag ghcr.io/oullin/oullin_proxy:$IMAGE_TAG  api-caddy_prod:latest
+
+            echo "----- Images after re-tag -----"
+            docker images | grep api-api
+            echo "-------------------------------"
+
             echo "🧹 Pruning old, unused Docker images ..."
-            docker image prune -af
+            docker image prune -f
 
             echo "✅ Latest images pulled successfully to VPS!"

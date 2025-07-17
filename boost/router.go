@@ -16,13 +16,13 @@ type Router struct {
 
 func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
-		r.Env.App.Credentials,
+		r.Pipeline.TokenHandler,
+		r.Pipeline.ApiKeys,
 	)
 
 	return http.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
-			middleware.UsernameCheck,
 			tokenMiddleware.Handle,
 		),
 	)

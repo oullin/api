@@ -11,8 +11,8 @@ const DriverName = "postgres"
 var schemaTables = []string{
 	"users", "posts", "categories",
 	"post_categories", "tags", "post_tags",
-	"post_views", "post_views", "comments",
-	"likes", "newsletters",
+	"post_views", "comments",
+	"likes", "newsletters", "api_keys",
 }
 
 func GetSchemaTables() []string {
@@ -21,6 +21,17 @@ func GetSchemaTables() []string {
 
 func isValidTable(seed string) bool {
 	return slices.Contains(schemaTables, seed)
+}
+
+type APIKey struct {
+	ID          int64  `gorm:"primaryKey"`
+	UUID        string `gorm:"type:uuid;unique;not null"`
+	AccountName string `gorm:"column:account_name;not null;unique;uniqueIndex:uq_account_keys"`
+	PublicKey   []byte `gorm:"column:public_key;not null;unique;index;uniqueIndex:uq_account_keys"`
+	SecretKey   []byte `gorm:"column:secret_key;not null;unique;index;uniqueIndex:uq_account_keys"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 type User struct {

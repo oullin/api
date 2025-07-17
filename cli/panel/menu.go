@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/oullin/cli/posts"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
 	"golang.org/x/term"
 	"net/url"
@@ -84,10 +85,13 @@ func (p *Menu) Print() {
 	fmt.Println(title)
 	fmt.Println(divider)
 
-	p.PrintOption("1) Parse Posts", inner)
-	p.PrintOption("2) Show Time", inner)
-	p.PrintOption("3) Show Date", inner)
-	p.PrintOption("0) Exit", inner)
+	p.PrintOption("1) Parse Blog Posts.", inner)
+	p.PrintOption("2) Create new API account.", inner)
+	p.PrintOption("3) Show API accounts.", inner)
+	p.PrintOption("4) Generate API accounts HTTP signature.", inner)
+	p.PrintOption("5) Generate app encryption key.", inner)
+	p.PrintOption(" ", inner)
+	p.PrintOption("0) Exit.", inner)
 
 	fmt.Println(footer + cli.Reset)
 }
@@ -115,6 +119,23 @@ func (p *Menu) CenterText(s string, width int) string {
 	right := pad - left
 
 	return strings.Repeat(" ", left) + s + strings.Repeat(" ", right)
+}
+
+func (p *Menu) CaptureAccountName() (string, error) {
+	fmt.Print("Enter the account name: ")
+
+	account, err := p.Reader.ReadString('\n')
+
+	if err != nil {
+		return "", fmt.Errorf("%sError reading the account name: %v %s", cli.RedColour, err, cli.Reset)
+	}
+
+	account = strings.TrimSpace(account)
+	if account == "" || len(account) < auth.AccountNameMinLength {
+		return "", fmt.Errorf("%sError: no account name provided or has an invalid length: %s", cli.RedColour, cli.Reset)
+	}
+
+	return account, nil
 }
 
 func (p *Menu) CapturePostURL() (*posts.Input, error) {

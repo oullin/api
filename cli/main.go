@@ -1,39 +1,30 @@
 package main
 
 import (
+	"fmt"
 	"github.com/oullin/boost"
-	"github.com/oullin/cli/gate"
+	"github.com/oullin/cli/accounts"
 	"github.com/oullin/cli/panel"
 	"github.com/oullin/cli/posts"
+	"github.com/oullin/database"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
-	"os"
-	"time"
 )
 
-var guard gate.Guard
 var environment *env.Environment
+var dbConn *database.Connection
 
 func init() {
 	secrets := boost.Ignite("./../.env", pkg.GetDefaultValidator())
 
 	environment = secrets
-	guard = gate.MakeGuard(environment.App.Credentials)
+	dbConn = boost.MakeDbConnection(environment)
 }
 
 func main() {
 	cli.ClearScreen()
-
-	if err := guard.CaptureInput(); err != nil {
-		cli.Errorln(err.Error())
-		return
-	}
-
-	if guard.Rejects() {
-		cli.Errorln("Invalid credentials")
-		os.Exit(1)
-	}
 
 	menu := panel.MakeMenu()
 
@@ -47,26 +38,40 @@ func main() {
 
 		switch menu.GetChoice() {
 		case 1:
-			input, err := menu.CapturePostURL()
-
-			if err != nil {
-				cli.Errorln(err.Error())
-				continue
-			}
-
-			httpClient := pkg.MakeDefaultClient(nil)
-			handler := posts.MakeHandler(input, httpClient, environment)
-
-			if _, err := handler.NotParsed(); err != nil {
+			if err = createBlogPost(menu); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
 
 			return
 		case 2:
-			showTime()
+			if err = createNewApiAccount(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
 		case 3:
-			timeParse()
+			if err = showApiAccount(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+		case 4:
+			if err = generateApiAccountsHTTPSignature(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+		case 5:
+			if err = generateAppEncryptionKey(); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
 		case 0:
 			cli.Successln("Goodbye!")
 			return
@@ -80,18 +85,94 @@ func main() {
 	}
 }
 
-func showTime() {
-	now := time.Now().Format("2006-01-02 15:04:05")
+func createBlogPost(menu panel.Menu) error {
+	input, err := menu.CapturePostURL()
 
-	cli.Cyanln("\nThe current time is: " + now)
+	if err != nil {
+		return err
+	}
+
+	httpClient := pkg.MakeDefaultClient(nil)
+	handler := posts.MakeHandler(input, httpClient, dbConn)
+
+	if _, err = handler.NotParsed(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func timeParse() {
-	s := pkg.MakeStringable("2025-04-12")
+func createNewApiAccount(menu panel.Menu) error {
+	var err error
+	var account string
+	var handler *accounts.Handler
 
-	if seed, err := s.ToDatetime(); err != nil {
-		panic(err)
-	} else {
-		cli.Magentaln(seed.Format(time.DateTime))
+	if account, err = menu.CaptureAccountName(); err != nil {
+		return err
 	}
+
+	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+		return err
+	}
+
+	if err = handler.CreateAccount(account); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func showApiAccount(menu panel.Menu) error {
+	var err error
+	var account string
+	var handler *accounts.Handler
+
+	if account, err = menu.CaptureAccountName(); err != nil {
+		return err
+	}
+
+	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+		return err
+	}
+
+	if err = handler.ReadAccount(account); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateApiAccountsHTTPSignature(menu panel.Menu) error {
+	var err error
+	var account string
+	var handler *accounts.Handler
+
+	if account, err = menu.CaptureAccountName(); err != nil {
+		return err
+	}
+
+	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+		return err
+	}
+
+	if err = handler.CreateSignature(account); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateAppEncryptionKey() error {
+	var err error
+	var key []byte
+
+	if key, err = auth.GenerateAESKey(); err != nil {
+		return err
+	}
+
+	cli.Successln("\n  The key was generated successfully.")
+	cli.Magentaln(fmt.Sprintf("  > key: %x", key))
+	fmt.Println(" ")
+
+	return nil
 }

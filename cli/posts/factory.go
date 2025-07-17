@@ -3,9 +3,8 @@ package posts
 import (
 	"context"
 	"fmt"
-	"github.com/oullin/boost"
+	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/markdown"
 	"net/http"
@@ -20,9 +19,7 @@ type Handler struct {
 	IsDebugging bool
 }
 
-func MakeHandler(input *Input, client *pkg.Client, env *env.Environment) Handler {
-	db := boost.MakeDbConnection(env)
-
+func MakeHandler(input *Input, client *pkg.Client, db *database.Connection) Handler {
 	tags := &repository.Tags{DB: db}
 	categories := &repository.Categories{DB: db}
 

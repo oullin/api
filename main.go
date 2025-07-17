@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/oullin/boost"
 	"github.com/oullin/pkg"
@@ -12,10 +13,14 @@ var app *boost.App
 
 func init() {
 	validate := pkg.GetDefaultValidator()
-
 	secrets := boost.Ignite("./.env", validate)
+	application, err := boost.MakeApp(secrets, validate)
 
-	app = boost.MakeApp(secrets, validate)
+	if err != nil {
+		panic(fmt.Sprintf("init: Error creating application: %s", err))
+	}
+
+	app = application
 }
 
 func main() {

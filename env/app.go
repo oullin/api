@@ -1,15 +1,13 @@
 package env
 
-import "github.com/oullin/pkg/auth"
-
 const local = "local"
 const staging = "staging"
 const production = "production"
 
 type AppEnvironment struct {
-	Name        string     `validate:"required,min=4"`
-	Type        string     `validate:"required,lowercase,oneof=local production staging"`
-	Credentials auth.Token `validate:"required"`
+	Name      string `validate:"required,min=4"`
+	Type      string `validate:"required,lowercase,oneof=local production staging"`
+	MasterKey string `validate:"required,min=32"`
 }
 
 func (e AppEnvironment) IsProduction() bool {
