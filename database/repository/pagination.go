@@ -15,3 +15,23 @@ type PaginatedResult[T any] struct {
 	NextPage     *int  `json:"next_page,omitempty"`
 	PreviousPage *int  `json:"previous_page,omitempty"`
 }
+
+// MapPaginatedResult converts a paginated result of type S to a paginated result of type D.
+func MapPaginatedResult[S any, D any](source *PaginatedResult[S], mapper func(S) D) *PaginatedResult[D] {
+	mappedData := make([]D, len(source.Data))
+
+	// Iterate over the source data and apply the mapper function
+	for i, item := range source.Data {
+		mappedData[i] = mapper(item)
+	}
+
+	return &PaginatedResult[D]{
+		Data:         mappedData,
+		TotalRecords: source.TotalRecords,
+		CurrentPage:  source.CurrentPage,
+		PageSize:     source.PageSize,
+		TotalPages:   source.TotalPages,
+		NextPage:     source.NextPage,
+		PreviousPage: source.PreviousPage,
+	}
+}
