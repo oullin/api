@@ -25,7 +25,7 @@ audit:
 watch:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
-	cd $(APP_PATH) && air
+	cd $(APP_PATH) && air -d
 
 install-air:
 	# --- Works with (air).

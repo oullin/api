@@ -1,6 +1,8 @@
 package boost
 
 import (
+	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
 	"github.com/oullin/env"
 	"github.com/oullin/handler"
 	"github.com/oullin/pkg/http"
@@ -12,6 +14,7 @@ type Router struct {
 	Env      *env.Environment
 	Mux      *baseHttp.ServeMux
 	Pipeline middleware.Pipeline
+	Db       *database.Connection
 }
 
 func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
@@ -26,6 +29,14 @@ func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 			tokenMiddleware.Handle,
 		),
 	)
+}
+
+func (r *Router) Posts() {
+	repo := repository.Posts{DB: r.Db}
+
+	abstract := handler.MakePostsHandler(&repo)
+
+	r.Mux.HandleFunc("/posts", abstract.Handle)
 }
 
 func (r *Router) Profile() {

@@ -42,6 +42,7 @@ func MakeApp(env *env.Environment, validator *pkg.Validator) (*App, error) {
 
 	router := Router{
 		Env: env,
+		Db:  db,
 		Mux: baseHttp.NewServeMux(),
 		Pipeline: middleware.Pipeline{
 			Env:          env,
