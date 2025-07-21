@@ -52,7 +52,7 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination *Pagination[dat
 		return nil, err
 	}
 
-	result := MakePagination[database.Post](posts, page, pageSize, total)
+	result := Paginate[database.Post](posts, page, pageSize, total)
 
 	return result, nil
 }

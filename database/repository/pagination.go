@@ -2,6 +2,8 @@ package repository
 
 import "math"
 
+const MaxLimit = 100
+
 // Pagination holds the data for a single page along with all pagination metadata.
 // It's generic and can be used for any data type.
 //
@@ -18,7 +20,7 @@ type Pagination[T any] struct {
 	PreviousPage *int  `json:"previous_page,omitempty"`
 }
 
-func MakePagination[T any](data []T, page, pageSize int, total int64) *Pagination[T] {
+func Paginate[T any](data []T, page, pageSize int, total int64) *Pagination[T] {
 	pSize := float64(pageSize)
 	if pSize <= 0 {
 		pSize = 10

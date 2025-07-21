@@ -1,6 +1,11 @@
 package posts
 
-import "github.com/oullin/database"
+import (
+	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
+	"net/url"
+	"strconv"
+)
 
 func Collection(p database.Post) PostResponse {
 	return PostResponse{
@@ -63,4 +68,30 @@ func MapTags(tags []database.Tag) []TagData {
 	}
 
 	return data
+}
+
+func MapPagination(url url.Values) repository.Pagination[database.Post] {
+	page := 1
+	pageSize := 10
+
+	if url.Get("page") != "" {
+		if tPage, err := strconv.Atoi(url.Get("page")); err == nil {
+			page = tPage
+		}
+	}
+
+	if url.Get("limit") != "" {
+		if limit, err := strconv.Atoi(url.Get("limit")); err == nil {
+			pageSize = limit
+		}
+
+		if pageSize > repository.MaxLimit {
+			pageSize = repository.MaxLimit
+		}
+	}
+
+	return repository.Pagination[database.Post]{
+		Page:     page,
+		PageSize: pageSize,
+	}
 }
