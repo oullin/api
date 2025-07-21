@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/handler/posts"
 	"github.com/oullin/pkg/http"
 	"log/slog"
@@ -21,7 +22,7 @@ func MakePostsHandler(posts *repository.Posts) PostsHandler {
 }
 
 func (h *PostsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	filters := repository.PostFilters{Title: ""}
+	filters := queries.PostFilters{Title: ""}
 	pagination := repository.PaginatedResult[database.Post]{
 		Page:     1,
 		PageSize: 10,

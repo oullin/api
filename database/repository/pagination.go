@@ -16,7 +16,18 @@ type PaginatedResult[T any] struct {
 	PreviousPage *int  `json:"previous_page,omitempty"`
 }
 
-// MapPaginatedResult converts a paginated result of type S to a paginated result of type D.
+// MapPaginatedResult transforms a paginated result containing items of a source type (S)
+// into a new result containing items of a destination type (D).
+//
+// It takes a source PaginatedResult and a mapper function that defines the conversion
+// logic from an item of type S to an item of type D.
+//
+// Type Parameters:
+//   - S: The source type (e.g., a database model like database.Post).
+//   - D: The destination type (e.g., an API response DTO like PostResponse).
+//
+// The function returns a new PaginatedResult with the transformed data, while preserving
+// all original pagination metadata (TotalRecords, CurrentPage, etc.).
 func MapPaginatedResult[S any, D any](source *PaginatedResult[S], mapper func(S) D) *PaginatedResult[D] {
 	mappedData := make([]D, len(source.Data))
 

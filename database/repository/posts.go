@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/pkg/gorm"
 	"math"
 )
@@ -14,58 +15,14 @@ type Posts struct {
 	Tags       *Tags
 }
 
-type PostFilters struct {
-	UUID           string
-	Slug           string
-	Title          string // Will perform a case-insensitive partial match
-	AuthorUsername string
-	CategorySlug   string
-	TagSlug        string
-	IsPublished    *bool // Pointer to bool to allow three states: true, false, and not-set (nil)
-}
-
-func (p Posts) GetPosts(filters *PostFilters, pagination *PaginatedResult[database.Post]) (*PaginatedResult[database.Post], error) {
+func (p Posts) GetPosts(filters *queries.PostFilters, pagination *PaginatedResult[database.Post]) (*PaginatedResult[database.Post], error) {
 	var posts []database.Post
 	var totalRecords int64
 
 	query := p.DB.Sql().Model(&database.Post{})
 	countQuery := query.Session(p.DB.Session())
 
-	if filters != nil {
-		// Filter by direct fields on the 'posts' table
-		if filters.UUID != "" {
-			query.Where("posts.uuid = ?", filters.UUID)
-		}
-
-		if filters.Slug != "" {
-			query.Where("posts.slug = ?", filters.Slug)
-		}
-
-		if filters.Title != "" {
-			// Use ILIKE for case-insensitive search (PostgreSQL specific).
-			// For MySQL, use: query.Where("LOWER(posts.title) LIKE LOWER(?)", "%"+filters.Title+"%")
-			query.Where("posts.title ILIKE ?", "%"+filters.Title+"%")
-		}
-
-		// Filter by relations using JOINs
-		if filters.AuthorUsername != "" {
-			// GORM's Joins() uses the struct relation name ("Author").
-			query.Joins("Author").Where("Author.username = ?", filters.AuthorUsername)
-		}
-
-		if filters.CategorySlug != "" {
-			// For many-to-many, an explicit join is often clearer and safer.
-			query.Joins("JOIN post_categories ON post_categories.post_id = posts.id").
-				Joins("JOIN categories ON categories.id = post_categories.category_id").
-				Where("categories.slug = ?", filters.CategorySlug)
-		}
-
-		if filters.TagSlug != "" {
-			query.Joins("JOIN post_tags ON post_tags.post_id = posts.id").
-				Joins("JOIN tags ON tags.id = post_tags.tag_id").
-				Where("tags.slug = ?", filters.TagSlug)
-		}
-	}
+	queries.ApplyPostsFilters(filters, query)
 
 	if err := countQuery.Distinct("posts.id, posts.published_at").Count(&totalRecords).Error; err != nil {
 		return nil, err
