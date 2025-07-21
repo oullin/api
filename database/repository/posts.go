@@ -6,7 +6,6 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/pkg/gorm"
-	"math"
 )
 
 type Posts struct {
@@ -15,9 +14,11 @@ type Posts struct {
 	Tags       *Tags
 }
 
-func (p Posts) GetPosts(filters *queries.PostFilters, pagination *PaginatedResult[database.Post]) (*PaginatedResult[database.Post], error) {
+func (p Posts) GetPosts(filters *queries.PostFilters, pagination *Pagination[database.Post]) (*Pagination[database.Post], error) {
+	page := 1
+	pageSize := 10
+	var total int64
 	var posts []database.Post
-	var totalRecords int64
 
 	query := p.
 		DB.Sql().
@@ -26,51 +27,23 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination *PaginatedResul
 
 	queries.ApplyPostsFilters(filters, query)
 
-	// Set default pagination values if none are provided
-	if pagination == nil {
-		pagination = &PaginatedResult[database.Post]{
-			Page:     1,
-			PageSize: 10,
-		}
+	if pagination != nil {
+		page = pagination.Page
+		pageSize = pagination.PageSize
 	}
-
-	if pagination.Page <= 0 {
-		pagination.Page = 1
-	}
-
-	if pagination.PageSize <= 0 {
-		pagination.PageSize = 10
-	}
-
-	// -------------
 
 	countQuery := query.Session(p.DB.Session())
-	if err := countQuery.Count(&totalRecords).Error; err != nil {
+	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, err
 	}
 
-	// Calculate pagination metadata
-	totalPages := int(math.Ceil(float64(totalRecords) / float64(pagination.PageSize)))
-
-	var nextPage *int
-	if pagination.Page < totalPages {
-		p := pagination.Page + 1
-		nextPage = &p
-	}
-
-	var prevPage *int
-	if pagination.Page > 1 && pagination.Page <= totalPages {
-		p := pagination.Page - 1
-		prevPage = &p
-	}
-
 	// Fetch the data for the current page
-	offset := (pagination.Page - 1) * pagination.PageSize
+	offset := (page - 1) * pageSize
 	err := query.Preload("Author").
 		Preload("Categories").
 		Preload("Tags").
 		Order("posts.published_at DESC").
-		Limit(pagination.PageSize).
+		Limit(pageSize).
 		Offset(offset).
 		Distinct().
 		Find(&posts).Error
@@ -79,16 +52,7 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination *PaginatedResul
 		return nil, err
 	}
 
-	// Assemble the final result
-	result := &PaginatedResult[database.Post]{
-		Data:         posts,
-		TotalRecords: totalRecords,
-		CurrentPage:  pagination.Page,
-		PageSize:     pagination.PageSize,
-		TotalPages:   totalPages,
-		NextPage:     nextPage,
-		PreviousPage: prevPage,
-	}
+	result := MakePagination[database.Post](posts, page, pageSize, total)
 
 	return result, nil
 }

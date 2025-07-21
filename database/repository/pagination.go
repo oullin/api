@@ -1,14 +1,16 @@
 package repository
 
-// PaginatedResult holds the data for a single page along with all pagination metadata.
+import "math"
+
+// Pagination holds the data for a single page along with all pagination metadata.
 // It's generic and can be used for any data type.
 //
 // NextPage and PreviousPage are pointers (*int) so they can be nil (and omitted from JSON output)
 // when there isn't a next or previous page.
-type PaginatedResult[T any] struct {
+type Pagination[T any] struct {
 	Data         []T   `json:"data"`
 	Page         int   `json:"page"`
-	TotalRecords int64 `json:"total_records"`
+	Total        int64 `json:"total"`
 	CurrentPage  int   `json:"current_page"`
 	PageSize     int   `json:"page_size"`
 	TotalPages   int   `json:"total_pages"`
@@ -16,19 +18,56 @@ type PaginatedResult[T any] struct {
 	PreviousPage *int  `json:"previous_page,omitempty"`
 }
 
+func MakePagination[T any](data []T, page, pageSize int, total int64) *Pagination[T] {
+	pSize := float64(pageSize)
+	if pSize <= 0 {
+		pSize = 10
+	}
+
+	totalPages := int(math.Ceil(float64(total) / pSize))
+
+	pagination := Pagination[T]{
+		Data:         data,
+		Page:         page,
+		Total:        total,
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		TotalPages:   totalPages,
+		NextPage:     nil,
+		PreviousPage: nil,
+	}
+
+	var nextPage *int
+	if pagination.Page < pagination.TotalPages {
+		p := pagination.Page + 1
+		nextPage = &p
+	}
+
+	var prevPage *int
+	if pagination.Page > 1 && pagination.Page <= pagination.TotalPages {
+		p := pagination.Page - 1
+		prevPage = &p
+	}
+
+	pagination.NextPage = nextPage
+	pagination.PreviousPage = prevPage
+
+	return &pagination
+}
+
 // MapPaginatedResult transforms a paginated result containing items of a source type (S)
 // into a new result containing items of a destination type (D).
 //
-// It takes a source PaginatedResult and a mapper function that defines the conversion
+// It takes a source Pagination and a mapper function that defines the conversion
 // logic from an item of type S to an item of type D.
 //
 // Type Parameters:
 //   - S: The source type (e.g., a database model like database.Post).
 //   - D: The destination type (e.g., an API response DTO like PostResponse).
 //
-// The function returns a new PaginatedResult with the transformed data, while preserving
-// all original pagination metadata (TotalRecords, CurrentPage, etc.).
-func MapPaginatedResult[S any, D any](source *PaginatedResult[S], mapper func(S) D) *PaginatedResult[D] {
+// The function returns a new Pagination with the transformed data, while preserving
+// all original pagination metadata (Total, CurrentPage, etc.).
+func MapPaginatedResult[S any, D any](source *Pagination[S], mapper func(S) D) *Pagination[D] {
 	mappedData := make([]D, len(source.Data))
 
 	// Iterate over the source data and apply the mapper function
@@ -36,9 +75,9 @@ func MapPaginatedResult[S any, D any](source *PaginatedResult[S], mapper func(S)
 		mappedData[i] = mapper(item)
 	}
 
-	return &PaginatedResult[D]{
+	return &Pagination[D]{
 		Data:         mappedData,
-		TotalRecords: source.TotalRecords,
+		Total:        source.Total,
 		CurrentPage:  source.CurrentPage,
 		PageSize:     source.PageSize,
 		TotalPages:   source.TotalPages,

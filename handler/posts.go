@@ -23,7 +23,7 @@ func MakePostsHandler(posts *repository.Posts) PostsHandler {
 
 func (h *PostsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	filters := queries.PostFilters{Title: ""}
-	pagination := repository.PaginatedResult[database.Post]{
+	pagination := repository.Pagination[database.Post]{
 		Page:     1,
 		PageSize: 10,
 	}
