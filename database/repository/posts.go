@@ -19,14 +19,12 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination *PaginatedResul
 	var posts []database.Post
 	var totalRecords int64
 
-	query := p.DB.Sql().Model(&database.Post{})
-	countQuery := query.Session(p.DB.Session())
+	query := p.
+		DB.Sql().
+		Model(&database.Post{}).
+		Distinct("posts.id, posts.published_at")
 
 	queries.ApplyPostsFilters(filters, query)
-
-	if err := countQuery.Distinct("posts.id, posts.published_at").Count(&totalRecords).Error; err != nil {
-		return nil, err
-	}
 
 	// Set default pagination values if none are provided
 	if pagination == nil {
@@ -42,6 +40,13 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination *PaginatedResul
 
 	if pagination.PageSize <= 0 {
 		pagination.PageSize = 10
+	}
+
+	// -------------
+
+	countQuery := query.Session(p.DB.Session())
+	if err := countQuery.Count(&totalRecords).Error; err != nil {
+		return nil, err
 	}
 
 	// Calculate pagination metadata
