@@ -33,10 +33,13 @@ func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 
 func (r *Router) Posts() {
 	repo := repository.Posts{DB: r.Db}
-
 	abstract := handler.MakePostsHandler(&repo)
 
-	r.Mux.HandleFunc("/posts", abstract.Handle)
+	resolver := r.PipelineFor(
+		abstract.Handle,
+	)
+
+	r.Mux.HandleFunc("/posts", resolver)
 }
 
 func (r *Router) Profile() {

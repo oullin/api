@@ -70,4 +70,5 @@ func (a *App) Boot() {
 	router.Talks()
 	router.Education()
 	router.Recommendations()
+	router.Posts()
 }

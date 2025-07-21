@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	//"github.com/oullin/pkg/gorm"
-	"gorm.io/gorm"
+	"github.com/oullin/pkg/gorm"
 	"math"
 )
 
@@ -68,7 +67,7 @@ func (p Posts) GetPosts(filters *PostFilters, pagination *PaginatedResult[databa
 	}
 
 	// Count the total number of records matching the filters
-	if err := query.Distinct("posts.id").Count(&totalRecords).Error; err != nil {
+	if err := query.Distinct("posts.id, posts.published_at").Count(&totalRecords).Error; err != nil {
 		return nil, err
 	}
 
@@ -108,7 +107,7 @@ func (p Posts) GetPosts(filters *PostFilters, pagination *PaginatedResult[databa
 	err := query.Preload("Author").
 		Preload("Categories").
 		Preload("Tags").
-		Order("posts.published_at DESC, posts.created_at DESC").
+		Order("posts.published_at DESC").
 		Limit(pagination.PageSize).
 		Offset(offset).
 		Distinct().
