@@ -29,6 +29,7 @@ func (p Posts) GetPosts(filters *PostFilters, pagination *PaginatedResult[databa
 	var totalRecords int64
 
 	query := p.DB.Sql().Model(&database.Post{})
+	countQuery := query.Session(p.DB.Session())
 
 	if filters != nil {
 		// Filter by direct fields on the 'posts' table
@@ -66,8 +67,7 @@ func (p Posts) GetPosts(filters *PostFilters, pagination *PaginatedResult[databa
 		}
 	}
 
-	// Count the total number of records matching the filters
-	if err := query.Distinct("posts.id, posts.published_at").Count(&totalRecords).Error; err != nil {
+	if err := countQuery.Distinct("posts.id, posts.published_at").Count(&totalRecords).Error; err != nil {
 		return nil, err
 	}
 

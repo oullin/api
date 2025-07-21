@@ -6,8 +6,8 @@ package repository
 // NextPage and PreviousPage are pointers (*int) so they can be nil (and omitted from JSON output)
 // when there isn't a next or previous page.
 type PaginatedResult[T any] struct {
-	Data         []T `json:"data"`
-	Page         int
+	Data         []T   `json:"data"`
+	Page         int   `json:"page"`
 	TotalRecords int64 `json:"total_records"`
 	CurrentPage  int   `json:"current_page"`
 	PageSize     int   `json:"page_size"`

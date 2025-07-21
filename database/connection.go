@@ -73,6 +73,10 @@ func (c *Connection) Sql() *gorm.DB {
 	return c.driver
 }
 
+func (c *Connection) Session() *gorm.Session {
+	return &gorm.Session{}
+}
+
 func (c *Connection) Transaction(callback func(db *gorm.DB) error) error {
 	return c.driver.Transaction(callback)
 }

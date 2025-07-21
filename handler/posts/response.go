@@ -1,4 +1,4 @@
-package payload
+package posts
 
 import (
 	"time"
@@ -19,7 +19,6 @@ type PostResponse struct {
 	// Associations
 	Categories []CategoryData `json:"categories"`
 	Tags       []TagData      `json:"tags"`
-	Comments   []CommentData  `json:"comments"`
 }
 
 type UserData struct {
@@ -43,9 +42,6 @@ type CategoryData struct {
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-
-	// Associations
-	Posts []PostResponse `json:"posts"`
 }
 
 type TagData struct {
@@ -58,16 +54,4 @@ type TagData struct {
 
 	// Associations
 	Posts []PostResponse `json:"posts"`
-}
-
-type CommentData struct {
-	UUID       string        `json:"uuid"`
-	Post       PostResponse  `json:"post"`
-	Author     UserData      `json:"author"`
-	Parent     *CommentData  `json:"parent"`
-	Replies    []CommentData `json:"replies"`
-	Content    string        `json:"content"`
-	ApprovedAt *time.Time    `json:"approved_at"`
-	CreatedAt  time.Time     `json:"created_at"`
-	UpdatedAt  time.Time     `json:"updated_at"`
 }
