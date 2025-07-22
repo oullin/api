@@ -29,7 +29,7 @@ func (h *PostsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *h
 	if err != nil {
 		slog.Error(err.Error())
 
-		return http.InternalError("The was an issue reading the posts. Please, try again later.")
+		return http.InternalError("There was an issue reading the posts. Please, try again later.")
 	}
 
 	items := pagination.HydratePagination(

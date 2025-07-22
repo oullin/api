@@ -43,7 +43,7 @@ func ApplyPostsFilters(filters *PostFilters, query *gorm.DB) {
 			Joins("JOIN categories ON categories.id = post_categories.category_id").
 			Where("categories.deleted_at IS NULL").
 			Where("("+
-				"LOWER(categories.slug) = ? OR LOWER(categories.name) = ? OR LOWER(categories.description) = ?"+
+				"LOWER(categories.slug) ILIKE ? OR LOWER(categories.name) ILIKE ? OR LOWER(categories.description) ILIKE ?"+
 				")",
 				"%"+filters.GetCategory()+"%",
 				"%"+filters.GetCategory()+"%",
@@ -57,7 +57,7 @@ func ApplyPostsFilters(filters *PostFilters, query *gorm.DB) {
 			Joins("JOIN tags ON tags.id = post_tags.tag_id").
 			Where("tags.deleted_at IS NULL").
 			Where("("+
-				"LOWER(tags.slug) = ? OR LOWER(tags.name) = ? OR LOWER(tags.description) = ?"+
+				"LOWER(tags.slug) ILIKE ? OR LOWER(tags.name) ILIKE ? OR LOWER(tags.description) ILIKE ?"+
 				")",
 				"%"+filters.GetTag()+"%",
 				"%"+filters.GetTag()+"%",

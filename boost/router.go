@@ -39,7 +39,7 @@ func (r *Router) Posts() {
 		abstract.Handle,
 	)
 
-	r.Mux.HandleFunc("/posts", resolver)
+	r.Mux.HandleFunc("GET /posts", resolver)
 }
 
 func (r *Router) Profile() {
