@@ -67,7 +67,21 @@ func (r *Response) RespondWithNotModified() {
 
 func InternalError(msg string) *ApiError {
 	return &ApiError{
-		Message: fmt.Sprintf("Internal Server Error: %s", msg),
+		Message: fmt.Sprintf("Internal server error: %s", msg),
 		Status:  baseHttp.StatusInternalServerError,
+	}
+}
+
+func BadRequestError(msg string) *ApiError {
+	return &ApiError{
+		Message: fmt.Sprintf("Bad request error: %s", msg),
+		Status:  baseHttp.StatusBadRequest,
+	}
+}
+
+func NotFound(msg string) *ApiError {
+	return &ApiError{
+		Message: fmt.Sprintf("Not found error: %s", msg),
+		Status:  baseHttp.StatusNotFound,
 	}
 }

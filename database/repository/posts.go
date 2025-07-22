@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/pkg/gorm"
 )
 
@@ -11,6 +13,67 @@ type Posts struct {
 	DB         *database.Connection
 	Categories *Categories
 	Tags       *Tags
+}
+
+func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+	var numItems int64
+	var posts []database.Post
+
+	query := p.DB.Sql().
+		Model(&database.Post{}).
+		Where("posts.published_at is not null"). // only published posts will be selected.
+		Where("posts.deleted_at is null")        // deleted posted will be discarded.
+
+	queries.ApplyPostsFilters(&filters, query)
+
+	countQuery := query.
+		Session(p.DB.GetSession()). // clone the based query.
+		Distinct("posts.id")        // remove duplicated posts to get the actual count.
+
+	if err := countQuery.Count(&numItems).Error; err != nil {
+		return nil, err
+	}
+
+	offset := (paginate.Page - 1) * paginate.Limit
+
+	err := query.Preload("Author").
+		Preload("Categories").
+		Preload("Tags").
+		Order("posts.published_at DESC").
+		Limit(paginate.Limit).
+		Offset(offset).
+		Distinct(). // remove duplications if any after applying JOINS
+		Find(&posts).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	paginate.SetNumItems(numItems)
+	result := pagination.MakePagination[database.Post](posts, paginate)
+
+	return result, nil
+}
+
+func (p Posts) FindBy(slug string) *database.Post {
+	post := database.Post{}
+
+	result := p.DB.Sql().
+		Preload("Author").
+		Preload("Categories").
+		Preload("Tags").
+		Where("LOWER(slug) = ?", slug).
+		First(&post)
+
+	if gorm.HasDbIssues(result.Error) {
+		return nil
+	}
+
+	if result.RowsAffected > 0 {
+		return &post
+	}
+
+	return nil
 }
 
 func (p Posts) FindCategoryBy(slug string) *database.Category {
