@@ -72,7 +72,7 @@ func GetTagsResponse(tags []database.Tag) []TagData {
 	return data
 }
 
-func GetPaginateFrom(url url.Values) *pagination.Paginate {
+func GetPaginateFrom(url url.Values) pagination.Paginate {
 	page := 1
 	pageSize := 10
 
@@ -92,12 +92,12 @@ func GetPaginateFrom(url url.Values) *pagination.Paginate {
 		}
 	}
 
-	return &pagination.Paginate{
+	return pagination.Paginate{
 		Page:  page,
 		Limit: pageSize,
 	}
 }
 
-func GetFiltersFrom(r *baseHttp.Request) *queries.PostFilters {
-	return nil
+func GetFiltersFrom(r *baseHttp.Request) queries.PostFilters {
+	return queries.PostFilters{}
 }

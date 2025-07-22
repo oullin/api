@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// ApplyPostsFilters The given query master table is "posts"
 func ApplyPostsFilters(filters *PostFilters, query *gorm.DB) {
 	if filters == nil {
 		return
@@ -15,35 +16,52 @@ func ApplyPostsFilters(filters *PostFilters, query *gorm.DB) {
 
 	if filters.GetText() != "" {
 		query.
-			Or("LOWER(posts.slug) ILIKE ?", "%"+filters.GetText()+"%").
-			Or("LOWER(posts.excerpt) ILIKE ?", "%"+filters.GetText()+"%").
-			Or("LOWER(posts.content) ILIKE ?", "%"+filters.GetText()+"%")
+			Where("LOWER(posts.slug) ILIKE ? OR LOWER(posts.excerpt) ILIKE ? OR LOWER(posts.content) ILIKE ?",
+				"%"+filters.GetText()+"%",
+				"%"+filters.GetText()+"%",
+				"%"+filters.GetText()+"%",
+			)
 	}
 
 	if filters.GetAuthor() != "" {
 		query.
-			Joins("Author").
-			Where("LOWER(Author.username) = ?", filters.GetAuthor()).
-			Or("LOWER(Author.first_name) = ?", filters.GetAuthor()).
-			Or("LOWER(Author.last_name) = ?", filters.GetAuthor()).
-			Or("LOWER(Author.display_name) = ?", filters.GetAuthor())
+			Joins("JOIN users ON posts.author_id = users.id").
+			Where("users.deleted_at IS NULL").
+			Where("("+
+				"LOWER(users.bio) ILIKE ? OR LOWER(users.first_name) ILIKE ? OR LOWER(users.last_name) ILIKE ? OR LOWER(users.display_name) ILIKE ?"+
+				")",
+				"%"+filters.GetAuthor()+"%",
+				"%"+filters.GetAuthor()+"%",
+				"%"+filters.GetAuthor()+"%",
+				"%"+filters.GetAuthor()+"%",
+			)
 	}
 
 	if filters.GetCategory() != "" {
 		query.
 			Joins("JOIN post_categories ON post_categories.post_id = posts.id").
 			Joins("JOIN categories ON categories.id = post_categories.category_id").
-			Where("LOWER(categories.slug) = ?", filters.GetCategory()).
-			Or("LOWER(categories.name) = ?", filters.GetCategory()).
-			Or("LOWER(categories.description) = ?", "%"+filters.GetCategory()+"%")
+			Where("categories.deleted_at IS NULL").
+			Where("("+
+				"LOWER(categories.slug) = ? OR LOWER(categories.name) = ? OR LOWER(categories.description) = ?"+
+				")",
+				"%"+filters.GetCategory()+"%",
+				"%"+filters.GetCategory()+"%",
+				"%"+filters.GetCategory()+"%",
+			)
 	}
 
 	if filters.GetTag() != "" {
 		query.
 			Joins("JOIN post_tags ON post_tags.post_id = posts.id").
 			Joins("JOIN tags ON tags.id = post_tags.tag_id").
-			Where("LOWER(tags.slug) = ?", filters.GetTag()).
-			Or("LOWER(tags.name) = ?", filters.GetTag()).
-			Or("LOWER(tags.description) = ?", "%"+filters.GetTag()+"%")
+			Where("tags.deleted_at IS NULL").
+			Where("("+
+				"LOWER(tags.slug) = ? OR LOWER(tags.name) = ? OR LOWER(tags.description) = ?"+
+				")",
+				"%"+filters.GetTag()+"%",
+				"%"+filters.GetTag()+"%",
+				"%"+filters.GetTag()+"%",
+			)
 	}
 }

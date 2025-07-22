@@ -15,18 +15,20 @@ type Posts struct {
 	Tags       *Tags
 }
 
-func (p Posts) GetPosts(filters *queries.PostFilters, paginate *pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginate) (*pagination.Pagination[database.Post], error) {
 	var numItems int64
 	var posts []database.Post
 
 	query := p.
 		DB.Sql().
 		Model(&database.Post{}).
-		Distinct("posts.id, posts.published_at")
+		Distinct("posts.id, posts.published_at").
+		Where("posts.published_at is not null").
+		Where("posts.deleted_at is null")
 
-	queries.ApplyPostsFilters(filters, query)
+	queries.ApplyPostsFilters(&filters, query)
 
-	countQuery := query.Session(p.DB.Session())
+	countQuery := query.Session(p.DB.GetSession())
 	if err := countQuery.Count(&numItems).Error; err != nil {
 		return nil, err
 	}
@@ -39,7 +41,6 @@ func (p Posts) GetPosts(filters *queries.PostFilters, paginate *pagination.Pagin
 		Order("posts.published_at DESC").
 		Limit(paginate.Limit).
 		Offset(offset).
-		Distinct().
 		Find(&posts).Error
 
 	if err != nil {
