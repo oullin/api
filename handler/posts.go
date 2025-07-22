@@ -6,6 +6,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/posts"
+	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
 	"log/slog"
 	baseHttp "net/http"
@@ -22,11 +23,12 @@ func MakePostsHandler(posts *repository.Posts) PostsHandler {
 }
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	payload, closer, err := http.ParseRequestBody[posts.IndexRequestBody](r)
-	defer closer() //close the given request body.
+	defer pkg.CloseWithLog(r.Body)
+
+	payload, err := http.ParseRequestBody[posts.IndexRequestBody](r)
 
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error("failed to parse request body", "err", err)
 
 		return http.InternalError("There was an issue reading the request. Please, try again later.")
 	}
@@ -37,7 +39,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 	)
 
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error("failed to fetch posts", "err", err)
 
 		return http.InternalError("There was an issue reading the posts. Please, try again later.")
 	}
@@ -48,7 +50,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 	)
 
 	if err := json.NewEncoder(w).Encode(items); err != nil {
-		slog.Error(err.Error())
+		slog.Error("failed to encode response", "err", err)
 
 		return http.InternalError("There was an issue processing the response. Please, try later.")
 	}
