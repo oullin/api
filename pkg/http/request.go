@@ -8,6 +8,8 @@ import (
 	baseHttp "net/http"
 )
 
+const MaxRequestSize = 1 << 20 // 1MB limit
+
 func ParseRequestBody[T any](r *baseHttp.Request) (T, func(), error) {
 	var err error
 	var request T
@@ -21,7 +23,8 @@ func ParseRequestBody[T any](r *baseHttp.Request) (T, func(), error) {
 		}(r.Body)
 	}
 
-	if data, err = io.ReadAll(r.Body); err != nil {
+	limitedReader := io.LimitReader(r.Body, MaxRequestSize)
+	if data, err = io.ReadAll(limitedReader); err != nil {
 		return request, closer, fmt.Errorf("failed to read the given request body: %w", err)
 	}
 

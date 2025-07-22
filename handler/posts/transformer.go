@@ -94,7 +94,7 @@ func GetPaginateFrom(url url.Values) pagination.Paginate {
 		page = pagination.MinPage
 	}
 
-	if pageSize > pagination.MaxLimit {
+	if pageSize > pagination.MaxLimit || pageSize < 1 {
 		pageSize = pagination.MaxLimit
 	}
 

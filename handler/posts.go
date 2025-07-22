@@ -28,7 +28,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 	if err != nil {
 		slog.Error(err.Error())
 
-		return http.InternalError("There was an issue reading the request. Please, try again later." + err.Error())
+		return http.InternalError("There was an issue reading the request. Please, try again later.")
 	}
 
 	result, err := h.Posts.GetPosts(
