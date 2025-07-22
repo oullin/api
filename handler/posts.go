@@ -22,8 +22,17 @@ func MakePostsHandler(posts *repository.Posts) PostsHandler {
 }
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+	payload, closer, err := http.ParseRequestBody[posts.IndexRequestBody](r)
+	closer() //close the given request body.
+
+	if err != nil {
+		slog.Error(err.Error())
+
+		return http.InternalError("There was an issue reading the request. Please, try again later." + err.Error())
+	}
+
 	result, err := h.Posts.GetPosts(
-		posts.GetFiltersFrom(r),
+		posts.GetFiltersFrom(payload),
 		posts.GetPaginateFrom(r.URL.Query()),
 	)
 
@@ -38,7 +47,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 		posts.GetPostsResponse,
 	)
 
-	if err = json.NewEncoder(w).Encode(items); err != nil {
+	if err := json.NewEncoder(w).Encode(items); err != nil {
 		slog.Error(err.Error())
 
 		return http.InternalError("There was an issue processing the response. Please, try later.")

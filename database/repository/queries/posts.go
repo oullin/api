@@ -28,7 +28,7 @@ func ApplyPostsFilters(filters *PostFilters, query *gorm.DB) {
 			Joins("JOIN users ON posts.author_id = users.id").
 			Where("users.deleted_at IS NULL").
 			Where("("+
-				"LOWER(users.bio) ILIKE ? OR LOWER(users.first_name) ILIKE ? OR LOWER(users.last_name) ILIKE ? OR LOWER(users.display_name) ILIKE ?"+
+				"LOWER(users.bio) ILIKE ? OR LOWER(users.first_name) LIKE ? OR LOWER(users.last_name) LIKE ? OR LOWER(users.display_name) ILIKE ?"+
 				")",
 				"%"+filters.GetAuthor()+"%",
 				"%"+filters.GetAuthor()+"%",

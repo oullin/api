@@ -104,8 +104,13 @@ func GetPaginateFrom(url url.Values) pagination.Paginate {
 	}
 }
 
-func GetFiltersFrom(r *baseHttp.Request) queries.PostFilters {
-	return queries.PostFilters{}
+func GetFiltersFrom(request IndexRequestBody) queries.PostFilters {
+	return queries.PostFilters{
+		Title:    request.Title,
+		Author:   request.Author,
+		Category: request.Category,
+		Tag:      request.Tag,
+	}
 }
 
 func GetSlugFrom(r *baseHttp.Request) string {

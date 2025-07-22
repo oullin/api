@@ -6,12 +6,11 @@ import (
 )
 
 type PostFilters struct {
-	Text        string
-	Title       string // Will perform a case-insensitive partial match
-	Author      string
-	Category    string
-	Tag         string
-	IsPublished *bool // Pointer to bool to allow three states: true, false, and not-set (nil)
+	Text     string
+	Title    string // Will perform a case-insensitive partial match
+	Author   string
+	Category string
+	Tag      string
 }
 
 func (f PostFilters) GetText() string {

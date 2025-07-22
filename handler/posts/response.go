@@ -4,6 +4,14 @@ import (
 	"time"
 )
 
+type IndexRequestBody struct {
+	Title    string `json:"title"`
+	Author   string `json:"author"`
+	Category string `json:"category"`
+	Tag      string `json:"tag"`
+	Text     string `json:"text"`
+}
+
 type PostResponse struct {
 	UUID          string     `json:"uuid"`
 	Author        UserData   `json:"author"`
