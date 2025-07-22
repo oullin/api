@@ -23,7 +23,7 @@ func MakePostsHandler(posts *repository.Posts) PostsHandler {
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	payload, closer, err := http.ParseRequestBody[posts.IndexRequestBody](r)
-	closer() //close the given request body.
+	defer closer() //close the given request body.
 
 	if err != nil {
 		slog.Error(err.Error())
