@@ -20,7 +20,7 @@ func MakePostsHandler(posts *repository.Posts) PostsHandler {
 	}
 }
 
-func (h *PostsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	result, err := h.Posts.GetPosts(
 		posts.GetFiltersFrom(r),
 		posts.GetPaginateFrom(r.URL.Query()),

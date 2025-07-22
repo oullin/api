@@ -19,16 +19,17 @@ func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginat
 	var numItems int64
 	var posts []database.Post
 
-	query := p.
-		DB.Sql().
+	query := p.DB.Sql().
 		Model(&database.Post{}).
-		Distinct("posts.id, posts.published_at").
-		Where("posts.published_at is not null").
-		Where("posts.deleted_at is null")
+		Where("posts.published_at is not null"). // only published posts will be selected.
+		Where("posts.deleted_at is null") // deleted posted will be discarded.
 
 	queries.ApplyPostsFilters(&filters, query)
 
-	countQuery := query.Session(p.DB.GetSession())
+	countQuery := query.
+		Session(p.DB.GetSession()). // clone the based query.
+		Distinct("posts.id") // remove duplicated posts to get the actual count.
+
 	if err := countQuery.Count(&numItems).Error; err != nil {
 		return nil, err
 	}
@@ -41,6 +42,7 @@ func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginat
 		Order("posts.published_at DESC").
 		Limit(paginate.Limit).
 		Offset(offset).
+		Distinct(). // remove duplications if any after applying JOINS
 		Find(&posts).Error
 
 	if err != nil {
