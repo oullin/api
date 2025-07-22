@@ -33,7 +33,7 @@ func GetPostsResponse(p database.Post) PostResponse {
 			ProfilePictureURL: p.Author.ProfilePictureURL,
 			IsAdmin:           p.Author.IsAdmin,
 			CreatedAt:         p.Author.CreatedAt,
-			UpdatedAt:         p.UpdatedAt,
+			UpdatedAt:         p.Author.UpdatedAt,
 		},
 	}
 }
@@ -58,14 +58,14 @@ func GetCategoriesResponse(categories []database.Category) []CategoryData {
 func GetTagsResponse(tags []database.Tag) []TagData {
 	var data []TagData
 
-	for _, category := range tags {
+	for _, tag := range tags {
 		data = append(data, TagData{
-			UUID:        category.UUID,
-			Name:        category.Name,
-			Slug:        category.Slug,
-			Description: category.Description,
-			CreatedAt:   category.CreatedAt,
-			UpdatedAt:   category.UpdatedAt,
+			UUID:        tag.UUID,
+			Name:        tag.Name,
+			Slug:        tag.Slug,
+			Description: tag.Description,
+			CreatedAt:   tag.CreatedAt,
+			UpdatedAt:   tag.UpdatedAt,
 		})
 	}
 
@@ -73,8 +73,8 @@ func GetTagsResponse(tags []database.Tag) []TagData {
 }
 
 func GetPaginateFrom(url url.Values) pagination.Paginate {
-	page := 1
-	pageSize := 10
+	page := pagination.MinPage
+	pageSize := pagination.MaxLimit
 
 	if url.Get("page") != "" {
 		if tPage, err := strconv.Atoi(url.Get("page")); err == nil {
@@ -86,10 +86,14 @@ func GetPaginateFrom(url url.Values) pagination.Paginate {
 		if limit, err := strconv.Atoi(url.Get("limit")); err == nil {
 			pageSize = limit
 		}
+	}
 
-		if pageSize > pagination.MaxLimit {
-			pageSize = pagination.MaxLimit
-		}
+	if page < pagination.MinPage {
+		page = pagination.MinPage
+	}
+
+	if pageSize > pagination.MaxLimit {
+		pageSize = pagination.MaxLimit
 	}
 
 	return pagination.Paginate{

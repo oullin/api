@@ -2,6 +2,7 @@ package pagination
 
 import "math"
 
+const MinPage = 1
 const MaxLimit = 100
 
 // Pagination holds the data for a single page along with all pagination metadata.

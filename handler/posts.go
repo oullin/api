@@ -40,7 +40,7 @@ func (h *PostsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *h
 	if err = json.NewEncoder(w).Encode(items); err != nil {
 		slog.Error(err.Error())
 
-		return http.InternalError(err.Error())
+		return http.InternalError("There was an issue processing the response. Please, try later.")
 	}
 
 	return nil
