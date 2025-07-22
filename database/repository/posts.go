@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/pkg/gorm"
 )
@@ -14,7 +15,7 @@ type Posts struct {
 	Tags       *Tags
 }
 
-func (p Posts) GetPosts(filters *queries.PostFilters, pagination PaginationAttr) (*Pagination[database.Post], error) {
+func (p Posts) GetPosts(filters *queries.PostFilters, paginate *pagination.Paginate) (*pagination.Pagination[database.Post], error) {
 	var numItems int64
 	var posts []database.Post
 
@@ -30,13 +31,13 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination PaginationAttr)
 		return nil, err
 	}
 
-	offset := (pagination.Page - 1) * pagination.Limit
+	offset := (paginate.Page - 1) * paginate.Limit
 
 	err := query.Preload("Author").
 		Preload("Categories").
 		Preload("Tags").
 		Order("posts.published_at DESC").
-		Limit(pagination.Limit).
+		Limit(paginate.Limit).
 		Offset(offset).
 		Distinct().
 		Find(&posts).Error
@@ -45,8 +46,8 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination PaginationAttr)
 		return nil, err
 	}
 
-	pagination.SetNumItems(numItems)
-	result := Paginate[database.Post](posts, pagination)
+	paginate.SetNumItems(numItems)
+	result := pagination.MakePagination[database.Post](posts, paginate)
 
 	return result, nil
 }

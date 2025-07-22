@@ -2,12 +2,14 @@ package posts
 
 import (
 	"github.com/oullin/database"
-	"github.com/oullin/database/repository"
+	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/database/repository/queries"
+	baseHttp "net/http"
 	"net/url"
 	"strconv"
 )
 
-func Collection(p database.Post) PostResponse {
+func GetPostsResponse(p database.Post) PostResponse {
 	return PostResponse{
 		UUID:          p.UUID,
 		Slug:          p.Slug,
@@ -18,8 +20,8 @@ func Collection(p database.Post) PostResponse {
 		PublishedAt:   p.PublishedAt,
 		CreatedAt:     p.CreatedAt,
 		UpdatedAt:     p.UpdatedAt,
-		Categories:    MapCategories(p.Categories),
-		Tags:          MapTags(p.Tags),
+		Categories:    GetCategoriesResponse(p.Categories),
+		Tags:          GetTagsResponse(p.Tags),
 		Author: UserData{
 			UUID:              p.Author.UUID,
 			FirstName:         p.Author.FirstName,
@@ -36,7 +38,7 @@ func Collection(p database.Post) PostResponse {
 	}
 }
 
-func MapCategories(categories []database.Category) []CategoryData {
+func GetCategoriesResponse(categories []database.Category) []CategoryData {
 	var data []CategoryData
 
 	for _, category := range categories {
@@ -53,7 +55,7 @@ func MapCategories(categories []database.Category) []CategoryData {
 	return data
 }
 
-func MapTags(tags []database.Tag) []TagData {
+func GetTagsResponse(tags []database.Tag) []TagData {
 	var data []TagData
 
 	for _, category := range tags {
@@ -70,7 +72,7 @@ func MapTags(tags []database.Tag) []TagData {
 	return data
 }
 
-func MapPagination(url url.Values) repository.PaginationAttr {
+func GetPaginateFrom(url url.Values) *pagination.Paginate {
 	page := 1
 	pageSize := 10
 
@@ -85,13 +87,17 @@ func MapPagination(url url.Values) repository.PaginationAttr {
 			pageSize = limit
 		}
 
-		if pageSize > repository.MaxLimit {
-			pageSize = repository.MaxLimit
+		if pageSize > pagination.MaxLimit {
+			pageSize = pagination.MaxLimit
 		}
 	}
 
-	return repository.PaginationAttr{
+	return &pagination.Paginate{
 		Page:  page,
 		Limit: pageSize,
 	}
+}
+
+func GetFiltersFrom(r *baseHttp.Request) *queries.PostFilters {
+	return nil
 }

@@ -1,26 +1,8 @@
-package repository
+package pagination
 
 import "math"
 
 const MaxLimit = 100
-
-type PaginationAttr struct {
-	Page     int
-	Limit    int
-	NumItems int64
-}
-
-func (a *PaginationAttr) SetNumItems(number int64) {
-	a.NumItems = number
-}
-
-func (a *PaginationAttr) GetNumItemsAsInt() int64 {
-	return a.NumItems
-}
-
-func (a *PaginationAttr) GetNumItemsAsFloat() float64 {
-	return float64(a.NumItems)
-}
 
 // Pagination holds the data for a single page along with all pagination metadata.
 // It's generic and can be used for any data type.
@@ -31,31 +13,27 @@ type Pagination[T any] struct {
 	Data         []T   `json:"data"`
 	Page         int   `json:"page"`
 	Total        int64 `json:"total"`
-	CurrentPage  int   `json:"current_page"`
 	PageSize     int   `json:"page_size"`
 	TotalPages   int   `json:"total_pages"`
 	NextPage     *int  `json:"next_page,omitempty"`
 	PreviousPage *int  `json:"previous_page,omitempty"`
 }
 
-//func Paginate[T any](data []T, page, pageSize int, total int64) *Pagination[T] {
-
-func Paginate[T any](data []T, attr PaginationAttr) *Pagination[T] {
-	pSize := float64(attr.Limit)
+func MakePagination[T any](data []T, paginate *Paginate) *Pagination[T] {
+	pSize := float64(paginate.Limit)
 	if pSize <= 0 {
 		pSize = 10
 	}
 
 	totalPages := int(
-		math.Ceil(attr.GetNumItemsAsFloat() / pSize),
+		math.Ceil(paginate.GetNumItemsAsFloat() / pSize),
 	)
 
 	pagination := Pagination[T]{
 		Data:         data,
-		Page:         attr.Page,
-		Total:        attr.GetNumItemsAsInt(),
-		CurrentPage:  attr.Page,
-		PageSize:     attr.Limit,
+		Page:         paginate.Page,
+		Total:        paginate.GetNumItemsAsInt(),
+		PageSize:     paginate.Limit,
 		TotalPages:   totalPages,
 		NextPage:     nil,
 		PreviousPage: nil,
@@ -79,7 +57,7 @@ func Paginate[T any](data []T, attr PaginationAttr) *Pagination[T] {
 	return &pagination
 }
 
-// MapPaginatedResult transforms a paginated result containing items of a source type (S)
+// HydratePagination transforms a paginated result containing items of a source type (S)
 // into a new result containing items of a destination type (D).
 //
 // It takes a source Pagination and a mapper function that defines the conversion
@@ -91,7 +69,7 @@ func Paginate[T any](data []T, attr PaginationAttr) *Pagination[T] {
 //
 // The function returns a new Pagination with the transformed data, while preserving
 // all original pagination metadata (Total, CurrentPage, etc.).
-func MapPaginatedResult[S any, D any](source *Pagination[S], mapper func(S) D) *Pagination[D] {
+func HydratePagination[S any, D any](source *Pagination[S], mapper func(S) D) *Pagination[D] {
 	mappedData := make([]D, len(source.Data))
 
 	// Iterate over the source data and apply the mapper function
@@ -102,7 +80,7 @@ func MapPaginatedResult[S any, D any](source *Pagination[S], mapper func(S) D) *
 	return &Pagination[D]{
 		Data:         mappedData,
 		Total:        source.Total,
-		CurrentPage:  source.CurrentPage,
+		Page:         source.Page,
 		PageSize:     source.PageSize,
 		TotalPages:   source.TotalPages,
 		NextPage:     source.NextPage,
