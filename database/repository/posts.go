@@ -55,6 +55,27 @@ func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginat
 	return result, nil
 }
 
+func (p Posts) FindBy(slug string) *database.Post {
+	post := database.Post{}
+
+	result := p.DB.Sql().
+		Preload("Author").
+		Preload("Categories").
+		Preload("Tags").
+		Where("LOWER(slug) = ?", slug).
+		First(&post)
+
+	if gorm.HasDbIssues(result.Error) {
+		return nil
+	}
+
+	if result.RowsAffected > 0 {
+		return &post
+	}
+
+	return nil
+}
+
 func (p Posts) FindCategoryBy(slug string) *database.Category {
 	return p.Categories.FindBy(slug)
 }

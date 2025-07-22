@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"strings"
 	"time"
 	"unicode"
@@ -15,6 +17,12 @@ func MakeStringable(value string) *Stringable {
 	return &Stringable{
 		value: strings.TrimSpace(value),
 	}
+}
+
+func (s Stringable) ToLower() string {
+	caser := cases.Lower(language.English)
+
+	return strings.TrimSpace(caser.String(s.value))
 }
 
 func (s Stringable) ToSnakeCase() string {

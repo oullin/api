@@ -4,9 +4,11 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
+	"github.com/oullin/pkg"
 	baseHttp "net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 func GetPostsResponse(p database.Post) PostResponse {
@@ -104,4 +106,10 @@ func GetPaginateFrom(url url.Values) pagination.Paginate {
 
 func GetFiltersFrom(r *baseHttp.Request) queries.PostFilters {
 	return queries.PostFilters{}
+}
+
+func GetSlugFrom(r *baseHttp.Request) string {
+	str := pkg.MakeStringable(r.PathValue("slug"))
+
+	return strings.TrimSpace(str.ToLower())
 }

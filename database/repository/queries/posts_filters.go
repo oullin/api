@@ -1,8 +1,7 @@
 package queries
 
 import (
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
+	"github.com/oullin/pkg"
 	"strings"
 )
 
@@ -36,7 +35,7 @@ func (f PostFilters) GetTag() string {
 }
 
 func (f PostFilters) sanitiseString(seed string) string {
-	caser := cases.Lower(language.English)
+	str := pkg.MakeStringable(seed)
 
-	return strings.TrimSpace(caser.String(seed))
+	return strings.TrimSpace(str.ToLower())
 }
