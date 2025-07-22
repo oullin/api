@@ -22,13 +22,13 @@ func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginat
 	query := p.DB.Sql().
 		Model(&database.Post{}).
 		Where("posts.published_at is not null"). // only published posts will be selected.
-		Where("posts.deleted_at is null") // deleted posted will be discarded.
+		Where("posts.deleted_at is null")        // deleted posted will be discarded.
 
 	queries.ApplyPostsFilters(&filters, query)
 
 	countQuery := query.
 		Session(p.DB.GetSession()). // clone the based query.
-		Distinct("posts.id") // remove duplicated posts to get the actual count.
+		Distinct("posts.id")        // remove duplicated posts to get the actual count.
 
 	if err := countQuery.Count(&numItems).Error; err != nil {
 		return nil, err
