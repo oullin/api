@@ -14,10 +14,8 @@ type Posts struct {
 	Tags       *Tags
 }
 
-func (p Posts) GetPosts(filters *queries.PostFilters, pagination *Pagination[database.Post]) (*Pagination[database.Post], error) {
-	page := 1
-	pageSize := 10
-	var total int64
+func (p Posts) GetPosts(filters *queries.PostFilters, pagination PaginationAttr) (*Pagination[database.Post], error) {
+	var numItems int64
 	var posts []database.Post
 
 	query := p.
@@ -27,23 +25,18 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination *Pagination[dat
 
 	queries.ApplyPostsFilters(filters, query)
 
-	if pagination != nil {
-		page = pagination.Page
-		pageSize = pagination.PageSize
-	}
-
 	countQuery := query.Session(p.DB.Session())
-	if err := countQuery.Count(&total).Error; err != nil {
+	if err := countQuery.Count(&numItems).Error; err != nil {
 		return nil, err
 	}
 
-	// Fetch the data for the current page
-	offset := (page - 1) * pageSize
+	offset := (pagination.Page - 1) * pagination.Limit
+
 	err := query.Preload("Author").
 		Preload("Categories").
 		Preload("Tags").
 		Order("posts.published_at DESC").
-		Limit(pageSize).
+		Limit(pagination.Limit).
 		Offset(offset).
 		Distinct().
 		Find(&posts).Error
@@ -52,7 +45,8 @@ func (p Posts) GetPosts(filters *queries.PostFilters, pagination *Pagination[dat
 		return nil, err
 	}
 
-	result := Paginate[database.Post](posts, page, pageSize, total)
+	pagination.SetNumItems(numItems)
+	result := Paginate[database.Post](posts, pagination)
 
 	return result, nil
 }

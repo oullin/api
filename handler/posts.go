@@ -24,7 +24,7 @@ func (h *PostsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *h
 	filters := queries.PostFilters{Title: ""}
 	pagination := posts.MapPagination(r.URL.Query())
 
-	result, err := h.Posts.GetPosts(&filters, &pagination)
+	result, err := h.Posts.GetPosts(&filters, pagination)
 
 	if err != nil {
 		slog.Error(err.Error())

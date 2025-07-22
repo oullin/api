@@ -4,6 +4,24 @@ import "math"
 
 const MaxLimit = 100
 
+type PaginationAttr struct {
+	Page     int
+	Limit    int
+	NumItems int64
+}
+
+func (a *PaginationAttr) SetNumItems(number int64) {
+	a.NumItems = number
+}
+
+func (a *PaginationAttr) GetNumItemsAsInt() int64 {
+	return a.NumItems
+}
+
+func (a *PaginationAttr) GetNumItemsAsFloat() float64 {
+	return float64(a.NumItems)
+}
+
 // Pagination holds the data for a single page along with all pagination metadata.
 // It's generic and can be used for any data type.
 //
@@ -20,20 +38,24 @@ type Pagination[T any] struct {
 	PreviousPage *int  `json:"previous_page,omitempty"`
 }
 
-func Paginate[T any](data []T, page, pageSize int, total int64) *Pagination[T] {
-	pSize := float64(pageSize)
+//func Paginate[T any](data []T, page, pageSize int, total int64) *Pagination[T] {
+
+func Paginate[T any](data []T, attr PaginationAttr) *Pagination[T] {
+	pSize := float64(attr.Limit)
 	if pSize <= 0 {
 		pSize = 10
 	}
 
-	totalPages := int(math.Ceil(float64(total) / pSize))
+	totalPages := int(
+		math.Ceil(attr.GetNumItemsAsFloat() / pSize),
+	)
 
 	pagination := Pagination[T]{
 		Data:         data,
-		Page:         page,
-		Total:        total,
-		CurrentPage:  page,
-		PageSize:     pageSize,
+		Page:         attr.Page,
+		Total:        attr.GetNumItemsAsInt(),
+		CurrentPage:  attr.Page,
+		PageSize:     attr.Limit,
 		TotalPages:   totalPages,
 		NextPage:     nil,
 		PreviousPage: nil,

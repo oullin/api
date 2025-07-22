@@ -70,7 +70,7 @@ func MapTags(tags []database.Tag) []TagData {
 	return data
 }
 
-func MapPagination(url url.Values) repository.Pagination[database.Post] {
+func MapPagination(url url.Values) repository.PaginationAttr {
 	page := 1
 	pageSize := 10
 
@@ -90,8 +90,8 @@ func MapPagination(url url.Values) repository.Pagination[database.Post] {
 		}
 	}
 
-	return repository.Pagination[database.Post]{
-		Page:     page,
-		PageSize: pageSize,
+	return repository.PaginationAttr{
+		Page:  page,
+		Limit: pageSize,
 	}
 }
