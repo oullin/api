@@ -39,9 +39,17 @@ oullin.io {
 
 		@preflight {
 			method OPTIONS
+			header Origin *
 		}
 
-		respond @preflight 204
+		handle @preflight {
+			# Reflect the Origin back so it's always allowed
+			header Access-Control-Allow-Origin "{http.request.header.Origin}"
+			header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+			header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent"
+			header Access-Control-Max-Age "86400"
+			respond 204
+		}
 
 		reverse_proxy api:8080 {
 			header_up Host {host}

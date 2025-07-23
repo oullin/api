@@ -22,9 +22,17 @@
 	# This handles the browser's "preflight" OPTIONS request.
 	@preflight {
 		method OPTIONS
+		header Origin *
 	}
 
-	respond @preflight 204
+	handle @preflight {
+		# Reflect the Origin back so it's always allowed
+		header Access-Control-Allow-Origin "{http.request.header.Origin}"
+		header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+		header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent"
+		header Access-Control-Max-Age "86400"
+		respond 204
+	}
 
 	# Reverse proxy all incoming requests to the 'api' service.
 	# 	- The service name 'api' is resolved by Docker's internal DNS to the correct container IP on the 'caddy_net' network.
