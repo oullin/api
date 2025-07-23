@@ -31,9 +31,7 @@ oullin.io {
 	#	- header_up: Preserve the original Host header.
 	#	- header_up X-*: Forward the client headers.
 	handle_path /api/* {
-		reverse_proxy {
-			to api:8080
-
+		reverse_proxy to api:8080 {
 			header_up Host {host}
 			header_up X-API-Username {http.request.header.X-API-Username}
 			header_up X-API-Key {http.request.header.X-API-Key}
