@@ -26,28 +26,31 @@ oullin.io {
 		format json
 	}
 
+	# Route API traffic to the Go backend.
 	# Reverse-proxy all requests to the Go API, forwarding Host + auth headers
-	reverse_proxy {
-		# Tell Caddy which upstream to send to
-		to api:8080
+	handle_path /api/* {
+		reverse_proxy {
+			# Tell Caddy which upstream to send to
+			to api:8080
 
-		# Preserve the original Host header
-		header_up Host {host}
+			# Preserve the original Host header
+			header_up Host {host}
 
-		# Forward the client-sent auth headers
-		header_up X-API-Username {http.request.header.X-API-Username}
-		header_up X-API-Key {http.request.header.X-API-Key}
-		header_up X-API-Signature {http.request.header.X-API-Signature}
+			# Forward the client-sent auth headers
+			header_up X-API-Username {http.request.header.X-API-Username}
+			header_up X-API-Key {http.request.header.X-API-Key}
+			header_up X-API-Signature {http.request.header.X-API-Signature}
 
-		# *** DEBUG: echo back to client what Caddy actually saw ***
-		# header_down X-Debug-Username {http.request.header.X-API-Username}
-		# header_down X-Debug-Key {http.request.header.X-API-Key}
-		# header_down X-Debug-Signature {http.request.header.X-API-Signature}
+			# *** DEBUG: echo back to client what Caddy actually saw ***
+			# header_down X-Debug-Username {http.request.header.X-API-Username}
+			# header_down X-Debug-Key {http.request.header.X-API-Key}
+			# header_down X-Debug-Signature {http.request.header.X-API-Signature}
 
-		# Transport timeouts
-		transport http {
-			dial_timeout 10s
-			response_header_timeout 30s
+			# Transport timeouts
+			transport http {
+				dial_timeout 10s
+				response_header_timeout 30s
+			}
 		}
 	}
 }
