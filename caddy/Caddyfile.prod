@@ -26,7 +26,7 @@ oullin.io {
 		format json
 	}
 
-	# Route API traffic to the Go backend.
+	# API handler.
 	# 	- Reverse-proxy all requests to the Go API, forwarding Host + auth headers.
 	#	- to: Tell Caddy which upstream to send to.
 	#	- header_up: Preserve the original Host header.
