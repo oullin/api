@@ -6,14 +6,14 @@ oullin.io {
 	encode gzip zstd
 
 	# Add security-related headers to protect against common attacks.
+	# 	- Strict-Transport-Security: Enable HSTS to ensure browsers only connect via HTTPS.
+	# 	- X-Frame-Options: Prevent clickjacking attacks.
+	# 	- X-Content-Type-Options: Prevent content type sniffing.
+	# 	- Referrer-Policy: Enhances user privacy.
 	header {
-		# Enable HSTS to ensure browsers only connect via HTTPS.
 		Strict-Transport-Security "max-age=31536000;"
-		# Prevent clickjacking attacks.
 		X-Frame-Options "SAMEORIGIN"
-		# Prevent content type sniffing.
 		X-Content-Type-Options "nosniff"
-		# Enhances user privacy.
 		Referrer-Policy "strict-origin-when-cross-origin"
 	}
 
@@ -27,30 +27,31 @@ oullin.io {
 	}
 
 	# Route API traffic to the Go backend.
-	# Reverse-proxy all requests to the Go API, forwarding Host + auth headers
+	# 	- Reverse-proxy all requests to the Go API, forwarding Host + auth headers.
+	#	- to: Tell Caddy which upstream to send to.
+	#	- header_up: Preserve the original Host header.
+	#	- header_up X-*: Forward the client headers.
 	handle_path /api/* {
 		reverse_proxy {
-			# Tell Caddy which upstream to send to
 			to api:8080
 
-			# Preserve the original Host header
 			header_up Host {host}
-
-			# Forward the client-sent auth headers
 			header_up X-API-Username {http.request.header.X-API-Username}
 			header_up X-API-Key {http.request.header.X-API-Key}
 			header_up X-API-Signature {http.request.header.X-API-Signature}
 
-			# *** DEBUG: echo back to client what Caddy actually saw ***
-			# header_down X-Debug-Username {http.request.header.X-API-Username}
-			# header_down X-Debug-Key {http.request.header.X-API-Key}
-			# header_down X-Debug-Signature {http.request.header.X-API-Signature}
-
-			# Transport timeouts
 			transport http {
 				dial_timeout 10s
 				response_header_timeout 30s
 			}
 		}
+	}
+
+	# Default handler.
+	# 	- Route all other traffic to the Vue frontend app.
+	#	- `web_caddy_prod` is the Vue app's container name.
+	# 	- source: https://github.com/oullin/web
+	handle {
+		reverse_proxy web_caddy_prod:80
 	}
 }
