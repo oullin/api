@@ -1,6 +1,7 @@
 .PHONY: fresh audit watch format run-cli validate-caddy
 
-APP_CADDY_CONFIG_FILE ?= caddy/Caddyfile.prod
+APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
+APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
 
 format:
 	gofmt -w -s .
@@ -54,5 +55,7 @@ run-cli:
 # --- Mac:
 #     Needs to be locally installed: https://formulae.brew.sh/formula/caddy
 validate-caddy:
-	caddy fmt --overwrite $(APP_CADDY_CONFIG_FILE)
-	caddy validate --config $(APP_CADDY_CONFIG_FILE)
+	caddy fmt --overwrite $(APP_CADDY_CONFIG_PROD_FILE)
+	caddy validate --config $(APP_CADDY_CONFIG_PROD_FILE)
+	caddy fmt --overwrite $(APP_CADDY_CONFIG_LOCAL_FILE)
+	caddy validate --config $(APP_CADDY_CONFIG_LOCAL_FILE)
