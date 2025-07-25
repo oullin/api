@@ -35,6 +35,7 @@ oullin.io {
 			Access-Control-Allow-Origin "https://oullin.io"
 			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 			Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent, If-None-Match"
+			Access-Control-Expose-Headers "ETag"
 		}
 
 		@preflight {
