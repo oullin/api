@@ -16,7 +16,7 @@
 	header {
 		Access-Control-Allow-Origin "http://localhost:5173" # allows the Vue app (running on localhost:5173) to make requests.
 		Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" # Specifies which methods are allowed.
-		Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent" # allows the custom headers needed by the API.
+		Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent, If-None-Match" # allows the custom headers needed by the API.
 	}
 
 	# This handles the browser's "preflight" OPTIONS request.
@@ -29,7 +29,7 @@
 		# Reflect the Origin back so it's always allowed
 		header Access-Control-Allow-Origin "{http.request.header.Origin}"
 		header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-		header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent"
+		header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent, If-None-Match"
 		header Access-Control-Max-Age "86400"
 		respond 204
 	}
