@@ -7,8 +7,8 @@ func Count[T *int64](numItems T, query *gorm.DB, session *gorm.Session, distinct
 		Session(session).  // clone the based query.
 		Distinct(distinct) // remove duplicated; if any to get the actual count.
 
-	if sql.Count(numItems).Error != nil {
-		return sql.Error
+	if err := sql.Count(numItems).Error; err != nil {
+		return err
 	}
 
 	return nil

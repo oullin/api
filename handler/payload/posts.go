@@ -40,6 +40,7 @@ func GetPostsFiltersFrom(request IndexRequestBody) queries.PostFilters {
 		Author:   request.Author,
 		Category: request.Category,
 		Tag:      request.Tag,
+		Text:     request.Text,
 	}
 }
 
