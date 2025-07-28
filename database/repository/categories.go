@@ -23,11 +23,7 @@ func (c Categories) GetAll(paginate pagination.Paginate) (*pagination.Pagination
 		Limit(paginate.Limit).
 		Order("categories.name asc")
 
-	countQuery := query.
-		Session(c.DB.GetSession()). // clone the based query.
-		Distinct("categories.id")   // remove duplicated posts to get the actual count.
-
-	if err := countQuery.Count(&numItems).Error; err != nil {
+	if err := pagination.Count[*int64](&numItems, query, c.DB.GetSession(), "categories.id"); err != nil {
 		return nil, err
 	}
 
