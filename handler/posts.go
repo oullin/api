@@ -36,7 +36,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 
 	result, err := h.Posts.GetAll(
 		payload.GetPostsFiltersFrom(requestBody),
-		paginate.MakeFrom(r.URL.Query()),
+		paginate.MakeFrom(r.URL, 10),
 	)
 
 	if err != nil {

@@ -19,20 +19,26 @@ func (c Categories) GetAll(paginate pagination.Paginate) (*pagination.Pagination
 
 	query := c.DB.Sql().
 		Model(&database.Category{}).
+		Joins("JOIN post_categories ON post_categories.category_id = categories.id").
+		Joins("JOIN posts ON posts.id = post_categories.post_id").
 		Where("categories.deleted_at is null").
-		Limit(paginate.Limit).
-		Order("categories.name asc")
+		Where("posts.deleted_at is null").
+		Where("posts.published_at is not null")
 
-	if err := pagination.Count[*int64](&numItems, query, c.DB.GetSession(), "categories.id"); err != nil {
+	group := "categories.id, categories.slug"
+
+	if err := pagination.Count[*int64](&numItems, query, c.DB.GetSession(), group); err != nil {
 		return nil, err
 	}
 
 	offset := (paginate.Page - 1) * paginate.Limit
 
-	err := query.Preload("Posts").
-		Limit(paginate.Limit).
+	err := query.
+		Preload("Posts").
 		Offset(offset).
-		Distinct().
+		Limit(paginate.Limit).
+		Order("categories.name asc").
+		Group(group).
 		Find(&categories).Error
 
 	if err != nil {

@@ -3,7 +3,8 @@ package pagination
 import "math"
 
 const MinPage = 1
-const MaxLimit = 100
+const PostsMaxLimit = 10
+const CategoriesMaxLimit = 5
 
 // Pagination holds the data for a single page along with all pagination metadata.
 // It's generic and can be used for any data type.

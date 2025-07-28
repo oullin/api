@@ -24,7 +24,7 @@ func MakeCategoriesHandler(categories *repository.Categories) CategoriesHandler 
 
 func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	result, err := h.Categories.GetAll(
-		paginate.MakeFrom(r.URL.Query()),
+		paginate.MakeFrom(r.URL, 5),
 	)
 
 	if err != nil {
