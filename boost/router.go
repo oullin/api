@@ -38,7 +38,7 @@ func (r *Router) Posts() {
 	index := r.PipelineFor(abstract.Index)
 	show := r.PipelineFor(abstract.Show)
 
-	r.Mux.HandleFunc("GET /posts", index)
+	r.Mux.HandleFunc("POST /posts", index)
 	r.Mux.HandleFunc("GET /posts/{slug}", show)
 }
 
