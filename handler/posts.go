@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/paginate"
-	"github.com/oullin/handler/posts"
+	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
 	"log/slog"
@@ -26,7 +26,7 @@ func MakePostsHandler(posts *repository.Posts) PostsHandler {
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	defer pkg.CloseWithLog(r.Body)
 
-	payload, err := http.ParseRequestBody[posts.IndexRequestBody](r)
+	requestBody, err := http.ParseRequestBody[payload.IndexRequestBody](r)
 
 	if err != nil {
 		slog.Error("failed to parse request body", "err", err)
@@ -35,7 +35,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 	}
 
 	result, err := h.Posts.GetAll(
-		posts.GetFiltersFrom(payload),
+		payload.GetPostsFiltersFrom(requestBody),
 		paginate.MakeFrom(r.URL.Query()),
 	)
 
@@ -47,7 +47,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 
 	items := pagination.HydratePagination(
 		result,
-		posts.GetPostsResponse,
+		payload.GetPostsResponse,
 	)
 
 	if err := json.NewEncoder(w).Encode(items); err != nil {
@@ -60,7 +60,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 }
 
 func (h *PostsHandler) Show(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	slug := posts.GetSlugFrom(r)
+	slug := payload.GetSlugFrom(r)
 
 	if slug == "" {
 		return http.BadRequestError("Slugs are required to show posts content")
@@ -71,7 +71,7 @@ func (h *PostsHandler) Show(w baseHttp.ResponseWriter, r *baseHttp.Request) *htt
 		return http.NotFound(fmt.Sprintf("The given post '%s' was not found", slug))
 	}
 
-	items := posts.GetPostsResponse(*post)
+	items := payload.GetPostsResponse(*post)
 	if err := json.NewEncoder(w).Encode(items); err != nil {
 		slog.Error(err.Error())
 

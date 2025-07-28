@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/paginate"
-	"github.com/oullin/handler/posts"
+	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg/http"
 	"log/slog"
 	baseHttp "net/http"
@@ -34,8 +34,8 @@ func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request
 
 	items := pagination.HydratePagination(
 		result,
-		func(s database.Category) posts.CategoryResponse {
-			return posts.CategoryResponse{
+		func(s database.Category) payload.CategoryResponse {
+			return payload.CategoryResponse{
 				UUID:        s.UUID,
 				Name:        s.Name,
 				Slug:        s.Slug,
