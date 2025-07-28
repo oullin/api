@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/posts"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
@@ -33,9 +34,9 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 		return http.InternalError("There was an issue reading the request. Please, try again later.")
 	}
 
-	result, err := h.Posts.GetPosts(
+	result, err := h.Posts.GetAll(
 		posts.GetFiltersFrom(payload),
-		posts.GetPaginateFrom(r.URL.Query()),
+		paginate.MakeFrom(r.URL.Query()),
 	)
 
 	if err != nil {

@@ -4,12 +4,49 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/pkg/gorm"
 	"strings"
 )
 
 type Categories struct {
 	DB *database.Connection
+}
+
+func (c Categories) GetAll(paginate pagination.Paginate) (*pagination.Pagination[database.Category], error) {
+	var numItems int64
+	var categories []database.Category
+
+	query := c.DB.Sql().
+		Model(&database.Category{}).
+		Where("categories.deleted_at is null").
+		Limit(paginate.Limit).
+		Order("categories.name asc")
+
+	countQuery := query.
+		Session(c.DB.GetSession()). // clone the based query.
+		Distinct("categories.id")   // remove duplicated posts to get the actual count.
+
+	if err := countQuery.Count(&numItems).Error; err != nil {
+		return nil, err
+	}
+
+	offset := (paginate.Page - 1) * paginate.Limit
+
+	err := query.Preload("Posts").
+		Limit(paginate.Limit).
+		Offset(offset).
+		Distinct().
+		Find(&categories).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	paginate.SetNumItems(numItems)
+	result := pagination.MakePagination[database.Category](categories, paginate)
+
+	return result, nil
 }
 
 func (c Categories) FindBy(slug string) *database.Category {

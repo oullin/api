@@ -42,6 +42,15 @@ func (r *Router) Posts() {
 	r.Mux.HandleFunc("GET /posts/{slug}", show)
 }
 
+func (r *Router) Categories() {
+	repo := repository.Categories{DB: r.Db}
+	abstract := handler.MakeCategoriesHandler(&repo)
+
+	index := r.PipelineFor(abstract.Index)
+
+	r.Mux.HandleFunc("GET /categories", index)
+}
+
 func (r *Router) Profile() {
 	abstract := handler.MakeProfileHandler("./storage/fixture/profile.json")
 

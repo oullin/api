@@ -15,7 +15,7 @@ type Posts struct {
 	Tags       *Tags
 }
 
-func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+func (p Posts) GetAll(filters queries.PostFilters, paginate pagination.Paginate) (*pagination.Pagination[database.Post], error) {
 	var numItems int64
 	var posts []database.Post
 
