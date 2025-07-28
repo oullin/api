@@ -34,7 +34,7 @@ func (c Categories) GetAll(paginate pagination.Paginate) (*pagination.Pagination
 	offset := (paginate.Page - 1) * paginate.Limit
 
 	err := query.
-		Preload("Posts").
+		Preload("Posts", "posts.deleted_at IS NULL AND posts.published_at IS NOT NULL").
 		Offset(offset).
 		Limit(paginate.Limit).
 		Order("categories.name asc").
