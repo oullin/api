@@ -44,10 +44,10 @@
                 "description": "A popular general-purpose scripting language that is especially suited to web development."
             },
             {
-            "uuid": "a1b2c3d4-e5f6-3456-7890-abcdef123456",
-            "percentage": 95,
-            "item": "Cloud Cost Optimization",
-            "description": "The process of reducing cloud spending without negatively impacting performance or reliability."
+                "uuid": "a1b2c3d4-e5f6-3456-7890-abcdef123456",
+                "percentage": 95,
+                "item": "Cloud Cost Optimization",
+                "description": "The process of reducing cloud spending without negatively impacting performance or reliability."
             },
             {
                 "uuid": "e5f6a1b2-c3d4-7890-1234-901234567890",
@@ -164,10 +164,10 @@
                 "description": "Continuous Integration and Delivery, the practice of automating the software development and release process."
             },
             {
-            "uuid": "c3d4e5f6-a1b2-5678-9012-789012345678",
-            "percentage": 75,
-            "item": "ETL",
-            "description": "Extract, Transform, Load; a data integration process for combining data from multiple sources."
+                "uuid": "c3d4e5f6-a1b2-5678-9012-789012345678",
+                "percentage": 75,
+                "item": "ETL",
+                "description": "Extract, Transform, Load; a data integration process for combining data from multiple sources."
             },
             {
                 "uuid": "d4e5f6a1-b2c3-6789-0123-890123456789",
