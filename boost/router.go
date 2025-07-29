@@ -38,8 +38,17 @@ func (r *Router) Posts() {
 	index := r.PipelineFor(abstract.Index)
 	show := r.PipelineFor(abstract.Show)
 
-	r.Mux.HandleFunc("GET /posts", index)
+	r.Mux.HandleFunc("POST /posts", index)
 	r.Mux.HandleFunc("GET /posts/{slug}", show)
+}
+
+func (r *Router) Categories() {
+	repo := repository.Categories{DB: r.Db}
+	abstract := handler.MakeCategoriesHandler(&repo)
+
+	index := r.PipelineFor(abstract.Index)
+
+	r.Mux.HandleFunc("GET /categories", index)
 }
 
 func (r *Router) Profile() {

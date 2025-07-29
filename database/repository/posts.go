@@ -15,7 +15,7 @@ type Posts struct {
 	Tags       *Tags
 }
 
-func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+func (p Posts) GetAll(filters queries.PostFilters, paginate pagination.Paginate) (*pagination.Pagination[database.Post], error) {
 	var numItems int64
 	var posts []database.Post
 
@@ -26,11 +26,7 @@ func (p Posts) GetPosts(filters queries.PostFilters, paginate pagination.Paginat
 
 	queries.ApplyPostsFilters(&filters, query)
 
-	countQuery := query.
-		Session(p.DB.GetSession()). // clone the based query.
-		Distinct("posts.id")        // remove duplicated posts to get the actual count.
-
-	if err := countQuery.Count(&numItems).Error; err != nil {
+	if err := pagination.Count[*int64](&numItems, query, p.DB.GetSession(), "posts.id"); err != nil {
 		return nil, err
 	}
 
