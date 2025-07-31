@@ -26,9 +26,21 @@ func TestEncryptDecrypt(t *testing.T) {
 }
 
 func TestDecryptWrongKey(t *testing.T) {
-	key, _ := GenerateAESKey()
-	other, _ := GenerateAESKey()
-	enc, _ := Encrypt([]byte("hello"), key)
+	key, err := GenerateAESKey()
+	if err != nil {
+		t.Fatalf("key err: %v", err)
+	}
+
+	other, err := GenerateAESKey()
+	if err != nil {
+		t.Fatalf("other key err: %v", err)
+	}
+
+	enc, err := Encrypt([]byte("hello"), key)
+
+	if err != nil {
+		t.Fatalf("encrypt err: %v", err)
+	}
 
 	if _, err := Decrypt(enc, other); err == nil {
 		t.Fatalf("expected error")

@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run unit tests
-        run: go test ./pkg ./pkg/auth ./pkg/cli ./pkg/gorm ./pkg/http ./pkg/llogs ./pkg/media -coverprofile=coverage.out
+        run: go test ./pkg/... -coverprofile=coverage.out
 
       - name: Coverage Report
         run: go tool cover -func=coverage.out
