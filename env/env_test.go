@@ -2,6 +2,7 @@ package env
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -14,8 +15,9 @@ func TestGetEnvVar(t *testing.T) {
 }
 
 func TestGetSecretOrEnv_File(t *testing.T) {
-	path := "/run/secrets/testsecret"
-	os.MkdirAll("/run/secrets", 0755)
+	dir := t.TempDir()
+	SecretsDir = dir
+	path := filepath.Join(dir, "testsecret")
 	os.WriteFile(path, []byte("secret"), 0644)
 	t.Cleanup(func() { os.Remove(path) })
 

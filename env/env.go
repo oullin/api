@@ -2,6 +2,7 @@ package env
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -13,12 +14,16 @@ type Environment struct {
 	Sentry  SentryEnvironment
 }
 
+// SecretsDir defines where secret files are read from. It can be overridden in
+// tests.
+var SecretsDir = "/run/secrets"
+
 func GetEnvVar(key string) string {
 	return strings.TrimSpace(os.Getenv(key))
 }
 
 func GetSecretOrEnv(secretName string, envVarName string) string {
-	secretPath := "/run/secrets/" + secretName
+	secretPath := filepath.Join(SecretsDir, secretName)
 
 	// Try to read the secret file first.
 	content, err := os.ReadFile(secretPath)
