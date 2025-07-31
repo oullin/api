@@ -31,7 +31,7 @@ jobs:
         run: go test ./pkg/... -coverprofile=coverage.out
 
       - name: Run other tests
-        run: go test ./boost ./env
+        run: go test ./boost ./env -coverprofile=coverage.out
 
       - name: Coverage Report
         run: go tool cover -func=coverage.out | tail -n 1
