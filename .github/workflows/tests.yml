@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run unit tests
-        run: go test ./pkg/... -coverprofile=coverage.out
+        run: go test ./pkg/... ./boost ./env -coverprofile=coverage.out
 
       - name: Coverage Report
         run: go tool cover -func=coverage.out | tail -n 1
