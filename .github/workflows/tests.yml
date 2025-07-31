@@ -36,3 +36,8 @@ jobs:
         run: |
           go test ./boost ./env -coverprofile=coverage.out
           go tool cover -func=coverage.out | tail -n 1
+
+      - name: Run handler tests
+        run: |
+          go test ./handler/... -coverprofile=coverage.out
+          go tool cover -func=coverage.out | tail -n 1
