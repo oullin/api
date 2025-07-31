@@ -9,11 +9,13 @@ import (
 func captureOutput(f func()) string {
 	r, w, _ := os.Pipe()
 	old := os.Stdout
+
 	os.Stdout = w
 	f()
 	w.Close()
 	os.Stdout = old
 	out, _ := io.ReadAll(r)
+
 	return string(out)
 }
 

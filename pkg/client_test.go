@@ -24,6 +24,7 @@ func TestClientTransportAndGet(t *testing.T) {
 
 func TestClientGetNil(t *testing.T) {
 	var c *Client
+
 	_, err := c.Get(context.Background(), "http://example.com")
 	if err == nil {
 		t.Fatalf("expected error")

@@ -11,6 +11,7 @@ func TestResponse_RespondOkAndHasCache(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	r := MakeResponseFrom("salt", rec, req)
+
 	if err := r.RespondOk(map[string]string{"a": "b"}); err != nil {
 		t.Fatalf("respond: %v", err)
 	}
@@ -33,6 +34,7 @@ func TestResponse_WithHeaders(t *testing.T) {
 	rec := httptest.NewRecorder()
 	r := MakeResponseFrom("salt", rec, req)
 	called := false
+
 	r.WithHeaders(func(w http.ResponseWriter) { called = true })
 	if !called {
 		t.Fatalf("callback not called")

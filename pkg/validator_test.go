@@ -17,6 +17,7 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 	}
 
 	invalid := &user{Email: "bad", Name: "", Code: "1"}
+
 	if ok, err := v.Passes(invalid); ok || err == nil {
 		t.Fatalf("expected fail")
 	}
@@ -24,6 +25,7 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 		t.Fatalf("errors not recorded")
 	}
 	json := v.GetErrorsAsJason()
+
 	if json == "" {
 		t.Fatalf("json empty")
 	}
@@ -32,6 +34,7 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 func TestValidator_Rejects(t *testing.T) {
 	v := GetDefaultValidator()
 	u := &user{Email: "", Name: "", Code: "1"}
+
 	reject, _ := v.Rejects(u)
 	if !reject {
 		t.Fatalf("expected reject")

@@ -13,6 +13,7 @@ type sampleReq struct {
 func TestParseRequestBody(t *testing.T) {
 	r := httptest.NewRequest("POST", "/", strings.NewReader("{\"name\":\"bob\"}"))
 	v, err := ParseRequestBody[sampleReq](r)
+
 	if err != nil || v.Name != "bob" {
 		t.Fatalf("parse failed: %v %#v", err, v)
 	}
@@ -21,6 +22,7 @@ func TestParseRequestBody(t *testing.T) {
 func TestParseRequestBodyEmpty(t *testing.T) {
 	r := httptest.NewRequest("POST", "/", nil)
 	v, err := ParseRequestBody[sampleReq](r)
+
 	if err != nil || v.Name != "" {
 		t.Fatalf("expected zero value")
 	}
@@ -29,6 +31,7 @@ func TestParseRequestBodyEmpty(t *testing.T) {
 func TestParseRequestBodyInvalid(t *testing.T) {
 	r := httptest.NewRequest("POST", "/", strings.NewReader("{"))
 	_, err := ParseRequestBody[sampleReq](r)
+
 	if err == nil {
 		t.Fatalf("expected error")
 	}

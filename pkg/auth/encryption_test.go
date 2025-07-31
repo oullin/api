@@ -7,6 +7,7 @@ func TestEncryptDecrypt(t *testing.T) {
 	if err != nil || len(key) != EncryptionKeyLength {
 		t.Fatalf("key err")
 	}
+
 	plain := []byte("hello")
 	enc, err := Encrypt(plain, key)
 	if err != nil {
@@ -25,6 +26,7 @@ func TestDecryptWrongKey(t *testing.T) {
 	key, _ := GenerateAESKey()
 	other, _ := GenerateAESKey()
 	enc, _ := Encrypt([]byte("hello"), key)
+
 	if _, err := Decrypt(enc, other); err == nil {
 		t.Fatalf("expected error")
 	}
@@ -33,6 +35,7 @@ func TestDecryptWrongKey(t *testing.T) {
 func TestCreateSignatureFrom(t *testing.T) {
 	sig1 := CreateSignatureFrom("msg", "secret")
 	sig2 := CreateSignatureFrom("msg", "secret")
+
 	if sig1 != sig2 {
 		t.Fatalf("signature mismatch")
 	}

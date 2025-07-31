@@ -12,6 +12,7 @@ import (
 func TestPipelineChainOrder(t *testing.T) {
 	p := Pipeline{}
 	order := []string{}
+
 	m1 := func(next pkgHttp.ApiHandler) pkgHttp.ApiHandler {
 		return func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
 			order = append(order, "m1")

@@ -29,6 +29,7 @@ func TestParseJsonFile(t *testing.T) {
 
 func TestParseJsonFileError(t *testing.T) {
 	_, err := ParseJsonFile[jsonSample]("nonexistent.json")
+
 	if err == nil {
 		t.Fatalf("expected error")
 	}

@@ -15,8 +15,11 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
+
       - uses: actions/checkout@v4
+
       - name: Run unit tests
         run: go test ./pkg ./pkg/auth ./pkg/cli ./pkg/gorm ./pkg/http ./pkg/llogs ./pkg/media -coverprofile=coverage.out
+
       - name: Coverage Report
         run: go tool cover -func=coverage.out

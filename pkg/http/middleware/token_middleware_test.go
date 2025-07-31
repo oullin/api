@@ -11,6 +11,7 @@ import (
 
 func TestTokenMiddlewareErrors(t *testing.T) {
 	tm := TokenCheckMiddleware{}
+
 	e := tm.getInvalidRequestError("a", "b", "c")
 	if e.Status != 403 || e.Message == "" {
 		t.Fatalf("invalid request error")
@@ -27,9 +28,11 @@ func TestTokenMiddlewareErrors(t *testing.T) {
 
 func TestTokenMiddlewareHandleInvalid(t *testing.T) {
 	tm := MakeTokenMiddleware(nil, nil)
+
 	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
 		return nil
 	})
+
 	rec := httptest.NewRecorder()
 	err := handler(rec, httptest.NewRequest("GET", "/", nil))
 	if err == nil || err.Status != 403 {

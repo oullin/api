@@ -17,12 +17,14 @@ func (f *fakeCloser) Close() error {
 
 func TestCloseWithLog(t *testing.T) {
 	c := &fakeCloser{}
+
 	CloseWithLog(c)
 	if !c.closed {
 		t.Fatalf("close not called")
 	}
 
 	c2 := &fakeCloser{err: errors.New("fail")}
+
 	CloseWithLog(c2)
 	if !c2.closed {
 		t.Fatalf("close not called with error")

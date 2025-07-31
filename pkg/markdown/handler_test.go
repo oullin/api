@@ -13,6 +13,7 @@ func TestParserFetch(t *testing.T) {
 	defer server.Close()
 
 	p := Parser{Url: server.URL}
+
 	content, err := p.Fetch()
 	if err != nil || content != "data" {
 		t.Fatalf("fetch failed")

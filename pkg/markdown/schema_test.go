@@ -11,6 +11,7 @@ published_at: 2024-06-09
 ---
 ![alt](url)
 content`
+
 	post, err := Parse(md)
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -32,6 +33,7 @@ slug: another
 published_at: 2024-06-09
 ---
 content`
+
 	post, err := Parse(md)
 	if err != nil {
 		t.Fatalf("err: %v", err)
