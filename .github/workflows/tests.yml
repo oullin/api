@@ -28,10 +28,11 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Run pkg tests
-        run: go test ./pkg/... -coverprofile=coverage.out
+        run: |
+          go test ./pkg/... -coverprofile=coverage.out
+          go tool cover -func=coverage.out | tail -n 1
 
       - name: Run other tests
-        run: go test ./boost ./env -coverprofile=coverage.out
-
-      - name: Coverage Report
-        run: go tool cover -func=coverage.out | tail -n 1
+        run: |
+          go test ./boost ./env -coverprofile=coverage.out
+          go tool cover -func=coverage.out | tail -n 1
