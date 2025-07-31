@@ -3,7 +3,10 @@ package auth
 import "testing"
 
 func TestTokenHandlerLifecycle(t *testing.T) {
-	key, _ := GenerateAESKey()
+	key, err := GenerateAESKey()
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
 	h, err := MakeTokensHandler(key)
 
 	if err != nil {
@@ -35,8 +38,14 @@ func TestMakeTokensHandlerError(t *testing.T) {
 }
 
 func TestSetupNewAccountErrors(t *testing.T) {
-	key, _ := GenerateAESKey()
-	h, _ := MakeTokensHandler(key)
+	key, err := GenerateAESKey()
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	h, err := MakeTokensHandler(key)
+	if err != nil {
+		t.Fatalf("make handler: %v", err)
+	}
 
 	if _, err := h.SetupNewAccount("ab"); err == nil {
 		t.Fatalf("expected error for short name")

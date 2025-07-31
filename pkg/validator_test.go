@@ -24,7 +24,7 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 	if len(v.GetErrors()) == 0 {
 		t.Fatalf("errors not recorded")
 	}
-	json := v.GetErrorsAsJason()
+	json := v.GetErrorsAsJson()
 
 	if json == "" {
 		t.Fatalf("json empty")

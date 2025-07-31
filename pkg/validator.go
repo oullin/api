@@ -97,7 +97,7 @@ func (v *Validator) parseError(validateErrs validator.ValidationErrors) {
 	}
 }
 
-func (v *Validator) GetErrorsAsJason() string {
+func (v *Validator) GetErrorsAsJson() string {
 	value, err := json.Marshal(v.GetErrors())
 
 	if err != nil {

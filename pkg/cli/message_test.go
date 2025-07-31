@@ -21,23 +21,45 @@ func captureOutput(f func()) string {
 
 func TestMessageFunctions(t *testing.T) {
 	if captureOutput(func() { Error("err") }) == "" {
-		t.Fatalf("no output")
+		t.Fatalf("no output for Error")
 	}
 	if captureOutput(func() { Success("ok") }) == "" {
-		t.Fatalf("no output")
+		t.Fatalf("no output for Success")
 	}
 	if captureOutput(func() { Warning("warn") }) == "" {
-		t.Fatalf("no output")
+		t.Fatalf("no output for Warning")
 	}
-	captureOutput(func() { Errorln("err") })
-	captureOutput(func() { Successln("ok") })
-	captureOutput(func() { Warningln("warn") })
-	captureOutput(func() { Magenta("m") })
-	captureOutput(func() { Magentaln("m") })
-	captureOutput(func() { Blue("b") })
-	captureOutput(func() { Blueln("b") })
-	captureOutput(func() { Cyan("c") })
-	captureOutput(func() { Cyanln("c") })
-	captureOutput(func() { Gray("g") })
-	captureOutput(func() { Grayln("g") })
+	if captureOutput(func() { Errorln("err") }) == "" {
+		t.Fatalf("no output for Errorln")
+	}
+	if captureOutput(func() { Successln("ok") }) == "" {
+		t.Fatalf("no output for Successln")
+	}
+	if captureOutput(func() { Warningln("warn") }) == "" {
+		t.Fatalf("no output for Warningln")
+	}
+	if captureOutput(func() { Magenta("m") }) == "" {
+		t.Fatalf("no output for Magenta")
+	}
+	if captureOutput(func() { Magentaln("m") }) == "" {
+		t.Fatalf("no output for Magentaln")
+	}
+	if captureOutput(func() { Blue("b") }) == "" {
+		t.Fatalf("no output for Blue")
+	}
+	if captureOutput(func() { Blueln("b") }) == "" {
+		t.Fatalf("no output for Blueln")
+	}
+	if captureOutput(func() { Cyan("c") }) == "" {
+		t.Fatalf("no output for Cyan")
+	}
+	if captureOutput(func() { Cyanln("c") }) == "" {
+		t.Fatalf("no output for Cyanln")
+	}
+	if captureOutput(func() { Gray("g") }) == "" {
+		t.Fatalf("no output for Gray")
+	}
+	if captureOutput(func() { Grayln("g") }) == "" {
+		t.Fatalf("no output for Grayln")
+	}
 }

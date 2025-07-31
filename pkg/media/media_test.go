@@ -62,7 +62,10 @@ func TestMakeMediaErrors(t *testing.T) {
 
 func TestGetFilePath(t *testing.T) {
 	setupTempDir(t)
-	m, _ := MakeMedia("u", []byte{1}, "a.jpg")
+	m, err := MakeMedia("u", []byte{1}, "a.jpg")
+	if err != nil {
+		t.Fatalf("make: %v", err)
+	}
 
 	p := m.GetFilePath("thumb")
 	if !strings.Contains(filepath.Base(p), "thumb-") {

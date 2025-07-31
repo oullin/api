@@ -4,8 +4,11 @@ import "testing"
 
 func TestEncryptDecrypt(t *testing.T) {
 	key, err := GenerateAESKey()
-	if err != nil || len(key) != EncryptionKeyLength {
-		t.Fatalf("key err")
+	if err != nil {
+		t.Fatalf("key err: %v", err)
+	}
+	if len(key) != EncryptionKeyLength {
+		t.Fatalf("invalid key length %d", len(key))
 	}
 
 	plain := []byte("hello")

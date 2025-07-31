@@ -5,8 +5,9 @@ import "testing"
 func TestSafeDisplay(t *testing.T) {
 	tok := "sk_1234567890123456abcd"
 	d := SafeDisplay(tok)
+	expected := "sk_1234567890..."
 
-	if d == tok || len(d) >= len(tok) {
-		t.Fatalf("masking failed")
+	if d != expected {
+		t.Fatalf("expected %s got %s", expected, d)
 	}
 }
