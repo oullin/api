@@ -2,10 +2,18 @@ package boost
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/auth"
+	"github.com/oullin/pkg/http/middleware"
+	"github.com/oullin/pkg/llogs"
 )
 
 func validEnvVars(t *testing.T) {
@@ -101,5 +109,154 @@ func TestAppHelpers(t *testing.T) {
 	}
 	if app.GetDB() != nil {
 		t.Fatalf("expected nil db")
+	}
+}
+func TestAppBootRoutes(t *testing.T) {
+	validEnvVars(t)
+
+	env := MakeEnv(pkg.GetDefaultValidator())
+
+	key, err := auth.GenerateAESKey()
+	if err != nil {
+		t.Fatalf("key err: %v", err)
+	}
+
+	handler, err := auth.MakeTokensHandler(key)
+	if err != nil {
+		t.Fatalf("handler err: %v", err)
+	}
+
+	router := Router{
+		Env: env,
+		Mux: http.NewServeMux(),
+		Pipeline: middleware.Pipeline{
+			Env:          env,
+			ApiKeys:      &repository.ApiKeys{DB: &database.Connection{}},
+			TokenHandler: handler,
+		},
+		Db: &database.Connection{},
+	}
+
+	app := &App{}
+	app.SetRouter(router)
+
+	app.Boot()
+
+	routes := []struct {
+		method string
+		path   string
+	}{
+		{"GET", "/profile"},
+		{"GET", "/experience"},
+		{"GET", "/projects"},
+		{"GET", "/social"},
+		{"GET", "/talks"},
+		{"GET", "/education"},
+		{"GET", "/recommendations"},
+		{"POST", "/posts"},
+		{"GET", "/posts/slug"},
+		{"GET", "/categories"},
+	}
+
+	for _, rt := range routes {
+		req := httptest.NewRequest(rt.method, rt.path, nil)
+		h, pattern := app.GetMux().Handler(req)
+		if pattern == "" || h == nil {
+			t.Fatalf("route missing %s %s", rt.method, rt.path)
+		}
+	}
+}
+
+func TestMakeLogs(t *testing.T) {
+	dir, err := os.MkdirTemp("", "logdir")
+	if err != nil {
+		t.Fatalf("tmpdir err: %v", err)
+	}
+
+	validEnvVars(t)
+	t.Setenv("ENV_APP_LOGS_DIR", filepath.Join(dir, "log-%s.txt"))
+
+	env := MakeEnv(pkg.GetDefaultValidator())
+
+	d := MakeLogs(env)
+	driver := *d
+	fl := driver.(llogs.FilesLogs)
+
+	if !strings.HasPrefix(fl.DefaultPath(), dir) {
+		t.Fatalf("wrong log dir")
+	}
+
+	if !fl.Close() {
+		t.Fatalf("close failed")
+	}
+}
+
+func TestMakeDbConnectionPanic(t *testing.T) {
+	validEnvVars(t)
+	t.Setenv("ENV_DB_PORT", "1")
+	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
+
+	env := MakeEnv(pkg.GetDefaultValidator())
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic")
+		}
+	}()
+
+	MakeDbConnection(env)
+}
+
+func TestMakeAppPanic(t *testing.T) {
+	validEnvVars(t)
+	t.Setenv("ENV_DB_PORT", "1")
+	t.Setenv("ENV_APP_LOGS_DIR", "/tmp/log-%s.txt")
+	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
+
+	env := MakeEnv(pkg.GetDefaultValidator())
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic")
+		}
+	}()
+
+	MakeApp(env, pkg.GetDefaultValidator())
+}
+
+func TestMakeSentry(t *testing.T) {
+	validEnvVars(t)
+	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
+
+	env := MakeEnv(pkg.GetDefaultValidator())
+
+	s := MakeSentry(env)
+	if s == nil || s.Handler == nil || s.Options == nil {
+		t.Fatalf("sentry setup failed")
+	}
+}
+
+func TestCloseLogs(t *testing.T) {
+	dir, err := os.MkdirTemp("", "logdir")
+	if err != nil {
+		t.Fatalf("tmpdir err: %v", err)
+	}
+
+	validEnvVars(t)
+	t.Setenv("ENV_APP_LOGS_DIR", filepath.Join(dir, "log-%s.txt"))
+	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
+
+	env := MakeEnv(pkg.GetDefaultValidator())
+
+	l := MakeLogs(env)
+	app := &App{logs: l}
+
+	app.CloseLogs()
+}
+
+func TestGetMuxNil(t *testing.T) {
+	app := &App{}
+	if app.GetMux() != nil {
+		t.Fatalf("expected nil mux")
 	}
 }
