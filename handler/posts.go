@@ -3,8 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/oullin/database/repository"
+	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg"
@@ -13,14 +14,17 @@ import (
 	baseHttp "net/http"
 )
 
-type PostsHandler struct {
-	Posts *repository.Posts
+type postsRepo interface {
+	GetAll(queries.PostFilters, pagination.Paginate) (*pagination.Pagination[database.Post], error)
+	FindBy(slug string) *database.Post
 }
 
-func MakePostsHandler(posts *repository.Posts) PostsHandler {
-	return PostsHandler{
-		Posts: posts,
-	}
+type PostsHandler struct {
+	Posts postsRepo
+}
+
+func MakePostsHandler(posts postsRepo) PostsHandler {
+	return PostsHandler{Posts: posts}
 }
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
