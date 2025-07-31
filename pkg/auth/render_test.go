@@ -11,3 +11,10 @@ func TestSafeDisplay(t *testing.T) {
 		t.Fatalf("expected %s got %s", expected, d)
 	}
 }
+
+func TestSafeDisplayShort(t *testing.T) {
+	tok := "pk_short"
+	if SafeDisplay(tok) != tok {
+		t.Fatalf("expected same")
+	}
+}

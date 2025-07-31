@@ -19,3 +19,16 @@ func TestParserFetch(t *testing.T) {
 		t.Fatalf("fetch failed")
 	}
 }
+
+func TestParserFetchError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(500)
+	}))
+	defer server.Close()
+
+	p := Parser{Url: server.URL}
+
+	if _, err := p.Fetch(); err == nil {
+		t.Fatalf("expected error")
+	}
+}

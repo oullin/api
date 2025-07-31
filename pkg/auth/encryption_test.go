@@ -47,6 +47,22 @@ func TestDecryptWrongKey(t *testing.T) {
 	}
 }
 
+func TestDecryptShortCipher(t *testing.T) {
+	key, err := GenerateAESKey()
+	if err != nil {
+		t.Fatalf("key err: %v", err)
+	}
+	if _, err := Decrypt([]byte("short"), key); err == nil {
+		t.Fatalf("expected error for short cipher")
+	}
+}
+
+func TestValidateTokenFormatEmpty(t *testing.T) {
+	if ValidateTokenFormat(" ") == nil {
+		t.Fatalf("empty token should fail")
+	}
+}
+
 func TestCreateSignatureFrom(t *testing.T) {
 	sig1 := CreateSignatureFrom("msg", "secret")
 	sig2 := CreateSignatureFrom("msg", "secret")

@@ -42,3 +42,26 @@ content`
 		t.Fatalf("parse failed")
 	}
 }
+
+func TestParseErrors(t *testing.T) {
+	if _, err := Parse("invalid"); err == nil {
+		t.Fatalf("expected error")
+	}
+
+	if _, err := Parse(`---\nbad`); err == nil {
+		t.Fatalf("expected bad yaml error")
+	}
+
+	md := `---
+slug: a
+published_at: "bad"
+---
+content`
+	post, err := Parse(md)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if _, err := post.GetPublishedAt(); err == nil {
+		t.Fatalf("expected date error")
+	}
+}

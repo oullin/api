@@ -50,4 +50,23 @@ func TestSetupNewAccountErrors(t *testing.T) {
 	if _, err := h.SetupNewAccount("ab"); err == nil {
 		t.Fatalf("expected error for short name")
 	}
+
+	badHandler := &TokenHandler{EncryptionKey: []byte("short")}
+	if _, err := badHandler.SetupNewAccount("tester"); err == nil {
+		t.Fatalf("expected encrypt error")
+	}
+}
+
+func TestDecodeTokensForError(t *testing.T) {
+	key, err := GenerateAESKey()
+	if err != nil {
+		t.Fatalf("key err: %v", err)
+	}
+	h, err := MakeTokensHandler(key)
+	if err != nil {
+		t.Fatalf("make handler: %v", err)
+	}
+	if _, err := h.DecodeTokensFor("acc", []byte("bad"), []byte("bad")); err == nil {
+		t.Fatalf("expected error")
+	}
 }

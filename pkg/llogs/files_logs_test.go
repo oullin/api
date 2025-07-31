@@ -23,6 +23,10 @@ func TestFilesLogs(t *testing.T) {
 	if !fl.Close() {
 		t.Fatalf("close")
 	}
+
+	if fl.Close() {
+		t.Fatalf("expected false on second close")
+	}
 }
 
 func TestDefaultPath(t *testing.T) {
