@@ -25,6 +25,7 @@ func TestApiKeysWithTestContainer(t *testing.T) {
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),
+		postgres.BasicWaitStrategies(),
 	)
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
