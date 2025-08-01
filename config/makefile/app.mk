@@ -1,4 +1,4 @@
-.PHONY: fresh audit watch format run-cli validate-caddy
+.PHONY: fresh destroy audit watch format run-cli validate-caddy
 
 APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
 APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
@@ -7,6 +7,10 @@ format:
 	gofmt -w -s .
 
 fresh:
+	docker compose down --volumes --rmi all --remove-orphans
+	docker ps
+
+destroy:
 	docker compose down --remove-orphans && \
 	docker container prune -f && \
 	docker image prune -f && \
