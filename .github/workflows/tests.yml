@@ -9,8 +9,8 @@ jobs:
     if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'testing')
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        go-version: [1.24.x]
+        matrix:
+          go-version: ['1.24.5']
     steps:
       - uses: actions/setup-go@v5
         with:
@@ -29,20 +29,29 @@ jobs:
 
       - name: Run pkg tests
         run: |
-          go test ./pkg/... -coverprofile=coverage.out
-          go tool cover -func=coverage.out | tail -n 1
+          go test ./pkg/... -coverprofile=coverage-pkg.out
+          go tool cover -func=coverage-pkg.out | tail -n 1
 
       - name: Run boost & env tests
         run: |
-          go test ./boost ./env -coverprofile=coverage.out
-          go tool cover -func=coverage.out | tail -n 1
+          go test ./boost ./env -coverprofile=coverage-boost-env.out
+          go tool cover -func=coverage-boost-env.out | tail -n 1
 
       - name: Run handlers tests
         run: |
-          go test ./handler/... -coverprofile=coverage.out
-          go tool cover -func=coverage.out | tail -n 1
+          go test ./handler/... -coverprofile=coverage-handler.out
+          go tool cover -func=coverage-handler.out | tail -n 1
 
       - name: Run database tests
         run: |
-          go test ./database/... -coverprofile=coverage.out
-          go tool cover -func=coverage.out | tail -n 1
+          go test ./database/... -coverprofile=coverage-database.out
+          go tool cover -func=coverage-database.out | tail -n 1
+
+      - name: Merge coverage reports
+        run: go tool cover -merge=coverage-*.out -o coverage.out
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.out
