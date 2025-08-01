@@ -1,38 +1,63 @@
 package seeds
 
 import (
-	"reflect"
+	"context"
+	"os/exec"
 	"testing"
-	"unsafe"
 
-	"github.com/google/uuid"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/database"
 	"github.com/oullin/env"
 )
 
 func testConnection(t *testing.T, e *env.Environment) *database.Connection {
-	dsn := "file:" + uuid.NewString() + "?mode=memory&cache=shared"
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("open sqlite: %v", err)
+	if _, err := exec.LookPath("docker"); err != nil {
+		t.Skip("docker not installed")
 	}
 
-	conn := &database.Connection{}
-	rv := reflect.ValueOf(conn).Elem()
+	ctx := context.Background()
 
-	driverField := rv.FieldByName("driver")
-	reflect.NewAt(driverField.Type(), unsafe.Pointer(driverField.UnsafeAddr())).Elem().Set(reflect.ValueOf(db))
+	pg, err := postgres.RunContainer(ctx,
+		testcontainers.WithImage("postgres:16-alpine"),
+		postgres.WithDatabase("testdb"),
+		postgres.WithUsername("test"),
+		postgres.WithPassword("secret"),
+		postgres.BasicWaitStrategies(),
+	)
+	if err != nil {
+		t.Fatalf("container run err: %v", err)
+	}
+	t.Cleanup(func() { pg.Terminate(ctx) })
 
-	nameField := rv.FieldByName("driverName")
-	reflect.NewAt(nameField.Type(), unsafe.Pointer(nameField.UnsafeAddr())).Elem().SetString("sqlite")
+	host, err := pg.Host(ctx)
+	if err != nil {
+		t.Fatalf("host err: %v", err)
+	}
+	port, err := pg.MappedPort(ctx, "5432/tcp")
+	if err != nil {
+		t.Fatalf("port err: %v", err)
+	}
 
-	envField := rv.FieldByName("env")
-	reflect.NewAt(envField.Type(), unsafe.Pointer(envField.UnsafeAddr())).Elem().Set(reflect.ValueOf(e))
+	e.DB = env.DBEnvironment{
+		UserName:     "test",
+		UserPassword: "secret",
+		DatabaseName: "testdb",
+		Port:         port.Int(),
+		Host:         host,
+		DriverName:   database.DriverName,
+		SSLMode:      "disable",
+		TimeZone:     "UTC",
+	}
 
-	err = db.AutoMigrate(
+	conn, err := database.MakeConnection(e)
+	if err != nil {
+		t.Fatalf("make connection: %v", err)
+	}
+	t.Cleanup(func() { conn.Close() })
+
+	if err := conn.Sql().AutoMigrate(
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -43,8 +68,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 		&database.Comment{},
 		&database.Like{},
 		&database.Newsletter{},
-	)
-	if err != nil {
+	); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
 
