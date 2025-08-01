@@ -18,14 +18,18 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - uses: actions/cache@v4
+      - name: Cache Go modules
+        uses: actions/cache@v4
         with:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+      - name: Download Go modules
+        run: go mod download
 
       - name: Run pkg tests
         run: |
@@ -50,5 +54,5 @@ jobs:
       - name: Merge coverage reports
         run: |
           echo "mode: set" > coverage-${{ matrix.go-version }}.out
-          tail -q -n +2 coverage-*-*.out >> coverage-${{ matrix.go-version }}.out
+          tail -q -n +2 coverage-*-${{ matrix.go-version }}.out >> coverage-${{ matrix.go-version }}.out
           go tool cover -func=coverage-${{ matrix.go-version }}.out | tail -n 1
