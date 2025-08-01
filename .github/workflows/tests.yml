@@ -20,11 +20,6 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Debug repository files
-        run: |
-          echo "Workspace $PWD"
-          ls -lah .
-
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
