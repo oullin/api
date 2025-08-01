@@ -44,5 +44,5 @@ jobs:
 
       - name: Run database tests
         run: |
-          go test ./database -coverprofile=coverage.out
+          go test ./database/... -coverprofile=coverage.out
           go tool cover -func=coverage.out | tail -n 1
