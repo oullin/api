@@ -48,7 +48,9 @@ jobs:
           go tool cover -func=coverage-database.out | tail -n 1
 
       - name: Merge coverage reports
-        run: go tool cover -merge=coverage-*.out -o coverage.out
+        run: |
+          echo "mode: set" > coverage.out
+          tail -q -n +2 coverage-*.out >> coverage.out
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
