@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'testing')
+    if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'test')
     runs-on: ubuntu-latest
     strategy:
       matrix:
