@@ -93,23 +93,23 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 	}
 
 	if _, err := validate.Rejects(app); err != nil {
-		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJson())
 	}
 
 	if _, err := validate.Rejects(db); err != nil {
-		panic(errorSuffix + "invalid [Sql] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [Sql] model: " + validate.GetErrorsAsJson())
 	}
 
 	if _, err := validate.Rejects(logsCreds); err != nil {
-		panic(errorSuffix + "invalid [logs Creds] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [logs Creds] model: " + validate.GetErrorsAsJson())
 	}
 
 	if _, err := validate.Rejects(net); err != nil {
-		panic(errorSuffix + "invalid [NETWORK] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [NETWORK] model: " + validate.GetErrorsAsJson())
 	}
 
 	if _, err := validate.Rejects(sentryEnvironment); err != nil {
-		panic(errorSuffix + "invalid [SENTRY] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid [SENTRY] model: " + validate.GetErrorsAsJson())
 	}
 
 	blog := &env.Environment{
@@ -121,7 +121,7 @@ func MakeEnv(validate *pkg.Validator) *env.Environment {
 	}
 
 	if _, err := validate.Rejects(blog); err != nil {
-		panic(errorSuffix + "invalid blog [ENVIRONMENT] model: " + validate.GetErrorsAsJason())
+		panic(errorSuffix + "invalid blog [ENVIRONMENT] model: " + validate.GetErrorsAsJson())
 	}
 
 	return blog

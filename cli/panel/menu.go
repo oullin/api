@@ -175,7 +175,7 @@ func (p *Menu) CapturePostURL() (*posts.Input, error) {
 			cli.Reset,
 			cli.BlueColour,
 			cli.Reset,
-			validate.GetErrorsAsJason(),
+			validate.GetErrorsAsJson(),
 		)
 	}
 
