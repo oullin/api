@@ -170,8 +170,8 @@ type Newsletter struct {
 	FirstName      string     `gorm:"type:varchar(250);not null"`
 	LastName       string     `gorm:"type:varchar(250);not null"`
 	Email          string     `gorm:"type:varchar(250);unique;not null"`
-	SubscribedAt   *time.Time `gorm:"index:idx_newsletters_subscribed_at;type:datetime"`
-	UnsubscribedAt *time.Time `gorm:"index:idx_newsletters_unsubscribed_at;type:datetime"`
+	SubscribedAt   *time.Time `gorm:"index:idx_newsletters_subscribed_at;type:timestamptz"`
+	UnsubscribedAt *time.Time `gorm:"index:idx_newsletters_unsubscribed_at;type:timestamptz"`
 	CreatedAt      time.Time  `gorm:"default:CURRENT_TIMESTAMP;index:idx_newsletters_created_at"`
 	UpdatedAt      time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
 }
