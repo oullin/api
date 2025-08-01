@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
         matrix:
-          go-version: ['1.24.5']
+          go-version: ['1.24.4', '1.23.3']
     steps:
       - uses: actions/setup-go@v5
         with:
@@ -51,6 +51,7 @@ jobs:
         run: |
           echo "mode: set" > coverage.out
           tail -q -n +2 coverage-*.out >> coverage.out
+          go tool cover -func=coverage.out | tail -n 1
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
