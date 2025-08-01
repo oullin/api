@@ -6,17 +6,29 @@ on:
 
 jobs:
   test:
-    if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'testing')
+    if: github.event.pull_request.draft == false ||
+      (github.event.action == 'labeled' && github.event.label.name == 'testing')
     runs-on: ubuntu-latest
     strategy:
       matrix:
         go-version: ['1.24.5', '1.24.4']
+
     steps:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
 
       - uses: actions/checkout@v4
+
+      # ——— DEBUG: confirm go.sum is where we expect ———
+      - name: Verify go.sum presence
+        run: |
+          echo "Workspace: $PWD"
+          ls -lah .
+          if [[ ! -f go.sum ]]; then
+            echo "::error ::go.sum not found in workspace root!"
+            exit 1
+          fi
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -27,32 +39,43 @@ jobs:
           key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.go-version }}-
+          cache-dependency-path: go.sum
 
       - name: Download Go modules
         run: go mod download
 
       - name: Run pkg tests
         run: |
-          go test -coverpkg=./... ./pkg/... -coverprofile=coverage-pkg-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-pkg-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./pkg/... \
+            -coverprofile=coverage-pkg-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-pkg-${{ matrix.go-version }}.out \
+            | tail -n 1
 
       - name: Run boost & env tests
         run: |
-          go test -coverpkg=./... ./boost ./env -coverprofile=coverage-boost-env-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-boost-env-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./boost ./env \
+            -coverprofile=coverage-boost-env-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-boost-env-${{ matrix.go-version }}.out \
+            | tail -n 1
 
       - name: Run handlers tests
         run: |
-          go test -coverpkg=./... ./handler/... -coverprofile=coverage-handler-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-handler-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./handler/... \
+            -coverprofile=coverage-handler-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-handler-${{ matrix.go-version }}.out \
+            | tail -n 1
 
       - name: Run database tests
         run: |
-          go test -coverpkg=./... ./database/... -coverprofile=coverage-database-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-database-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./database/... \
+            -coverprofile=coverage-database-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-database-${{ matrix.go-version }}.out \
+            | tail -n 1
 
       - name: Merge coverage reports
         run: |
           echo "mode: set" > coverage-${{ matrix.go-version }}.out
-          tail -q -n +2 coverage-*-${{ matrix.go-version }}.out >> coverage-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-${{ matrix.go-version }}.out | tail -n 1
+          tail -q -n +2 coverage-*-${{ matrix.go-version }}.out \
+            >> coverage-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-${{ matrix.go-version }}.out \
+            | tail -n 1
