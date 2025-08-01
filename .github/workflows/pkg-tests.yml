@@ -1,4 +1,4 @@
-name: Tests
+name: Pkg Tests
 
 on:
   pull_request:
@@ -8,13 +8,10 @@ jobs:
   test:
     if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'test')
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [1.24.x]
     steps:
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: 1.24.x
 
       - uses: actions/checkout@v4
 
@@ -30,19 +27,4 @@ jobs:
       - name: Run pkg tests
         run: |
           go test ./pkg/... -coverprofile=coverage.out
-          go tool cover -func=coverage.out | tail -n 1
-
-      - name: Run other tests
-        run: |
-          go test ./boost ./env -coverprofile=coverage.out
-          go tool cover -func=coverage.out | tail -n 1
-
-      - name: Run handler tests
-        run: |
-          go test ./handler/... -coverprofile=coverage.out
-          go tool cover -func=coverage.out | tail -n 1
-
-      - name: Run database tests
-        run: |
-          go test ./database -coverprofile=coverage.out
           go tool cover -func=coverage.out | tail -n 1
