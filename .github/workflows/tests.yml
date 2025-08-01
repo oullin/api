@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'test')
+    if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'testing')
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,12 +32,12 @@ jobs:
           go test ./pkg/... -coverprofile=coverage.out
           go tool cover -func=coverage.out | tail -n 1
 
-      - name: Run other tests
+      - name: Run boost & env tests
         run: |
           go test ./boost ./env -coverprofile=coverage.out
           go tool cover -func=coverage.out | tail -n 1
 
-      - name: Run handler tests
+      - name: Run handlers tests
         run: |
           go test ./handler/... -coverprofile=coverage.out
           go tool cover -func=coverage.out | tail -n 1
