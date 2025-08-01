@@ -6,15 +6,18 @@ import (
 )
 
 func TestIsValidTable(t *testing.T) {
-	if !isValidTable("users") {
-		t.Fatalf("expected users table to be valid")
+	for _, name := range GetSchemaTables() {
+		if !isValidTable(name) {
+			t.Fatalf("expected %s table to be valid", name)
+		}
 	}
+
 	if isValidTable("unknown") {
 		t.Fatalf("unexpected valid table")
 	}
 }
 
-func TestIsValidTableEdgeCases(t *testing.T) {
+func TestIsValidTableNonexistentTables(t *testing.T) {
 	invalid := []string{
 		"",
 		"user!@#",
