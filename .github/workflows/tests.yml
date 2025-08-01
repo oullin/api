@@ -29,22 +29,22 @@ jobs:
 
       - name: Run pkg tests
         run: |
-          go test ./pkg/... -coverprofile=coverage-pkg.out
+          go test -coverpkg=./... ./pkg/... -coverprofile=coverage-pkg.out
           go tool cover -func=coverage-pkg.out | tail -n 1
 
       - name: Run boost & env tests
         run: |
-          go test ./boost ./env -coverprofile=coverage-boost-env.out
+          go test -coverpkg=./... ./boost ./env -coverprofile=coverage-boost-env.out
           go tool cover -func=coverage-boost-env.out | tail -n 1
 
       - name: Run handlers tests
         run: |
-          go test ./handler/... -coverprofile=coverage-handler.out
+          go test -coverpkg=./... ./handler/... -coverprofile=coverage-handler.out
           go tool cover -func=coverage-handler.out | tail -n 1
 
       - name: Run database tests
         run: |
-          go test ./database/... -coverprofile=coverage-database.out
+          go test -coverpkg=./... ./database/... -coverprofile=coverage-database.out
           go tool cover -func=coverage-database.out | tail -n 1
 
       - name: Merge coverage reports
