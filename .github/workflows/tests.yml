@@ -9,9 +9,8 @@ jobs:
     if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && github.event.label.name == 'testing')
     runs-on: ubuntu-latest
     strategy:
-        matrix:
-          go-version: ['1.24.5', '1.24.4']
-        max-parallel: 1
+      matrix:
+        go-version: ['1.24.5', '1.24.4']
     steps:
       - uses: actions/setup-go@v5
         with:
@@ -30,27 +29,26 @@ jobs:
 
       - name: Run pkg tests
         run: |
-          go test -coverpkg=./... ./pkg/... -coverprofile=coverage-pkg.out
-          go tool cover -func=coverage-pkg.out | tail -n 1
+          go test -coverpkg=./... ./pkg/... -coverprofile=coverage-pkg-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-pkg-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Run boost & env tests
         run: |
-          go test -coverpkg=./... ./boost ./env -coverprofile=coverage-boost-env.out
-          go tool cover -func=coverage-boost-env.out | tail -n 1
+          go test -coverpkg=./... ./boost ./env -coverprofile=coverage-boost-env-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-boost-env-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Run handlers tests
         run: |
-          go test -coverpkg=./... ./handler/... -coverprofile=coverage-handler.out
-          go tool cover -func=coverage-handler.out | tail -n 1
+          go test -coverpkg=./... ./handler/... -coverprofile=coverage-handler-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-handler-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Run database tests
         run: |
-          go test -coverpkg=./... ./database/... -coverprofile=coverage-database.out
-          go tool cover -func=coverage-database.out | tail -n 1
+          go test -coverpkg=./... ./database/... -coverprofile=coverage-database-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-database-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Merge coverage reports
         run: |
-          echo "mode: set" > coverage.out
-          tail -q -n +2 coverage-*.out >> coverage.out
-          go tool cover -func=coverage.out | tail -n 1
-
+          echo "mode: set" > coverage-${{ matrix.go-version }}.out
+          tail -q -n +2 coverage-*-*.out >> coverage-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-${{ matrix.go-version }}.out | tail -n 1
