@@ -14,17 +14,13 @@ import (
 	baseHttp "net/http"
 )
 
-type postsRepo interface {
-	GetAll(queries.PostFilters, pagination.Paginate) (*pagination.Pagination[database.Post], error)
-	FindBy(slug string) *database.Post
-}
-
 type PostsHandler struct {
-	Posts postsRepo
+	GetAll func(queries.PostFilters, pagination.Paginate) (*pagination.Pagination[database.Post], error)
+	FindBy func(slug string) *database.Post
 }
 
-func MakePostsHandler(posts postsRepo) PostsHandler {
-	return PostsHandler{Posts: posts}
+func MakePostsHandler(getAll func(queries.PostFilters, pagination.Paginate) (*pagination.Pagination[database.Post], error), findBy func(string) *database.Post) PostsHandler {
+	return PostsHandler{GetAll: getAll, FindBy: findBy}
 }
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
@@ -38,7 +34,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 		return http.InternalError("There was an issue reading the request. Please, try again later.")
 	}
 
-	result, err := h.Posts.GetAll(
+	result, err := h.GetAll(
 		payload.GetPostsFiltersFrom(requestBody),
 		paginate.MakeFrom(r.URL, 10),
 	)
@@ -70,7 +66,7 @@ func (h *PostsHandler) Show(w baseHttp.ResponseWriter, r *baseHttp.Request) *htt
 		return http.BadRequestError("Slugs are required to show posts content")
 	}
 
-	post := h.Posts.FindBy(slug)
+	post := h.FindBy(slug)
 	if post == nil {
 		return http.NotFound(fmt.Sprintf("The given post '%s' was not found", slug))
 	}

@@ -11,20 +11,16 @@ import (
 	baseHttp "net/http"
 )
 
-type categoriesRepo interface {
-	GetAll(pagination.Paginate) (*pagination.Pagination[database.Category], error)
-}
-
 type CategoriesHandler struct {
-	Categories categoriesRepo
+	GetAll func(pagination.Paginate) (*pagination.Pagination[database.Category], error)
 }
 
-func MakeCategoriesHandler(categories categoriesRepo) CategoriesHandler {
-	return CategoriesHandler{Categories: categories}
+func MakeCategoriesHandler(getAll func(pagination.Paginate) (*pagination.Pagination[database.Category], error)) CategoriesHandler {
+	return CategoriesHandler{GetAll: getAll}
 }
 
 func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	result, err := h.Categories.GetAll(
+	result, err := h.GetAll(
 		paginate.MakeFrom(r.URL, 5),
 	)
 

@@ -14,37 +14,15 @@ import (
 	"github.com/oullin/handler/payload"
 )
 
-// stubCategories simulates repository.Categories
-type stubCategories struct {
-	result *pagination.Pagination[database.Category]
-	err    error
-}
-
-func (s stubCategories) GetAll(p pagination.Paginate) (*pagination.Pagination[database.Category], error) {
-	return s.result, s.err
-}
-
-// stubPosts simulates repository.Posts
-type stubPosts struct {
-	list *pagination.Pagination[database.Post]
-	err  error
-	item *database.Post
-}
-
-func (s stubPosts) GetAll(filters queries.PostFilters, p pagination.Paginate) (*pagination.Pagination[database.Post], error) {
-	return s.list, s.err
-}
-
-func (s stubPosts) FindBy(slug string) *database.Post {
-	return s.item
-}
-
 func TestCategoriesHandlerIndex(t *testing.T) {
 	pag := pagination.Paginate{Page: 1, Limit: 5}
 	pag.SetNumItems(1)
 	cats := []database.Category{{UUID: "1", Name: "Cat", Slug: "cat", Description: "desc"}}
-	repo := stubCategories{result: pagination.MakePagination(cats, pag)}
-	h := MakeCategoriesHandler(&repo)
+	result := pagination.MakePagination(cats, pag)
+	repoErr := error(nil)
+	h := MakeCategoriesHandler(func(p pagination.Paginate) (*pagination.Pagination[database.Category], error) {
+		return result, repoErr
+	})
 
 	req := httptest.NewRequest("GET", "/categories", nil)
 	rec := httptest.NewRecorder()
@@ -65,7 +43,7 @@ func TestCategoriesHandlerIndex(t *testing.T) {
 		t.Fatalf("unexpected resp %#v", resp)
 	}
 
-	repo.err = errors.New("fail")
+	repoErr = errors.New("fail")
 	rec2 := httptest.NewRecorder()
 	if h.Index(rec2, req) == nil {
 		t.Fatalf("expected error")
@@ -76,8 +54,14 @@ func TestPostsHandlerIndex(t *testing.T) {
 	post := database.Post{UUID: "p1", Slug: "slug", Title: "title"}
 	pag := pagination.Paginate{Page: 1, Limit: 10}
 	pag.SetNumItems(1)
-	repo := stubPosts{list: pagination.MakePagination([]database.Post{post}, pag)}
-	h := MakePostsHandler(&repo)
+	list := pagination.MakePagination([]database.Post{post}, pag)
+	repoErr := error(nil)
+	h := MakePostsHandler(
+		func(filters queries.PostFilters, p pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+			return list, repoErr
+		},
+		func(slug string) *database.Post { return &post },
+	)
 
 	body, _ := json.Marshal(payload.IndexRequestBody{Title: "title"})
 	req := httptest.NewRequest("POST", "/posts", bytes.NewReader(body))
@@ -89,7 +73,7 @@ func TestPostsHandlerIndex(t *testing.T) {
 		t.Fatalf("status %d", rec.Code)
 	}
 
-	repo.err = errors.New("fail")
+	repoErr = errors.New("fail")
 	rec2 := httptest.NewRecorder()
 	if h.Index(rec2, req) == nil {
 		t.Fatalf("expected error")
@@ -104,8 +88,13 @@ func TestPostsHandlerIndex(t *testing.T) {
 
 func TestPostsHandlerShow(t *testing.T) {
 	post := database.Post{UUID: "p1", Slug: "slug", Title: "title"}
-	repo := stubPosts{item: &post}
-	h := MakePostsHandler(&repo)
+	item := &post
+	h := MakePostsHandler(
+		func(filters queries.PostFilters, p pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+			return nil, nil
+		},
+		func(slug string) *database.Post { return item },
+	)
 
 	req := httptest.NewRequest("GET", "/posts/slug", nil)
 	req.SetPathValue("slug", "slug")
@@ -123,7 +112,7 @@ func TestPostsHandlerShow(t *testing.T) {
 		t.Fatalf("expected bad request")
 	}
 
-	repo.item = nil
+	item = nil
 	req3 := httptest.NewRequest("GET", "/posts/slug", nil)
 	req3.SetPathValue("slug", "slug")
 	rec3 := httptest.NewRecorder()
