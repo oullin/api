@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/payload"
@@ -12,19 +13,17 @@ import (
 )
 
 type CategoriesHandler struct {
-	repo interface {
-		GetAll(pagination.Paginate) (*pagination.Pagination[database.Category], error)
+	Categories *repository.Categories
+}
+
+func MakeCategoriesHandler(categories *repository.Categories) CategoriesHandler {
+	return CategoriesHandler{
+		Categories: categories,
 	}
 }
 
-func MakeCategoriesHandler(repo interface {
-	GetAll(pagination.Paginate) (*pagination.Pagination[database.Category], error)
-}) CategoriesHandler {
-	return CategoriesHandler{repo: repo}
-}
-
 func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	result, err := h.repo.GetAll(
+	result, err := h.Categories.GetAll(
 		paginate.MakeFrom(r.URL, 5),
 	)
 

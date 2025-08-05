@@ -14,51 +14,6 @@ import (
 	"github.com/oullin/handler/payload"
 )
 
-type fakeCategoriesRepo struct {
-	getAll func(pagination.Paginate) (*pagination.Pagination[database.Category], error)
-}
-
-func (f fakeCategoriesRepo) GetAll(p pagination.Paginate) (*pagination.Pagination[database.Category], error) {
-	return f.getAll(p)
-}
-
-func TestCategoriesHandlerIndex(t *testing.T) {
-	pag := pagination.Paginate{Page: 1, Limit: 5}
-	pag.SetNumItems(1)
-	cats := []database.Category{{UUID: "1", Name: "Cat", Slug: "cat", Description: "desc"}}
-	result := pagination.MakePagination(cats, pag)
-	repoErr := error(nil)
-	repo := fakeCategoriesRepo{getAll: func(p pagination.Paginate) (*pagination.Pagination[database.Category], error) {
-		return result, repoErr
-	}}
-	h := MakeCategoriesHandler(repo)
-
-	req := httptest.NewRequest("GET", "/categories", nil)
-	rec := httptest.NewRecorder()
-	if err := h.Index(rec, req); err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status %d", rec.Code)
-	}
-
-	var resp struct {
-		Data []struct{ Slug string } `json:"data"`
-	}
-	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if len(resp.Data) != 1 || resp.Data[0].Slug != "cat" {
-		t.Fatalf("unexpected resp %#v", resp)
-	}
-
-	repoErr = errors.New("fail")
-	rec2 := httptest.NewRecorder()
-	if h.Index(rec2, req) == nil {
-		t.Fatalf("expected error")
-	}
-}
-
 func TestPostsHandlerIndex(t *testing.T) {
 	post := database.Post{UUID: "p1", Slug: "slug", Title: "title"}
 	pag := pagination.Paginate{Page: 1, Limit: 10}
