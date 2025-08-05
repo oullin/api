@@ -12,15 +12,19 @@ import (
 )
 
 type CategoriesHandler struct {
-	GetAll func(pagination.Paginate) (*pagination.Pagination[database.Category], error)
+	repo interface {
+		GetAll(pagination.Paginate) (*pagination.Pagination[database.Category], error)
+	}
 }
 
-func MakeCategoriesHandler(getAll func(pagination.Paginate) (*pagination.Pagination[database.Category], error)) CategoriesHandler {
-	return CategoriesHandler{GetAll: getAll}
+func MakeCategoriesHandler(repo interface {
+	GetAll(pagination.Paginate) (*pagination.Pagination[database.Category], error)
+}) CategoriesHandler {
+	return CategoriesHandler{repo: repo}
 }
 
 func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	result, err := h.GetAll(
+	result, err := h.repo.GetAll(
 		paginate.MakeFrom(r.URL, 5),
 	)
 

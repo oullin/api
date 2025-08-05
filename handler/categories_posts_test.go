@@ -14,15 +14,24 @@ import (
 	"github.com/oullin/handler/payload"
 )
 
+type fakeCategoriesRepo struct {
+	getAll func(pagination.Paginate) (*pagination.Pagination[database.Category], error)
+}
+
+func (f fakeCategoriesRepo) GetAll(p pagination.Paginate) (*pagination.Pagination[database.Category], error) {
+	return f.getAll(p)
+}
+
 func TestCategoriesHandlerIndex(t *testing.T) {
 	pag := pagination.Paginate{Page: 1, Limit: 5}
 	pag.SetNumItems(1)
 	cats := []database.Category{{UUID: "1", Name: "Cat", Slug: "cat", Description: "desc"}}
 	result := pagination.MakePagination(cats, pag)
 	repoErr := error(nil)
-	h := MakeCategoriesHandler(func(p pagination.Paginate) (*pagination.Pagination[database.Category], error) {
+	repo := fakeCategoriesRepo{getAll: func(p pagination.Paginate) (*pagination.Pagination[database.Category], error) {
 		return result, repoErr
-	})
+	}}
+	h := MakeCategoriesHandler(repo)
 
 	req := httptest.NewRequest("GET", "/categories", nil)
 	rec := httptest.NewRecorder()

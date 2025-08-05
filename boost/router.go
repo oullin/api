@@ -44,7 +44,7 @@ func (r *Router) Posts() {
 
 func (r *Router) Categories() {
 	repo := repository.Categories{DB: r.Db}
-	abstract := handler.MakeCategoriesHandler(repo.GetAll)
+	abstract := handler.MakeCategoriesHandler(repo)
 
 	index := r.PipelineFor(abstract.Index)
 
