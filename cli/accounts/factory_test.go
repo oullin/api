@@ -24,3 +24,12 @@ func TestMakeHandler(t *testing.T) {
 		t.Fatalf("key not saved: %v", err)
 	}
 }
+
+func TestMakeHandlerInvalidKey(t *testing.T) {
+	conn := clitest.MakeTestConnection(t)
+	env := clitest.MakeTestEnv()
+	env.App.MasterKey = "short"
+	if _, err := MakeHandler(conn, env); err == nil {
+		t.Fatalf("expected error")
+	}
+}

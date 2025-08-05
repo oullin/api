@@ -35,3 +35,17 @@ func TestCreateAccountInvalid(t *testing.T) {
 		t.Fatalf("expected error")
 	}
 }
+
+func TestReadAccountNotFound(t *testing.T) {
+	h := setupAccountHandler(t)
+	if err := h.ReadAccount("missing"); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestCreateSignatureNotFound(t *testing.T) {
+	h := setupAccountHandler(t)
+	if err := h.CreateSignature("missing"); err == nil {
+		t.Fatalf("expected error")
+	}
+}

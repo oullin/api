@@ -74,6 +74,33 @@ func TestHandlePostMissingAuthor(t *testing.T) {
 	}
 }
 
+func TestHandlePostEmptyCategories(t *testing.T) {
+	h, _ := setupPostsHandler(t)
+	post := &markdown.Post{FrontMatter: markdown.FrontMatter{Author: "jdoe"}}
+	if err := h.HandlePost(post); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestHandlePostInvalidDate(t *testing.T) {
+	h, _ := setupPostsHandler(t)
+	post := &markdown.Post{FrontMatter: markdown.FrontMatter{Author: "jdoe", PublishedAt: "bad"}}
+	if err := h.HandlePost(post); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestHandlePostDuplicateSlug(t *testing.T) {
+	h, _ := setupPostsHandler(t)
+	post := &markdown.Post{FrontMatter: markdown.FrontMatter{Author: "jdoe", Slug: "dup", Categories: "tech", PublishedAt: time.Now().Format("2006-01-02")}}
+	if err := h.HandlePost(post); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if err := h.HandlePost(post); err == nil {
+		t.Fatalf("expected duplicate error")
+	}
+}
+
 func TestNotParsed(t *testing.T) {
 	h, conn := setupPostsHandler(t)
 	md := "---\nauthor: jdoe\nslug: parsed\ncategories: tech\npublished_at: 2024-01-01\ntags:\n - go\n---\ncontent"
