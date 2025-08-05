@@ -53,6 +53,11 @@ jobs:
           go test -coverpkg=./... ./database/... -coverprofile=coverage-database-${{ matrix.go-version }}.out
           go tool cover -func=coverage-database-${{ matrix.go-version }}.out | tail -n 1
 
+      - name: Run CLI tests
+        run: |
+          go test -coverpkg=./... ./cli/... -coverprofile=coverage-cli-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-cli-${{ matrix.go-version }}.out | tail -n 1
+
       - name: Merge coverage reports
         run: |
           echo "mode: set" > coverage-${{ matrix.go-version }}.out
