@@ -28,6 +28,14 @@ func (a *App) CloseDB() {
 	driver.Close()
 }
 
+func (a *App) IsLocal() bool {
+	return a.env.App.IsLocal()
+}
+
+func (a *App) IsProduction() bool {
+	return a.env.App.IsProduction()
+}
+
 func (a *App) GetEnv() *env.Environment {
 	return a.env
 }
