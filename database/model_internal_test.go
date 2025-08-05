@@ -7,14 +7,19 @@ import (
 
 func TestIsValidTable(t *testing.T) {
 	for _, name := range GetSchemaTables() {
-		if !isValidTable(name) {
-			t.Fatalf("expected %s table to be valid", name)
-		}
+		name := name
+		t.Run(name, func(t *testing.T) {
+			if !isValidTable(name) {
+				t.Errorf("expected table %q to be valid", name)
+			}
+		})
 	}
 
-	if isValidTable("unknown") {
-		t.Fatalf("unexpected valid table")
-	}
+	t.Run("nonexistent table", func(t *testing.T) {
+		if isValidTable("unknown") {
+			t.Error(`expected table "unknown" to be invalid`)
+		}
+	})
 }
 
 func TestIsValidTableNonexistentTables(t *testing.T) {
@@ -30,8 +35,11 @@ func TestIsValidTableNonexistentTables(t *testing.T) {
 	}
 
 	for _, name := range invalid {
-		if isValidTable(name) {
-			t.Fatalf("%q should be invalid", name)
-		}
+		name := name
+		t.Run(name, func(t *testing.T) {
+			if isValidTable(name) {
+				t.Errorf("%q should be invalid", name)
+			}
+		})
 	}
 }
