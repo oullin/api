@@ -27,7 +27,7 @@ func captureOutput(fn func()) string {
 }
 
 func setupPostsHandler(t *testing.T) (*Handler, *database.Connection) {
-	conn := clitest.MakeSQLiteConnection(t, &database.User{}, &database.Post{}, &database.Category{}, &database.PostCategory{}, &database.Tag{}, &database.PostTag{})
+	conn := clitest.MakeTestConnection(t, &database.User{}, &database.Post{}, &database.Category{}, &database.PostCategory{}, &database.Tag{}, &database.PostTag{})
 	user := database.User{UUID: uuid.NewString(), Username: "jdoe", FirstName: "John", LastName: "Doe", Email: "jdoe@example.com", PasswordHash: "x"}
 	if err := conn.Sql().Create(&user).Error; err != nil {
 		t.Fatalf("user create: %v", err)

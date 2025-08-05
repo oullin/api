@@ -8,7 +8,7 @@ import (
 )
 
 func TestMakeHandler(t *testing.T) {
-	conn := clitest.MakeSQLiteConnection(t, &database.APIKey{})
+	conn := clitest.MakeTestConnection(t, &database.APIKey{})
 	h, err := MakeHandler(conn, clitest.MakeTestEnv())
 	if err != nil {
 		t.Fatalf("make handler: %v", err)
