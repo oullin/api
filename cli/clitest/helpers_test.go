@@ -13,8 +13,8 @@ func TestMakeTestEnv(t *testing.T) {
 }
 
 func TestMakeTestConnectionSkipsWithoutDocker(t *testing.T) {
-	if _, err := exec.LookPath("docker"); err == nil {
-		t.Skip("docker available")
+	if _, err := exec.LookPath("docker"); err != nil {
+		t.Skip("docker not available")
 	}
 	t.Run("skip", func(t *testing.T) {
 		MakeTestConnection(t)
