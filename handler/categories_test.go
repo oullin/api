@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -19,41 +18,15 @@ import (
 func TestCategoriesHandlerIndex_Success(t *testing.T) {
 	conn, author := handlertests.MakeTestDB(t)
 
-	type fixture struct {
-		Post struct {
-			Slug    string `json:"slug"`
-			Title   string `json:"title"`
-			Excerpt string `json:"excerpt"`
-			Content string `json:"content"`
-		} `json:"post"`
-		Category struct {
-			Name        string `json:"name"`
-			Slug        string `json:"slug"`
-			Description string `json:"description"`
-		} `json:"category"`
-	}
-
-	f, err := os.Open("../storage/fixture/categories.json")
-	if err != nil {
-		t.Fatalf("open fixture: %v", err)
-	}
-	defer f.Close()
-
-	var fx fixture
-
-	if err := json.NewDecoder(f).Decode(&fx); err != nil {
-		t.Fatalf("decode fixture: %v", err)
-	}
-
 	published := time.Now()
 
 	post := database.Post{
 		UUID:        uuid.NewString(),
 		AuthorID:    author.ID,
-		Slug:        fx.Post.Slug,
-		Title:       fx.Post.Title,
-		Excerpt:     fx.Post.Excerpt,
-		Content:     fx.Post.Content,
+		Slug:        "hello",
+		Title:       "Hello",
+		Excerpt:     "Ex",
+		Content:     "Body",
 		PublishedAt: &published,
 	}
 
@@ -63,9 +36,9 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 
 	cat := database.Category{
 		UUID:        uuid.NewString(),
-		Name:        fx.Category.Name,
-		Slug:        fx.Category.Slug,
-		Description: fx.Category.Description,
+		Name:        "Cat",
+		Slug:        "cat",
+		Description: "desc",
 	}
 
 	if err := conn.Sql().Create(&cat).Error; err != nil {
