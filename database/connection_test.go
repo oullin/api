@@ -27,16 +27,21 @@ func TestApiKeysWithTestContainer(t *testing.T) {
 		postgres.WithPassword("secret"),
 		postgres.BasicWaitStrategies(),
 	)
+
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
 	}
+
 	t.Cleanup(func() { pg.Terminate(ctx) })
 
 	host, err := pg.Host(ctx)
+
 	if err != nil {
 		t.Fatalf("host err: %v", err)
 	}
+
 	port, err := pg.MappedPort(ctx, "5432/tcp")
+
 	if err != nil {
 		t.Fatalf("port err: %v", err)
 	}
@@ -55,9 +60,11 @@ func TestApiKeysWithTestContainer(t *testing.T) {
 	}
 
 	conn, err := database.MakeConnection(e)
+
 	if err != nil {
 		t.Fatalf("make connection: %v", err)
 	}
+
 	t.Cleanup(func() { conn.Close() })
 
 	if err := conn.Sql().AutoMigrate(&database.APIKey{}); err != nil {
@@ -71,6 +78,7 @@ func TestApiKeysWithTestContainer(t *testing.T) {
 		PublicKey:   []byte("pub"),
 		SecretKey:   []byte("sec"),
 	})
+
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}

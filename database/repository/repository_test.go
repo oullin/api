@@ -28,16 +28,21 @@ func setupDB(t *testing.T) *database.Connection {
 		postgres.WithPassword("secret"),
 		postgres.BasicWaitStrategies(),
 	)
+
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
 	}
+
 	t.Cleanup(func() { pg.Terminate(ctx) })
 
 	host, err := pg.Host(ctx)
+
 	if err != nil {
 		t.Fatalf("host err: %v", err)
 	}
+
 	port, err := pg.MappedPort(ctx, "5432/tcp")
+
 	if err != nil {
 		t.Fatalf("port err: %v", err)
 	}
@@ -56,9 +61,11 @@ func setupDB(t *testing.T) *database.Connection {
 	}
 
 	conn, err := database.MakeConnection(e)
+
 	if err != nil {
 		t.Fatalf("make connection: %v", err)
 	}
+
 	t.Cleanup(func() { conn.Close() })
 
 	return conn
@@ -81,12 +88,18 @@ func TestUsersFindBy(t *testing.T) {
 		PasswordHash: "x",
 		PublicToken:  uuid.NewString(),
 	}
+
 	if err := conn.Sql().Create(&u).Error; err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 
-	repo := repository.Users{DB: conn, Env: &env.Environment{}}
+	repo := repository.Users{
+		DB:  conn,
+		Env: &env.Environment{},
+	}
+
 	found := repo.FindBy("jdoe")
+
 	if found == nil || found.ID != u.ID {
 		t.Fatalf("user not found")
 	}
@@ -99,14 +112,18 @@ func TestTagsFindOrCreate(t *testing.T) {
 		t.Fatalf("migrate: %v", err)
 	}
 
-	repo := repository.Tags{DB: conn}
+	repo := repository.Tags{
+		DB: conn,
+	}
 
 	first, err := repo.FindOrCreate("golang")
+
 	if err != nil {
 		t.Fatalf("create tag: %v", err)
 	}
 
 	second, err := repo.FindOrCreate("golang")
+
 	if err != nil {
 		t.Fatalf("find tag: %v", err)
 	}
@@ -123,13 +140,22 @@ func TestCategoriesFindBy(t *testing.T) {
 		t.Fatalf("migrate: %v", err)
 	}
 
-	c := database.Category{UUID: uuid.NewString(), Name: "News", Slug: "news"}
+	c := database.Category{
+		UUID: uuid.NewString(),
+		Name: "News",
+		Slug: "news",
+	}
+
 	if err := conn.Sql().Create(&c).Error; err != nil {
 		t.Fatalf("create cat: %v", err)
 	}
 
-	repo := repository.Categories{DB: conn}
+	repo := repository.Categories{
+		DB: conn,
+	}
+
 	found := repo.FindBy("news")
+
 	if found == nil || found.ID != c.ID {
 		t.Fatalf("category not found")
 	}
@@ -152,40 +178,67 @@ func TestPostsCreateAndFind(t *testing.T) {
 		PasswordHash: "x",
 		PublicToken:  uuid.NewString(),
 	}
+
 	if err := conn.Sql().Create(&user).Error; err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 
-	cat := database.Category{UUID: uuid.NewString(), Name: "Tech", Slug: "tech"}
+	cat := database.Category{
+		UUID: uuid.NewString(),
+		Name: "Tech",
+		Slug: "tech",
+	}
+
 	if err := conn.Sql().Create(&cat).Error; err != nil {
 		t.Fatalf("create cat: %v", err)
 	}
 
-	tag := database.Tag{UUID: uuid.NewString(), Name: "Go", Slug: "go"}
+	tag := database.Tag{
+		UUID: uuid.NewString(),
+		Name: "Go",
+		Slug: "go",
+	}
+
 	if err := conn.Sql().Create(&tag).Error; err != nil {
 		t.Fatalf("create tag: %v", err)
 	}
 
 	postsRepo := repository.Posts{
-		DB:         conn,
-		Categories: &repository.Categories{DB: conn},
-		Tags:       &repository.Tags{DB: conn},
+		DB: conn,
+		Categories: &repository.Categories{
+			DB: conn,
+		},
+		Tags: &repository.Tags{
+			DB: conn,
+		},
 	}
 
 	p, err := postsRepo.Create(database.PostsAttrs{
-		AuthorID:   user.ID,
-		Slug:       "first-post",
-		Title:      "First Post",
-		Excerpt:    "excerpt",
-		Content:    "content",
-		Categories: []database.CategoriesAttrs{{Id: cat.ID, Name: cat.Name}},
-		Tags:       []database.TagAttrs{{Id: tag.ID, Name: tag.Name}},
+		AuthorID: user.ID,
+		Slug:     "first-post",
+		Title:    "First Post",
+		Excerpt:  "excerpt",
+		Content:  "content",
+		Categories: []database.CategoriesAttrs{
+			{
+				Id:   cat.ID,
+				Name: cat.Name,
+			},
+		},
+		Tags: []database.TagAttrs{
+			{
+				Id:   tag.ID,
+				Name: tag.Name,
+			},
+		},
 	})
+
 	if err != nil {
 		t.Fatalf("create post: %v", err)
 	}
 
 	found := postsRepo.FindBy("first-post")
+
 	if found == nil || found.ID != p.ID {
 		t.Fatalf("post not found")
 	}

@@ -7,8 +7,17 @@ import (
 )
 
 func TestGetCategoriesResponse(t *testing.T) {
-	cats := []database.Category{{UUID: "1", Name: "n", Slug: "s", Description: "d"}}
+	cats := []database.Category{
+		{
+			UUID:        "1",
+			Name:        "n",
+			Slug:        "s",
+			Description: "d",
+		},
+	}
+
 	r := GetCategoriesResponse(cats)
+
 	if len(r) != 1 || r[0].Slug != "s" {
 		t.Fatalf("unexpected %#v", r)
 	}

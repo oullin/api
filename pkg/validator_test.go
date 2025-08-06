@@ -11,19 +11,30 @@ type user struct {
 func TestValidator_PassesAndRejects(t *testing.T) {
 	v := GetDefaultValidator()
 
-	ok, err := v.Passes(&user{Email: "a@b.com", Name: "John", Code: "123"})
+	ok, err := v.Passes(&user{
+		Email: "a@b.com",
+		Name:  "John",
+		Code:  "123",
+	})
+
 	if err != nil || !ok {
 		t.Fatalf("expected pass got %v %v", ok, err)
 	}
 
-	invalid := &user{Email: "bad", Name: "", Code: "1"}
+	invalid := &user{
+		Email: "bad",
+		Name:  "",
+		Code:  "1",
+	}
 
 	if ok, err := v.Passes(invalid); ok || err == nil {
 		t.Fatalf("expected fail")
 	}
+
 	if len(v.GetErrors()) == 0 {
 		t.Fatalf("errors not recorded")
 	}
+
 	json := v.GetErrorsAsJson()
 
 	if json == "" {
@@ -33,9 +44,14 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 
 func TestValidator_Rejects(t *testing.T) {
 	v := GetDefaultValidator()
-	u := &user{Email: "", Name: "", Code: "1"}
+	u := &user{
+		Email: "",
+		Name:  "",
+		Code:  "1",
+	}
 
 	reject, _ := v.Rejects(u)
+
 	if !reject {
 		t.Fatalf("expected reject")
 	}

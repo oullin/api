@@ -12,6 +12,7 @@ type fakeCloser struct {
 
 func (f *fakeCloser) Close() error {
 	f.closed = true
+
 	return f.err
 }
 
@@ -19,6 +20,7 @@ func TestCloseWithLog(t *testing.T) {
 	c := &fakeCloser{}
 
 	CloseWithLog(c)
+
 	if !c.closed {
 		t.Fatalf("close not called")
 	}
@@ -26,6 +28,7 @@ func TestCloseWithLog(t *testing.T) {
 	c2 := &fakeCloser{err: errors.New("fail")}
 
 	CloseWithLog(c2)
+
 	if !c2.closed {
 		t.Fatalf("close not called with error")
 	}
