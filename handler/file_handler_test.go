@@ -23,7 +23,10 @@ type fileHandlerTestCase struct {
 }
 
 func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
-	file := handlertests.WriteJSON(t, handlertests.TestEnvelope{Version: "v1", Data: tc.data})
+	file := handlertests.WriteJSON(t, handlertests.TestEnvelope{
+		Version: "v1",
+		Data:    tc.data,
+	})
 	defer os.Remove(file)
 
 	h := tc.make(file)

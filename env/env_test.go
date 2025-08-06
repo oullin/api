@@ -39,7 +39,9 @@ func TestGetSecretOrEnv_Env(t *testing.T) {
 }
 
 func TestAppEnvironmentChecks(t *testing.T) {
-	env := AppEnvironment{Type: "production"}
+	env := AppEnvironment{
+		Type: "production",
+	}
 
 	if !env.IsProduction() {
 		t.Fatalf("expected production")
@@ -78,7 +80,10 @@ func TestDBEnvironment_GetDSN(t *testing.T) {
 }
 
 func TestNetEnvironment(t *testing.T) {
-	net := NetEnvironment{HttpHost: "localhost", HttpPort: "8080"}
+	net := NetEnvironment{
+		HttpHost: "localhost",
+		HttpPort: "8080",
+	}
 
 	if net.GetHttpHost() != "localhost" {
 		t.Fatalf("wrong host")

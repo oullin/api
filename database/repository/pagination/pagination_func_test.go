@@ -3,7 +3,10 @@ package pagination
 import "testing"
 
 func TestMakePagination(t *testing.T) {
-	p := Paginate{Page: 2, Limit: 2}
+	p := Paginate{
+		Page:  2,
+		Limit: 2,
+	}
 	p.SetNumItems(5)
 
 	result := MakePagination([]int{1, 2}, p)

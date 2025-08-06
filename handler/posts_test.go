@@ -17,7 +17,9 @@ import (
 )
 
 func TestPostsHandlerIndex_ParseError(t *testing.T) {
-	h := PostsHandler{Posts: &repository.Posts{}}
+	h := PostsHandler{
+		Posts: &repository.Posts{},
+	}
 	badReq := httptest.NewRequest("POST", "/posts", bytes.NewReader([]byte("{")))
 	rec := httptest.NewRecorder()
 	if h.Index(rec, badReq) == nil {
@@ -26,7 +28,9 @@ func TestPostsHandlerIndex_ParseError(t *testing.T) {
 }
 
 func TestPostsHandlerShow_MissingSlug(t *testing.T) {
-	h := PostsHandler{Posts: &repository.Posts{}}
+	h := PostsHandler{
+		Posts: &repository.Posts{},
+	}
 	req := httptest.NewRequest("GET", "/posts/", nil)
 	rec := httptest.NewRecorder()
 	if h.Show(rec, req) == nil {
@@ -37,13 +41,23 @@ func TestPostsHandlerShow_MissingSlug(t *testing.T) {
 func TestPostsHandlerIndex_Success(t *testing.T) {
 	conn, author := handlertests.MakeTestDB(t)
 	published := time.Now()
-	post := database.Post{UUID: uuid.NewString(), AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
+	post := database.Post{
+		UUID:        uuid.NewString(),
+		AuthorID:    author.ID,
+		Slug:        "hello",
+		Title:       "Hello",
+		Excerpt:     "Ex",
+		Content:     "Body",
+		PublishedAt: &published,
+	}
 
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
 
-	h := MakePostsHandler(&repository.Posts{DB: conn})
+	h := MakePostsHandler(&repository.Posts{
+		DB: conn,
+	})
 
 	req := httptest.NewRequest("POST", "/posts", bytes.NewReader([]byte("{}")))
 	rec := httptest.NewRecorder()
@@ -68,13 +82,23 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 func TestPostsHandlerShow_Success(t *testing.T) {
 	conn, author := handlertests.MakeTestDB(t)
 	published := time.Now()
-	post := database.Post{UUID: uuid.NewString(), AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
+	post := database.Post{
+		UUID:        uuid.NewString(),
+		AuthorID:    author.ID,
+		Slug:        "hello",
+		Title:       "Hello",
+		Excerpt:     "Ex",
+		Content:     "Body",
+		PublishedAt: &published,
+	}
 
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
 
-	h := MakePostsHandler(&repository.Posts{DB: conn})
+	h := MakePostsHandler(&repository.Posts{
+		DB: conn,
+	})
 
 	req := httptest.NewRequest("GET", "/posts/hello", nil)
 	req.SetPathValue("slug", "hello")

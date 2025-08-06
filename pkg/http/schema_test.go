@@ -3,7 +3,10 @@ package http
 import "testing"
 
 func TestApiErrorError(t *testing.T) {
-	e := &ApiError{Message: "boom", Status: 500}
+	e := &ApiError{
+		Message: "boom",
+		Status:  500,
+	}
 	if e.Error() != "boom" {
 		t.Fatalf("got %s", e.Error())
 	}

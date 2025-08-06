@@ -23,7 +23,9 @@ func captureOutput(fn func()) string {
 }
 
 func TestPrintLineAndGetChoiceNil(t *testing.T) {
-	m := Menu{Reader: bufio.NewReader(strings.NewReader("\n"))}
+	m := Menu{
+		Reader: bufio.NewReader(strings.NewReader("\n")),
+	}
 	m.PrintLine()
 	if m.GetChoice() != 0 {
 		t.Fatalf("expected 0")
@@ -31,7 +33,9 @@ func TestPrintLineAndGetChoiceNil(t *testing.T) {
 }
 
 func TestPrint(t *testing.T) {
-	m := Menu{Reader: bufio.NewReader(strings.NewReader(""))}
+	m := Menu{
+		Reader: bufio.NewReader(strings.NewReader("")),
+	}
 	_ = captureOutput(func() { m.Print() })
 }
 
@@ -54,7 +58,9 @@ func TestPrintOption(t *testing.T) {
 }
 
 func TestCaptureInput(t *testing.T) {
-	m := Menu{Reader: bufio.NewReader(strings.NewReader("2\n"))}
+	m := Menu{
+		Reader: bufio.NewReader(strings.NewReader("2\n")),
+	}
 
 	if err := m.CaptureInput(); err != nil {
 		t.Fatalf("capture: %v", err)
@@ -63,7 +69,9 @@ func TestCaptureInput(t *testing.T) {
 		t.Fatalf("choice: %d", m.GetChoice())
 	}
 
-	bad := Menu{Reader: bufio.NewReader(strings.NewReader("bad\n"))}
+	bad := Menu{
+		Reader: bufio.NewReader(strings.NewReader("bad\n")),
+	}
 
 	if err := bad.CaptureInput(); err == nil {
 		t.Fatalf("expected error")
@@ -71,14 +79,18 @@ func TestCaptureInput(t *testing.T) {
 }
 
 func TestCaptureAccountName(t *testing.T) {
-	m := Menu{Reader: bufio.NewReader(strings.NewReader("Alice\n"))}
+	m := Menu{
+		Reader: bufio.NewReader(strings.NewReader("Alice\n")),
+	}
 	name, err := m.CaptureAccountName()
 
 	if err != nil || name != "Alice" {
 		t.Fatalf("got %q err %v", name, err)
 	}
 
-	bad := Menu{Reader: bufio.NewReader(strings.NewReader("\n"))}
+	bad := Menu{
+		Reader: bufio.NewReader(strings.NewReader("\n")),
+	}
 	if _, err := bad.CaptureAccountName(); err == nil {
 		t.Fatalf("expected error")
 	}
@@ -86,14 +98,20 @@ func TestCaptureAccountName(t *testing.T) {
 
 func TestCapturePostURL(t *testing.T) {
 	goodURL := "https://raw.githubusercontent.com/user/repo/file.md"
-	m := Menu{Reader: bufio.NewReader(strings.NewReader(goodURL + "\n")), Validator: pkg.GetDefaultValidator()}
+	m := Menu{
+		Reader:    bufio.NewReader(strings.NewReader(goodURL + "\n")),
+		Validator: pkg.GetDefaultValidator(),
+	}
 	in, err := m.CapturePostURL()
 
 	if err != nil || in.Url != goodURL {
 		t.Fatalf("got %v err %v", in, err)
 	}
 
-	m2 := Menu{Reader: bufio.NewReader(strings.NewReader("http://example.com\n")), Validator: pkg.GetDefaultValidator()}
+	m2 := Menu{
+		Reader:    bufio.NewReader(strings.NewReader("http://example.com\n")),
+		Validator: pkg.GetDefaultValidator(),
+	}
 	if _, err := m2.CapturePostURL(); err == nil {
 		t.Fatalf("expected error")
 	}

@@ -9,7 +9,12 @@ import (
 
 func TestFilesLogs(t *testing.T) {
 	dir := t.TempDir()
-	e := &env.Environment{Logs: env.LogsEnvironment{Dir: dir + "/log-%s.txt", DateFormat: "2006"}}
+	e := &env.Environment{
+		Logs: env.LogsEnvironment{
+			Dir:        dir + "/log-%s.txt",
+			DateFormat: "2006",
+		},
+	}
 
 	d, err := MakeFilesLogs(e)
 
@@ -31,8 +36,15 @@ func TestFilesLogs(t *testing.T) {
 }
 
 func TestDefaultPath(t *testing.T) {
-	e := &env.Environment{Logs: env.LogsEnvironment{Dir: "foo-%s", DateFormat: "2006"}}
-	fl := FilesLogs{env: e}
+	e := &env.Environment{
+		Logs: env.LogsEnvironment{
+			Dir:        "foo-%s",
+			DateFormat: "2006",
+		},
+	}
+	fl := FilesLogs{
+		env: e,
+	}
 
 	p := fl.DefaultPath()
 	if !strings.HasPrefix(p, "foo-") {
