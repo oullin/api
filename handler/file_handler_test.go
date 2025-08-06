@@ -18,19 +18,25 @@ type fileHandler interface {
 type fileHandlerTestCase struct {
 	make     func(string) fileHandler
 	endpoint string
-	data     interface{}
+	fixture  string
 
 	assert func(*testing.T, any)
 }
 
 func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
-	file := handlertests.WriteJSON(t, handlertests.TestEnvelope{
-		Version: "v1",
-		Data:    tc.data,
-	})
-	defer os.Remove(file)
+	f, err := os.Open(tc.fixture)
+	if err != nil {
+		t.Fatalf("open fixture: %v", err)
+	}
+	defer f.Close()
 
-	h := tc.make(file)
+	var expected handlertests.TestEnvelope
+
+	if err := json.NewDecoder(f).Decode(&expected); err != nil {
+		t.Fatalf("decode fixture: %v", err)
+	}
+
+	h := tc.make(tc.fixture)
 	req := httptest.NewRequest("GET", tc.endpoint, nil)
 	rec := httptest.NewRecorder()
 
@@ -48,14 +54,14 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 		t.Fatalf("decode: %v", err)
 	}
 
-	if resp.Version != "v1" {
+	if resp.Version != expected.Version {
 		t.Fatalf("version %s", resp.Version)
 	}
 
 	tc.assert(t, resp.Data)
 
 	req2 := httptest.NewRequest("GET", tc.endpoint, nil)
-	req2.Header.Set("If-None-Match", "\"v1\"")
+	req2.Header.Set("If-None-Match", "\""+expected.Version+"\"")
 	rec2 := httptest.NewRecorder()
 
 	if err := h.Handle(rec2, req2); err != nil {
@@ -80,24 +86,28 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 	}
 }
 
-func assertArrayUUID1(t *testing.T, data any) {
-	arr, ok := data.([]interface{})
+func assertFirstUUID(expected string) func(*testing.T, any) {
+	return func(t *testing.T, data any) {
+		arr, ok := data.([]interface{})
 
-	if !ok || len(arr) != 1 {
-		t.Fatalf("unexpected data: %+v", data)
-	}
+		if !ok || len(arr) == 0 {
+			t.Fatalf("unexpected data: %+v", data)
+		}
 
-	m, ok := arr[0].(map[string]interface{})
+		m, ok := arr[0].(map[string]interface{})
 
-	if !ok || m["uuid"] != "1" {
-		t.Fatalf("unexpected payload: %+v", data)
+		if !ok || m["uuid"] != expected {
+			t.Fatalf("unexpected payload: %+v", data)
+		}
 	}
 }
 
-func assertNicknameNick(t *testing.T, data any) {
-	obj, ok := data.(map[string]interface{})
+func assertNickname(expected string) func(*testing.T, any) {
+	return func(t *testing.T, data any) {
+		obj, ok := data.(map[string]interface{})
 
-	if !ok || obj["nickname"] != "nick" {
-		t.Fatalf("unexpected payload: %+v", data)
+		if !ok || obj["nickname"] != expected {
+			t.Fatalf("unexpected payload: %+v", data)
+		}
 	}
 }
