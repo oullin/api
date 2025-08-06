@@ -41,6 +41,7 @@ func setupPostsHandler(t *testing.T) (*Handler, *database.Connection) {
 	if err := conn.Sql().Create(&user).Error; err != nil {
 		t.Fatalf("user create: %v", err)
 	}
+
 	conn.Sql().Create(&database.Category{
 		UUID: uuid.NewString(),
 		Name: "Tech",
@@ -54,6 +55,7 @@ func setupPostsHandler(t *testing.T) (*Handler, *database.Connection) {
 	input := &Input{
 		Url: "http://example",
 	}
+
 	h := MakeHandler(input, pkg.MakeDefaultClient(nil), conn)
 
 	return &h, conn
@@ -77,14 +79,17 @@ func TestHandlePost(t *testing.T) {
 	if err := h.HandlePost(post); err != nil {
 		t.Fatalf("handle: %v", err)
 	}
+
 	var p database.Post
 
 	if err := conn.Sql().Preload("Categories").First(&p, "slug = ?", "hello").Error; err != nil {
 		t.Fatalf("post not created: %v", err)
 	}
+
 	if len(p.Categories) != 1 {
 		t.Fatalf("expected 1 category")
 	}
+
 	_ = captureOutput(func() { h.RenderArticle(post) })
 }
 
@@ -159,6 +164,7 @@ func TestNotParsed(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("not parsed: %v", err)
 	}
+
 	var p database.Post
 
 	if err := conn.Sql().First(&p, "slug = ?", "parsed").Error; err != nil {
@@ -171,6 +177,7 @@ func TestNotParsedError(t *testing.T) {
 	srv := httptest.NewServer(http.NotFoundHandler())
 	defer srv.Close()
 	h.Input.Url = srv.URL
+
 	if ok, err := h.NotParsed(); err == nil || ok {
 		t.Fatalf("expected error")
 	}

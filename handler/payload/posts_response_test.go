@@ -49,6 +49,7 @@ func TestGetPostsResponse(t *testing.T) {
 	}
 
 	r := GetPostsResponse(p)
+
 	if r.UUID != "1" || r.Author.UUID != "u1" || len(r.Categories) != 1 || len(r.Tags) != 1 {
 		t.Fatalf("unexpected response: %+v", r)
 	}

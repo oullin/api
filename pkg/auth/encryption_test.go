@@ -8,6 +8,7 @@ func TestEncryptDecrypt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}
+
 	if len(key) != EncryptionKeyLength {
 		t.Fatalf("invalid key length %d", len(key))
 	}
@@ -18,11 +19,13 @@ func TestEncryptDecrypt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("encrypt err: %v", err)
 	}
+
 	dec, err := Decrypt(enc, key)
 
 	if err != nil {
 		t.Fatalf("decrypt err: %v", err)
 	}
+
 	if string(dec) != "hello" {
 		t.Fatalf("expected hello got %s", dec)
 	}
@@ -58,6 +61,7 @@ func TestDecryptShortCipher(t *testing.T) {
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}
+
 	if _, err := Decrypt([]byte("short"), key); err == nil {
 		t.Fatalf("expected error for short cipher")
 	}
@@ -82,6 +86,7 @@ func TestValidateTokenFormat(t *testing.T) {
 	if ValidateTokenFormat("pk_1234567890123") != nil {
 		t.Fatalf("valid token should pass")
 	}
+
 	if ValidateTokenFormat("bad") == nil {
 		t.Fatalf("invalid token should fail")
 	}

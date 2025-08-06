@@ -12,6 +12,7 @@ func TestUserResponseJSON(t *testing.T) {
 	if err := json.Unmarshal(body, &res); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
+
 	if res.UUID != "u" || res.FirstName != "f" || !res.IsAdmin {
 		t.Fatalf("unexpected response: %+v", res)
 	}

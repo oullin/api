@@ -12,6 +12,7 @@ func TestProfileResponseJSON(t *testing.T) {
 	if err := json.Unmarshal(body, &res); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
+
 	if res.Version != "v1" || res.Data.Handle != "h" || len(res.Data.Skills) != 1 || res.Data.Skills[0].Uuid != "u" {
 		t.Fatalf("unexpected response: %+v", res)
 	}

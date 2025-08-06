@@ -7,6 +7,7 @@ func TestMakePagination(t *testing.T) {
 		Page:  2,
 		Limit: 2,
 	}
+
 	p.SetNumItems(5)
 
 	result := MakePagination([]int{1, 2}, p)
@@ -14,9 +15,11 @@ func TestMakePagination(t *testing.T) {
 	if result.TotalPages != 3 {
 		t.Fatalf("expected 3 pages got %d", result.TotalPages)
 	}
+
 	if result.NextPage == nil || *result.NextPage != 3 {
 		t.Fatalf("next page mismatch")
 	}
+
 	if result.PreviousPage == nil || *result.PreviousPage != 1 {
 		t.Fatalf("prev page mismatch")
 	}
@@ -36,6 +39,7 @@ func TestHydratePagination(t *testing.T) {
 	if len(dst.Data) != 2 || dst.Data[1] != 2 {
 		t.Fatalf("unexpected hydration")
 	}
+
 	if dst.Total != src.Total || dst.Page != src.Page {
 		t.Fatalf("metadata mismatch")
 	}

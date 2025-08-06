@@ -8,6 +8,7 @@ func TestTokenHandlerLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate key: %v", err)
 	}
+
 	h, err := MakeTokensHandler(key)
 
 	if err != nil {
@@ -25,6 +26,7 @@ func TestTokenHandlerLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}
+
 	if decoded.PublicKey != token.PublicKey || decoded.SecretKey != token.SecretKey {
 		t.Fatalf("decode mismatch")
 	}
@@ -44,6 +46,7 @@ func TestSetupNewAccountErrors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("generate key: %v", err)
 	}
+
 	h, err := MakeTokensHandler(key)
 
 	if err != nil {
@@ -55,6 +58,7 @@ func TestSetupNewAccountErrors(t *testing.T) {
 	}
 
 	badHandler := &TokenHandler{EncryptionKey: []byte("short")}
+
 	if _, err := badHandler.SetupNewAccount("tester"); err == nil {
 		t.Fatalf("expected encrypt error")
 	}
@@ -66,11 +70,13 @@ func TestDecodeTokensForError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}
+
 	h, err := MakeTokensHandler(key)
 
 	if err != nil {
 		t.Fatalf("make handler: %v", err)
 	}
+
 	if _, err := h.DecodeTokensFor("acc", []byte("bad"), []byte("bad")); err == nil {
 		t.Fatalf("expected error")
 	}

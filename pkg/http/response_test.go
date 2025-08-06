@@ -19,11 +19,13 @@ func TestResponse_RespondOkAndHasCache(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d", rec.Code)
 	}
+
 	if rec.Header().Get("ETag") == "" || rec.Header().Get("Cache-Control") == "" {
 		t.Fatalf("headers missing")
 	}
 
 	req.Header.Set("If-None-Match", r.etag)
+
 	if !r.HasCache() {
 		t.Fatalf("expected cache")
 	}
@@ -36,6 +38,7 @@ func TestResponse_WithHeaders(t *testing.T) {
 	called := false
 
 	r.WithHeaders(func(w http.ResponseWriter) { called = true })
+
 	if !called {
 		t.Fatalf("callback not called")
 	}
@@ -57,9 +60,11 @@ func TestApiErrorHelpers(t *testing.T) {
 	if InternalError("x").Status != http.StatusInternalServerError {
 		t.Fatalf("internal status")
 	}
+
 	if BadRequestError("x").Status != http.StatusBadRequest {
 		t.Fatalf("bad req status")
 	}
+
 	if NotFound("x").Status != http.StatusNotFound {
 		t.Fatalf("not found")
 	}

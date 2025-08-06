@@ -22,11 +22,13 @@ func TestMakeApiHandler(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status %d", rec.Code)
 	}
+
 	var resp ErrorResponse
 
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
+
 	if resp.Error == "" || resp.Status != http.StatusBadRequest {
 		t.Fatalf("invalid response")
 	}

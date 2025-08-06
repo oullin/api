@@ -10,7 +10,9 @@ func TestGetPostsFiltersFrom(t *testing.T) {
 		Tag:      "g",
 		Text:     "x",
 	}
+
 	f := GetPostsFiltersFrom(req)
+
 	if f.Title != "t" || f.Author != "a" || f.Category != "c" || f.Tag != "g" || f.Text != "x" {
 		t.Fatalf("unexpected filters: %+v", f)
 	}

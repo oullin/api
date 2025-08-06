@@ -32,6 +32,7 @@ func setupDB(t *testing.T) *database.Connection {
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
 	}
+
 	t.Cleanup(func() { pg.Terminate(ctx) })
 
 	host, err := pg.Host(ctx)
@@ -39,6 +40,7 @@ func setupDB(t *testing.T) *database.Connection {
 	if err != nil {
 		t.Fatalf("host err: %v", err)
 	}
+
 	port, err := pg.MappedPort(ctx, "5432/tcp")
 
 	if err != nil {
@@ -63,6 +65,7 @@ func setupDB(t *testing.T) *database.Connection {
 	if err != nil {
 		t.Fatalf("make connection: %v", err)
 	}
+
 	t.Cleanup(func() { conn.Close() })
 
 	return conn
@@ -94,7 +97,9 @@ func TestUsersFindBy(t *testing.T) {
 		DB:  conn,
 		Env: &env.Environment{},
 	}
+
 	found := repo.FindBy("jdoe")
+
 	if found == nil || found.ID != u.ID {
 		t.Fatalf("user not found")
 	}
@@ -148,7 +153,9 @@ func TestCategoriesFindBy(t *testing.T) {
 	repo := repository.Categories{
 		DB: conn,
 	}
+
 	found := repo.FindBy("news")
+
 	if found == nil || found.ID != c.ID {
 		t.Fatalf("category not found")
 	}
@@ -231,6 +238,7 @@ func TestPostsCreateAndFind(t *testing.T) {
 	}
 
 	found := postsRepo.FindBy("first-post")
+
 	if found == nil || found.ID != p.ID {
 		t.Fatalf("post not found")
 	}

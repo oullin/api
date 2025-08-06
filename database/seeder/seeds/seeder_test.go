@@ -30,6 +30,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
 	}
+
 	t.Cleanup(func() { pg.Terminate(ctx) })
 
 	host, err := pg.Host(ctx)
@@ -37,6 +38,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 	if err != nil {
 		t.Fatalf("host err: %v", err)
 	}
+
 	port, err := pg.MappedPort(ctx, "5432/tcp")
 
 	if err != nil {
@@ -59,6 +61,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 	if err != nil {
 		t.Fatalf("make connection: %v", err)
 	}
+
 	t.Cleanup(func() { conn.Close() })
 
 	if err := conn.Sql().AutoMigrate(
@@ -81,6 +84,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 
 func setupSeeder(t *testing.T) *Seeder {
 	e := &env.Environment{App: env.AppEnvironment{Type: "local"}}
+
 	conn := testConnection(t, e)
 
 	return MakeSeeder(conn, e)
@@ -110,16 +114,19 @@ func TestSeederWorkflow(t *testing.T) {
 	var count int64
 
 	seeder.dbConn.Sql().Model(&database.User{}).Count(&count)
+
 	if count != 2 {
 		t.Fatalf("expected 2 users got %d", count)
 	}
 
 	seeder.dbConn.Sql().Model(&database.Post{}).Count(&count)
+
 	if count != 2 {
 		t.Fatalf("expected 2 posts got %d", count)
 	}
 
 	seeder.dbConn.Sql().Model(&database.Category{}).Count(&count)
+
 	if count == 0 {
 		t.Fatalf("categories not seeded")
 	}
@@ -135,16 +142,19 @@ func TestSeederEmptyMethods(t *testing.T) {
 	var count int64
 
 	seeder.dbConn.Sql().Model(&database.PostCategory{}).Count(&count)
+
 	if count != 0 {
 		t.Fatalf("expected 0 post_categories")
 	}
 
 	seeder.dbConn.Sql().Model(&database.PostTag{}).Count(&count)
+
 	if count != 0 {
 		t.Fatalf("expected 0 post_tags")
 	}
 
 	seeder.dbConn.Sql().Model(&database.PostView{}).Count(&count)
+
 	if count != 0 {
 		t.Fatalf("expected 0 post_views")
 	}

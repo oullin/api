@@ -30,9 +30,11 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 	if ok, err := v.Passes(invalid); ok || err == nil {
 		t.Fatalf("expected fail")
 	}
+
 	if len(v.GetErrors()) == 0 {
 		t.Fatalf("errors not recorded")
 	}
+
 	json := v.GetErrorsAsJson()
 
 	if json == "" {
@@ -49,6 +51,7 @@ func TestValidator_Rejects(t *testing.T) {
 	}
 
 	reject, _ := v.Rejects(u)
+
 	if !reject {
 		t.Fatalf("expected reject")
 	}

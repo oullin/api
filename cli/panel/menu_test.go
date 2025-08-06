@@ -26,7 +26,9 @@ func TestPrintLineAndGetChoiceNil(t *testing.T) {
 	m := Menu{
 		Reader: bufio.NewReader(strings.NewReader("\n")),
 	}
+
 	m.PrintLine()
+
 	if m.GetChoice() != 0 {
 		t.Fatalf("expected 0")
 	}
@@ -36,14 +38,17 @@ func TestPrint(t *testing.T) {
 	m := Menu{
 		Reader: bufio.NewReader(strings.NewReader("")),
 	}
+
 	_ = captureOutput(func() { m.Print() })
 }
 
 func TestCenterText(t *testing.T) {
 	m := Menu{}
+
 	if got := m.CenterText("hi", 6); got != "  hi  " {
 		t.Fatalf("unexpected: %q", got)
 	}
+
 	if got := m.CenterText("toolong", 4); got != "tool" {
 		t.Fatalf("unexpected truncation: %q", got)
 	}
@@ -51,7 +56,9 @@ func TestCenterText(t *testing.T) {
 
 func TestPrintOption(t *testing.T) {
 	m := Menu{}
+
 	out := captureOutput(func() { m.PrintOption("x", 5) })
+
 	if !strings.Contains(out, "║ x   ║") {
 		t.Fatalf("unexpected output: %q", out)
 	}
@@ -65,6 +72,7 @@ func TestCaptureInput(t *testing.T) {
 	if err := m.CaptureInput(); err != nil {
 		t.Fatalf("capture: %v", err)
 	}
+
 	if m.GetChoice() != 2 {
 		t.Fatalf("choice: %d", m.GetChoice())
 	}
@@ -82,6 +90,7 @@ func TestCaptureAccountName(t *testing.T) {
 	m := Menu{
 		Reader: bufio.NewReader(strings.NewReader("Alice\n")),
 	}
+
 	name, err := m.CaptureAccountName()
 
 	if err != nil || name != "Alice" {
@@ -91,6 +100,7 @@ func TestCaptureAccountName(t *testing.T) {
 	bad := Menu{
 		Reader: bufio.NewReader(strings.NewReader("\n")),
 	}
+
 	if _, err := bad.CaptureAccountName(); err == nil {
 		t.Fatalf("expected error")
 	}
@@ -102,6 +112,7 @@ func TestCapturePostURL(t *testing.T) {
 		Reader:    bufio.NewReader(strings.NewReader(goodURL + "\n")),
 		Validator: pkg.GetDefaultValidator(),
 	}
+
 	in, err := m.CapturePostURL()
 
 	if err != nil || in.Url != goodURL {
@@ -112,6 +123,7 @@ func TestCapturePostURL(t *testing.T) {
 		Reader:    bufio.NewReader(strings.NewReader("http://example.com\n")),
 		Validator: pkg.GetDefaultValidator(),
 	}
+
 	if _, err := m2.CapturePostURL(); err == nil {
 		t.Fatalf("expected error")
 	}

@@ -27,12 +27,15 @@ func TestMakeMediaAndUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("make: %v", err)
 	}
+
 	if !strings.HasPrefix(m.GetFileName(), "uid-") {
 		t.Fatalf("name prefix")
 	}
+
 	if m.GetExtension() != ".jpg" {
 		t.Fatalf("ext")
 	}
+
 	if m.GetHeaderName() != "pic.jpg" {
 		t.Fatalf("header")
 	}
@@ -40,6 +43,7 @@ func TestMakeMediaAndUpload(t *testing.T) {
 	if err := m.Upload(GetUsersImagesDir()); err != nil {
 		t.Fatalf("upload: %v", err)
 	}
+
 	if _, err := os.Stat(m.path); err != nil {
 		t.Fatalf("file not created")
 	}
@@ -51,14 +55,17 @@ func TestMakeMediaAndUpload(t *testing.T) {
 
 func TestMakeMediaErrors(t *testing.T) {
 	setupTempDir(t)
+
 	if _, err := MakeMedia("u", []byte{}, "a.jpg"); err == nil {
 		t.Fatalf("expected empty file error")
 	}
+
 	big := make([]byte, maxFileSize+1)
 
 	if _, err := MakeMedia("u", big, "a.jpg"); err == nil {
 		t.Fatalf("expected size error")
 	}
+
 	if _, err := MakeMedia("u", []byte{1}, "a.txt"); err == nil {
 		t.Fatalf("expected ext error")
 	}
@@ -73,6 +80,7 @@ func TestGetFilePath(t *testing.T) {
 	}
 
 	p := m.GetFilePath("thumb")
+
 	if !strings.Contains(filepath.Base(p), "thumb-") {
 		t.Fatalf("file path wrong: %s", p)
 	}
@@ -80,6 +88,7 @@ func TestGetFilePath(t *testing.T) {
 
 func TestGetPostsImagesDir(t *testing.T) {
 	setupTempDir(t)
+
 	if !strings.Contains(GetPostsImagesDir(), "posts") {
 		t.Fatalf("dir invalid")
 	}
@@ -89,6 +98,7 @@ func TestGetStorageDir(t *testing.T) {
 	dir := setupTempDir(t)
 
 	p := GetStorageDir()
+
 	if !strings.HasPrefix(p, dir) {
 		t.Fatalf("unexpected storage dir")
 	}

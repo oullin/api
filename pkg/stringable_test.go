@@ -28,6 +28,7 @@ func TestStringable_ToDatetime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
 	if dt.Year() != 2024 || dt.Month() != time.June || dt.Day() != 9 {
 		t.Fatalf("unexpected datetime: %v", dt)
 	}

@@ -15,7 +15,9 @@ func TestGetTagsResponse(t *testing.T) {
 			Description: "d",
 		},
 	}
+
 	r := GetTagsResponse(tags)
+
 	if len(r) != 1 || r[0].Slug != "s" {
 		t.Fatalf("unexpected %#v", r)
 	}

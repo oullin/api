@@ -31,6 +31,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
+
 	cat := database.Category{
 		UUID:        uuid.NewString(),
 		Name:        "Cat",
@@ -41,6 +42,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 	if err := conn.Sql().Create(&cat).Error; err != nil {
 		t.Fatalf("create category: %v", err)
 	}
+
 	link := database.PostCategory{
 		PostID:     post.ID,
 		CategoryID: cat.ID,
@@ -60,6 +62,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 	if err := h.Index(rec, req); err != nil {
 		t.Fatalf("index err: %v", err)
 	}
+
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d", rec.Code)
 	}
@@ -69,6 +72,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
+
 	if len(resp.Data) != 1 || resp.Data[0].Slug != "cat" {
 		t.Fatalf("unexpected data: %+v", resp.Data)
 	}

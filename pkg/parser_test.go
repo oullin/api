@@ -24,6 +24,7 @@ func TestParseJsonFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
+
 	if v.Name != "john" || v.Age != 30 {
 		t.Fatalf("unexpected result: %#v", v)
 	}

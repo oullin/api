@@ -21,11 +21,13 @@ func TestFilesLogs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("make logs: %v", err)
 	}
+
 	fl := d.(FilesLogs)
 
 	if !strings.HasPrefix(fl.path, dir) {
 		t.Fatalf("path not in dir")
 	}
+
 	if !fl.Close() {
 		t.Fatalf("close")
 	}
@@ -42,11 +44,13 @@ func TestDefaultPath(t *testing.T) {
 			DateFormat: "2006",
 		},
 	}
+
 	fl := FilesLogs{
 		env: e,
 	}
 
 	p := fl.DefaultPath()
+
 	if !strings.HasPrefix(p, "foo-") {
 		t.Fatalf("path prefix")
 	}

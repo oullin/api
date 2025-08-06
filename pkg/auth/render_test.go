@@ -14,6 +14,7 @@ func TestSafeDisplay(t *testing.T) {
 
 func TestSafeDisplayShort(t *testing.T) {
 	tok := "pk_short"
+
 	if SafeDisplay(tok) != tok {
 		t.Fatalf("expected same")
 	}

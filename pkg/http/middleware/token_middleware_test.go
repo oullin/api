@@ -13,14 +13,19 @@ func TestTokenMiddlewareErrors(t *testing.T) {
 	tm := TokenCheckMiddleware{}
 
 	e := tm.getInvalidRequestError("a", "b", "c")
+
 	if e.Status != 403 || e.Message == "" {
 		t.Fatalf("invalid request error")
 	}
+
 	e = tm.getInvalidTokenFormatError("pk_x", pkgAuth.ValidateTokenFormat("bad"))
+
 	if e.Status != 403 {
 		t.Fatalf("invalid token error")
 	}
+
 	e = tm.getUnauthenticatedError("a", "b", "c")
+
 	if e.Status != 403 {
 		t.Fatalf("unauthenticated error")
 	}

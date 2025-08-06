@@ -70,6 +70,7 @@ func TestIgnite(t *testing.T) {
 	if err != nil {
 		t.Fatalf("temp file err: %v", err)
 	}
+
 	defer os.Remove(f.Name())
 	f.WriteString(content)
 	f.Close()
@@ -94,8 +95,10 @@ func TestAppBootNil(t *testing.T) {
 
 func TestAppHelpers(t *testing.T) {
 	app := &App{}
+
 	mux := http.NewServeMux()
 	r := Router{Mux: mux}
+
 	app.SetRouter(r)
 
 	if app.GetMux() != mux {
@@ -108,10 +111,12 @@ func TestAppHelpers(t *testing.T) {
 	if app.GetEnv() != nil {
 		t.Fatalf("expected nil env")
 	}
+
 	if app.GetDB() != nil {
 		t.Fatalf("expected nil db")
 	}
 }
+
 func TestAppBootRoutes(t *testing.T) {
 	validEnvVars(t)
 
@@ -141,6 +146,7 @@ func TestAppBootRoutes(t *testing.T) {
 	}
 
 	app := &App{}
+
 	app.SetRouter(router)
 
 	app.Boot()
@@ -164,6 +170,7 @@ func TestAppBootRoutes(t *testing.T) {
 	for _, rt := range routes {
 		req := httptest.NewRequest(rt.method, rt.path, nil)
 		h, pattern := app.GetMux().Handler(req)
+
 		if pattern == "" || h == nil {
 			t.Fatalf("route missing %s %s", rt.method, rt.path)
 		}
@@ -235,6 +242,7 @@ func TestMakeSentry(t *testing.T) {
 	env := MakeEnv(pkg.GetDefaultValidator())
 
 	s := MakeSentry(env)
+
 	if s == nil || s.Handler == nil || s.Options == nil {
 		t.Fatalf("sentry setup failed")
 	}
@@ -261,6 +269,7 @@ func TestCloseLogs(t *testing.T) {
 
 func TestGetMuxNil(t *testing.T) {
 	app := &App{}
+
 	if app.GetMux() != nil {
 		t.Fatalf("expected nil mux")
 	}

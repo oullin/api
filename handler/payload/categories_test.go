@@ -15,7 +15,9 @@ func TestGetCategoriesResponse(t *testing.T) {
 			Description: "d",
 		},
 	}
+
 	r := GetCategoriesResponse(cats)
+
 	if len(r) != 1 || r[0].Slug != "s" {
 		t.Fatalf("unexpected %#v", r)
 	}
