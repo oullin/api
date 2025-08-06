@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
@@ -70,17 +71,17 @@ func makeCategoriesRepo(t *testing.T) *repository.Categories {
 		t.Fatalf("migrate: %v", err)
 	}
 
-	author := database.User{ID: 1, UUID: "u1", Username: "user", FirstName: "F", LastName: "L", Email: "u@example.com", PasswordHash: "x"}
+	author := database.User{ID: 1, UUID: uuid.NewString(), Username: "user", FirstName: "F", LastName: "L", Email: "u@example.com", PasswordHash: "x"}
 	if err := conn.Sql().Create(&author).Error; err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 	published := time.Now()
-	post := database.Post{UUID: "p1", AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
+	post := database.Post{UUID: uuid.NewString(), AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
 
-	cat := database.Category{UUID: "c1", Name: "Cat", Slug: "cat", Description: "desc"}
+	cat := database.Category{UUID: uuid.NewString(), Name: "Cat", Slug: "cat", Description: "desc"}
 	if err := conn.Sql().Create(&cat).Error; err != nil {
 		t.Fatalf("create category: %v", err)
 	}
