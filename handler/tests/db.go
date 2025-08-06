@@ -66,7 +66,7 @@ func MakeTestDB(t *testing.T) (*database.Connection, database.User) {
 		t.Fatalf("migrate: %v", err)
 	}
 
-	author := database.User{ID: 1, UUID: uuid.NewString(), Username: "user", FirstName: "F", LastName: "L", Email: "u@example.com", PasswordHash: "x"}
+	author := database.User{UUID: uuid.NewString(), Username: "user", FirstName: "F", LastName: "L", Email: "u@example.com", PasswordHash: "x"}
 	if err := conn.Sql().Create(&author).Error; err != nil {
 		t.Fatalf("create user: %v", err)
 	}
