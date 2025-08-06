@@ -3,10 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
-	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg"
@@ -16,12 +14,11 @@ import (
 )
 
 type PostsHandler struct {
-	GetAll func(queries.PostFilters, pagination.Paginate) (*pagination.Pagination[database.Post], error)
-	FindBy func(slug string) *database.Post
+	Posts *repository.Posts
 }
 
 func MakePostsHandler(repo *repository.Posts) PostsHandler {
-	return PostsHandler{GetAll: repo.GetAll, FindBy: repo.FindBy}
+	return PostsHandler{Posts: repo}
 }
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
@@ -35,7 +32,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *ht
 		return http.InternalError("There was an issue reading the request. Please, try again later.")
 	}
 
-	result, err := h.GetAll(
+	result, err := h.Posts.GetAll(
 		payload.GetPostsFiltersFrom(requestBody),
 		paginate.MakeFrom(r.URL, 10),
 	)
@@ -67,7 +64,7 @@ func (h *PostsHandler) Show(w baseHttp.ResponseWriter, r *baseHttp.Request) *htt
 		return http.BadRequestError("Slugs are required to show posts content")
 	}
 
-	post := h.FindBy(slug)
+	post := h.Posts.FindBy(slug)
 	if post == nil {
 		return http.NotFound(fmt.Sprintf("The given post '%s' was not found", slug))
 	}
