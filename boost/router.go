@@ -33,7 +33,7 @@ func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 
 func (r *Router) Posts() {
 	repo := repository.Posts{DB: r.Db}
-	abstract := handler.MakePostsHandler(repo.GetAll, repo.FindBy)
+	abstract := handler.MakePostsHandler(&repo)
 
 	index := r.PipelineFor(abstract.Index)
 	show := r.PipelineFor(abstract.Show)

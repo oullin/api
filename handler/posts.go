@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/handler/paginate"
@@ -19,8 +20,8 @@ type PostsHandler struct {
 	FindBy func(slug string) *database.Post
 }
 
-func MakePostsHandler(getAll func(queries.PostFilters, pagination.Paginate) (*pagination.Pagination[database.Post], error), findBy func(string) *database.Post) PostsHandler {
-	return PostsHandler{GetAll: getAll, FindBy: findBy}
+func MakePostsHandler(repo *repository.Posts) PostsHandler {
+	return PostsHandler{GetAll: repo.GetAll, FindBy: repo.FindBy}
 }
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {

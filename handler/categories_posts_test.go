@@ -20,12 +20,12 @@ func TestPostsHandlerIndex(t *testing.T) {
 	pag.SetNumItems(1)
 	list := pagination.MakePagination([]database.Post{post}, pag)
 	repoErr := error(nil)
-	h := MakePostsHandler(
-		func(filters queries.PostFilters, p pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+	h := PostsHandler{
+		GetAll: func(filters queries.PostFilters, p pagination.Paginate) (*pagination.Pagination[database.Post], error) {
 			return list, repoErr
 		},
-		func(slug string) *database.Post { return &post },
-	)
+		FindBy: func(slug string) *database.Post { return &post },
+	}
 
 	body, _ := json.Marshal(payload.IndexRequestBody{Title: "title"})
 	req := httptest.NewRequest("POST", "/posts", bytes.NewReader(body))
@@ -53,12 +53,12 @@ func TestPostsHandlerIndex(t *testing.T) {
 func TestPostsHandlerShow(t *testing.T) {
 	post := database.Post{UUID: "p1", Slug: "slug", Title: "title"}
 	item := &post
-	h := MakePostsHandler(
-		func(filters queries.PostFilters, p pagination.Paginate) (*pagination.Pagination[database.Post], error) {
+	h := PostsHandler{
+		GetAll: func(filters queries.PostFilters, p pagination.Paginate) (*pagination.Pagination[database.Post], error) {
 			return nil, nil
 		},
-		func(slug string) *database.Post { return item },
-	)
+		FindBy: func(slug string) *database.Post { return item },
+	}
 
 	req := httptest.NewRequest("GET", "/posts/slug", nil)
 	req.SetPathValue("slug", "slug")
