@@ -6,10 +6,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	tests "github.com/oullin/handler/tests"
 )
 
 func TestRecommendationsHandlerHandle(t *testing.T) {
-	file := writeJSON(t, testEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
+	file := tests.WriteJSON(t, tests.TestEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
 	defer os.Remove(file)
 
 	h := MakeRecommendationsHandler(file)
@@ -23,7 +25,7 @@ func TestRecommendationsHandlerHandle(t *testing.T) {
 		t.Fatalf("status %d", rec.Code)
 	}
 
-	var resp testEnvelope
+	var resp tests.TestEnvelope
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

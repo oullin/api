@@ -6,10 +6,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	tests "github.com/oullin/handler/tests"
 )
 
 func TestExperienceHandlerHandle(t *testing.T) {
-	file := writeJSON(t, testEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
+	file := tests.WriteJSON(t, tests.TestEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
 	defer os.Remove(file)
 
 	h := MakeExperienceHandler(file)
@@ -23,7 +25,7 @@ func TestExperienceHandlerHandle(t *testing.T) {
 		t.Fatalf("status %d", rec.Code)
 	}
 
-	var resp testEnvelope
+	var resp tests.TestEnvelope
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -55,7 +57,7 @@ func TestExperienceHandlerHandle(t *testing.T) {
 }
 
 func TestExperienceHandlerHandle_Payload(t *testing.T) {
-	file := writeJSON(t, testEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
+	file := tests.WriteJSON(t, tests.TestEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
 	defer os.Remove(file)
 
 	h := MakeExperienceHandler(file)
@@ -66,7 +68,7 @@ func TestExperienceHandlerHandle_Payload(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 
-	var resp testEnvelope
+	var resp tests.TestEnvelope
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

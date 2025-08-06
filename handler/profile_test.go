@@ -6,10 +6,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	tests "github.com/oullin/handler/tests"
 )
 
 func TestProfileHandlerHandle(t *testing.T) {
-	file := writeJSON(t, testEnvelope{Version: "v1", Data: map[string]string{"nickname": "nick"}})
+	file := tests.WriteJSON(t, tests.TestEnvelope{Version: "v1", Data: map[string]string{"nickname": "nick"}})
 	defer os.Remove(file)
 
 	h := MakeProfileHandler(file)
@@ -23,7 +25,7 @@ func TestProfileHandlerHandle(t *testing.T) {
 		t.Fatalf("status %d", rec.Code)
 	}
 
-	var resp testEnvelope
+	var resp tests.TestEnvelope
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -55,7 +57,7 @@ func TestProfileHandlerHandle(t *testing.T) {
 }
 
 func TestProfileHandlerHandle_Payload(t *testing.T) {
-	file := writeJSON(t, testEnvelope{Version: "v1", Data: map[string]string{"nickname": "nick"}})
+	file := tests.WriteJSON(t, tests.TestEnvelope{Version: "v1", Data: map[string]string{"nickname": "nick"}})
 	defer os.Remove(file)
 
 	h := MakeProfileHandler(file)
@@ -66,7 +68,7 @@ func TestProfileHandlerHandle_Payload(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 
-	var resp testEnvelope
+	var resp tests.TestEnvelope
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

@@ -1,4 +1,4 @@
-package handler
+package tests
 
 import (
 	"encoding/json"
@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-type testEnvelope struct {
+type TestEnvelope struct {
 	Version string      `json:"version"`
 	Data    interface{} `json:"data"`
 }
 
-func writeJSON(t *testing.T, v interface{}) string {
+func WriteJSON(t *testing.T, v interface{}) string {
 	t.Helper()
 	f, err := os.CreateTemp("", "data.json")
 	if err != nil {
