@@ -2,6 +2,7 @@ module github.com/oullin
 
 go 1.24
 
+// Dependencies updated to latest releases
 require (
 	github.com/getsentry/sentry-go v0.35.0
 	github.com/go-playground/validator/v10 v10.27.0
