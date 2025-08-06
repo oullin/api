@@ -2,20 +2,21 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
+	"os/exec"
 	"testing"
 	"time"
-	"unsafe"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/env"
 	"github.com/oullin/handler/payload"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 func TestPostsHandlerIndex_ParseError(t *testing.T) {
@@ -39,29 +40,62 @@ func TestPostsHandlerShow_MissingSlug(t *testing.T) {
 func makePostsRepo(t *testing.T) *repository.Posts {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("open db: %v", err)
+	if _, err := exec.LookPath("docker"); err != nil {
+		t.Skip("docker not installed")
 	}
 
-	if err := db.AutoMigrate(&database.User{}, &database.Post{}, &database.Category{}, &database.Tag{}, &database.PostCategory{}, &database.PostTag{}); err != nil {
+	ctx := context.Background()
+	pg, err := postgres.RunContainer(ctx,
+		testcontainers.WithImage("postgres:16-alpine"),
+		postgres.WithDatabase("testdb"),
+		postgres.WithUsername("test"),
+		postgres.WithPassword("secret"),
+		postgres.BasicWaitStrategies(),
+	)
+	if err != nil {
+		t.Fatalf("container run err: %v", err)
+	}
+	t.Cleanup(func() { pg.Terminate(ctx) })
+
+	host, err := pg.Host(ctx)
+	if err != nil {
+		t.Fatalf("host err: %v", err)
+	}
+	port, err := pg.MappedPort(ctx, "5432/tcp")
+	if err != nil {
+		t.Fatalf("port err: %v", err)
+	}
+
+	e := &env.Environment{
+		DB: env.DBEnvironment{
+			UserName:     "test",
+			UserPassword: "secret",
+			DatabaseName: "testdb",
+			Port:         port.Int(),
+			Host:         host,
+			DriverName:   database.DriverName,
+			SSLMode:      "disable",
+			TimeZone:     "UTC",
+		},
+	}
+
+	conn, err := database.MakeConnection(e)
+	if err != nil {
+		t.Fatalf("make connection: %v", err)
+	}
+	t.Cleanup(func() { conn.Close() })
+
+	if err := conn.Sql().AutoMigrate(&database.User{}, &database.Post{}, &database.Category{}, &database.Tag{}, &database.PostCategory{}, &database.PostTag{}); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
 
-	conn := &database.Connection{}
-	rv := reflect.ValueOf(conn).Elem()
-	driverField := rv.FieldByName("driver")
-	reflect.NewAt(driverField.Type(), unsafe.Pointer(driverField.UnsafeAddr())).Elem().Set(reflect.ValueOf(db))
-	nameField := rv.FieldByName("driverName")
-	reflect.NewAt(nameField.Type(), unsafe.Pointer(nameField.UnsafeAddr())).Elem().SetString("sqlite")
-
 	author := database.User{ID: 1, UUID: "u1", Username: "user", FirstName: "F", LastName: "L", Email: "u@example.com", PasswordHash: "x"}
-	if err := db.Create(&author).Error; err != nil {
+	if err := conn.Sql().Create(&author).Error; err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 	published := time.Now()
 	post := database.Post{UUID: "p1", AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
-	if err := db.Create(&post).Error; err != nil {
+	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
 
