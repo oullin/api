@@ -4,6 +4,7 @@ import (
 	"context"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -17,8 +18,12 @@ func TestApiKeysWithTestContainer(t *testing.T) {
 	if _, err := exec.LookPath("docker"); err != nil {
 		t.Skip("docker not installed")
 	}
+	if err := exec.Command("docker", "ps").Run(); err != nil {
+		t.Skip("docker not running")
+	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	pg, err := postgres.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16-alpine"),
@@ -32,7 +37,7 @@ func TestApiKeysWithTestContainer(t *testing.T) {
 		t.Fatalf("container run err: %v", err)
 	}
 
-	t.Cleanup(func() { pg.Terminate(ctx) })
+	t.Cleanup(func() { pg.Terminate(context.Background()) })
 
 	host, err := pg.Host(ctx)
 
