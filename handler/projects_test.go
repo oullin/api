@@ -7,11 +7,11 @@ import (
 	"os"
 	"testing"
 
-	tests "github.com/oullin/handler/tests"
+	handlertests "github.com/oullin/handler/tests"
 )
 
 func TestProjectsHandlerHandle(t *testing.T) {
-	file := tests.WriteJSON(t, tests.TestEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
+	file := handlertests.WriteJSON(t, handlertests.TestEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
 	defer os.Remove(file)
 
 	h := MakeProjectsHandler(file)
@@ -25,7 +25,7 @@ func TestProjectsHandlerHandle(t *testing.T) {
 		t.Fatalf("status %d", rec.Code)
 	}
 
-	var resp tests.TestEnvelope
+	var resp handlertests.TestEnvelope
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestProjectsHandlerHandle(t *testing.T) {
 }
 
 func TestProjectsHandlerHandle_Payload(t *testing.T) {
-	file := tests.WriteJSON(t, tests.TestEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
+	file := handlertests.WriteJSON(t, handlertests.TestEnvelope{Version: "v1", Data: []map[string]string{{"uuid": "1"}}})
 	defer os.Remove(file)
 
 	h := MakeProjectsHandler(file)
@@ -68,7 +68,7 @@ func TestProjectsHandlerHandle_Payload(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 
-	var resp tests.TestEnvelope
+	var resp handlertests.TestEnvelope
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
