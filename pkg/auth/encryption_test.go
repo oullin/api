@@ -4,6 +4,7 @@ import "testing"
 
 func TestEncryptDecrypt(t *testing.T) {
 	key, err := GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}
@@ -13,10 +14,12 @@ func TestEncryptDecrypt(t *testing.T) {
 
 	plain := []byte("hello")
 	enc, err := Encrypt(plain, key)
+
 	if err != nil {
 		t.Fatalf("encrypt err: %v", err)
 	}
 	dec, err := Decrypt(enc, key)
+
 	if err != nil {
 		t.Fatalf("decrypt err: %v", err)
 	}
@@ -27,11 +30,13 @@ func TestEncryptDecrypt(t *testing.T) {
 
 func TestDecryptWrongKey(t *testing.T) {
 	key, err := GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}
 
 	other, err := GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("other key err: %v", err)
 	}
@@ -49,6 +54,7 @@ func TestDecryptWrongKey(t *testing.T) {
 
 func TestDecryptShortCipher(t *testing.T) {
 	key, err := GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}

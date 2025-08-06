@@ -14,6 +14,7 @@ func setupTempDir(t *testing.T) string {
 	os.Chdir(dir)
 	t.Cleanup(func() { os.Chdir(old) })
 	os.MkdirAll(GetUsersImagesDir(), 0755)
+
 	return dir
 }
 
@@ -22,6 +23,7 @@ func TestMakeMediaAndUpload(t *testing.T) {
 	data := []byte{1, 2, 3}
 
 	m, err := MakeMedia("uid", data, "pic.jpg")
+
 	if err != nil {
 		t.Fatalf("make: %v", err)
 	}
@@ -34,12 +36,14 @@ func TestMakeMediaAndUpload(t *testing.T) {
 	if m.GetHeaderName() != "pic.jpg" {
 		t.Fatalf("header")
 	}
+
 	if err := m.Upload(GetUsersImagesDir()); err != nil {
 		t.Fatalf("upload: %v", err)
 	}
 	if _, err := os.Stat(m.path); err != nil {
 		t.Fatalf("file not created")
 	}
+
 	if err := m.RemovePrefixedFiles(GetUsersImagesDir(), "uid"); err != nil {
 		t.Fatalf("remove: %v", err)
 	}
@@ -63,6 +67,7 @@ func TestMakeMediaErrors(t *testing.T) {
 func TestGetFilePath(t *testing.T) {
 	setupTempDir(t)
 	m, err := MakeMedia("u", []byte{1}, "a.jpg")
+
 	if err != nil {
 		t.Fatalf("make: %v", err)
 	}

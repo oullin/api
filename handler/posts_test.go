@@ -38,6 +38,7 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 	conn, author := handlertests.MakeTestDB(t)
 	published := time.Now()
 	post := database.Post{UUID: uuid.NewString(), AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
+
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
@@ -55,6 +56,7 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 	}
 
 	var resp pagination.Pagination[payload.PostResponse]
+
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -67,6 +69,7 @@ func TestPostsHandlerShow_Success(t *testing.T) {
 	conn, author := handlertests.MakeTestDB(t)
 	published := time.Now()
 	post := database.Post{UUID: uuid.NewString(), AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
+
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
@@ -85,6 +88,7 @@ func TestPostsHandlerShow_Success(t *testing.T) {
 	}
 
 	var resp payload.PostResponse
+
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

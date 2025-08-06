@@ -26,16 +26,19 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 		postgres.WithPassword("secret"),
 		postgres.BasicWaitStrategies(),
 	)
+
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
 	}
 	t.Cleanup(func() { pg.Terminate(ctx) })
 
 	host, err := pg.Host(ctx)
+
 	if err != nil {
 		t.Fatalf("host err: %v", err)
 	}
 	port, err := pg.MappedPort(ctx, "5432/tcp")
+
 	if err != nil {
 		t.Fatalf("port err: %v", err)
 	}
@@ -52,6 +55,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 	}
 
 	conn, err := database.MakeConnection(e)
+
 	if err != nil {
 		t.Fatalf("make connection: %v", err)
 	}
@@ -78,6 +82,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 func setupSeeder(t *testing.T) *Seeder {
 	e := &env.Environment{App: env.AppEnvironment{Type: "local"}}
 	conn := testConnection(t, e)
+
 	return MakeSeeder(conn, e)
 }
 
@@ -97,6 +102,7 @@ func TestSeederWorkflow(t *testing.T) {
 	seeder.SeedPostsCategories(categories, posts)
 	seeder.SeedPostTags(tags, posts)
 	seeder.SeedPostViews(posts, userA, userB)
+
 	if err := seeder.SeedNewsLetters(); err != nil {
 		t.Fatalf("newsletter err: %v", err)
 	}

@@ -12,6 +12,7 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 	v := GetDefaultValidator()
 
 	ok, err := v.Passes(&user{Email: "a@b.com", Name: "John", Code: "123"})
+
 	if err != nil || !ok {
 		t.Fatalf("expected pass got %v %v", ok, err)
 	}

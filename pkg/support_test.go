@@ -12,6 +12,7 @@ type fakeCloser struct {
 
 func (f *fakeCloser) Close() error {
 	f.closed = true
+
 	return f.err
 }
 

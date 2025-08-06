@@ -29,6 +29,7 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 	h := tc.make(file)
 	req := httptest.NewRequest("GET", tc.endpoint, nil)
 	rec := httptest.NewRecorder()
+
 	if err := h.Handle(rec, req); err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -37,6 +38,7 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 	}
 
 	var resp handlertests.TestEnvelope
+
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -48,6 +50,7 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 	req2 := httptest.NewRequest("GET", tc.endpoint, nil)
 	req2.Header.Set("If-None-Match", "\"v1\"")
 	rec2 := httptest.NewRecorder()
+
 	if err := h.Handle(rec2, req2); err != nil {
 		t.Fatalf("err: %v", err)
 	}

@@ -12,6 +12,7 @@ func TestFilesLogs(t *testing.T) {
 	e := &env.Environment{Logs: env.LogsEnvironment{Dir: dir + "/log-%s.txt", DateFormat: "2006"}}
 
 	d, err := MakeFilesLogs(e)
+
 	if err != nil {
 		t.Fatalf("make logs: %v", err)
 	}

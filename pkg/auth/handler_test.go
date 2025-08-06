@@ -4,6 +4,7 @@ import "testing"
 
 func TestTokenHandlerLifecycle(t *testing.T) {
 	key, err := GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("generate key: %v", err)
 	}
@@ -39,10 +40,12 @@ func TestMakeTokensHandlerError(t *testing.T) {
 
 func TestSetupNewAccountErrors(t *testing.T) {
 	key, err := GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("generate key: %v", err)
 	}
 	h, err := MakeTokensHandler(key)
+
 	if err != nil {
 		t.Fatalf("make handler: %v", err)
 	}
@@ -59,10 +62,12 @@ func TestSetupNewAccountErrors(t *testing.T) {
 
 func TestDecodeTokensForError(t *testing.T) {
 	key, err := GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}
 	h, err := MakeTokensHandler(key)
+
 	if err != nil {
 		t.Fatalf("make handler: %v", err)
 	}

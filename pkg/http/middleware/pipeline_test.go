@@ -14,19 +14,24 @@ func TestPipelineChainOrder(t *testing.T) {
 	order := []string{}
 
 	m1 := func(next pkgHttp.ApiHandler) pkgHttp.ApiHandler {
+
 		return func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
 			order = append(order, "m1")
+
 			return next(w, r)
 		}
 	}
 	m2 := func(next pkgHttp.ApiHandler) pkgHttp.ApiHandler {
+
 		return func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
 			order = append(order, "m2")
+
 			return next(w, r)
 		}
 	}
 	final := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
 		order = append(order, "final")
+
 		return nil
 	}
 

@@ -13,6 +13,7 @@ published_at: 2024-06-09
 content`
 
 	post, err := Parse(md)
+
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -35,6 +36,7 @@ published_at: 2024-06-09
 content`
 
 	post, err := Parse(md)
+
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -58,6 +60,7 @@ published_at: "bad"
 ---
 content`
 	post, err := Parse(md)
+
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}

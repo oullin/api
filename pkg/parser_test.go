@@ -14,11 +14,13 @@ func TestParseJsonFile(t *testing.T) {
 	dir := t.TempDir()
 	file := dir + "/sample.json"
 	content := `{"name":"john","age":30}`
+
 	if err := os.WriteFile(file, []byte(content), 0644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
 	v, err := ParseJsonFile[jsonSample](file)
+
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}

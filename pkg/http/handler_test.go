@@ -9,6 +9,7 @@ import (
 
 func TestMakeApiHandler(t *testing.T) {
 	h := MakeApiHandler(func(w http.ResponseWriter, r *http.Request) *ApiError {
+
 		return &ApiError{Message: "bad", Status: http.StatusBadRequest}
 	})
 

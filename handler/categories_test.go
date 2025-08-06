@@ -19,14 +19,17 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 	conn, author := handlertests.MakeTestDB(t)
 	published := time.Now()
 	post := database.Post{UUID: uuid.NewString(), AuthorID: author.ID, Slug: "hello", Title: "Hello", Excerpt: "Ex", Content: "Body", PublishedAt: &published}
+
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
 	cat := database.Category{UUID: uuid.NewString(), Name: "Cat", Slug: "cat", Description: "desc"}
+
 	if err := conn.Sql().Create(&cat).Error; err != nil {
 		t.Fatalf("create category: %v", err)
 	}
 	link := database.PostCategory{PostID: post.ID, CategoryID: cat.ID}
+
 	if err := conn.Sql().Create(&link).Error; err != nil {
 		t.Fatalf("create link: %v", err)
 	}
@@ -44,6 +47,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 	}
 
 	var resp pagination.Pagination[payload.CategoryResponse]
+
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

@@ -66,6 +66,7 @@ func TestIgnite(t *testing.T) {
 		"ENV_SENTRY_CSP=csp\n"
 
 	f, err := os.CreateTemp("", "envfile")
+
 	if err != nil {
 		t.Fatalf("temp file err: %v", err)
 	}
@@ -117,11 +118,13 @@ func TestAppBootRoutes(t *testing.T) {
 	env := MakeEnv(pkg.GetDefaultValidator())
 
 	key, err := auth.GenerateAESKey()
+
 	if err != nil {
 		t.Fatalf("key err: %v", err)
 	}
 
 	handler, err := auth.MakeTokensHandler(key)
+
 	if err != nil {
 		t.Fatalf("handler err: %v", err)
 	}
@@ -169,6 +172,7 @@ func TestAppBootRoutes(t *testing.T) {
 
 func TestMakeLogs(t *testing.T) {
 	dir, err := os.MkdirTemp("", "logdir")
+
 	if err != nil {
 		t.Fatalf("tmpdir err: %v", err)
 	}
@@ -238,6 +242,7 @@ func TestMakeSentry(t *testing.T) {
 
 func TestCloseLogs(t *testing.T) {
 	dir, err := os.MkdirTemp("", "logdir")
+
 	if err != nil {
 		t.Fatalf("tmpdir err: %v", err)
 	}

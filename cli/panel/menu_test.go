@@ -18,6 +18,7 @@ func captureOutput(fn func()) string {
 	w.Close()
 	out, _ := io.ReadAll(r)
 	os.Stdout = old
+
 	return string(out)
 }
 
@@ -54,6 +55,7 @@ func TestPrintOption(t *testing.T) {
 
 func TestCaptureInput(t *testing.T) {
 	m := Menu{Reader: bufio.NewReader(strings.NewReader("2\n"))}
+
 	if err := m.CaptureInput(); err != nil {
 		t.Fatalf("capture: %v", err)
 	}
@@ -62,6 +64,7 @@ func TestCaptureInput(t *testing.T) {
 	}
 
 	bad := Menu{Reader: bufio.NewReader(strings.NewReader("bad\n"))}
+
 	if err := bad.CaptureInput(); err == nil {
 		t.Fatalf("expected error")
 	}
@@ -70,6 +73,7 @@ func TestCaptureInput(t *testing.T) {
 func TestCaptureAccountName(t *testing.T) {
 	m := Menu{Reader: bufio.NewReader(strings.NewReader("Alice\n"))}
 	name, err := m.CaptureAccountName()
+
 	if err != nil || name != "Alice" {
 		t.Fatalf("got %q err %v", name, err)
 	}
@@ -84,6 +88,7 @@ func TestCapturePostURL(t *testing.T) {
 	goodURL := "https://raw.githubusercontent.com/user/repo/file.md"
 	m := Menu{Reader: bufio.NewReader(strings.NewReader(goodURL + "\n")), Validator: pkg.GetDefaultValidator()}
 	in, err := m.CapturePostURL()
+
 	if err != nil || in.Url != goodURL {
 		t.Fatalf("got %v err %v", in, err)
 	}

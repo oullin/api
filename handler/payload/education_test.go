@@ -8,6 +8,7 @@ import (
 func TestEducationResponseJSON(t *testing.T) {
 	body := []byte(`{"version":"v1","data":[{"uuid":"u","icon":"i","school":"s","degree":"d","field":"f","description":"desc","graduated_at":"g","issuing_country":"c"}]}`)
 	var res EducationResponse
+
 	if err := json.Unmarshal(body, &res); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}

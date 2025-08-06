@@ -8,6 +8,7 @@ import (
 func TestSocialResponseJSON(t *testing.T) {
 	body := []byte(`{"version":"v1","data":[{"uuid":"u","handle":"h","url":"u","description":"d","name":"n"}]}`)
 	var res SocialResponse
+
 	if err := json.Unmarshal(body, &res); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
