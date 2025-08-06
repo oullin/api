@@ -4,6 +4,7 @@ import (
 	"context"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
@@ -18,8 +19,12 @@ func setupDB(t *testing.T) *database.Connection {
 	if _, err := exec.LookPath("docker"); err != nil {
 		t.Skip("docker not installed")
 	}
+	if err := exec.Command("docker", "ps").Run(); err != nil {
+		t.Skip("docker not running")
+	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	pg, err := postgres.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16-alpine"),
@@ -33,7 +38,7 @@ func setupDB(t *testing.T) *database.Connection {
 		t.Fatalf("container run err: %v", err)
 	}
 
-	t.Cleanup(func() { pg.Terminate(ctx) })
+	t.Cleanup(func() { pg.Terminate(context.Background()) })
 
 	host, err := pg.Host(ctx)
 
