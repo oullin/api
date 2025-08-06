@@ -23,7 +23,7 @@ func MakeTestConnection(t *testing.T, models ...interface{}) *database.Connectio
 		t.Skip("docker not running")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	pg, err := postgres.RunContainer(ctx,
