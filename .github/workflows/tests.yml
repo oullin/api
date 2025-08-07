@@ -43,7 +43,7 @@ jobs:
 
       - name: Run kernel & env tests
         run: |
-          go test -coverpkg=./... ./metal/kernel ./env -coverprofile=coverage-metal-env-${{ matrix.go-version }}.out
+          go test -coverpkg=./... ./metal/kernel ./metal/env -coverprofile=coverage-metal-env-${{ matrix.go-version }}.out
           go tool cover -func=coverage-metal-env-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Run handlers tests
