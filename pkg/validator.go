@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"strings"
 	"sync"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type Validator struct {
@@ -86,7 +87,7 @@ func (v *Validator) parseError(validateErrs validator.ValidationErrors) {
 		case "email":
 			e = fmt.Errorf("field '%s' must be a valid email address", field)
 		case "eth_addr":
-			e = fmt.Errorf("Field '%s' must  be a valid Ethereum address", field)
+			e = fmt.Errorf("field '%s' must be a valid Ethereum address", field)
 		case "len":
 			e = fmt.Errorf("field '%s' must be exactly %v characters long", field, current.Param())
 		default:
