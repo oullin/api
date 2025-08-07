@@ -16,7 +16,7 @@ import (
 type App struct {
 	router    *Router
 	sentry    *pkg.Sentry
-	logs      *llogs.Driver
+	logs      llogs.Driver
 	validator *pkg.Validator
 	env       *env.Environment
 	db        *database.Connection

@@ -177,24 +177,25 @@ func TestAppBootRoutes(t *testing.T) {
 }
 
 func TestMakeLogs(t *testing.T) {
-	// Create a temporary directory for logs
-	logDir := "/tmp/logs"
-	err := os.MkdirAll(logDir, 0755)
+	// Create a temporary directory with a lowercase path
+	tempDir := getLowerTempDir(t)
+	// Ensure the directory exists
+	err := os.MkdirAll(tempDir, 0755)
 	if err != nil {
 		t.Fatalf("failed to create log directory: %v", err)
 	}
-	defer os.RemoveAll(logDir) // Clean up after test
+	// Clean up after tests
+	defer os.RemoveAll(tempDir)
 
 	validEnvVars(t)
-	t.Setenv("ENV_APP_LOGS_DIR", logDir+"/log-%s.txt")
+	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 
 	env := MakeEnv(pkg.GetDefaultValidator())
 
-	d := MakeLogs(env)
-	driver := *d
+	driver := MakeLogs(env)
 	fl := driver.(llogs.FilesLogs)
 
-	if !strings.HasPrefix(fl.DefaultPath(), logDir) {
+	if !strings.HasPrefix(fl.DefaultPath(), tempDir) {
 		t.Fatalf("wrong log dir")
 	}
 
@@ -220,9 +221,19 @@ func TestMakeDbConnectionPanic(t *testing.T) {
 }
 
 func TestMakeAppPanic(t *testing.T) {
+	// Create a temporary directory with a lowercase path
+	tempDir := getLowerTempDir(t)
+	// Ensure the directory exists
+	err := os.MkdirAll(tempDir, 0755)
+	if err != nil {
+		t.Fatalf("failed to create log directory: %v", err)
+	}
+	// Clean up after tests
+	defer os.RemoveAll(tempDir)
+
 	validEnvVars(t)
 	t.Setenv("ENV_DB_PORT", "1")
-	t.Setenv("ENV_APP_LOGS_DIR", "/tmp/log-%s.txt")
+	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
 	env := MakeEnv(pkg.GetDefaultValidator())
@@ -249,16 +260,31 @@ func TestMakeSentry(t *testing.T) {
 	}
 }
 
+// getLowerTempDir returns a lowercase version of t.TempDir()
+func getLowerTempDir(t *testing.T) string {
+	// Create a temporary directory in /tmp which should be lowercase
+	return "/tmp/testlogs" + strings.ToLower(strings.ReplaceAll(t.Name(), "/", "_"))
+}
+
 func TestCloseLogs(t *testing.T) {
+	// Create a temporary directory with a lowercase path
+	tempDir := getLowerTempDir(t)
+	// Ensure the directory exists
+	err := os.MkdirAll(tempDir, 0755)
+	if err != nil {
+		t.Fatalf("failed to create log directory: %v", err)
+	}
+	// Clean up after tests
+	defer os.RemoveAll(tempDir)
 
 	validEnvVars(t)
-	t.Setenv("ENV_APP_LOGS_DIR", "/tmp/logs/log-%s.txt")
+	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
 	env := MakeEnv(pkg.GetDefaultValidator())
 
-	l := MakeLogs(env)
-	app := &App{logs: l}
+	logs := MakeLogs(env)
+	app := &App{logs: logs}
 
 	app.CloseLogs()
 }

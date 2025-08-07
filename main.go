@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	_ "github.com/lib/pq"
+	"github.com/getsentry/sentry-go"
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg"
 	"github.com/rs/cors"
 	"log/slog"
 	baseHttp "net/http"
+	"time"
 )
 
 var app *kernel.App
@@ -27,6 +29,7 @@ func init() {
 func main() {
 	defer app.CloseDB()
 	defer app.CloseLogs()
+	defer sentry.Flush(2 * time.Second)
 
 	app.Boot()
 

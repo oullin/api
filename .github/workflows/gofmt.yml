@@ -27,3 +27,9 @@ jobs:
               with:
                   commit_message: apply coding style fixes
                   commit_options: '--no-verify'
+                  file_pattern: .
+                  repository: .
+                  commit_user_name: GitHub Actions
+                  commit_user_email: actions@github.com
+                  commit_author: gocanto <gocanto@users.noreply.github.com>
+                  branch: ${{ github.head_ref }}

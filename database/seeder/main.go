@@ -26,7 +26,7 @@ func main() {
 	dbConnection := kernel.MakeDbConnection(environment)
 	logs := kernel.MakeLogs(environment)
 
-	defer (*logs).Close()
+	defer logs.Close()
 	defer (*dbConnection).Close()
 
 	// [1] --- Create the Seeder Runner.
