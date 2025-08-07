@@ -6,7 +6,7 @@ tmp
 database/infra/data
 
 # --- [API]: Bin
-bin/*.*
+bin/*
 !bin/.gitkeep
 
 # --- [API]: Storage

@@ -5,7 +5,7 @@ import (
 	"github.com/oullin/metal/env"
 	"log/slog"
 	"os"
-	"strings"
+	"path/filepath"
 	"time"
 )
 
@@ -23,7 +23,7 @@ func MakeFilesLogs(env *env.Environment) (Driver, error) {
 	manager.path = manager.DefaultPath()
 
 	// Create directory if it doesn't exist
-	dir := manager.path[:strings.LastIndex(manager.path, "/")]
+	dir := filepath.Dir(manager.path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return FilesLogs{}, fmt.Errorf("failed to create log directory: %w", err)
 	}

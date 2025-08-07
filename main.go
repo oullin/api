@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	_ "github.com/lib/pq"
 	"github.com/getsentry/sentry-go"
+	_ "github.com/lib/pq"
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg"
 	"github.com/rs/cors"

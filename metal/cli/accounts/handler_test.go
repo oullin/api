@@ -3,8 +3,8 @@ package accounts
 import (
 	"testing"
 
-	"github.com/oullin/metal/cli/clitest"
 	"github.com/oullin/database"
+	"github.com/oullin/metal/cli/clitest"
 )
 
 func setupAccountHandler(t *testing.T) *Handler {
