@@ -33,14 +33,14 @@ VERSION               := $(shell git describe --tags 2>/dev/null | cut -c 2-)
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
-include ./config/makefile/helpers.mk
-include ./config/makefile/env.mk
-include ./config/makefile/db.mk
-include ./config/makefile/app.mk
-include ./config/makefile/logs.mk
-include ./config/makefile/build.mk
-include ./config/makefile/infra.mk
-include ./config/makefile/cli.mk
+include ./metal/makefile/helpers.mk
+include ./metal/makefile/env.mk
+include ./metal/makefile/db.mk
+include ./metal/makefile/app.mk
+include ./metal/makefile/logs.mk
+include ./metal/makefile/build.mk
+include ./metal/makefile/infra.mk
+include ./metal/makefile/cli.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
