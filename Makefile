@@ -40,6 +40,7 @@ include ./config/makefile/app.mk
 include ./config/makefile/logs.mk
 include ./config/makefile/build.mk
 include ./config/makefile/infra.mk
+include ./config/makefile/cli.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -53,7 +54,8 @@ help:
 	@printf "  $(BOLD)$(GREEN)audit$(NC)            : Run code audits and checks.\n"
 	@printf "  $(BOLD)$(GREEN)watch$(NC)            : Start a file watcher process.\n"
 	@printf "  $(BOLD)$(GREEN)format$(NC)           : Automatically format code.\n"
-	@printf "  $(BOLD)$(GREEN)run-cli$(NC)          : Run the API's cli interface.\n\n"
+	@printf "  $(BOLD)$(GREEN)run-cli$(NC)          : Run the API's cli interface.\n"
+	@printf "  $(BOLD)$(GREEN)run-main$(NC)         : Run the main application.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)build-local$(NC)      : Build the main application for development.\n"

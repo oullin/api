@@ -1,7 +1,7 @@
 package accounts
 
 import (
-	"github.com/oullin/cli/clitest"
+	"github.com/oullin/metal/cli/clitest"
 	"testing"
 
 	"github.com/oullin/database"
