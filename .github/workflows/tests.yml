@@ -2,12 +2,15 @@ name: Tests
 
 on:
   pull_request:
-    types: [ready_for_review, synchronize, labeled]
+    types: [opened, reopened, ready_for_review, synchronize, labeled]
+  push:
+    branches: [main, master]
 
 jobs:
   test:
-    if: github.event.pull_request.draft == false ||
-      (github.event.action == 'labeled' && github.event.label.name == 'testing')
+    if: (github.event_name == 'push') ||
+      (github.event_name == 'pull_request' && (github.event.pull_request.draft == false ||
+      (github.event.action == 'labeled' && github.event.label.name == 'testing')))
     runs-on: ubuntu-latest
     strategy:
       matrix:
