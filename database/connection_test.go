@@ -11,7 +11,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 )
 
 func TestApiKeysWithTestContainer(t *testing.T) {

@@ -2,7 +2,7 @@ package kernel
 
 import (
 	"github.com/joho/godotenv"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg"
 )
 

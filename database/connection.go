@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log/slog"

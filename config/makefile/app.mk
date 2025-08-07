@@ -1,4 +1,4 @@
-.PHONY: fresh destroy audit watch format run-cli validate-caddy
+.PHONY: fresh destroy audit watch format run-cli validate-caddy test-all
 
 APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
 APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
@@ -55,6 +55,9 @@ run-cli:
     	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
     	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
     	docker compose run --rm api-runner go run ./cli/main.go
+
+test-all:
+	go test ./...
 
 # --- Mac:
 #     Needs to be locally installed: https://formulae.brew.sh/formula/caddy

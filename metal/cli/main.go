@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/metal/cli/panel"
 	"github.com/oullin/metal/cli/posts"
 	"github.com/oullin/database"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"

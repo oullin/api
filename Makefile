@@ -56,6 +56,7 @@ help:
 	@printf "  $(BOLD)$(GREEN)format$(NC)           : Automatically format code.\n"
 	@printf "  $(BOLD)$(GREEN)run-cli$(NC)          : Run the API's cli interface.\n"
 	@printf "  $(BOLD)$(GREEN)run-main$(NC)         : Run the main application.\n\n"
+	@printf "  $(BOLD)$(GREEN)test-all$(NC)         : Run all the application tests.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)build-local$(NC)      : Build the main application for development.\n"

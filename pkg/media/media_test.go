@@ -95,11 +95,18 @@ func TestGetPostsImagesDir(t *testing.T) {
 }
 
 func TestGetStorageDir(t *testing.T) {
-	dir := setupTempDir(t)
+	setupTempDir(t)
 
 	p := GetStorageDir()
 
-	if !strings.HasPrefix(p, dir) {
-		t.Fatalf("unexpected storage dir")
+	// Get the current working directory
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get working directory: %v", err)
+	}
+
+	expected := filepath.Join(dir, StorageDir)
+	if p != expected {
+		t.Fatalf("unexpected storage dir, got: %s, want: %s", p, expected)
 	}
 }
