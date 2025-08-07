@@ -38,10 +38,10 @@ jobs:
           go test -coverpkg=./... ./pkg/... -coverprofile=coverage-pkg-${{ matrix.go-version }}.out
           go tool cover -func=coverage-pkg-${{ matrix.go-version }}.out | tail -n 1
 
-      - name: Run boost & env tests
+      - name: Run kernel & env tests
         run: |
-          go test -coverpkg=./... ./boost ./env -coverprofile=coverage-boost-env-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-boost-env-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./metal/kernel ./env -coverprofile=coverage-metal-env-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-metal-env-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Run handlers tests
         run: |
