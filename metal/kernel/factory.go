@@ -1,15 +1,16 @@
-package metal
+package kernel
 
 import (
+	"log"
+	"strconv"
+	"time"
+
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/oullin/database"
 	"github.com/oullin/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/llogs"
-	"log"
-	"strconv"
-	"time"
 )
 
 func MakeSentry(env *env.Environment) *pkg.Sentry {

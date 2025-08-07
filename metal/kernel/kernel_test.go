@@ -1,10 +1,9 @@
-package boost
+package kernel
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -178,14 +177,16 @@ func TestAppBootRoutes(t *testing.T) {
 }
 
 func TestMakeLogs(t *testing.T) {
-	dir, err := os.MkdirTemp("", "logdir")
-
+	// Create a temporary directory for logs
+	logDir := "/tmp/logs"
+	err := os.MkdirAll(logDir, 0755)
 	if err != nil {
-		t.Fatalf("tmpdir err: %v", err)
+		t.Fatalf("failed to create log directory: %v", err)
 	}
+	defer os.RemoveAll(logDir) // Clean up after test
 
 	validEnvVars(t)
-	t.Setenv("ENV_APP_LOGS_DIR", filepath.Join(dir, "log-%s.txt"))
+	t.Setenv("ENV_APP_LOGS_DIR", logDir+"/log-%s.txt")
 
 	env := MakeEnv(pkg.GetDefaultValidator())
 
@@ -193,7 +194,7 @@ func TestMakeLogs(t *testing.T) {
 	driver := *d
 	fl := driver.(llogs.FilesLogs)
 
-	if !strings.HasPrefix(fl.DefaultPath(), dir) {
+	if !strings.HasPrefix(fl.DefaultPath(), logDir) {
 		t.Fatalf("wrong log dir")
 	}
 
@@ -249,14 +250,9 @@ func TestMakeSentry(t *testing.T) {
 }
 
 func TestCloseLogs(t *testing.T) {
-	dir, err := os.MkdirTemp("", "logdir")
-
-	if err != nil {
-		t.Fatalf("tmpdir err: %v", err)
-	}
 
 	validEnvVars(t)
-	t.Setenv("ENV_APP_LOGS_DIR", filepath.Join(dir, "log-%s.txt"))
+	t.Setenv("ENV_APP_LOGS_DIR", "/tmp/logs/log-%s.txt")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
 	env := MakeEnv(pkg.GetDefaultValidator())

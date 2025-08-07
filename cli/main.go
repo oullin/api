@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/oullin/metal"
 	"github.com/oullin/cli/accounts"
 	"github.com/oullin/cli/panel"
 	"github.com/oullin/cli/posts"
 	"github.com/oullin/database"
 	"github.com/oullin/env"
+	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
@@ -17,10 +17,10 @@ var environment *env.Environment
 var dbConn *database.Connection
 
 func init() {
-	secrets := metal.Ignite("./../.env", pkg.GetDefaultValidator())
+	secrets := kernel.Ignite("./../.env", pkg.GetDefaultValidator())
 
 	environment = secrets
-	dbConn = metal.MakeDbConnection(environment)
+	dbConn = kernel.MakeDbConnection(environment)
 }
 
 func main() {

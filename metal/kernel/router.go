@@ -1,4 +1,4 @@
-package metal
+package kernel
 
 import (
 	"github.com/oullin/database"

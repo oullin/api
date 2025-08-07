@@ -1,4 +1,4 @@
-package boost
+package kernel
 
 import (
 	"github.com/oullin/database"

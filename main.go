@@ -3,19 +3,19 @@ package main
 import (
 	"fmt"
 	_ "github.com/lib/pq"
-	"github.com/oullin/metal"
+	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg"
 	"github.com/rs/cors"
 	"log/slog"
 	baseHttp "net/http"
 )
 
-var app *metal.App
+var app *kernel.App
 
 func init() {
 	validate := pkg.GetDefaultValidator()
-	secrets := metal.Ignite("./.env", validate)
-	application, err := metal.MakeApp(secrets, validate)
+	secrets := kernel.Ignite("./.env", validate)
+	application, err := kernel.MakeApp(secrets, validate)
 
 	if err != nil {
 		panic(fmt.Sprintf("init: Error creating application: %s", err))
