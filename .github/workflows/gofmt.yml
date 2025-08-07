@@ -2,6 +2,9 @@ name: Go Fmt
 
 on: [pull_request]
 
+permissions:
+    contents: write
+
 jobs:
     gofmt:
         strategy:
@@ -27,7 +30,7 @@ jobs:
               run: gofmt -w -s .
 
             - name: Commit Changes
-              uses: stefanzweifel/git-auto-commit-action@v4.0.0
+              uses: stefanzweifel/git-auto-commit-action@v6.0.1
               with:
                   commit_message: apply coding style fixes
                   commit_options: '--no-verify'
@@ -36,5 +39,4 @@ jobs:
                   commit_user_name: GitHub Actions
                   commit_user_email: actions@github.com
                   commit_author: gocanto <gocanto@users.noreply.github.com>
-                  # Use the PR head ref which is available in pull_request events
                   branch: ${{ github.head_ref }}
