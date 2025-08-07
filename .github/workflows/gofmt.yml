@@ -3,7 +3,7 @@ name: Go Fmt
 on: [pull_request]
 
 jobs:
-    test:
+    gofmt:
         strategy:
             matrix:
                 go-version: [1.24.5]
