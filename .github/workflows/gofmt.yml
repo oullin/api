@@ -1,6 +1,6 @@
-on: [pull_request]
-
 name: Go Fmt
+
+on: [pull_request]
 
 jobs:
     test:
@@ -12,12 +12,16 @@ jobs:
         runs-on: ${{ matrix.os }}
 
         steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.head_ref }}
+                  fetch-depth: 0
+
             - name: Install Go
               uses: actions/setup-go@v5
               with:
                   go-version: ${{ matrix.go-version }}
-            - name: Checkout code
-              uses: actions/checkout@v4
 
             - name: Run Formatter
               run: gofmt -w -s .
@@ -32,4 +36,5 @@ jobs:
                   commit_user_name: GitHub Actions
                   commit_user_email: actions@github.com
                   commit_author: gocanto <gocanto@users.noreply.github.com>
+                  # Use the PR head ref which is available in pull_request events
                   branch: ${{ github.head_ref }}
