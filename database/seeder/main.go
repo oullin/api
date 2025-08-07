@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/oullin/boost"
+	"github.com/oullin/metal"
 	"github.com/oullin/database"
 	"github.com/oullin/database/seeder/seeds"
 	"github.com/oullin/env"
@@ -14,7 +14,7 @@ import (
 var environment *env.Environment
 
 func init() {
-	secrets := boost.Ignite("./.env", pkg.GetDefaultValidator())
+	secrets := metal.Ignite("./.env", pkg.GetDefaultValidator())
 
 	environment = secrets
 }
@@ -22,8 +22,8 @@ func init() {
 func main() {
 	cli.ClearScreen()
 
-	dbConnection := boost.MakeDbConnection(environment)
-	logs := boost.MakeLogs(environment)
+	dbConnection := metal.MakeDbConnection(environment)
+	logs := metal.MakeLogs(environment)
 
 	defer (*logs).Close()
 	defer (*dbConnection).Close()

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/oullin/boost"
+	"github.com/oullin/metal"
 	"github.com/oullin/cli/accounts"
 	"github.com/oullin/cli/panel"
 	"github.com/oullin/cli/posts"
@@ -17,10 +17,10 @@ var environment *env.Environment
 var dbConn *database.Connection
 
 func init() {
-	secrets := boost.Ignite("./../.env", pkg.GetDefaultValidator())
+	secrets := metal.Ignite("./../.env", pkg.GetDefaultValidator())
 
 	environment = secrets
-	dbConn = boost.MakeDbConnection(environment)
+	dbConn = metal.MakeDbConnection(environment)
 }
 
 func main() {
