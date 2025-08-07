@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/oullin/cli/clitest"
 	"github.com/oullin/database"
+	"github.com/oullin/metal/cli/clitest"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/markdown"
 )

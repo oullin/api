@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/auth"
 )
 

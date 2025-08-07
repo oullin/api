@@ -1,9 +1,10 @@
-package boost
+package kernel
 
 import (
-	"github.com/oullin/database"
-	"github.com/oullin/env"
 	baseHttp "net/http"
+
+	"github.com/oullin/database"
+	"github.com/oullin/metal/env"
 )
 
 func (a *App) SetRouter(router Router) {
@@ -15,8 +16,7 @@ func (a *App) CloseLogs() {
 		return
 	}
 
-	driver := *a.logs
-	driver.Close()
+	a.logs.Close()
 }
 
 func (a *App) CloseDB() {
@@ -24,8 +24,7 @@ func (a *App) CloseDB() {
 		return
 	}
 
-	driver := *a.db
-	driver.Close()
+	a.db.Close()
 }
 
 func (a *App) IsLocal() bool {

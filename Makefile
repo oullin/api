@@ -33,13 +33,13 @@ VERSION               := $(shell git describe --tags 2>/dev/null | cut -c 2-)
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
-include ./config/makefile/helpers.mk
-include ./config/makefile/env.mk
-include ./config/makefile/db.mk
-include ./config/makefile/app.mk
-include ./config/makefile/logs.mk
-include ./config/makefile/build.mk
-include ./config/makefile/infra.mk
+include ./metal/makefile/helpers.mk
+include ./metal/makefile/env.mk
+include ./metal/makefile/db.mk
+include ./metal/makefile/app.mk
+include ./metal/makefile/logs.mk
+include ./metal/makefile/build.mk
+include ./metal/makefile/infra.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -53,7 +53,7 @@ help:
 	@printf "  $(BOLD)$(GREEN)audit$(NC)            : Run code audits and checks.\n"
 	@printf "  $(BOLD)$(GREEN)watch$(NC)            : Start a file watcher process.\n"
 	@printf "  $(BOLD)$(GREEN)format$(NC)           : Automatically format code.\n"
-	@printf "  $(BOLD)$(GREEN)run-cli$(NC)          : Run the API's cli interface.\n\n"
+	@printf "  $(BOLD)$(GREEN)test-all$(NC)         : Run all the application tests.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)build-local$(NC)      : Build the main application for development.\n"

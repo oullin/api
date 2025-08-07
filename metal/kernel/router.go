@@ -1,14 +1,25 @@
-package boost
+package kernel
 
 import (
+	baseHttp "net/http"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/env"
 	"github.com/oullin/handler"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/http/middleware"
-	baseHttp "net/http"
 )
+
+type StaticRouteResource interface {
+	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *http.ApiError
+}
+
+func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
+	abstract := maker(file)
+	resolver := r.PipelineFor(abstract.Handle)
+	r.Mux.HandleFunc("GET "+path, resolver)
+}
 
 type Router struct {
 	Env      *env.Environment
@@ -52,71 +63,29 @@ func (r *Router) Categories() {
 }
 
 func (r *Router) Profile() {
-	abstract := handler.MakeProfileHandler("./storage/fixture/profile.json")
-
-	resolver := r.PipelineFor(
-		abstract.Handle,
-	)
-
-	r.Mux.HandleFunc("GET /profile", resolver)
+	addStaticRoute(r, "/profile", "./storage/fixture/profile.json", handler.MakeProfileHandler)
 }
 
 func (r *Router) Experience() {
-	abstract := handler.MakeExperienceHandler("./storage/fixture/experience.json")
-
-	resolver := r.PipelineFor(
-		abstract.Handle,
-	)
-
-	r.Mux.HandleFunc("GET /experience", resolver)
+	addStaticRoute(r, "/experience", "./storage/fixture/experience.json", handler.MakeExperienceHandler)
 }
 
 func (r *Router) Projects() {
-	abstract := handler.MakeProjectsHandler("./storage/fixture/projects.json")
-
-	resolver := r.PipelineFor(
-		abstract.Handle,
-	)
-
-	r.Mux.HandleFunc("GET /projects", resolver)
+	addStaticRoute(r, "/projects", "./storage/fixture/projects.json", handler.MakeProjectsHandler)
 }
 
 func (r *Router) Social() {
-	abstract := handler.MakeSocialHandler("./storage/fixture/social.json")
-
-	resolver := r.PipelineFor(
-		abstract.Handle,
-	)
-
-	r.Mux.HandleFunc("GET /social", resolver)
+	addStaticRoute(r, "/social", "./storage/fixture/social.json", handler.MakeSocialHandler)
 }
 
 func (r *Router) Talks() {
-	abstract := handler.MakeTalksHandler("./storage/fixture/talks.json")
-
-	resolver := r.PipelineFor(
-		abstract.Handle,
-	)
-
-	r.Mux.HandleFunc("GET /talks", resolver)
+	addStaticRoute(r, "/talks", "./storage/fixture/talks.json", handler.MakeTalksHandler)
 }
 
 func (r *Router) Education() {
-	abstract := handler.MakeEducationHandler("./storage/fixture/education.json")
-
-	resolver := r.PipelineFor(
-		abstract.Handle,
-	)
-
-	r.Mux.HandleFunc("GET /education", resolver)
+	addStaticRoute(r, "/education", "./storage/fixture/education.json", handler.MakeEducationHandler)
 }
 
 func (r *Router) Recommendations() {
-	abstract := handler.MakeRecommendationsHandler("./storage/fixture/recommendations.json")
-
-	resolver := r.PipelineFor(
-		abstract.Handle,
-	)
-
-	r.Mux.HandleFunc("GET /recommendations", resolver)
+	addStaticRoute(r, "/recommendations", "./storage/fixture/recommendations.json", handler.MakeRecommendationsHandler)
 }

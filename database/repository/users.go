@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/oullin/database"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/gorm"
 	"strings"
 )

@@ -2,16 +2,19 @@ name: Tests
 
 on:
   pull_request:
-    types: [ready_for_review, synchronize, labeled]
+    types: [opened, reopened, ready_for_review, synchronize, labeled]
+  push:
+    branches: [main, master]
 
 jobs:
   test:
-    if: github.event.pull_request.draft == false ||
-      (github.event.action == 'labeled' && github.event.label.name == 'testing')
+    if: (github.event_name == 'push') ||
+      (github.event_name == 'pull_request' && (github.event.pull_request.draft == false ||
+      (github.event.action == 'labeled' && github.event.label.name == 'testing')))
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ['1.24.5', '1.24.4']
+        go-version: ['1.24.6', '1.24.5']
 
     steps:
       - uses: actions/setup-go@v5
@@ -38,10 +41,10 @@ jobs:
           go test -coverpkg=./... ./pkg/... -coverprofile=coverage-pkg-${{ matrix.go-version }}.out
           go tool cover -func=coverage-pkg-${{ matrix.go-version }}.out | tail -n 1
 
-      - name: Run boost & env tests
+      - name: Run kernel & env tests
         run: |
-          go test -coverpkg=./... ./boost ./env -coverprofile=coverage-boost-env-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-boost-env-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./metal/kernel ./metal/env -coverprofile=coverage-metal-env-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-metal-env-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Run handlers tests
         run: |
@@ -55,7 +58,7 @@ jobs:
 
       - name: Run CLI tests
         run: |
-          go test -coverpkg=./... ./cli/... -coverprofile=coverage-cli-${{ matrix.go-version }}.out
+          go test -coverpkg=./... ./metal/cli/... -coverprofile=coverage-cli-${{ matrix.go-version }}.out
           go tool cover -func=coverage-cli-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Merge coverage reports

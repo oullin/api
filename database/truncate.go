@@ -3,7 +3,7 @@ package database
 import (
 	"errors"
 	"fmt"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 )
 
 type Truncate struct {

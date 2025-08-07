@@ -2,9 +2,10 @@ package llogs
 
 import (
 	"fmt"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -20,6 +21,13 @@ func MakeFilesLogs(env *env.Environment) (Driver, error) {
 	manager.env = env
 
 	manager.path = manager.DefaultPath()
+
+	// Create directory if it doesn't exist
+	dir := filepath.Dir(manager.path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return FilesLogs{}, fmt.Errorf("failed to create log directory: %w", err)
+	}
+
 	resource, err := os.OpenFile(manager.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {

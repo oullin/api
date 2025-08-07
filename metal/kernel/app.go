@@ -1,21 +1,22 @@
-package boost
+package kernel
 
 import (
 	"fmt"
+	baseHttp "net/http"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http/middleware"
 	"github.com/oullin/pkg/llogs"
-	baseHttp "net/http"
 )
 
 type App struct {
 	router    *Router
 	sentry    *pkg.Sentry
-	logs      *llogs.Driver
+	logs      llogs.Driver
 	validator *pkg.Validator
 	env       *env.Environment
 	db        *database.Connection

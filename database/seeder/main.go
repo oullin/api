@@ -1,20 +1,21 @@
 package main
 
 import (
-	"github.com/oullin/boost"
-	"github.com/oullin/database"
-	"github.com/oullin/database/seeder/seeds"
-	"github.com/oullin/env"
-	"github.com/oullin/pkg"
-	"github.com/oullin/pkg/cli"
 	"sync"
 	"time"
+
+	"github.com/oullin/database"
+	"github.com/oullin/database/seeder/seeds"
+	"github.com/oullin/metal/env"
+	"github.com/oullin/metal/kernel"
+	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/cli"
 )
 
 var environment *env.Environment
 
 func init() {
-	secrets := boost.Ignite("./.env", pkg.GetDefaultValidator())
+	secrets := kernel.Ignite("./.env", pkg.GetDefaultValidator())
 
 	environment = secrets
 }
@@ -22,10 +23,10 @@ func init() {
 func main() {
 	cli.ClearScreen()
 
-	dbConnection := boost.MakeDbConnection(environment)
-	logs := boost.MakeLogs(environment)
+	dbConnection := kernel.MakeDbConnection(environment)
+	logs := kernel.MakeLogs(environment)
 
-	defer (*logs).Close()
+	defer logs.Close()
 	defer (*dbConnection).Close()
 
 	// [1] --- Create the Seeder Runner.

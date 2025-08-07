@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log/slog"
@@ -49,24 +49,24 @@ func (c *Connection) Close() bool {
 func (c *Connection) Ping() {
 	var driver *sql.DB
 
-	fmt.Println("\n---------")
+	slog.Info("Database ping started", "separator", "---------")
 
 	if conn, err := c.driver.DB(); err != nil {
-		fmt.Println(fmt.Sprintf("error retrieving the db driver: %v", err.Error()))
+		slog.Error("Error retrieving the db driver", "error", err.Error())
 
 		return
 	} else {
 		driver = conn
-		fmt.Println(fmt.Sprintf("db driver adquired: %T", driver))
+		slog.Info("Database driver acquired", "type", fmt.Sprintf("%T", driver))
 	}
 
 	if err := driver.Ping(); err != nil {
-		slog.Error("error pinging the db driver: " + err.Error())
+		slog.Error("Error pinging the db driver", "error", err.Error())
 	}
 
-	fmt.Println(fmt.Sprintf("db driver is healthy: %+v", driver.Stats()))
+	slog.Info("Database driver is healthy", "stats", driver.Stats())
 
-	fmt.Println("---------")
+	slog.Info("Database ping completed", "separator", "---------")
 }
 
 func (c *Connection) Sql() *gorm.DB {

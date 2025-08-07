@@ -2,20 +2,22 @@ package main
 
 import (
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	_ "github.com/lib/pq"
-	"github.com/oullin/boost"
+	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg"
 	"github.com/rs/cors"
 	"log/slog"
 	baseHttp "net/http"
+	"time"
 )
 
-var app *boost.App
+var app *kernel.App
 
 func init() {
 	validate := pkg.GetDefaultValidator()
-	secrets := boost.Ignite("./.env", validate)
-	application, err := boost.MakeApp(secrets, validate)
+	secrets := kernel.Ignite("./.env", validate)
+	application, err := kernel.MakeApp(secrets, validate)
 
 	if err != nil {
 		panic(fmt.Sprintf("init: Error creating application: %s", err))
@@ -27,6 +29,7 @@ func init() {
 func main() {
 	defer app.CloseDB()
 	defer app.CloseLogs()
+	defer sentry.Flush(2 * time.Second)
 
 	app.Boot()
 

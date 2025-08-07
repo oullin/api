@@ -9,7 +9,7 @@ import (
 func MakeApiHandler(fn ApiHandler) baseHttp.HandlerFunc {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) {
 		if err := fn(w, r); err != nil {
-			slog.Error("API Error: %s, Status: %d", err.Message, err.Status)
+			slog.Error("API Error", "message", err.Message, "status", err.Status)
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(err.Status)

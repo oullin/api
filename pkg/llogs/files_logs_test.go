@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 )
 
 func TestFilesLogs(t *testing.T) {

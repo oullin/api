@@ -1,15 +1,15 @@
-package boost
+package kernel
 
 import (
+	"log"
+	"strconv"
+
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/oullin/database"
-	"github.com/oullin/env"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/llogs"
-	"log"
-	"strconv"
-	"time"
 )
 
 func MakeSentry(env *env.Environment) *pkg.Sentry {
@@ -21,8 +21,6 @@ func MakeSentry(env *env.Environment) *pkg.Sentry {
 	if err := sentry.Init(cOptions); err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
-
-	defer sentry.Flush(2 * time.Second)
 
 	options := sentryhttp.Options{}
 	handler := sentryhttp.New(options)
@@ -44,20 +42,23 @@ func MakeDbConnection(env *env.Environment) *database.Connection {
 	return dbConn
 }
 
-func MakeLogs(env *env.Environment) *llogs.Driver {
+func MakeLogs(env *env.Environment) llogs.Driver {
 	lDriver, err := llogs.MakeFilesLogs(env)
 
 	if err != nil {
 		panic("logs: error opening logs file: " + err.Error())
 	}
 
-	return &lDriver
+	return lDriver
 }
 
 func MakeEnv(validate *pkg.Validator) *env.Environment {
 	errorSuffix := "Environment: "
 
-	port, _ := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))
+	port, err := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))
+	if err != nil {
+		panic(errorSuffix + "invalid value for ENV_DB_PORT: " + err.Error())
+	}
 
 	app := env.AppEnvironment{
 		Name:      env.GetEnvVar("ENV_APP_NAME"),

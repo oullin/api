@@ -3,7 +3,7 @@ package panel
 import (
 	"bufio"
 	"fmt"
-	"github.com/oullin/cli/posts"
+	"github.com/oullin/metal/cli/posts"
 	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
