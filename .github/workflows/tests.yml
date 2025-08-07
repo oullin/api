@@ -58,7 +58,7 @@ jobs:
 
       - name: Run CLI tests
         run: |
-          go test -coverpkg=./... ./cli/... -coverprofile=coverage-cli-${{ matrix.go-version }}.out
+          go test -coverpkg=./... ./metal/cli/... -coverprofile=coverage-cli-${{ matrix.go-version }}.out
           go tool cover -func=coverage-cli-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Merge coverage reports
