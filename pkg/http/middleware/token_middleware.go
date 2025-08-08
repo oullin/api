@@ -88,86 +88,111 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 		reqID := strings.TrimSpace(r.Header.Get(requestIDHeader))
-
 		if reqID == "" {
 			return t.getInvalidRequestError()
 		}
 
 		logger := slog.With("request_id", reqID, "path", r.URL.Path, "method", r.Method)
 
-		accountName := strings.TrimSpace(r.Header.Get(usernameHeader))
-		publicToken := strings.TrimSpace(r.Header.Get(tokenHeader))
-		signature := strings.TrimSpace(r.Header.Get(signatureHeader))
-		ts := strings.TrimSpace(r.Header.Get(timestampHeader))
-		nonce := strings.TrimSpace(r.Header.Get(nonceHeader))
-
-		if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" {
-			logger.Warn("missing authentication headers")
-			return t.getInvalidRequestError()
+		// Extract and validate required headers
+		accountName, publicToken, signature, ts, nonce, hdrErr := t.validateAndGetHeaders(r, logger)
+		if hdrErr != nil {
+			return hdrErr
 		}
 
-		if err := auth.ValidateTokenFormat(publicToken); err != nil {
-			logger.Warn("invalid token format")
-			return t.getInvalidTokenFormatError()
+		// Validate timestamp within allowed window
+		if tsErr := t.validateTimestamp(ts, logger); tsErr != nil {
+			return tsErr
 		}
 
-		// Validate timestamp skew window
-		parsed, err := time.ParseDuration(ts + "s")
-		if err != nil {
-			// try interpreting as epoch seconds (int)
-			var epoch int64
-			for _, ch := range ts {
-				if ch < '0' || ch > '9' {
-					logger.Warn("invalid timestamp format")
-					return t.getInvalidRequestError()
-				}
-			}
-			// safe to parse as int64 now
-			// custom parse to avoid strconv import
-			for _, ch := range ts {
-				epoch = epoch*10 + int64(ch-'0')
-			}
-			now := time.Now().Unix()
-			if epoch < now-int64(t.clockSkew.Seconds()) || epoch > now+int64(t.clockSkew.Seconds()) {
-				logger.Warn("timestamp outside allowed window")
-				return t.getUnauthenticatedError()
-			}
-		} else {
-			_ = parsed // ignore if duration parsed (not expected), kept for completeness
+		// Read body and compute hash
+		bodyHash, bodyErr := t.readBodyHash(r, logger)
+		if bodyErr != nil {
+			return bodyErr
 		}
-
-		// Read and hash body, then restore it for downstream
-		var bodyBytes []byte
-		if r.Body != nil {
-			b, readErr := io.ReadAll(r.Body)
-			if readErr != nil {
-				logger.Warn("unable to read body for signing")
-				return t.getInvalidRequestError()
-			}
-			bodyBytes = b
-			r.Body = io.NopCloser(bytes.NewReader(b))
-		}
-		bodyHash := sha256Hex(bodyBytes)
 
 		// Build canonical request string
 		canonical := buildCanonical(r.Method, r.URL, accountName, publicToken, ts, nonce, bodyHash)
 
 		clientIP := parseClientIP(r)
 
-		reject := t.shallReject(logger, accountName, publicToken, signature, canonical, nonce, clientIP)
-		if reject {
+		if t.shallReject(logger, accountName, publicToken, signature, canonical, nonce, clientIP) {
 			return t.getUnauthenticatedError()
 		}
 
 		// Update the request context
-		ctx := context.WithValue(r.Context(), authAccountNameKey, accountName)
-		ctx = context.WithValue(r.Context(), requestIdKey, reqID)
-		r = r.WithContext(ctx)
+		r = t.attachAuthContext(r, accountName, reqID)
 
 		logger.Info("authentication successful")
 
 		return next(w, r)
 	}
+}
+
+// validateAndGetHeaders extracts and validates required auth headers, logging and returning
+// appropriate ApiError on failure.
+func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, logger *slog.Logger) (accountName, publicToken, signature, ts, nonce string, apiErr *http.ApiError) {
+	accountName = strings.TrimSpace(r.Header.Get(usernameHeader))
+	publicToken = strings.TrimSpace(r.Header.Get(tokenHeader))
+	signature = strings.TrimSpace(r.Header.Get(signatureHeader))
+	ts = strings.TrimSpace(r.Header.Get(timestampHeader))
+	nonce = strings.TrimSpace(r.Header.Get(nonceHeader))
+
+	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" {
+		logger.Warn("missing authentication headers")
+		return "", "", "", "", "", t.getInvalidRequestError()
+	}
+
+	if err := auth.ValidateTokenFormat(publicToken); err != nil {
+		logger.Warn("invalid token format")
+		return "", "", "", "", "", t.getInvalidTokenFormatError()
+	}
+
+	return accountName, publicToken, signature, ts, nonce, nil
+}
+
+// validateTimestamp ensures the provided timestamp is numeric and within skew.
+func (t TokenCheckMiddleware) validateTimestamp(ts string, logger *slog.Logger) *http.ApiError {
+	if ts == "" {
+		logger.Warn("missing timestamp")
+		return t.getInvalidRequestError()
+	}
+	var epoch int64
+	for _, ch := range ts {
+		if ch < '0' || ch > '9' {
+			logger.Warn("invalid timestamp format")
+			return t.getInvalidRequestError()
+		}
+		epoch = epoch*10 + int64(ch-'0')
+	}
+	now := time.Now().Unix()
+	if epoch < now-int64(t.clockSkew.Seconds()) || epoch > now+int64(t.clockSkew.Seconds()) {
+		logger.Warn("timestamp outside allowed window")
+		return t.getUnauthenticatedError()
+	}
+	return nil
+}
+
+// readBodyHash reads and restores the request body and returns its SHA256 hex.
+func (t TokenCheckMiddleware) readBodyHash(r *baseHttp.Request, logger *slog.Logger) (string, *http.ApiError) {
+	if r.Body == nil {
+		return sha256Hex(nil), nil
+	}
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		logger.Warn("unable to read body for signing")
+		return "", t.getInvalidRequestError()
+	}
+	// restore for downstream handlers
+	r.Body = io.NopCloser(bytes.NewReader(b))
+	return sha256Hex(b), nil
+}
+
+// attachAuthContext adds auth/account data and request id to the request context.
+func (t TokenCheckMiddleware) attachAuthContext(r *baseHttp.Request, accountName, reqID string) *baseHttp.Request {
+	ctx := context.WithValue(r.Context(), authAccountNameKey, accountName)
+	ctx = context.WithValue(r.Context(), requestIdKey, reqID)
+	return r.WithContext(ctx)
 }
 
 func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) bool {
