@@ -291,3 +291,59 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 		t.Fatalf("next should not be called on auth failure")
 	}
 }
+
+// New happy path only test
+func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
+	conn := setupDB(t)
+
+	// Prepare TokenHandler and seed an account with encrypted keys
+	th, err := auth.MakeTokensHandler(generate32(t))
+	if err != nil {
+		t.Fatalf("MakeTokensHandler: %v", err)
+	}
+	seed, err := th.SetupNewAccount("acme-user-happy")
+	if err != nil {
+		t.Fatalf("SetupNewAccount: %v", err)
+	}
+
+	repo := &repository.ApiKeys{DB: conn}
+	if _, err := repo.Create(database.APIKeyAttr{
+		AccountName: seed.AccountName,
+		PublicKey:   seed.EncryptedPublicKey,
+		SecretKey:   seed.EncryptedSecretKey,
+	}); err != nil {
+		t.Fatalf("repo.Create: %v", err)
+	}
+
+	// Build middleware
+	tm := MakeTokenMiddleware(th, repo)
+	// Relax window for test
+	tm.clockSkew = 2 * time.Minute
+	tm.nonceTTL = 1 * time.Minute
+
+	nextCalled := false
+	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		nextCalled = true
+		return nil
+	}
+	handler := tm.Handle(next)
+
+	req := makeSignedRequest(t,
+		http.MethodPost,
+		"https://api.test.local/v1/resource?b=2&a=1",
+		"{\"x\":123}",
+		seed.AccountName,
+		seed.PublicKey,
+		seed.SecretKey,
+		time.Now(),
+		"n-happy-1",
+		"rid-happy-1",
+	)
+	rec := httptest.NewRecorder()
+	if err := handler(rec, req); err != nil {
+		t.Fatalf("happy path failed: %#v", err)
+	}
+	if !nextCalled {
+		t.Fatalf("next was not called on happy path")
+	}
+}
