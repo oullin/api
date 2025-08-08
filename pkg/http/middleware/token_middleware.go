@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/oullin/database"
@@ -21,6 +20,7 @@ import (
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/limiter"
 )
 
 const tokenHeader = "X-API-Key"
@@ -32,7 +32,6 @@ const requestIDHeader = "X-Request-ID"
 
 // Context keys for propagating auth info downstream
 // Use unexported custom type to avoid collisions
-
 type contextKey string
 
 const (
@@ -40,54 +39,36 @@ const (
 	requestIdKey       contextKey = "request.id"
 )
 
-// --- Phase 2 support types
-
-type rateLimiter struct {
-	mu       sync.Mutex
-	history  map[string][]time.Time // key: ip+"|"+account -> failures timestamps
-	window   time.Duration
-	maxFails int
-}
-
-func newRateLimiter(window time.Duration, maxFails int) *rateLimiter {
-	return &rateLimiter{history: make(map[string][]time.Time), window: window, maxFails: maxFails}
-}
-
-func (r *rateLimiter) tooMany(key string) bool {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	now := time.Now()
-	slice := r.history[key]
-	// prune
-	pruned := slice[:0]
-	for _, t := range slice {
-		if now.Sub(t) <= r.window {
-			pruned = append(pruned, t)
-		}
-	}
-	r.history[key] = pruned
-	return len(pruned) >= r.maxFails
-}
-
-func (r *rateLimiter) fail(key string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	now := time.Now()
-	r.history[key] = append(r.history[key], now)
-}
-
+// TokenCheckMiddleware authenticates signed API requests using account tokens.
+// It validates required headers, enforces a timestamp skew window, prevents
+// replay attacks via nonce tracking, compares tokens/signatures in constant time,
+// and applies a basic failure-based rate limiter per client scope.
 type TokenCheckMiddleware struct {
-	ApiKeys      *repository.ApiKeys
+	// ApiKeys provides access to persisted API key records used to resolve
+	// account credentials (account name, public key, and secret key).
+	ApiKeys *repository.ApiKeys
+
+	// TokenHandler performs encoding/decoding of tokens and signature creation/verification.
 	TokenHandler *auth.TokenHandler
 
-	// Phase 2 additions
-	nonceCache  *cache.TTLCache
-	rateLimiter *rateLimiter
+	// nonceCache stores recently seen nonce's to prevent replaying the same request
+	// within the configured TTL window.
+	nonceCache *cache.TTLCache
 
-	// Configurable parameters
-	clockSkew       time.Duration
-	nonceTTL        time.Duration
-	failWindow      time.Duration
+	// rateLimiter throttles repeated authentication failures per "clientIP|account" scope.
+	rateLimiter *limiter.MemoryLimiter
+
+	// clockSkew defines the allowed difference between client and server time when
+	// validating the request timestamp.
+	clockSkew time.Duration
+
+	// nonceTTL is how long a nonce remains invalid after its first use (replay-protection window).
+	nonceTTL time.Duration
+
+	// failWindow indicates the sliding time window used to evaluate authentication failures.
+	failWindow time.Duration
+
+	// maxFailPerScope is the maximum number of failures allowed within failWindow for a given scope.
 	maxFailPerScope int
 }
 
@@ -96,7 +77,7 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 		ApiKeys:         apiKeys,
 		TokenHandler:    tokenHandler,
 		nonceCache:      cache.NewTTLCache(),
-		rateLimiter:     newRateLimiter(1*time.Minute, 10),
+		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
 		clockSkew:       5 * time.Minute,
 		nonceTTL:        5 * time.Minute,
 		failWindow:      1 * time.Minute,
@@ -192,7 +173,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) bool {
 	// Basic rate limiting on failures per IP/account
 	limiterKey := clientIP + "|" + strings.ToLower(accountName)
-	if t.rateLimiter != nil && t.rateLimiter.tooMany(limiterKey) {
+	if t.rateLimiter != nil && t.rateLimiter.TooMany(limiterKey) {
 		logger.Warn("too many authentication failures", "ip", clientIP)
 		return true
 	}
@@ -200,7 +181,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	var item *database.APIKey
 	if item = t.ApiKeys.FindBy(accountName); item == nil {
 		if t.rateLimiter != nil {
-			t.rateLimiter.fail(limiterKey)
+			t.rateLimiter.Fail(limiterKey)
 		}
 		logger.Warn("account not found")
 		return true
@@ -213,7 +194,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	)
 	if err != nil {
 		if t.rateLimiter != nil {
-			t.rateLimiter.fail(limiterKey)
+			t.rateLimiter.Fail(limiterKey)
 		}
 		logger.Error("failed to decode account keys", "account", item.AccountName, "error", err)
 		return true
@@ -224,7 +205,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	expected := []byte(strings.TrimSpace(token.PublicKey))
 	if subtle.ConstantTimeCompare(provided, expected) != 1 {
 		if t.rateLimiter != nil {
-			t.rateLimiter.fail(limiterKey)
+			t.rateLimiter.Fail(limiterKey)
 		}
 		logger.Warn("public token mismatch", "account", item.AccountName)
 		return true
@@ -235,7 +216,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		key := item.AccountName + "|" + nonce
 		if t.nonceCache.Used(key) {
 			if t.rateLimiter != nil {
-				t.rateLimiter.fail(limiterKey)
+				t.rateLimiter.Fail(limiterKey)
 			}
 			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
 			return true
@@ -246,7 +227,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	localSignature := auth.CreateSignatureFrom(canonical, token.SecretKey)
 	if subtle.ConstantTimeCompare([]byte(signature), []byte(localSignature)) != 1 {
 		if t.rateLimiter != nil {
-			t.rateLimiter.fail(limiterKey)
+			t.rateLimiter.Fail(limiterKey)
 		}
 		logger.Warn("signature mismatch", "account", item.AccountName)
 		return true
