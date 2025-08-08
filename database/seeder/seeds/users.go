@@ -23,7 +23,10 @@ func MakeUsersSeed(db *database.Connection) *UsersSeed {
 }
 
 func (s UsersSeed) Create(attrs database.UsersAttrs) (database.User, error) {
-	pass, _ := portal.MakePassword("password")
+	pass, err := portal.MakePassword("password")
+	if err != nil {
+		return database.User{}, fmt.Errorf("failed to generate seed password: %w", err)
+	}
 
 	fake := database.User{
 		UUID:         uuid.NewString(),

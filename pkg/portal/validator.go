@@ -15,11 +15,13 @@ type Validator struct {
 	Errors   map[string]interface{}
 }
 
-func GetDefaultValidator() *Validator {
-	var once sync.Once
-	var defaultValidator *Validator
+var (
+	defaultOnce      sync.Once
+	defaultValidator *Validator
+)
 
-	once.Do(func() {
+func GetDefaultValidator() *Validator {
+	defaultOnce.Do(func() {
 		defaultValidator = MakeValidatorFrom(
 			validator.New(
 				validator.WithRequiredStructEnabled(),

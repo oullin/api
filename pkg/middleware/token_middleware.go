@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"crypto/subtle"
 	"io"
 	"log/slog"
@@ -240,21 +241,24 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		return true
 	}
 
-	// Constant-time compare of provided public token vs stored one
-	provided := []byte(strings.TrimSpace(publicToken))
-	expected := []byte(strings.TrimSpace(token.PublicKey))
+	// Constant-time compare (fixed-length by hashing) of provided public token vs stored one
+	pBytes := []byte(strings.TrimSpace(publicToken))
+	eBytes := []byte(strings.TrimSpace(token.PublicKey))
+	hP := sha256.Sum256(pBytes)
+	hE := sha256.Sum256(eBytes)
 
-	if subtle.ConstantTimeCompare(provided, expected) != 1 {
+	if subtle.ConstantTimeCompare(hP[:], hE[:]) != 1 {
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("public token mismatch", "account", item.AccountName)
 
 		return true
 	}
 
-	// Nonce replay protection: check if already used for this account
+	// Nonce replay protection: atomically check-and-mark (UseOnce)
 	if t.nonceCache != nil {
 		key := item.AccountName + "|" + nonce
-		if t.nonceCache.Used(key) {
+
+		if t.nonceCache.UseOnce(key, t.nonceTTL) {
 			t.rateLimiter.Fail(limiterKey)
 			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
 
@@ -262,19 +266,16 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		}
 	}
 
-	// Compute local signature over canonical request and compare in constant time
+	// Compute local signature over canonical request and compare in constant time (hash to fixed-length first)
 	localSignature := auth.CreateSignatureFrom(canonical, token.SecretKey)
-	if subtle.ConstantTimeCompare([]byte(signature), []byte(localSignature)) != 1 {
+	hSig := sha256.Sum256([]byte(strings.TrimSpace(signature)))
+	hLocal := sha256.Sum256([]byte(localSignature))
+
+	if subtle.ConstantTimeCompare(hSig[:], hLocal[:]) != 1 {
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("signature mismatch", "account", item.AccountName)
 
 		return true
-	}
-
-	// Mark nonce as used within the TTL
-	if t.nonceCache != nil {
-		key := item.AccountName + "|" + nonce
-		t.nonceCache.Mark(key, t.nonceTTL)
 	}
 
 	return false

@@ -13,6 +13,10 @@ import (
 )
 
 func CloseWithLog(c io.Closer) {
+	if c == nil {
+		return
+	}
+
 	if err := c.Close(); err != nil {
 		slog.Error("failed to close resource", "err", err)
 	}

@@ -45,5 +45,31 @@ func (c *TTLCache) Mark(key string, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.data[key] = time.Now().Add(ttl)
+	now := time.Now()
+	// Opportunistic prune of expired entries to bound memory growth
+
+	for k, exp := range c.data {
+		if now.After(exp) {
+			delete(c.data, k)
+		}
+	}
+
+	c.data[key] = now.Add(ttl)
+}
+
+// UseOnce atomically checks whether the key has already been used and, if not,
+// marks it as used with the provided ttl. Returns true if the key was already
+// present (and not expired), false if it was newly marked.
+func (c *TTLCache) UseOnce(key string, ttl time.Duration) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	now := time.Now()
+	if exp, ok := c.data[key]; ok && now.Before(exp) {
+		return true // already used
+	}
+
+	c.data[key] = now.Add(ttl)
+
+	return false
 }
