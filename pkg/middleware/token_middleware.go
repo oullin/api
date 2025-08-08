@@ -58,6 +58,13 @@ type TokenCheckMiddleware struct {
 	// validating the request timestamp.
 	clockSkew time.Duration
 
+	// now is an injectable time source for deterministic tests. If nil, time.Now is used.
+	now func() time.Time
+
+	// disallowFuture, if true, rejects timestamps greater than the current server time,
+	// even if they are within the positive skew window.
+	disallowFuture bool
+
 	// nonceTTL is how long a nonce remains invalid after its first use (replay-protection window).
 	nonceTTL time.Duration
 
@@ -75,6 +82,8 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 		nonceCache:      cache.NewTTLCache(),
 		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
 		clockSkew:       5 * time.Minute,
+		now:             time.Now,
+		disallowFuture:  false,
 		nonceTTL:        5 * time.Minute,
 		failWindow:      1 * time.Minute,
 		maxFailPerScope: 10,
@@ -96,8 +105,9 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return hdrErr
 		}
 
-		// Validate timestamp within allowed skew
-		if tsErr := t.validateTimestamp(ts, logger); tsErr != nil {
+		// Validate timestamp within allowed skew using ValidTimestamp helper
+		vt := NewValidTimestamp(ts, logger, t.now)
+		if tsErr := vt.Validate(t.clockSkew, t.disallowFuture); tsErr != nil {
 			return tsErr
 		}
 
@@ -145,32 +155,6 @@ func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, logger 
 	}
 
 	return accountName, publicToken, signature, ts, nonce, nil
-}
-
-// validateTimestamp ensures the provided timestamp is numeric and within skew.
-func (t TokenCheckMiddleware) validateTimestamp(ts string, logger *slog.Logger) *http.ApiError {
-	if ts == "" {
-		logger.Warn("missing timestamp")
-		return t.getInvalidRequestError()
-	}
-
-	var epoch int64
-	for _, ch := range ts {
-		if ch < '0' || ch > '9' {
-			logger.Warn("invalid timestamp format")
-			return t.getInvalidRequestError()
-		}
-
-		epoch = epoch*10 + int64(ch-'0')
-	}
-
-	now := time.Now().Unix()
-	if epoch < now-int64(t.clockSkew.Seconds()) || epoch > now+int64(t.clockSkew.Seconds()) {
-		logger.Warn("timestamp outside allowed window")
-		return t.getUnauthenticatedError()
-	}
-
-	return nil
 }
 
 // readBodyHash reads and restores the request body and returns its SHA256 hex.
