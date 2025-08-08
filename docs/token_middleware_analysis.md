@@ -205,11 +205,11 @@ For native apps or trusted server-to-server clients:
   - [x] A3. Add structured logging with X-Request-ID; mask all sensitive values.
   - [x] A4. Put authenticated account into request context.
 
-- [ ] Phase 2 (Security hardening)
-  - [ ] B1. Add X-API-Timestamp and X-API-Nonce headers, validate clock skew.
-  - [ ] B2. Introduce nonce replay cache (in-memory or Redis) keyed by account+nonce within the time window.
-  - [ ] B3. Define canonical request string and require clients to sign it with HMAC(secret, canonical_request).
-  - [ ] B4. Add rate limiting on failed auth per IP/account.
+- [x] Phase 2 (Security hardening)
+  - [x] B1. Add X-API-Timestamp and X-API-Nonce headers, validate clock skew.
+  - [x] B2. Introduce nonce replay cache (in-memory or Redis) keyed by account+nonce within the time window.
+  - [x] B3. Define canonical request string and require clients to sign it with HMAC(secret, canonical_request).
+  - [x] B4. Add rate limiting on failed auth per IP/account.
 
 - [ ] Phase 3 (Operational maturity)
   - [ ] C1. Implement key rotation with key IDs; allow overlapping validity windows.
