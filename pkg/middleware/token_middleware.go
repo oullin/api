@@ -166,8 +166,6 @@ func (t TokenCheckMiddleware) guardDependencies(logger *slog.Logger) *http.ApiEr
 	return nil
 }
 
-// validateAndGetHeaders extracts and validates required auth headers, logging and returning
-// appropriate ApiError on failure.
 func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, logger *slog.Logger) (accountName, publicToken, signature, ts, nonce string, apiErr *http.ApiError) {
 	accountName = strings.TrimSpace(r.Header.Get(usernameHeader))
 	publicToken = strings.TrimSpace(r.Header.Get(tokenHeader))
