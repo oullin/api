@@ -9,7 +9,6 @@ import (
 	"github.com/oullin/metal/cli/posts"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
@@ -94,7 +93,7 @@ func createBlogPost(menu panel.Menu) error {
 		return err
 	}
 
-	httpClient := pkg.MakeDefaultClient(nil)
+	httpClient := portal.MakeDefaultClient(nil)
 	handler := posts.MakeHandler(input, httpClient, dbConn)
 
 	if _, err = handler.NotParsed(); err != nil {
