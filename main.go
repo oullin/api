@@ -2,20 +2,21 @@ package main
 
 import (
 	"fmt"
-	"github.com/getsentry/sentry-go"
-	_ "github.com/lib/pq"
-	"github.com/oullin/metal/kernel"
-	"github.com/oullin/pkg"
-	"github.com/rs/cors"
 	"log/slog"
 	baseHttp "net/http"
 	"time"
+
+	"github.com/getsentry/sentry-go"
+	_ "github.com/lib/pq"
+	"github.com/oullin/metal/kernel"
+	"github.com/oullin/pkg/portal"
+	"github.com/rs/cors"
 )
 
 var app *kernel.App
 
 func init() {
-	validate := pkg.GetDefaultValidator()
+	validate := portal.GetDefaultValidator()
 	secrets := kernel.Ignite("./.env", validate)
 	application, err := kernel.MakeApp(secrets, validate)
 

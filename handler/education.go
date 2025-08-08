@@ -2,8 +2,9 @@ package handler
 
 import (
 	"github.com/oullin/handler/payload"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/portal"
+
 	"log/slog"
 	baseHttp "net/http"
 )
@@ -19,7 +20,7 @@ func MakeEducationHandler(filePath string) EducationHandler {
 }
 
 func (h EducationHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	data, err := pkg.ParseJsonFile[payload.EducationResponse](h.filePath)
+	data, err := portal.ParseJsonFile[payload.EducationResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading education file", "error", err)

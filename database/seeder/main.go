@@ -8,14 +8,14 @@ import (
 	"github.com/oullin/database/seeder/seeds"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/cli"
+	"github.com/oullin/pkg/portal"
 )
 
 var environment *env.Environment
 
 func init() {
-	secrets := kernel.Ignite("./.env", pkg.GetDefaultValidator())
+	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
 
 	environment = secrets
 }

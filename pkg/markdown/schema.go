@@ -2,7 +2,9 @@ package markdown
 
 import (
 	"fmt"
-	"github.com/oullin/pkg"
+
+	"github.com/oullin/pkg/portal"
+
 	"time"
 )
 
@@ -28,7 +30,7 @@ type Parser struct {
 }
 
 func (f FrontMatter) GetPublishedAt() (*time.Time, error) {
-	stringable := pkg.MakeStringable(f.PublishedAt)
+	stringable := portal.MakeStringable(f.PublishedAt)
 	publishedAt, err := stringable.ToDatetime()
 
 	if err != nil {

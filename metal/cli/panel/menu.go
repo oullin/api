@@ -3,27 +3,28 @@ package panel
 import (
 	"bufio"
 	"fmt"
-	"github.com/oullin/metal/cli/posts"
-	"github.com/oullin/pkg"
-	"github.com/oullin/pkg/auth"
-	"github.com/oullin/pkg/cli"
-	"golang.org/x/term"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/oullin/metal/cli/posts"
+	"github.com/oullin/pkg/auth"
+	"github.com/oullin/pkg/cli"
+	"github.com/oullin/pkg/portal"
+	"golang.org/x/term"
 )
 
 type Menu struct {
 	Choice    *int
 	Reader    *bufio.Reader
-	Validator *pkg.Validator
+	Validator *portal.Validator
 }
 
 func MakeMenu() Menu {
 	menu := Menu{
 		Reader:    bufio.NewReader(os.Stdin),
-		Validator: pkg.GetDefaultValidator(),
+		Validator: portal.GetDefaultValidator(),
 	}
 
 	menu.Print()
