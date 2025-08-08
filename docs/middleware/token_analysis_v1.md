@@ -258,9 +258,43 @@ Validation rules:
 
 ---
 
-## 10) References
+## 10) Deployment and runtime context (docker-compose, Caddy, Makefile)
 
-- RFC 6749 (OAuth 2.0), OAuth 2.1 draft best practices.
-- RFC 7636 (PKCE).
-- NIST SP 800-63B (Digital Identity Guidelines).
-- Timing attack mitigations (use constant-time comparisons).
+Date: 2025-08-08 16:52 local
+
+- Containers and networks (docker-compose.yml):
+  - Services:
+    - api: Go API built from docker/dockerfile-api; exposes ENV_HTTP_PORT (default 8080) to the caddy_net and oullin_net networks. DB host is api-db via Docker DNS. Secrets are injected using Docker secrets (pg_username, pg_password, pg_dbname).
+    - api-db: Postgres 17.3-alpine. Port bound to 127.0.0.1:${ENV_DB_PORT:-5432} (not exposed publicly). Uses Docker secrets for credentials. Includes healthcheck and SSL files mounted read-only.
+    - api-db-migrate: Runs migrations from database/infra/migrations via a wrapper script.
+    - api-runner: Convenience container to run Go commands (e.g., seeders) with the code mounted at /app, sharing the network with api-db.
+    - caddy_local (profile local): Reverse proxy for local development. Host ports 8080->80 and 8443->443. Caddyfile: caddy/Caddyfile.local.
+    - caddy_prod (profile prod): Public reverse proxy/terminates TLS via Let’s Encrypt. Host ports 80/443 exposed. Caddyfile: caddy/Caddyfile.prod.
+  - Networks:
+    - caddy_net: Fronting proxy <-> API network.
+    - oullin_net: Internal network for API <-> DB and runner.
+  - Volumes:
+    - caddy_data, caddy_config, oullin_db_data for persistence; go_mod_cache for cached modules in api-runner.
+
+- Caddy local proxy (caddy/Caddyfile.local):
+  - auto_https off (HTTP only locally).
+  - Listens on :80 in the container (published as http://localhost:8080 on the host).
+  - CORS: Allows Origin http://localhost:5173 and headers X-API-Username, X-API-Key, X-API-Signature; handles OPTIONS preflight.
+  - reverse_proxy api:8080 — all paths are forwarded to API without an "/api" prefix.
+
+- Caddy production proxy (caddy/Caddyfile.prod):
+  - Site: oullin.io (automatic HTTPS).
+  - API is routed under /api/* and proxied to api:8080. That means production API path = https://oullin.io/api/... while local is http://localhost:8080/....
+  - CORS configured for https://oullin.io within the /api handler. For preflight, echoes Access-Control-Allow-Origin back.
+  - Forwards key auth headers upstream (header_up Host, X-API-Username, X-API-Key, X-API-Signature). X-Forwarded-For is also set by Caddy; the middleware’s ParseClientIP will prefer the first X-Forwarded-For entry.
+
+- Makefile (metal/makefile):
+  - build-local: docker compose --profile local up --build -d (starts api, api-db, caddy_local). After this, the API is reachable at http://localhost:8080.
+  - db:up, db:seed, db:migrate: Manage DB lifecycle and schema.
+  - validate-caddy: Format/validate local and prod Caddyfiles.
+  - env:init, env:check: Manage .env from .env.example.
+
+- API routes (metal/kernel/router.go):
+  - POST /posts (list/filter posts) and GET /posts/{slug} (show post) are protected by TokenCheckMiddleware.
+  - Other public static routes include /profile, /experience, /projects, /social, /talks, /education, /recommendations.
+  - In production behind Caddy, the protected routes are under /api (e.g., POST https://oullin.io/api/posts). Locally through caddy_local they are at http://localhost:8080/posts.
