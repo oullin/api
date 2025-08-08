@@ -3,15 +3,10 @@ package middleware
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/hex"
 	"io"
 	"log/slog"
-	"net"
 	baseHttp "net/http"
-	"net/url"
-	"sort"
 	"strings"
 	"time"
 
@@ -21,6 +16,7 @@ import (
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/limiter"
+	"github.com/oullin/pkg/portal"
 )
 
 const tokenHeader = "X-API-Key"
@@ -100,7 +96,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return hdrErr
 		}
 
-		// Validate timestamp within allowed window
+		// Validate timestamp within allowed skew
 		if tsErr := t.validateTimestamp(ts, logger); tsErr != nil {
 			return tsErr
 		}
@@ -112,9 +108,9 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 		}
 
 		// Build canonical request string
-		canonical := buildCanonical(r.Method, r.URL, accountName, publicToken, ts, nonce, bodyHash)
+		canonical := portal.BuildCanonical(r.Method, r.URL, accountName, publicToken, ts, nonce, bodyHash)
 
-		clientIP := parseClientIP(r)
+		clientIP := portal.ParseClientIP(r)
 
 		if t.shallReject(logger, accountName, publicToken, signature, canonical, nonce, clientIP) {
 			return t.getUnauthenticatedError()
@@ -157,35 +153,42 @@ func (t TokenCheckMiddleware) validateTimestamp(ts string, logger *slog.Logger) 
 		logger.Warn("missing timestamp")
 		return t.getInvalidRequestError()
 	}
+
 	var epoch int64
 	for _, ch := range ts {
 		if ch < '0' || ch > '9' {
 			logger.Warn("invalid timestamp format")
 			return t.getInvalidRequestError()
 		}
+
 		epoch = epoch*10 + int64(ch-'0')
 	}
+
 	now := time.Now().Unix()
 	if epoch < now-int64(t.clockSkew.Seconds()) || epoch > now+int64(t.clockSkew.Seconds()) {
 		logger.Warn("timestamp outside allowed window")
 		return t.getUnauthenticatedError()
 	}
+
 	return nil
 }
 
 // readBodyHash reads and restores the request body and returns its SHA256 hex.
 func (t TokenCheckMiddleware) readBodyHash(r *baseHttp.Request, logger *slog.Logger) (string, *http.ApiError) {
 	if r.Body == nil {
-		return sha256Hex(nil), nil
+		return portal.Sha256Hex(nil), nil
 	}
+
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.Warn("unable to read body for signing")
 		return "", t.getInvalidRequestError()
 	}
+
 	// restore for downstream handlers
 	r.Body = io.NopCloser(bytes.NewReader(b))
-	return sha256Hex(b), nil
+
+	return portal.Sha256Hex(b), nil
 }
 
 // attachAuthContext adds auth/account data and request id to the request context.
@@ -196,8 +199,8 @@ func (t TokenCheckMiddleware) attachAuthContext(r *baseHttp.Request, accountName
 }
 
 func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) bool {
-	// Basic rate limiting on failures per IP/account
 	limiterKey := clientIP + "|" + strings.ToLower(accountName)
+
 	if t.rateLimiter != nil && t.rateLimiter.TooMany(limiterKey) {
 		logger.Warn("too many authentication failures", "ip", clientIP)
 		return true
@@ -208,6 +211,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		if t.rateLimiter != nil {
 			t.rateLimiter.Fail(limiterKey)
 		}
+
 		logger.Warn("account not found")
 		return true
 	}
@@ -217,6 +221,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		item.SecretKey,
 		item.PublicKey,
 	)
+
 	if err != nil {
 		if t.rateLimiter != nil {
 			t.rateLimiter.Fail(limiterKey)
@@ -243,6 +248,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 			if t.rateLimiter != nil {
 				t.rateLimiter.Fail(limiterKey)
 			}
+
 			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
 			return true
 		}
@@ -265,70 +271,6 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	}
 
 	return false
-}
-
-// Helpers
-func sha256Hex(b []byte) string {
-	h := sha256.Sum256(b)
-	return hex.EncodeToString(h[:])
-}
-
-func sortedQuery(u *url.URL) string {
-	if u == nil {
-		return ""
-	}
-	q := u.Query()
-	if len(q) == 0 {
-		return ""
-	}
-	keys := make([]string, 0, len(q))
-	for k := range q {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	pairs := make([]string, 0, len(keys))
-	for _, k := range keys {
-		vals := q[k]
-		sort.Strings(vals)
-		for _, v := range vals {
-			pairs = append(pairs, url.QueryEscape(k)+"="+url.QueryEscape(v))
-		}
-	}
-	return strings.Join(pairs, "&")
-}
-
-func buildCanonical(method string, u *url.URL, username, public, ts, nonce, bodyHash string) string {
-	path := "/"
-	if u != nil && u.Path != "" {
-		path = u.EscapedPath()
-	}
-	query := sortedQuery(u)
-	parts := []string{
-		strings.ToUpper(method),
-		path,
-		query,
-		username,
-		public,
-		ts,
-		nonce,
-		bodyHash,
-	}
-	return strings.Join(parts, "\n")
-}
-
-func parseClientIP(r *baseHttp.Request) string {
-	// prefer X-Forwarded-For if present
-	xff := strings.TrimSpace(r.Header.Get("X-Forwarded-For"))
-	if xff != "" {
-		// take first IP
-		parts := strings.Split(xff, ",")
-		return strings.TrimSpace(parts[0])
-	}
-	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
-	if err == nil && host != "" {
-		return host
-	}
-	return strings.TrimSpace(r.RemoteAddr)
 }
 
 func (t TokenCheckMiddleware) getInvalidRequestError() *http.ApiError {

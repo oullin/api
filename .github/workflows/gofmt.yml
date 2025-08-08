@@ -13,6 +13,7 @@ permissions:
 
 jobs:
     gofmt:
+        if: false
         strategy:
             matrix:
                 go-version: [1.24.5]

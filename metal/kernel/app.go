@@ -8,7 +8,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/auth"
-	"github.com/oullin/pkg/http/middleware"
+	"github.com/oullin/pkg/middleware"
 	"github.com/oullin/pkg/llogs"
 	"github.com/oullin/pkg/portal"
 )
