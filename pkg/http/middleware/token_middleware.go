@@ -1,19 +1,32 @@
 package middleware
 
 import (
-	"fmt"
+	"context"
+	"crypto/subtle"
+	"log/slog"
+	baseHttp "net/http"
+	"strings"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http"
-	"log/slog"
-	baseHttp "net/http"
-	"strings"
 )
 
 const tokenHeader = "X-API-Key"
 const usernameHeader = "X-API-Username"
 const signatureHeader = "X-API-Signature"
+const requestIDHeader = "X-Request-ID"
+
+// Context keys for propagating auth info downstream
+// Use unexported custom type to avoid collisions
+
+type contextKey string
+
+const (
+	authAccountNameKey contextKey = "auth.account_name"
+	requestIdKey       contextKey = "request.id"
+)
 
 type TokenCheckMiddleware struct {
 	ApiKeys      *repository.ApiKeys
@@ -29,33 +42,49 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+		reqID := strings.TrimSpace(r.Header.Get(requestIDHeader))
+
+		if reqID == "" {
+			return t.getInvalidRequestError()
+		}
+
+		logger := slog.With("request_id", reqID, "path", r.URL.Path, "method", r.Method)
 
 		accountName := strings.TrimSpace(r.Header.Get(usernameHeader))
 		publicToken := strings.TrimSpace(r.Header.Get(tokenHeader))
 		signature := strings.TrimSpace(r.Header.Get(signatureHeader))
 
 		if accountName == "" || publicToken == "" || signature == "" {
-			return t.getInvalidRequestError(accountName, publicToken, signature)
+			logger.Warn("missing authentication headers")
+			return t.getInvalidRequestError()
 		}
 
 		if err := auth.ValidateTokenFormat(publicToken); err != nil {
-			return t.getInvalidTokenFormatError(publicToken, err)
+			logger.Warn("invalid token format")
+			return t.getInvalidTokenFormatError()
 		}
 
-		if t.shallReject(accountName, publicToken, signature) {
-			return t.getUnauthenticatedError(accountName, publicToken, signature)
+		reject := t.shallReject(logger, accountName, publicToken, signature)
+		if reject {
+			return t.getUnauthenticatedError()
 		}
 
-		slog.Info("Token validation successful")
+		// Update the request context
+		ctx := context.WithValue(r.Context(), authAccountNameKey, accountName)
+		ctx = context.WithValue(r.Context(), requestIdKey, reqID)
+		r = r.WithContext(ctx)
+
+		logger.Info("authentication successful")
 
 		return next(w, r)
 	}
 }
 
-func (t TokenCheckMiddleware) shallReject(accountName, publicToken, signature string) bool {
+func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature string) bool {
 	var item *database.APIKey
 
 	if item = t.ApiKeys.FindBy(accountName); item == nil {
+		logger.Warn("account not found")
 		return true
 	}
 
@@ -66,53 +95,45 @@ func (t TokenCheckMiddleware) shallReject(accountName, publicToken, signature st
 	)
 
 	if err != nil {
-		slog.Error(fmt.Sprintf("could not decode the given account [%s] keys: %v", item.AccountName, err))
-
+		logger.Error("failed to decode account keys", "account", item.AccountName, "error", err)
 		return true
 	}
 
-	if strings.TrimSpace(token.PublicKey) != strings.TrimSpace(publicToken) {
-		slog.Error(fmt.Sprintf("the given public token does not match tour records [%s]: %v", item.AccountName, err))
-
+	// Constant-time compare of provided public token vs stored one
+	provided := []byte(strings.TrimSpace(publicToken))
+	expected := []byte(strings.TrimSpace(token.PublicKey))
+	if subtle.ConstantTimeCompare(provided, expected) != 1 {
+		logger.Warn("public token mismatch", "account", item.AccountName)
 		return true
 	}
 
+	// Compute local signature and compare in constant time
 	localSignature := auth.CreateSignatureFrom(token.AccountName, token.SecretKey)
+	if subtle.ConstantTimeCompare([]byte(signature), []byte(localSignature)) != 1 {
+		logger.Warn("signature mismatch", "account", item.AccountName)
+		return true
+	}
 
-	return signature != localSignature
+	return false
 }
 
-func (t TokenCheckMiddleware) getInvalidRequestError(accountName, publicToken, signature string) *http.ApiError {
-	message := fmt.Sprintf(
-		"invalid request. Please, provide a valid token, signature and accout name headers. [account: %s, public token: %s, signature: %s]",
-		accountName,
-		auth.SafeDisplay(publicToken),
-		auth.SafeDisplay(signature),
-	)
-
+func (t TokenCheckMiddleware) getInvalidRequestError() *http.ApiError {
 	return &http.ApiError{
-		Message: message,
-		Status:  baseHttp.StatusForbidden,
+		Message: "Invalid authentication headers",
+		Status:  baseHttp.StatusUnauthorized,
 	}
 }
 
-func (t TokenCheckMiddleware) getInvalidTokenFormatError(publicToken string, err error) *http.ApiError {
+func (t TokenCheckMiddleware) getInvalidTokenFormatError() *http.ApiError {
 	return &http.ApiError{
-		Message: fmt.Sprintf("invalid token format [token: %s]: %v", auth.SafeDisplay(publicToken), err),
-		Status:  baseHttp.StatusForbidden,
+		Message: "Invalid credentials",
+		Status:  baseHttp.StatusUnauthorized,
 	}
 }
 
-func (t TokenCheckMiddleware) getUnauthenticatedError(accountName, publicToken, signature string) *http.ApiError {
-	message := fmt.Sprintf(
-		"Unauthenticated, please check your credentials and signature headers: [token: %s, account name: %s, signature: %s]",
-		auth.SafeDisplay(publicToken),
-		accountName,
-		signature,
-	)
-
+func (t TokenCheckMiddleware) getUnauthenticatedError() *http.ApiError {
 	return &http.ApiError{
-		Message: message,
-		Status:  baseHttp.StatusForbidden,
+		Message: "Invalid credentials",
+		Status:  baseHttp.StatusUnauthorized,
 	}
 }

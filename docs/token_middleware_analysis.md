@@ -20,11 +20,11 @@ Processing flow:
 4. Decrypts stored encrypted public/secret tokens using TokenHandler.DecodeTokensFor.
 5. Verifies the provided public token equals the decrypted public token.
 6. Computes a local signature via auth.CreateSignatureFrom(accountName, secretKey) and compares it to X-API-Signature.
-7. On success, logs "Token validation successful" and calls the next handler; otherwise returns http.ApiError with Status 403.
+7. On success, logs authentication success and calls the next handler; otherwise returns http.ApiError with Status 401 (generic message).
 
 Notes:
 - Secrets are stored encrypted-at-rest (AES-GCM).
-- auth.SafeDisplay is used when echoing tokens in error messages (masking).
+- Client-facing errors are generic and do not echo credentials; sensitive details are only in server logs.
 
 ---
 
@@ -197,28 +197,28 @@ For native apps or trusted server-to-server clients:
 
 ---
 
-## 7) Suggested phased plan
+## 7) Suggested phased plan (Checklist)
 
-Phase 1 (Low risk, immediate):
-- A1. Switch to constant-time comparisons for signature and public token.
-- A2. Return 401 for authentication failures; generic error messages to clients.
-- A3. Add structured logging with X-Request-ID; mask all sensitive values.
-- A4. Put authenticated account into request context.
+- [x] Phase 1 (Low risk, immediate)
+  - [x] A1. Switch to constant-time comparisons for signature and public token.
+  - [x] A2. Return 401 for authentication failures; generic error messages to clients.
+  - [x] A3. Add structured logging with X-Request-ID; mask all sensitive values.
+  - [x] A4. Put authenticated account into request context.
 
-Phase 2 (Security hardening):
-- B1. Add X-API-Timestamp and X-API-Nonce headers, validate clock skew.
-- B2. Introduce nonce replay cache (in-memory or Redis) keyed by account+nonce within the time window.
-- B3. Define canonical request string and require clients to sign it with HMAC(secret, canonical_request).
-- B4. Add rate limiting on failed auth per IP/account.
+- [ ] Phase 2 (Security hardening)
+  - [ ] B1. Add X-API-Timestamp and X-API-Nonce headers, validate clock skew.
+  - [ ] B2. Introduce nonce replay cache (in-memory or Redis) keyed by account+nonce within the time window.
+  - [ ] B3. Define canonical request string and require clients to sign it with HMAC(secret, canonical_request).
+  - [ ] B4. Add rate limiting on failed auth per IP/account.
 
-Phase 3 (Operational maturity):
-- C1. Implement key rotation with key IDs; allow overlapping validity windows.
-- C2. Optional IP allowlist/origin policy per account.
-- C3. mTLS for backend integrations where applicable.
+- [ ] Phase 3 (Operational maturity)
+  - [ ] C1. Implement key rotation with key IDs; allow overlapping validity windows.
+  - [ ] C2. Optional IP allowlist/origin policy per account.
+  - [ ] C3. mTLS for backend integrations where applicable.
 
-Phase 4 (Frontend modernization):
-- D1. Adopt OAuth 2.1 Authorization Code with PKCE for browser/mobile apps.
-- D2. Introduce a BFF to keep tokens and secrets off the browser.
+- [ ] Phase 4 (Frontend modernization)
+  - [ ] D1. Adopt OAuth 2.1 Authorization Code with PKCE for browser/mobile apps.
+  - [ ] D2. Introduce a BFF to keep tokens and secrets off the browser.
 
 ---
 
