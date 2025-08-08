@@ -13,7 +13,7 @@ permissions:
 
 jobs:
     gofmt:
-        if: false
+        if: github.event.action == 'labeled' && github.event.label.name == 'style'
         strategy:
             matrix:
                 go-version: [1.24.5]
