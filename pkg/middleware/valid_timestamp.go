@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"log/slog"
+	baseHttp "net/http"
 	"strconv"
 	"time"
 
@@ -31,19 +32,19 @@ func NewValidTimestamp(ts string, logger *slog.Logger, now func() time.Time) Val
 }
 
 func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.ApiError {
+	if v.logger == nil {
+		return &http.ApiError{Message: "Invalid timestamp headers tracker", Status: baseHttp.StatusUnauthorized}
+	}
+
 	if v.ts == "" {
-		if v.logger != nil {
-			v.logger.Warn("missing timestamp")
-		}
-		return &http.ApiError{Message: "Invalid authentication headers", Status: 401}
+		v.logger.Warn("missing timestamp")
+		return &http.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
 	}
 
 	epoch, err := strconv.ParseInt(v.ts, 10, 64)
 	if err != nil {
-		if v.logger != nil {
-			v.logger.Warn("invalid timestamp format")
-		}
-		return &http.ApiError{Message: "Invalid authentication headers", Status: 401}
+		v.logger.Warn("invalid timestamp format")
+		return &http.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
 	}
 
 	nowFn := v.now
@@ -61,17 +62,13 @@ func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.
 	}
 
 	if epoch < minValue {
-		if v.logger != nil {
-			v.logger.Warn("timestamp outside allowed window: too old")
-		}
-		return &http.ApiError{Message: "Invalid credentials", Status: 401}
+		v.logger.Warn("timestamp outside allowed window: too old")
+		return &http.ApiError{Message: "Invalid credentials", Status: baseHttp.StatusUnauthorized}
 	}
 
 	if epoch > maxValue {
-		if v.logger != nil {
-			v.logger.Warn("timestamp outside allowed window: in the future")
-		}
-		return &http.ApiError{Message: "Invalid credentials", Status: 401}
+		v.logger.Warn("timestamp outside allowed window: in the future")
+		return &http.ApiError{Message: "Invalid credentials", Status: baseHttp.StatusUnauthorized}
 	}
 
 	return nil

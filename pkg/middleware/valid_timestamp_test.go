@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"io"
 	"log/slog"
+	baseHttp "net/http"
 	"strconv"
 	"testing"
 	"time"
@@ -26,17 +28,17 @@ func TestNewValidTimestampConstructor(t *testing.T) {
 }
 
 func TestValidate_EmptyTimestamp(t *testing.T) {
-	vt := NewValidTimestamp("", nil, fixedClock(time.Unix(1_700_000_000, 0)))
+	vt := NewValidTimestamp("", slogNoop(), fixedClock(time.Unix(1_700_000_000, 0)))
 	err := vt.Validate(5*time.Minute, false)
-	if err == nil || err.Status != 401 || err.Message != "Invalid authentication headers" {
+	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid authentication headers" {
 		t.Fatalf("expected invalid request error for empty timestamp, got %#v", err)
 	}
 }
 
 func TestValidate_NonNumericTimestamp(t *testing.T) {
-	vt := NewValidTimestamp("abc", nil, fixedClock(time.Unix(1_700_000_000, 0)))
+	vt := NewValidTimestamp("abc", slogNoop(), fixedClock(time.Unix(1_700_000_000, 0)))
 	err := vt.Validate(5*time.Minute, false)
-	if err == nil || err.Status != 401 || err.Message != "Invalid authentication headers" {
+	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid authentication headers" {
 		t.Fatalf("expected invalid request error for non-numeric timestamp, got %#v", err)
 	}
 }
@@ -45,9 +47,9 @@ func TestValidate_TooOldTimestamp(t *testing.T) {
 	base := time.Unix(1_700_000_000, 0)
 	skew := 60 * time.Second
 	oldTs := strconv.FormatInt(base.Add(-skew).Add(-1*time.Second).Unix(), 10)
-	vt := NewValidTimestamp(oldTs, nil, fixedClock(base))
+	vt := NewValidTimestamp(oldTs, slogNoop(), fixedClock(base))
 	err := vt.Validate(skew, false)
-	if err == nil || err.Status != 401 || err.Message != "Invalid credentials" {
+	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid credentials" {
 		t.Fatalf("expected unauthenticated for too old timestamp, got %#v", err)
 	}
 }
@@ -58,15 +60,15 @@ func TestValidate_FutureWithinSkew_Behavior(t *testing.T) {
 	futureWithin := strconv.FormatInt(base.Add(30*time.Second).Unix(), 10)
 
 	// Allowed when disallowFuture=false
-	vt := NewValidTimestamp(futureWithin, nil, fixedClock(base))
+	vt := NewValidTimestamp(futureWithin, slogNoop(), fixedClock(base))
 	if err := vt.Validate(skew, false); err != nil {
 		t.Fatalf("expected future timestamp within skew to be allowed when disallowFuture=false, got %#v", err)
 	}
 
 	// Rejected when disallowFuture=true
-	vt = NewValidTimestamp(futureWithin, nil, fixedClock(base))
+	vt = NewValidTimestamp(futureWithin, slogNoop(), fixedClock(base))
 	err := vt.Validate(skew, true)
-	if err == nil || err.Status != 401 || err.Message != "Invalid credentials" {
+	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid credentials" {
 		t.Fatalf("expected unauthenticated for future timestamp when disallowFuture=true, got %#v", err)
 	}
 }
@@ -79,27 +81,33 @@ func TestValidate_Boundaries(t *testing.T) {
 	nowExact := strconv.FormatInt(base.Unix(), 10)
 
 	// Lower boundary inclusive
-	vt := NewValidTimestamp(minExact, nil, fixedClock(base))
+	vt := NewValidTimestamp(minExact, slogNoop(), fixedClock(base))
 	if err := vt.Validate(skew, false); err != nil {
 		t.Fatalf("expected min boundary to pass, got %#v", err)
 	}
 
 	// Upper boundary inclusive when disallowFuture=false
-	vt = NewValidTimestamp(maxExact, nil, fixedClock(base))
+	vt = NewValidTimestamp(maxExact, slogNoop(), fixedClock(base))
 	if err := vt.Validate(skew, false); err != nil {
 		t.Fatalf("expected max boundary to pass when disallowFuture=false, got %#v", err)
 	}
 
 	// When disallowFuture=true, upper boundary becomes 'now'
-	vt = NewValidTimestamp(nowExact, nil, fixedClock(base))
+	vt = NewValidTimestamp(nowExact, slogNoop(), fixedClock(base))
 	if err := vt.Validate(skew, true); err != nil {
 		t.Fatalf("expected 'now' to pass when disallowFuture=true, got %#v", err)
 	}
 }
 
+func TestValidate_NilLogger(t *testing.T) {
+	vt := NewValidTimestamp("", nil, fixedClock(time.Unix(1_700_000_000, 0)))
+	err := vt.Validate(5*time.Minute, false)
+	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid timestamp headers tracker" {
+		t.Fatalf("expected unauthorized for nil logger, got %#v", err)
+	}
+}
+
 // slogNoop provides a minimal no-op logger compatible with *slog.Logger without requiring configuration in tests.
 func slogNoop() *slog.Logger {
-	// slog.New requires a Handler; use a Discard handler by sending to a disabled level.
-	// For simplicity and to avoid extra deps, return nil to keep logging optional in validation.
-	return nil
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
