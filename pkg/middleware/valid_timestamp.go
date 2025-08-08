@@ -31,18 +31,18 @@ func NewValidTimestamp(ts string, logger *slog.Logger, now func() time.Time) Val
 }
 
 func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.ApiError {
-	if v.logger == nil {
-		return &http.ApiError{Message: "Invalid authentication headers internal formation", Status: 401}
-	}
-
 	if v.ts == "" {
-		v.logger.Warn("missing timestamp")
+		if v.logger != nil {
+			v.logger.Warn("missing timestamp")
+		}
 		return &http.ApiError{Message: "Invalid authentication headers", Status: 401}
 	}
 
 	epoch, err := strconv.ParseInt(v.ts, 10, 64)
 	if err != nil {
-		v.logger.Warn("invalid timestamp format")
+		if v.logger != nil {
+			v.logger.Warn("invalid timestamp format")
+		}
 		return &http.ApiError{Message: "Invalid authentication headers", Status: 401}
 	}
 
@@ -61,12 +61,16 @@ func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.
 	}
 
 	if epoch < minValue {
-		v.logger.Warn("timestamp outside allowed window: too old")
+		if v.logger != nil {
+			v.logger.Warn("timestamp outside allowed window: too old")
+		}
 		return &http.ApiError{Message: "Invalid credentials", Status: 401}
 	}
 
 	if epoch > maxValue {
-		v.logger.Warn("timestamp outside allowed window: in the future")
+		if v.logger != nil {
+			v.logger.Warn("timestamp outside allowed window: in the future")
+		}
 		return &http.ApiError{Message: "Invalid credentials", Status: 401}
 	}
 

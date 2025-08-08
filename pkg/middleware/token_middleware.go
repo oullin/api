@@ -93,11 +93,15 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 		reqID := strings.TrimSpace(r.Header.Get(requestIDHeader))
-		if reqID == "" {
+		logger := slog.With("request_id", reqID, "path", r.URL.Path, "method", r.Method)
+
+		if reqID == "" || logger == nil {
 			return t.getInvalidRequestError()
 		}
 
-		logger := slog.With("request_id", reqID, "path", r.URL.Path, "method", r.Method)
+		if depErr := t.guardDependencies(logger); depErr != nil {
+			return depErr
+		}
 
 		// Extract and validate required headers
 		accountName, publicToken, signature, ts, nonce, hdrErr := t.validateAndGetHeaders(r, logger)
@@ -127,12 +131,39 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 		}
 
 		// Update the request context
-		r = t.attachAuthContext(r, accountName, reqID)
+		r = t.attachContext(r, accountName, reqID)
 
 		logger.Info("authentication successful")
 
 		return next(w, r)
 	}
+}
+
+func (t TokenCheckMiddleware) guardDependencies(logger *slog.Logger) *http.ApiError {
+	missing := make([]string, 0, 4)
+
+	if t.ApiKeys == nil {
+		missing = append(missing, "ApiKeys")
+	}
+
+	if t.TokenHandler == nil {
+		missing = append(missing, "TokenHandler")
+	}
+
+	if t.nonceCache == nil {
+		missing = append(missing, "nonceCache")
+	}
+
+	if t.rateLimiter == nil {
+		missing = append(missing, "rateLimiter")
+	}
+
+	if len(missing) > 0 {
+		logger.Error("token middleware missing dependencies", "missing", strings.Join(missing, ","))
+		return t.getUnauthenticatedError()
+	}
+
+	return nil
 }
 
 // validateAndGetHeaders extracts and validates required auth headers, logging and returning
@@ -157,7 +188,6 @@ func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, logger 
 	return accountName, publicToken, signature, ts, nonce, nil
 }
 
-// readBodyHash reads and restores the request body and returns its SHA256 hex.
 func (t TokenCheckMiddleware) readBodyHash(r *baseHttp.Request, logger *slog.Logger) (string, *http.ApiError) {
 	if r.Body == nil {
 		return portal.Sha256Hex(nil), nil
@@ -175,31 +205,30 @@ func (t TokenCheckMiddleware) readBodyHash(r *baseHttp.Request, logger *slog.Log
 	return portal.Sha256Hex(b), nil
 }
 
-// attachAuthContext adds auth/account data and request id to the request context.
-func (t TokenCheckMiddleware) attachAuthContext(r *baseHttp.Request, accountName, reqID string) *baseHttp.Request {
+func (t TokenCheckMiddleware) attachContext(r *baseHttp.Request, accountName, reqID string) *baseHttp.Request {
 	ctx := context.WithValue(r.Context(), authAccountNameKey, accountName)
 	ctx = context.WithValue(r.Context(), requestIdKey, reqID)
+
 	return r.WithContext(ctx)
 }
 
 func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) bool {
 	limiterKey := clientIP + "|" + strings.ToLower(accountName)
 
-	if t.rateLimiter != nil && t.rateLimiter.TooMany(limiterKey) {
+	if t.rateLimiter.TooMany(limiterKey) {
 		logger.Warn("too many authentication failures", "ip", clientIP)
 		return true
 	}
 
 	var item *database.APIKey
 	if item = t.ApiKeys.FindBy(accountName); item == nil {
-		if t.rateLimiter != nil {
-			t.rateLimiter.Fail(limiterKey)
-		}
-
+		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("account not found")
+
 		return true
 	}
 
+	// Fetch account to understand its keys
 	token, err := t.TokenHandler.DecodeTokensFor(
 		item.AccountName,
 		item.SecretKey,
@@ -207,21 +236,20 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	)
 
 	if err != nil {
-		if t.rateLimiter != nil {
-			t.rateLimiter.Fail(limiterKey)
-		}
+		t.rateLimiter.Fail(limiterKey)
 		logger.Error("failed to decode account keys", "account", item.AccountName, "error", err)
+
 		return true
 	}
 
 	// Constant-time compare of provided public token vs stored one
 	provided := []byte(strings.TrimSpace(publicToken))
 	expected := []byte(strings.TrimSpace(token.PublicKey))
+
 	if subtle.ConstantTimeCompare(provided, expected) != 1 {
-		if t.rateLimiter != nil {
-			t.rateLimiter.Fail(limiterKey)
-		}
+		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("public token mismatch", "account", item.AccountName)
+
 		return true
 	}
 
@@ -229,11 +257,9 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	if t.nonceCache != nil {
 		key := item.AccountName + "|" + nonce
 		if t.nonceCache.Used(key) {
-			if t.rateLimiter != nil {
-				t.rateLimiter.Fail(limiterKey)
-			}
-
+			t.rateLimiter.Fail(limiterKey)
 			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
+
 			return true
 		}
 	}
@@ -241,10 +267,9 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	// Compute local signature over canonical request and compare in constant time
 	localSignature := auth.CreateSignatureFrom(canonical, token.SecretKey)
 	if subtle.ConstantTimeCompare([]byte(signature), []byte(localSignature)) != 1 {
-		if t.rateLimiter != nil {
-			t.rateLimiter.Fail(limiterKey)
-		}
+		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("signature mismatch", "account", item.AccountName)
+
 		return true
 	}
 
