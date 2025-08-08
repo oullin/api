@@ -8,8 +8,8 @@ import (
 	"encoding/hex"
 	"io"
 	"log/slog"
-	baseHttp "net/http"
 	"net"
+	baseHttp "net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -19,6 +19,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
+	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
 )
 
@@ -40,37 +41,6 @@ const (
 )
 
 // --- Phase 2 support types
-
-type nonceCache struct {
-	mu   sync.Mutex
-	data map[string]time.Time // key: accountName+"|"+nonce -> expiry time
-}
-
-func newNonceCache() *nonceCache {
-	return &nonceCache{data: make(map[string]time.Time)}
-}
-
-func (c *nonceCache) used(account, nonce string) bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	key := account + "|" + nonce
-	exp, ok := c.data[key]
-	if !ok {
-		return false
-	}
-	if time.Now().After(exp) {
-		delete(c.data, key)
-		return false
-	}
-	return true
-}
-
-func (c *nonceCache) mark(account, nonce string, ttl time.Duration) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	key := account + "|" + nonce
-	c.data[key] = time.Now().Add(ttl)
-}
 
 type rateLimiter struct {
 	mu       sync.Mutex
@@ -111,7 +81,7 @@ type TokenCheckMiddleware struct {
 	TokenHandler *auth.TokenHandler
 
 	// Phase 2 additions
-	nonceCache  *nonceCache
+	nonceCache  *cache.TTLCache
 	rateLimiter *rateLimiter
 
 	// Configurable parameters
@@ -125,7 +95,7 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 	return TokenCheckMiddleware{
 		ApiKeys:         apiKeys,
 		TokenHandler:    tokenHandler,
-		nonceCache:      newNonceCache(),
+		nonceCache:      cache.NewTTLCache(),
 		rateLimiter:     newRateLimiter(1*time.Minute, 10),
 		clockSkew:       5 * time.Minute,
 		nonceTTL:        5 * time.Minute,
@@ -261,12 +231,15 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	}
 
 	// Nonce replay protection: check if already used for this account
-	if t.nonceCache != nil && t.nonceCache.used(item.AccountName, nonce) {
-		if t.rateLimiter != nil {
-			t.rateLimiter.fail(limiterKey)
+	if t.nonceCache != nil {
+		key := item.AccountName + "|" + nonce
+		if t.nonceCache.Used(key) {
+			if t.rateLimiter != nil {
+				t.rateLimiter.fail(limiterKey)
+			}
+			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
+			return true
 		}
-		logger.Warn("replay detected: nonce already used", "account", item.AccountName)
-		return true
 	}
 
 	// Compute local signature over canonical request and compare in constant time
@@ -281,7 +254,8 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 
 	// Mark nonce as used within the TTL
 	if t.nonceCache != nil {
-		t.nonceCache.mark(item.AccountName, nonce, t.nonceTTL)
+		key := item.AccountName + "|" + nonce
+		t.nonceCache.Mark(key, t.nonceTTL)
 	}
 
 	return false
