@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/portal"
 )
 
 func captureOutput(fn func()) string {
@@ -110,7 +110,7 @@ func TestCapturePostURL(t *testing.T) {
 	goodURL := "https://raw.githubusercontent.com/user/repo/file.md"
 	m := Menu{
 		Reader:    bufio.NewReader(strings.NewReader(goodURL + "\n")),
-		Validator: pkg.GetDefaultValidator(),
+		Validator: portal.GetDefaultValidator(),
 	}
 
 	in, err := m.CapturePostURL()
@@ -121,7 +121,7 @@ func TestCapturePostURL(t *testing.T) {
 
 	m2 := Menu{
 		Reader:    bufio.NewReader(strings.NewReader("http://example.com\n")),
-		Validator: pkg.GetDefaultValidator(),
+		Validator: portal.GetDefaultValidator(),
 	}
 
 	if _, err := m2.CapturePostURL(); err == nil {

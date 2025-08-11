@@ -8,7 +8,7 @@ import (
 	"github.com/oullin/handler"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/http"
-	"github.com/oullin/pkg/http/middleware"
+	"github.com/oullin/pkg/middleware"
 )
 
 type StaticRouteResource interface {

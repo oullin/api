@@ -1,4 +1,4 @@
-package pkg
+package portal
 
 import (
 	sentryhttp "github.com/getsentry/sentry-go/http"

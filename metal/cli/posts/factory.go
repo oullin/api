@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/markdown"
+	"github.com/oullin/pkg/portal"
 	"net/http"
 	"time"
 )
 
 type Handler struct {
 	Input       *Input
-	Client      *pkg.Client
+	Client      *portal.Client
 	Posts       *repository.Posts
 	Users       *repository.Users
 	IsDebugging bool
 }
 
-func MakeHandler(input *Input, client *pkg.Client, db *database.Connection) Handler {
+func MakeHandler(input *Input, client *portal.Client, db *database.Connection) Handler {
 	tags := &repository.Tags{DB: db}
 	categories := &repository.Categories{DB: db}
 

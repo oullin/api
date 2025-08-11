@@ -3,12 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/payload"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/portal"
+
 	"log/slog"
 	baseHttp "net/http"
 )
@@ -22,7 +24,7 @@ func MakePostsHandler(repo *repository.Posts) PostsHandler {
 }
 
 func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-	defer pkg.CloseWithLog(r.Body)
+	defer portal.CloseWithLog(r.Body)
 
 	requestBody, err := http.ParseRequestBody[payload.IndexRequestBody](r)
 

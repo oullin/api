@@ -1,9 +1,8 @@
-package pkg
+package portal
 
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 )
@@ -71,9 +70,7 @@ func (f *Client) Get(ctx context.Context, url string) (string, error) {
 		return "", fmt.Errorf("received non-2xx status code: %d", resp.StatusCode)
 	}
 
-	// To avoid allocating a massive buffer for a potentially huge response, we could use io.Copy with a limited reader
-	// if we need to process the body. However, if we must return a string, reading all is necessary.
-	body, err := io.ReadAll(resp.Body)
+	body, err := ReadWithSizeLimit(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}

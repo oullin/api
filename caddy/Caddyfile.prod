@@ -34,8 +34,8 @@ oullin.io {
 		header {
 			Access-Control-Allow-Origin "https://oullin.io"
 			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-			Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent, If-None-Match"
-			Access-Control-Expose-Headers "ETag"
+			Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match"
+			Access-Control-Expose-Headers "ETag, X-Request-ID"
 		}
 
 		@preflight {
@@ -47,7 +47,7 @@ oullin.io {
 			# Reflect the Origin back so it's always allowed
 			header Access-Control-Allow-Origin "{http.request.header.Origin}"
 			header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-			header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, Content-Type, User-Agent, If-None-Match"
+			header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match"
 			header Access-Control-Max-Age "86400"
 			respond 204
 		}
@@ -57,6 +57,12 @@ oullin.io {
 			header_up X-API-Username {http.request.header.X-API-Username}
 			header_up X-API-Key {http.request.header.X-API-Key}
 			header_up X-API-Signature {http.request.header.X-API-Signature}
+			header_up X-API-Timestamp {http.request.header.X-API-Timestamp}
+			header_up X-API-Nonce {http.request.header.X-API-Nonce}
+			header_up X-Request-ID {http.request.header.X-Request-ID}
+			header_up Content-Type {http.request.header.Content-Type}
+			header_up User-Agent {http.request.header.User-Agent}
+			header_up If-None-Match {http.request.header.If-None-Match}
 
 			transport http {
 				dial_timeout 10s

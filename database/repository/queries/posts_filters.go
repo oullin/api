@@ -1,7 +1,8 @@
 package queries
 
 import (
-	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/portal"
+
 	"strings"
 )
 
@@ -34,7 +35,7 @@ func (f PostFilters) GetTag() string {
 }
 
 func (f PostFilters) sanitiseString(seed string) string {
-	str := pkg.MakeStringable(seed)
+	str := portal.MakeStringable(seed)
 
 	return strings.TrimSpace(str.ToLower())
 }

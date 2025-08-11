@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/metal/cli/clitest"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/markdown"
+	"github.com/oullin/pkg/portal"
 )
 
 func captureOutput(fn func()) string {
@@ -56,7 +56,7 @@ func setupPostsHandler(t *testing.T) (*Handler, *database.Connection) {
 		Url: "http://example",
 	}
 
-	h := MakeHandler(input, pkg.MakeDefaultClient(nil), conn)
+	h := MakeHandler(input, portal.MakeDefaultClient(nil), conn)
 
 	return &h, conn
 }

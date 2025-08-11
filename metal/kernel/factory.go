@@ -8,11 +8,11 @@ import (
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/llogs"
+	"github.com/oullin/pkg/portal"
 )
 
-func MakeSentry(env *env.Environment) *pkg.Sentry {
+func MakeSentry(env *env.Environment) *portal.Sentry {
 	cOptions := sentry.ClientOptions{
 		Dsn:   env.Sentry.DSN,
 		Debug: true,
@@ -25,7 +25,7 @@ func MakeSentry(env *env.Environment) *pkg.Sentry {
 	options := sentryhttp.Options{}
 	handler := sentryhttp.New(options)
 
-	return &pkg.Sentry{
+	return &portal.Sentry{
 		Handler: handler,
 		Options: &options,
 		Env:     env,
@@ -52,7 +52,7 @@ func MakeLogs(env *env.Environment) llogs.Driver {
 	return lDriver
 }
 
-func MakeEnv(validate *pkg.Validator) *env.Environment {
+func MakeEnv(validate *portal.Validator) *env.Environment {
 	errorSuffix := "Environment: "
 
 	port, err := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))

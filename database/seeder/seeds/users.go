@@ -2,10 +2,12 @@ package seeds
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/gorm"
+	"github.com/oullin/pkg/portal"
+
 	"strings"
 	"time"
 )
@@ -21,7 +23,10 @@ func MakeUsersSeed(db *database.Connection) *UsersSeed {
 }
 
 func (s UsersSeed) Create(attrs database.UsersAttrs) (database.User, error) {
-	pass, _ := pkg.MakePassword("password")
+	pass, err := portal.MakePassword("password")
+	if err != nil {
+		return database.User{}, fmt.Errorf("failed to generate seed password: %w", err)
+	}
 
 	fake := database.User{
 		UUID:         uuid.NewString(),

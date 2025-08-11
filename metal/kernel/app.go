@@ -7,22 +7,22 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"
-	"github.com/oullin/pkg/http/middleware"
 	"github.com/oullin/pkg/llogs"
+	"github.com/oullin/pkg/middleware"
+	"github.com/oullin/pkg/portal"
 )
 
 type App struct {
 	router    *Router
-	sentry    *pkg.Sentry
+	sentry    *portal.Sentry
 	logs      llogs.Driver
-	validator *pkg.Validator
+	validator *portal.Validator
 	env       *env.Environment
 	db        *database.Connection
 }
 
-func MakeApp(env *env.Environment, validator *pkg.Validator) (*App, error) {
+func MakeApp(env *env.Environment, validator *portal.Validator) (*App, error) {
 	tokenHandler, err := auth.MakeTokensHandler(
 		[]byte(env.App.MasterKey),
 	)

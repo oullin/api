@@ -9,10 +9,10 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/pkg"
 	"github.com/oullin/pkg/auth"
-	"github.com/oullin/pkg/http/middleware"
 	"github.com/oullin/pkg/llogs"
+	"github.com/oullin/pkg/middleware"
+	"github.com/oullin/pkg/portal"
 )
 
 func validEnvVars(t *testing.T) {
@@ -38,7 +38,7 @@ func validEnvVars(t *testing.T) {
 func TestMakeEnv(t *testing.T) {
 	validEnvVars(t)
 
-	env := MakeEnv(pkg.GetDefaultValidator())
+	env := MakeEnv(portal.GetDefaultValidator())
 
 	if env.App.Name != "guss" {
 		t.Fatalf("env not loaded")
@@ -74,7 +74,7 @@ func TestIgnite(t *testing.T) {
 	f.WriteString(content)
 	f.Close()
 
-	env := Ignite(f.Name(), pkg.GetDefaultValidator())
+	env := Ignite(f.Name(), portal.GetDefaultValidator())
 
 	if env.Network.HttpPort != "8080" {
 		t.Fatalf("env not loaded")
@@ -119,7 +119,7 @@ func TestAppHelpers(t *testing.T) {
 func TestAppBootRoutes(t *testing.T) {
 	validEnvVars(t)
 
-	env := MakeEnv(pkg.GetDefaultValidator())
+	env := MakeEnv(portal.GetDefaultValidator())
 
 	key, err := auth.GenerateAESKey()
 
@@ -190,7 +190,7 @@ func TestMakeLogs(t *testing.T) {
 	validEnvVars(t)
 	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 
-	env := MakeEnv(pkg.GetDefaultValidator())
+	env := MakeEnv(portal.GetDefaultValidator())
 
 	driver := MakeLogs(env)
 	fl := driver.(llogs.FilesLogs)
@@ -209,7 +209,7 @@ func TestMakeDbConnectionPanic(t *testing.T) {
 	t.Setenv("ENV_DB_PORT", "1")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(pkg.GetDefaultValidator())
+	env := MakeEnv(portal.GetDefaultValidator())
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -236,7 +236,7 @@ func TestMakeAppPanic(t *testing.T) {
 	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(pkg.GetDefaultValidator())
+	env := MakeEnv(portal.GetDefaultValidator())
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -244,14 +244,14 @@ func TestMakeAppPanic(t *testing.T) {
 		}
 	}()
 
-	MakeApp(env, pkg.GetDefaultValidator())
+	MakeApp(env, portal.GetDefaultValidator())
 }
 
 func TestMakeSentry(t *testing.T) {
 	validEnvVars(t)
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(pkg.GetDefaultValidator())
+	env := MakeEnv(portal.GetDefaultValidator())
 
 	s := MakeSentry(env)
 
@@ -281,7 +281,7 @@ func TestCloseLogs(t *testing.T) {
 	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(pkg.GetDefaultValidator())
+	env := MakeEnv(portal.GetDefaultValidator())
 
 	logs := MakeLogs(env)
 	app := &App{logs: logs}

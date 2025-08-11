@@ -3,7 +3,8 @@ package payload
 import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/queries"
-	"github.com/oullin/pkg"
+	"github.com/oullin/pkg/portal"
+
 	baseHttp "net/http"
 	"strings"
 	"time"
@@ -45,7 +46,7 @@ func GetPostsFiltersFrom(request IndexRequestBody) queries.PostFilters {
 }
 
 func GetSlugFrom(r *baseHttp.Request) string {
-	str := pkg.MakeStringable(r.PathValue("slug"))
+	str := portal.MakeStringable(r.PathValue("slug"))
 
 	return strings.TrimSpace(str.ToLower())
 }
