@@ -53,7 +53,11 @@ func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.
 	}
 
 	now := nowFn().Unix()
-	skewSecs := int64(skew.Seconds())
+	if skew < 0 {
+		skew = -skew
+	}
+
+	skewSecs := int64(skew / time.Second)
 	minValue := now - skewSecs
 	maxValue := now + skewSecs
 

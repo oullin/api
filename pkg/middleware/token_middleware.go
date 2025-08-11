@@ -259,18 +259,6 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		return t.getUnauthenticatedError()
 	}
 
-	// Nonce replay protection: atomically check-and-mark (UseOnce)
-	if t.nonceCache != nil {
-		key := item.AccountName + "|" + nonce
-
-		if t.nonceCache.UseOnce(key, t.nonceTTL) {
-			t.rateLimiter.Fail(limiterKey)
-			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
-
-			return t.getUnauthenticatedError()
-		}
-	}
-
 	// Compute local signature over canonical request and compare in constant time (hash to fixed-length first)
 	localSignature := auth.CreateSignatureFrom(canonical, token.SecretKey)
 	hSig := sha256.Sum256([]byte(strings.TrimSpace(signature)))
@@ -281,6 +269,18 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		logger.Warn("signature mismatch", "account", item.AccountName)
 
 		return t.getUnauthenticatedError()
+	}
+
+	// Nonce replay protection: atomically check-and-mark (UseOnce)
+	if t.nonceCache != nil {
+		key := item.AccountName + "|" + nonce
+
+		if t.nonceCache.UseOnce(key, t.nonceTTL) {
+			t.rateLimiter.Fail(limiterKey)
+			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
+
+			return t.getUnauthenticatedError()
+		}
 	}
 
 	return nil
