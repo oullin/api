@@ -1,0 +1,145 @@
+package middleware
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"strings"
+	"testing"
+	"time"
+	"unsafe"
+
+	"github.com/google/uuid"
+	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
+	"github.com/oullin/pkg/auth"
+	"github.com/oullin/pkg/cache"
+	pkgHttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/limiter"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
+
+// makeRepo creates an in-memory sqlite repo with a seeded API key
+func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHandler, *auth.Token) {
+	t.Helper()
+	th, err := auth.MakeTokensHandler(generate32(t))
+	if err != nil {
+		t.Fatalf("MakeTokensHandler: %v", err)
+	}
+	seed, err := th.SetupNewAccount(account)
+	if err != nil {
+		t.Fatalf("SetupNewAccount: %v", err)
+	}
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("gorm open: %v", err)
+	}
+	if err := db.AutoMigrate(&database.APIKey{}); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	if err := db.Create(&database.APIKey{
+		UUID:        uuid.NewString(),
+		AccountName: seed.AccountName,
+		PublicKey:   seed.EncryptedPublicKey,
+		SecretKey:   seed.EncryptedSecretKey,
+	}).Error; err != nil {
+		t.Fatalf("seed api key: %v", err)
+	}
+	conn := &database.Connection{}
+	v := reflect.ValueOf(conn).Elem().FieldByName("driver")
+	reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem().Set(reflect.ValueOf(db))
+	repo := &repository.ApiKeys{DB: conn}
+	return repo, th, seed
+}
+
+func TestTokenMiddlewareGuardDependencies(t *testing.T) {
+	logger := slogNoop()
+	tm := TokenCheckMiddleware{}
+	if err := tm.guardDependencies(logger); err == nil || err.Status != http.StatusUnauthorized {
+		t.Fatalf("expected unauthorized when dependencies missing")
+	}
+	tm.ApiKeys, tm.TokenHandler, _ = makeRepo(t, "guard1")
+	tm.nonceCache = cache.NewTTLCache()
+	tm.rateLimiter = limiter.NewMemoryLimiter(time.Minute, 1)
+	if err := tm.guardDependencies(logger); err != nil {
+		t.Fatalf("expected no error when dependencies provided, got %#v", err)
+	}
+}
+
+func TestTokenMiddleware_PublicTokenMismatch(t *testing.T) {
+	repo, th, seed := makeRepo(t, "mismatch")
+	tm := MakeTokenMiddleware(th, repo)
+	tm.clockSkew = time.Minute
+	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
+	handler := tm.Handle(next)
+
+	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/x", "", seed.AccountName, "wrong-"+seed.PublicKey, seed.SecretKey, time.Now(), "nonce-mm", "req-mm")
+	req.Header.Set("X-Forwarded-For", "1.1.1.1")
+	rec := httptest.NewRecorder()
+	if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
+		t.Fatalf("expected unauthorized for public token mismatch, got %#v", err)
+	}
+}
+
+func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
+	repo, th, seed := makeRepo(t, "siggy")
+	tm := MakeTokenMiddleware(th, repo)
+	tm.clockSkew = time.Minute
+	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
+	handler := tm.Handle(next)
+
+	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "body", seed.AccountName, seed.PublicKey, seed.SecretKey, time.Now(), "nonce-sig", "req-sig")
+	req.Header.Set("X-Forwarded-For", "1.1.1.1")
+	req.Header.Set("X-API-Signature", req.Header.Get("X-API-Signature")+"tamper")
+	rec := httptest.NewRecorder()
+	if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
+		t.Fatalf("expected unauthorized for signature mismatch, got %#v", err)
+	}
+}
+
+func TestTokenMiddleware_NonceReplay(t *testing.T) {
+	repo, th, seed := makeRepo(t, "replay")
+	tm := MakeTokenMiddleware(th, repo)
+	tm.clockSkew = time.Minute
+	tm.nonceTTL = time.Minute
+	nextCalled := 0
+	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		nextCalled++
+		return nil
+	}
+	handler := tm.Handle(next)
+
+	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "{}", seed.AccountName, seed.PublicKey, seed.SecretKey, time.Now(), "nonce-rp", "req-rp")
+	req.Header.Set("X-Forwarded-For", "1.1.1.1")
+	rec := httptest.NewRecorder()
+	if err := handler(rec, req); err != nil {
+		t.Fatalf("first call failed: %#v", err)
+	}
+	if nextCalled != 1 {
+		t.Fatalf("expected next called once on first request")
+	}
+	rec = httptest.NewRecorder()
+	if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
+		t.Fatalf("expected unauthorized on nonce replay, got %#v", err)
+	}
+}
+
+func TestTokenMiddleware_RateLimiter(t *testing.T) {
+	repo, th, seed := makeRepo(t, "ratey")
+	tm := MakeTokenMiddleware(th, repo)
+	tm.clockSkew = time.Minute
+	key := "9.9.9.9|" + strings.ToLower(seed.AccountName)
+	for i := 0; i < tm.maxFailPerScope; i++ {
+		tm.rateLimiter.Fail(key)
+	}
+	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
+	handler := tm.Handle(next)
+
+	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/rl", "", seed.AccountName, seed.PublicKey, seed.SecretKey, time.Now(), "nonce-rl", "req-rl")
+	req.Header.Set("X-Forwarded-For", "9.9.9.9")
+	rec := httptest.NewRecorder()
+	if err := handler(rec, req); err == nil || err.Status != http.StatusTooManyRequests {
+		t.Fatalf("expected rate limited error, got %#v", err)
+	}
+}
