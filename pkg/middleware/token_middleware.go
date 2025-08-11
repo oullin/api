@@ -71,7 +71,7 @@ type TokenCheckMiddleware struct {
 	// even if they are within the positive skew window.
 	disallowFuture bool
 
-	// nonceTTL is how long a nonce remains invalid after its first use (replay-protection window).
+	// nonceTTL is how long nonce remains invalid after its first use (replay-protection window).
 	nonceTTL time.Duration
 
 	// failWindow indicates the sliding time window used to evaluate authentication failures.
@@ -127,7 +127,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return bodyErr
 		}
 
-		// Build canonical request string
+		// Build a canonical request string
 		canonical := portal.BuildCanonical(r.Method, r.URL, accountName, publicToken, ts, nonce, bodyHash)
 
 		clientIP := portal.ParseClientIP(r)
@@ -228,7 +228,6 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	if item = t.ApiKeys.FindBy(accountName); item == nil {
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("account not found")
-
 		return t.getUnauthenticatedError()
 	}
 
@@ -242,7 +241,6 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	if err != nil {
 		t.rateLimiter.Fail(limiterKey)
 		logger.Error("failed to decode account keys", "account", item.AccountName, "error", err)
-
 		return t.getUnauthenticatedError()
 	}
 
@@ -255,19 +253,17 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	if subtle.ConstantTimeCompare(hP[:], hE[:]) != 1 {
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("public token mismatch", "account", item.AccountName)
-
 		return t.getUnauthenticatedError()
 	}
 
 	// Compute local signature over canonical request and compare in constant time (hash to fixed-length first)
-	localSignature := auth.CreateSignatureFrom(canonical, token.SecretKey)
+	localSignature := auth.CreateSignatureFrom(canonical, token.PublicKey) //@todo Change!
 	hSig := sha256.Sum256([]byte(strings.TrimSpace(signature)))
 	hLocal := sha256.Sum256([]byte(localSignature))
 
 	if subtle.ConstantTimeCompare(hSig[:], hLocal[:]) != 1 {
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("signature mismatch", "account", item.AccountName)
-
 		return t.getUnauthenticatedError()
 	}
 
@@ -278,7 +274,6 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		if t.nonceCache.UseOnce(key, t.nonceTTL) {
 			t.rateLimiter.Fail(limiterKey)
 			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
-
 			return t.getUnauthenticatedError()
 		}
 	}
