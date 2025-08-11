@@ -60,6 +60,9 @@ oullin.io {
 			header_up X-API-Timestamp {http.request.header.X-API-Timestamp}
 			header_up X-API-Nonce {http.request.header.X-API-Nonce}
 			header_up X-Request-ID {http.request.header.X-Request-ID}
+			header_up Content-Type {http.request.header.Content-Type}
+			header_up User-Agent {http.request.header.User-Agent}
+			header_up If-None-Match {http.request.header.If-None-Match}
 
 			transport http {
 				dial_timeout 10s

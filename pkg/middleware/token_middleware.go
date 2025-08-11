@@ -40,6 +40,11 @@ const (
 // It validates required headers, enforces a timestamp skew window, prevents
 // replay attacks via nonce tracking, compares tokens/signatures in constant time,
 // and applies a basic failure-based rate limiter per client scope.
+//
+// Error handling:
+// - Rate limiting errors return 429 Too Many Requests
+// - Timestamp errors return 401 with specific messages for expired or future timestamps
+// - Other authentication errors return 401 with generic messages
 type TokenCheckMiddleware struct {
 	// ApiKeys provides access to persisted API key records used to resolve
 	// account credentials (account name, public key, and secret key).
@@ -84,7 +89,7 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
 		clockSkew:       5 * time.Minute,
 		now:             time.Now,
-		disallowFuture:  false,
+		disallowFuture:  true,
 		nonceTTL:        5 * time.Minute,
 		failWindow:      1 * time.Minute,
 		maxFailPerScope: 10,
@@ -127,8 +132,8 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 
 		clientIP := portal.ParseClientIP(r)
 
-		if t.shallReject(logger, accountName, publicToken, signature, canonical, nonce, clientIP) {
-			return t.getUnauthenticatedError()
+		if err := t.shallReject(logger, accountName, publicToken, signature, canonical, nonce, clientIP); err != nil {
+			return err
 		}
 
 		// Update the request context
@@ -211,12 +216,12 @@ func (t TokenCheckMiddleware) attachContext(r *baseHttp.Request, accountName, re
 	return r.WithContext(ctx)
 }
 
-func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) bool {
+func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) *http.ApiError {
 	limiterKey := clientIP + "|" + strings.ToLower(accountName)
 
 	if t.rateLimiter.TooMany(limiterKey) {
 		logger.Warn("too many authentication failures", "ip", clientIP)
-		return true
+		return t.getRateLimitedError()
 	}
 
 	var item *database.APIKey
@@ -224,7 +229,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("account not found")
 
-		return true
+		return t.getUnauthenticatedError()
 	}
 
 	// Fetch account to understand its keys
@@ -238,7 +243,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		t.rateLimiter.Fail(limiterKey)
 		logger.Error("failed to decode account keys", "account", item.AccountName, "error", err)
 
-		return true
+		return t.getUnauthenticatedError()
 	}
 
 	// Constant-time compare (fixed-length by hashing) of provided public token vs stored one
@@ -251,7 +256,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("public token mismatch", "account", item.AccountName)
 
-		return true
+		return t.getUnauthenticatedError()
 	}
 
 	// Nonce replay protection: atomically check-and-mark (UseOnce)
@@ -262,7 +267,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 			t.rateLimiter.Fail(limiterKey)
 			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
 
-			return true
+			return t.getUnauthenticatedError()
 		}
 	}
 
@@ -275,10 +280,10 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("signature mismatch", "account", item.AccountName)
 
-		return true
+		return t.getUnauthenticatedError()
 	}
 
-	return false
+	return nil
 }
 
 func (t TokenCheckMiddleware) getInvalidRequestError() *http.ApiError {
@@ -298,6 +303,27 @@ func (t TokenCheckMiddleware) getInvalidTokenFormatError() *http.ApiError {
 func (t TokenCheckMiddleware) getUnauthenticatedError() *http.ApiError {
 	return &http.ApiError{
 		Message: "Invalid credentials",
+		Status:  baseHttp.StatusUnauthorized,
+	}
+}
+
+func (t TokenCheckMiddleware) getRateLimitedError() *http.ApiError {
+	return &http.ApiError{
+		Message: "Too many authentication attempts",
+		Status:  baseHttp.StatusTooManyRequests,
+	}
+}
+
+func (t TokenCheckMiddleware) getTimestampTooOldError() *http.ApiError {
+	return &http.ApiError{
+		Message: "Request timestamp expired",
+		Status:  baseHttp.StatusUnauthorized,
+	}
+}
+
+func (t TokenCheckMiddleware) getTimestampTooNewError() *http.ApiError {
+	return &http.ApiError{
+		Message: "Request timestamp invalid",
 		Status:  baseHttp.StatusUnauthorized,
 	}
 }

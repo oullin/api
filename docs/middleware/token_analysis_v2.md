@@ -1,6 +1,6 @@
 # Token middleware analysis (v2)
 
-Date: 2025-08-08
+Date: 2025-08-11
 Scope: pkg/middleware/token_middleware.go and related helpers (valid_timestamp.go, pkg/portal/support.go)
 
 ---
@@ -35,7 +35,7 @@ Main steps:
    - Rejects if timestamp older than now - skew or (if disallowFuture) newer than now; otherwise allows within [now - skew, now + skew].
 
 5) Body hashing
-   - Reads the request body to compute SHA-256 hex via portal.Sha256Hex, then restores the body so downstream handlers can read it again.
+   - Reads the request body with size limit (default 5MB) via portal.ReadWithSizeLimit to prevent DoS attacks, computes SHA-256 hex via portal.Sha256Hex, then restores the body so downstream handlers can read it again.
 
 6) Canonical request construction
    - portal.BuildCanonical(method, url, username, public, ts, nonce, bodyHash)
@@ -99,17 +99,18 @@ These map to the earlier docs’ Phases 1–2 checkboxes: constant-time compare,
 - In-memory state
   - Nonce cache and rate limiter are in-memory; not horizontally scalable. Replays could work across nodes, and failure limits won’t coordinate cluster-wide.
 - Future timestamp policy
-  - disallowFuture is false by default, allowing future timestamps within skew; opens small window for limited replay across clocks.
+  - [x] disallowFuture is false by default, allowing future timestamps within skew; opens small window for limited replay across clocks.
 - Key rotation and key identification
   - Canonical/signature doesn’t include a key identifier (kid). Rotations require coordination and lookup; currently only username+public token are provided.
 - Observability and audit
   - Logs are present but no explicit audit event for successful/failed auth with stable event schema or metrics emission.
 - Error handling surfaces
-  - All errors map to 401; may want 429 for rate-limited scopes and distinct codes for clock skew vs. formatting for better client remediation (while still generic).
+  - [x] Implemented appropriate status codes: 429 for rate-limited scopes and distinct error messages for clock skew vs. formatting errors for better client remediation (while still keeping messages generic).
 - DoS controls
   - Rate limiter is failure-triggered only; no general request token bucket per account/IP for auth endpoints.
 - Request size / body hashing
-  - Large bodies are fully read into memory to hash; could be abused. No explicit max size before rejection.
+  - [x] Implemented ReadWithSizeLimit with default 5MB limit to prevent DoS attacks from large request bodies.
+  - [x] Used in token_middleware.go, client.go, and markdown/handler.go for consistent protection.
 
 ---
 
@@ -133,7 +134,7 @@ These map to the earlier docs’ Phases 1–2 checkboxes: constant-time compare,
    - Ensure canonicalization is frozen per version and formally documented; add conformance tests for edge cases (empty query, repeated params, unicode path).
 
 5) Resource and abuse protections
-   - Enforce a maximum body size for requests that must be signed (e.g., 2–5MB) before hashing; reject larger with 413.
+   - ✓ Enforce a maximum body size for requests that must be signed (default 5MB) before hashing using ReadWithSizeLimit.
    - Add general-purpose rate limiting (token bucket) per IP/account for auth attempts and overall requests.
 
 6) Observability and audit
@@ -158,13 +159,13 @@ These map to the earlier docs’ Phases 1–2 checkboxes: constant-time compare,
 ## 5) Concrete implementation tasks
 
 - Replace nonceCache with interface and add RedisTTLCache implementation; wire by config. Use key "acct|nonce" with PX TTL and SET NX.
-- Replace limiter.MemoryLimiter with a pluggable Limiter interface and add Redis-based sliding window or token bucket implementation. Return 429 on scope saturation.
+- Replace limiter.MemoryLimiter with a pluggable Limiter interface and add Redis-based sliding window or token bucket implementation. ✓ Return 429 on scope saturation.
 - Default disallowFuture = true; make skew configurable via env. Add /time endpoint that returns server unix time.
 - Extend headers:
   - X-API-Key-ID (kid)
   - X-API-Alg (e.g., hmac-sha256;v=1)
   Include these in canonical string and signature verification path. Update tests.
-- Add MaxBodyBytes wrapper before hashing; reject with 413 if exceeded; document limits.
+- ✓ Added ReadWithSizeLimit function with default 5MB limit before hashing; rejects with generic error if exceeded.
 - Emit metrics and structured audit logs; create middleware counters and reason tags.
 - Documentation updates and client examples for canonicalization and signing including new headers.
 
@@ -173,7 +174,7 @@ These map to the earlier docs’ Phases 1–2 checkboxes: constant-time compare,
 ## 6) What remains unchanged (for clarity)
 
 - The overall request flow and canonicalization approach remains; we are enriching it with distributed state, policy tightening, and key management features.
-- Error messages remain generic to clients; only status codes and headers may change for rate-limiting (429) and possibly clock skew guidance headers.
+- Error messages remain generic to clients; status codes now include 429 for rate-limiting and more specific (but still generic) error messages for timestamp validation.
 
 ---
 

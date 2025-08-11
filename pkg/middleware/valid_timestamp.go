@@ -63,12 +63,12 @@ func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.
 
 	if epoch < minValue {
 		v.logger.Warn("timestamp outside allowed window: too old")
-		return &http.ApiError{Message: "Invalid credentials", Status: baseHttp.StatusUnauthorized}
+		return &http.ApiError{Message: "Request timestamp expired", Status: baseHttp.StatusUnauthorized}
 	}
 
 	if epoch > maxValue {
 		v.logger.Warn("timestamp outside allowed window: in the future")
-		return &http.ApiError{Message: "Invalid credentials", Status: baseHttp.StatusUnauthorized}
+		return &http.ApiError{Message: "Request timestamp invalid", Status: baseHttp.StatusUnauthorized}
 	}
 
 	return nil

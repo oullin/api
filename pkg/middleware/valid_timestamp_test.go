@@ -49,7 +49,7 @@ func TestValidate_TooOldTimestamp(t *testing.T) {
 	oldTs := strconv.FormatInt(base.Add(-skew).Add(-1*time.Second).Unix(), 10)
 	vt := NewValidTimestamp(oldTs, slogNoop(), fixedClock(base))
 	err := vt.Validate(skew, false)
-	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid credentials" {
+	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Request timestamp expired" {
 		t.Fatalf("expected unauthenticated for too old timestamp, got %#v", err)
 	}
 }
@@ -68,7 +68,7 @@ func TestValidate_FutureWithinSkew_Behavior(t *testing.T) {
 	// Rejected when disallowFuture=true
 	vt = NewValidTimestamp(futureWithin, slogNoop(), fixedClock(base))
 	err := vt.Validate(skew, true)
-	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid credentials" {
+	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Request timestamp invalid" {
 		t.Fatalf("expected unauthenticated for future timestamp when disallowFuture=true, got %#v", err)
 	}
 }

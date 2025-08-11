@@ -43,6 +43,24 @@ func TestTokenMiddlewareErrors(t *testing.T) {
 	if e.Status != http.StatusUnauthorized {
 		t.Fatalf("unauthenticated error")
 	}
+
+	e = tm.getRateLimitedError()
+
+	if e.Status != http.StatusTooManyRequests || e.Message == "" {
+		t.Fatalf("rate limited error should return 429 status code")
+	}
+
+	e = tm.getTimestampTooOldError()
+
+	if e.Status != http.StatusUnauthorized || e.Message != "Request timestamp expired" {
+		t.Fatalf("timestamp too old error")
+	}
+
+	e = tm.getTimestampTooNewError()
+
+	if e.Status != http.StatusUnauthorized || e.Message != "Request timestamp invalid" {
+		t.Fatalf("timestamp too new error")
+	}
 }
 
 func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {
@@ -345,5 +363,76 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 	}
 	if !nextCalled {
 		t.Fatalf("next was not called on happy path")
+	}
+}
+
+// TestMakeTokenMiddleware_DefaultDisallowFuture verifies that disallowFuture is true by default
+func TestMakeTokenMiddleware_DefaultDisallowFuture(t *testing.T) {
+	// Create middleware with default settings
+	tm := MakeTokenMiddleware(nil, nil)
+
+	// Verify disallowFuture is true by default
+	if !tm.disallowFuture {
+		t.Fatalf("expected disallowFuture to be true by default, got false")
+	}
+}
+
+// TestTokenMiddleware_RejectsFutureTimestamps verifies that future timestamps are rejected
+func TestTokenMiddleware_RejectsFutureTimestamps(t *testing.T) {
+	conn := setupDB(t)
+
+	// Prepare TokenHandler and seed an account with encrypted keys
+	th, err := auth.MakeTokensHandler(generate32(t))
+	if err != nil {
+		t.Fatalf("MakeTokensHandler: %v", err)
+	}
+	seed, err := th.SetupNewAccount("acme-user-future")
+	if err != nil {
+		t.Fatalf("SetupNewAccount: %v", err)
+	}
+
+	repo := &repository.ApiKeys{DB: conn}
+	if _, err := repo.Create(database.APIKeyAttr{
+		AccountName: seed.AccountName,
+		PublicKey:   seed.EncryptedPublicKey,
+		SecretKey:   seed.EncryptedSecretKey,
+	}); err != nil {
+		t.Fatalf("repo.Create: %v", err)
+	}
+
+	// Build middleware with default settings (disallowFuture = true)
+	tm := MakeTokenMiddleware(th, repo)
+
+	nextCalled := false
+	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		nextCalled = true
+		return nil
+	}
+	handler := tm.Handle(next)
+
+	// Create a request with a future timestamp (30 seconds in the future)
+	futureTime := time.Now().Add(30 * time.Second)
+	req := makeSignedRequest(t,
+		http.MethodGet,
+		"https://api.test.local/v1/test",
+		"",
+		seed.AccountName,
+		seed.PublicKey,
+		seed.SecretKey,
+		futureTime,
+		"n-future-1",
+		"rid-future-1",
+	)
+	rec := httptest.NewRecorder()
+
+	// The request should be rejected with a 401 Unauthorized
+	apiErr := handler(rec, req)
+	if apiErr == nil || apiErr.Status != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for future timestamp, got %#v", apiErr)
+	}
+
+	// Next handler should not be called
+	if nextCalled {
+		t.Fatalf("next should not be called when future timestamp is rejected")
 	}
 }

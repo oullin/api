@@ -3,6 +3,7 @@ package portal
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -93,7 +94,11 @@ func ParseClientIP(r *baseHttp.Request) string {
 // ReadWithSizeLimit reads from an io.Reader with a size limit to prevent DoS attacks.
 // It returns the read bytes and any error encountered.
 // The default size limit is 5MB.
-func ReadWithSizeLimit(r io.Reader, maxSize ...int64) ([]byte, error) {
+func ReadWithSizeLimit(reader io.Reader, maxSize ...int64) ([]byte, error) {
+	if reader == nil {
+		return nil, io.ErrUnexpectedEOF
+	}
+
 	// Default size limit is 5MB
 	const defaultMaxSize int64 = 5 * 1024 * 1024 // 5MB
 
@@ -102,7 +107,12 @@ func ReadWithSizeLimit(r io.Reader, maxSize ...int64) ([]byte, error) {
 		limit = maxSize[0]
 	}
 
-	limitedReader := io.LimitReader(r, limit)
+	limitedReader := &io.LimitedReader{R: reader, N: limit + 1}
+	data, err := io.ReadAll(limitedReader)
 
-	return io.ReadAll(limitedReader)
+	if int64(len(data)) > limit || err != nil {
+		return nil, fmt.Errorf("read exceeds size limit: %d, error: %w", limit, err)
+	}
+
+	return data, nil
 }
