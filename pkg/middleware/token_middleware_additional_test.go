@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -16,13 +17,41 @@ import (
 	"github.com/oullin/pkg/cache"
 	pkgHttp "github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/limiter"
-	"gorm.io/driver/sqlite"
+	"github.com/testcontainers/testcontainers-go"
+	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-// makeRepo creates an in-memory sqlite repo with a seeded API key
+// makeRepo creates a temporary postgres repo with a seeded API key
 func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHandler, *auth.Token) {
 	t.Helper()
+	testcontainers.SkipIfProviderIsNotHealthy(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	pgC, err := postgrescontainer.RunContainer(ctx,
+		testcontainers.WithImage("postgres:16-alpine"),
+		postgrescontainer.WithDatabase("testdb"),
+		postgrescontainer.WithUsername("test"),
+		postgrescontainer.WithPassword("test"),
+	)
+	if err != nil {
+		t.Skipf("run postgres container: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = pgC.Terminate(ctx)
+	})
+	dsn, err := pgC.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		t.Skipf("connection string: %v", err)
+	}
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("gorm open: %v", err)
+	}
+	if err := db.AutoMigrate(&database.APIKey{}); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
 	th, err := auth.MakeTokensHandler(generate32(t))
 	if err != nil {
 		t.Fatalf("MakeTokensHandler: %v", err)
@@ -30,13 +59,6 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	seed, err := th.SetupNewAccount(account)
 	if err != nil {
 		t.Fatalf("SetupNewAccount: %v", err)
-	}
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("gorm open: %v", err)
-	}
-	if err := db.AutoMigrate(&database.APIKey{}); err != nil {
-		t.Fatalf("migrate: %v", err)
 	}
 	if err := db.Create(&database.APIKey{
 		UUID:        uuid.NewString(),
