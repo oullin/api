@@ -54,6 +54,8 @@ help:
 	@printf "  $(BOLD)$(GREEN)watch$(NC)            : Start a file watcher process.\n"
 	@printf "  $(BOLD)$(GREEN)format$(NC)           : Automatically format code.\n"
 	@printf "  $(BOLD)$(GREEN)test-all$(NC)         : Run all the application tests.\n\n"
+	@printf "  $(BOLD)$(GREEN)run-cli$(NC)          : Run the application CLI interface.\n\n"
+	@printf "  $(BOLD)$(GREEN)run-cli-local$(NC)    : Run the application dev's CLI interface.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)build-local$(NC)      : Build the main application for development.\n"
