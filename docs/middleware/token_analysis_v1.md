@@ -1,11 +1,13 @@
 # Token Middleware Analysis and Recommendations
 
-File: pkg/http/middleware/token_middleware.go
+Files:
+- Legacy (pre-PR #77): pkg/http/middleware/token_middleware.go (removed)
+- Current (v1): pkg/middleware/token_middleware.go
 Date: 2025-08-08
 
 ---
 
-## 1) What it does
+## 1) What the legacy middleware did (pre-PR #77)
 
 The TokenCheckMiddleware enforces a simple HMAC-based request authentication using three custom HTTP headers:
 
@@ -101,6 +103,14 @@ Security hardening (medium impact):
 
 - Input normalization:
   - Canonicalize header casing, path, and query param encoding consistently.
+
+- Canonicalization rules (to prevent signature drift):
+  - METHOD uppercased; PATH must be URI-normalized without dot-segments.
+  - Percent-encode using RFC 3986 unreserved set; do not double-encode.
+  - SORTED_QUERY_STRING sorts by key, then by value, both byte-wise ascending; multi-value params preserved in sorted order.
+  - Collapse duplicate query separators; omit keys with empty names.
+  - BODY hash is the SHA-256 of the exact bytes sent; for empty body use the hash of the empty string.
+  - Header names are case-insensitive; trim surrounding whitespace on all header values.
 
 - Rate limiting:
   - Rate limit auth failures per IP/account.
@@ -279,20 +289,22 @@ Date: 2025-08-08 16:52 local
 - Caddy local proxy (caddy/Caddyfile.local):
   - auto_https off (HTTP only locally).
   - Listens on :80 in the container (published as http://localhost:8080 on the host).
-  - CORS: Allows Origin http://localhost:5173 and headers X-API-Username, X-API-Key, X-API-Signature; handles OPTIONS preflight.
+  - CORS: Allows Origin http://localhost:5173 and headers X-API-Username, X-API-Key, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID; handles OPTIONS preflight.
+  - CORS: Exposes header X-Request-ID to clients.
   - reverse_proxy api:8080 — all paths are forwarded to API without an "/api" prefix.
 
 - Caddy production proxy (caddy/Caddyfile.prod):
   - Site: oullin.io (automatic HTTPS).
   - API is routed under /api/* and proxied to api:8080. That means production API path = https://oullin.io/api/... while local is http://localhost:8080/....
   - CORS configured for https://oullin.io within the /api handler. For preflight, echoes Access-Control-Allow-Origin back.
-  - Forwards key auth headers upstream (header_up Host, X-API-Username, X-API-Key, X-API-Signature). X-Forwarded-For is also set by Caddy; the middleware’s ParseClientIP will prefer the first X-Forwarded-For entry.
+  - Forwards key auth headers upstream (header_up Host, X-API-Username, X-API-Key, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID). X-Forwarded-For is also set by Caddy; the middleware’s ParseClientIP will prefer the first X-Forwarded-For entry.
+  - CORS: Exposes header X-Request-ID to clients.
 
-- Makefile (metal/makefile):
-  - build-local: docker compose --profile local up --build -d (starts api, api-db, caddy_local). After this, the API is reachable at http://localhost:8080.
-  - db:up, db:seed, db:migrate: Manage DB lifecycle and schema.
-  - validate-caddy: Format/validate local and prod Caddyfiles.
-  - env:init, env:check: Manage .env from .env.example.
+- Makefiles (metal/makefile/*.mk):
+  - build-local (build.mk): docker compose --profile local up --build -d (starts api, api-db, caddy_local). After this, the API is reachable at http://localhost:8080.
+  - db:up, db:seed, db:migrate (db.mk): Manage DB lifecycle and schema.
+  - validate-caddy (app.mk): Format/validate local and production Caddyfiles.
+  - env:init, env:check (env.mk): Initialize and verify .env from .env.example.
 
 - API routes (metal/kernel/router.go):
   - POST /posts (list/filter posts) and GET /posts/{slug} (show post) are protected by TokenCheckMiddleware.
