@@ -49,8 +49,9 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	if err != nil {
 		t.Skipf("gorm open: %v", err)
 	}
-	sqlDB, _ := db.DB()
-	t.Cleanup(func() { _ = sqlDB.Close() })
+	if sqlDB, err := db.DB(); err == nil {
+		t.Cleanup(func() { _ = sqlDB.Close() })
+	}
 	if err := db.AutoMigrate(&database.APIKey{}); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
