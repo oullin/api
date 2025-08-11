@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -152,17 +152,39 @@ func TestTokenMiddleware_RateLimiter(t *testing.T) {
 	repo, th, seed := makeRepo(t, "ratey")
 	tm := MakeTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
-	key := "9.9.9.9|" + strings.ToLower(seed.AccountName)
-	for i := 0; i < tm.maxFailPerScope; i++ {
-		tm.rateLimiter.Fail(key)
+	nextCalled := 0
+	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		nextCalled++
+		return nil
 	}
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
 	handler := tm.Handle(next)
 
-	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/rl", "", seed.AccountName, seed.PublicKey, seed.SecretKey, time.Now(), "nonce-rl", "req-rl")
+	// Pre-warm limiter by sending invalid signature requests up to the limit
+	for i := 0; i < tm.maxFailPerScope; i++ {
+		req := makeSignedRequest(
+			t, http.MethodGet, "https://api.test.local/v1/rl", "",
+			seed.AccountName, seed.PublicKey, "wrong-secret", time.Now(),
+			fmt.Sprintf("nonce-rl-%d", i), fmt.Sprintf("req-rl-%d", i),
+		)
+		req.Header.Set("X-Forwarded-For", "9.9.9.9")
+		rec := httptest.NewRecorder()
+		_ = handler(rec, req) // ignore errors while warming
+	}
+
+	// Next request with valid signature should be rate limited
+	req := makeSignedRequest(
+		t, http.MethodGet, "https://api.test.local/v1/rl", "",
+		seed.AccountName, seed.PublicKey, seed.SecretKey, time.Now(),
+		"nonce-rl-final", "req-rl-final",
+	)
 	req.Header.Set("X-Forwarded-For", "9.9.9.9")
 	rec := httptest.NewRecorder()
-	if err := handler(rec, req); err == nil || err.Status != http.StatusTooManyRequests {
+	err := handler(rec, req)
+	if err == nil || err.Status != http.StatusTooManyRequests {
 		t.Fatalf("expected rate limited error, got %#v", err)
+	}
+
+	if nextCalled != 0 {
+		t.Fatalf("expected next not to be invoked when rate limited, got %d calls", nextCalled)
 	}
 }
