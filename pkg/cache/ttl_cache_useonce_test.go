@@ -30,7 +30,10 @@ func TestTTLCache_Mark_PrunesExpiredEntries(t *testing.T) {
 	c.Mark("old", 10*time.Millisecond)
 	time.Sleep(20 * time.Millisecond)
 	c.Mark("new", 10*time.Millisecond) // should prune "old"
-	if c.Used("old") {
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, ok := c.data["old"]; ok {
 		t.Fatalf("expected expired key to be pruned from cache")
 	}
 }
