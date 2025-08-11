@@ -2,11 +2,12 @@ package markdown
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
-	"io"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/oullin/pkg/portal"
+	"gopkg.in/yaml.v3"
 )
 
 func (p Parser) Fetch() (string, error) {
@@ -31,8 +32,7 @@ func (p Parser) Fetch() (string, error) {
 		return "", fmt.Errorf("failed to fetch markdown: status %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-
+	body, err := portal.ReadWithSizeLimit(resp.Body)
 	if err != nil {
 		return "", err
 	}

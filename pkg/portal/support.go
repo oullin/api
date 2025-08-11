@@ -89,3 +89,20 @@ func ParseClientIP(r *baseHttp.Request) string {
 
 	return strings.TrimSpace(r.RemoteAddr)
 }
+
+// ReadWithSizeLimit reads from an io.Reader with a size limit to prevent DoS attacks.
+// It returns the read bytes and any error encountered.
+// The default size limit is 5MB.
+func ReadWithSizeLimit(r io.Reader, maxSize ...int64) ([]byte, error) {
+	// Default size limit is 5MB
+	const defaultMaxSize int64 = 5 * 1024 * 1024 // 5MB
+
+	limit := defaultMaxSize
+	if len(maxSize) > 0 && maxSize[0] > 0 {
+		limit = maxSize[0]
+	}
+
+	limitedReader := io.LimitReader(r, limit)
+
+	return io.ReadAll(limitedReader)
+}

@@ -192,7 +192,7 @@ func (t TokenCheckMiddleware) readBodyHash(r *baseHttp.Request, logger *slog.Log
 		return portal.Sha256Hex(nil), nil
 	}
 
-	b, err := io.ReadAll(r.Body)
+	b, err := portal.ReadWithSizeLimit(r.Body)
 	if err != nil {
 		logger.Warn("unable to read body for signing")
 		return "", t.getInvalidRequestError()
