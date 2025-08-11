@@ -4,11 +4,9 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
-	"unsafe"
 
 	"github.com/google/uuid"
 	"github.com/oullin/database"
@@ -27,7 +25,7 @@ import (
 func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHandler, *auth.Token) {
 	t.Helper()
 	testcontainers.SkipIfProviderIsNotHealthy(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	pgC, err := postgrescontainer.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16-alpine"),
@@ -39,7 +37,9 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 		t.Skipf("run postgres container: %v", err)
 	}
 	t.Cleanup(func() {
-		_ = pgC.Terminate(ctx)
+		cctx, ccancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer ccancel()
+		_ = pgC.Terminate(cctx)
 	})
 	dsn, err := pgC.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
@@ -49,6 +49,8 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	if err != nil {
 		t.Skipf("gorm open: %v", err)
 	}
+	sqlDB, _ := db.DB()
+	t.Cleanup(func() { _ = sqlDB.Close() })
 	if err := db.AutoMigrate(&database.APIKey{}); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
@@ -68,9 +70,7 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	}).Error; err != nil {
 		t.Fatalf("seed api key: %v", err)
 	}
-	conn := &database.Connection{}
-	v := reflect.ValueOf(conn).Elem().FieldByName("driver")
-	reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem().Set(reflect.ValueOf(db))
+	conn := database.NewConnectionFromGorm(db)
 	repo := &repository.ApiKeys{DB: conn}
 	return repo, th, seed
 }
