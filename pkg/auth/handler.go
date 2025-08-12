@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type TokenHandler struct {
@@ -25,7 +27,7 @@ func MakeTokensHandler(encryptionKey []byte) (*TokenHandler, error) {
 	}, nil
 }
 
-func (t *TokenHandler) DecodeTokensFor(accountName string, secret, public []byte) (*Token, error) {
+func (t *TokenHandler) DecodeTokensFor(accountName, keyID string, secret, public []byte) (*Token, error) {
 	var err error
 	var publicKey, secretKey []byte
 
@@ -39,6 +41,7 @@ func (t *TokenHandler) DecodeTokensFor(accountName string, secret, public []byte
 
 	return &Token{
 		AccountName:        accountName,
+		KeyID:              keyID,
 		PublicKey:          string(publicKey),
 		EncryptedPublicKey: public,
 		SecretKey:          string(secretKey),
@@ -64,6 +67,7 @@ func (t *TokenHandler) SetupNewAccount(accountName string) (*Token, error) {
 
 	return &Token{
 		AccountName:        accountName,
+		KeyID:              uuid.NewString(),
 		PublicKey:          pk.PlainText,
 		EncryptedPublicKey: pk.EncryptedText,
 		SecretKey:          sk.PlainText,

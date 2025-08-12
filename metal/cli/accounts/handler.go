@@ -16,6 +16,7 @@ func (h Handler) CreateAccount(accountName string) error {
 
 	_, err = h.Tokens.Create(database.APIKeyAttr{
 		AccountName: token.AccountName,
+		KeyID:       token.KeyID,
 		SecretKey:   token.EncryptedSecretKey,
 		PublicKey:   token.EncryptedPublicKey,
 	})
@@ -38,6 +39,7 @@ func (h Handler) ReadAccount(accountName string) error {
 
 	token, err := h.TokenHandler.DecodeTokensFor(
 		item.AccountName,
+		item.KeyID,
 		item.SecretKey,
 		item.PublicKey,
 	)
@@ -48,6 +50,7 @@ func (h Handler) ReadAccount(accountName string) error {
 
 	cli.Successln("\nThe given account has been found successfully!\n")
 	cli.Blueln("   > " + fmt.Sprintf("Account name: %s", token.AccountName))
+	cli.Blueln("   > " + fmt.Sprintf("Key ID: %s", item.KeyID))
 	cli.Blueln("   > " + fmt.Sprintf("Public Key: %s", token.PublicKey))
 	cli.Blueln("   > " + fmt.Sprintf("Secret Key: %s", token.SecretKey))
 	cli.Blueln("   > " + fmt.Sprintf("API Signature: %s", auth.CreateSignatureFrom(token.AccountName, token.SecretKey)))
@@ -68,6 +71,7 @@ func (h Handler) CreateSignature(accountName string) error {
 
 	token, err := h.TokenHandler.DecodeTokensFor(
 		item.AccountName,
+		item.KeyID,
 		item.SecretKey,
 		item.PublicKey,
 	)
@@ -80,6 +84,7 @@ func (h Handler) CreateSignature(accountName string) error {
 
 	cli.Successln("\nThe given account has been found successfully!\n")
 	cli.Blueln("   > " + fmt.Sprintf("Account name: %s", token.AccountName))
+	cli.Blueln("   > " + fmt.Sprintf("Key ID: %s", item.KeyID))
 	cli.Blueln("   > " + fmt.Sprintf("Public Key: %s", auth.SafeDisplay(token.PublicKey)))
 	cli.Blueln("   > " + fmt.Sprintf("Secret Key: %s", auth.SafeDisplay(token.SecretKey)))
 	cli.Warningln("----- Encrypted Values -----")

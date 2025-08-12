@@ -52,7 +52,7 @@ func SortedQuery(u *url.URL) string {
 	return strings.Join(pairs, "&")
 }
 
-func BuildCanonical(method string, u *url.URL, username, public, ts, nonce, bodyHash string) string {
+func BuildCanonical(method string, u *url.URL, username, keyID, public, ts, nonce, bodyHash string) string {
 	path := "/"
 
 	if u != nil && u.Path != "" {
@@ -65,6 +65,7 @@ func BuildCanonical(method string, u *url.URL, username, public, ts, nonce, body
 		path,
 		query,
 		username,
+		keyID,
 		public,
 		ts,
 		nonce,

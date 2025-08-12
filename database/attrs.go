@@ -6,6 +6,7 @@ import (
 
 type APIKeyAttr struct {
 	AccountName string
+	KeyID       string
 	PublicKey   []byte
 	SecretKey   []byte
 }

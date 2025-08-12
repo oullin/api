@@ -95,17 +95,18 @@ func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
 	logger := slogNoop()
 	req := httptest.NewRequest("GET", "/", nil)
 	// All empty
-	if _, _, _, _, _, apiErr := tm.validateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
+	if _, _, _, _, _, _, apiErr := tm.validateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
 		t.Fatalf("expected error for missing headers")
 	}
 
 	// Set minimal headers but invalid token format (not pk_/sk_ prefix or too short)
 	req.Header.Set("X-API-Username", "alice")
+	req.Header.Set("X-API-Key-ID", "kid1")
 	req.Header.Set("X-API-Key", "badtoken")
 	req.Header.Set("X-API-Signature", "sig")
 	req.Header.Set("X-API-Timestamp", "1700000000")
 	req.Header.Set("X-API-Nonce", "n1")
-	if _, _, _, _, _, apiErr := tm.validateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
+	if _, _, _, _, _, _, apiErr := tm.validateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
 		t.Fatalf("expected error for invalid token format")
 	}
 }
@@ -214,7 +215,7 @@ func generate32(t *testing.T) []byte {
 // signingKey is the token used to create the signature. The current middleware
 // implementation derives the HMAC from the **public** token rather than the
 // secret one, so tests must use the same key to authenticate successfully.
-func makeSignedRequest(t *testing.T, method, rawURL, body, account, public, signingKey string, ts time.Time, nonce, reqID string) *http.Request {
+func makeSignedRequest(t *testing.T, method, rawURL, body, account, keyID, public, signingKey string, ts time.Time, nonce, reqID string) *http.Request {
 	t.Helper()
 	var bodyBuf *bytes.Buffer
 	if body != "" {
@@ -225,12 +226,13 @@ func makeSignedRequest(t *testing.T, method, rawURL, body, account, public, sign
 	req := httptest.NewRequest(method, rawURL, bodyBuf)
 	req.Header.Set("X-Request-ID", reqID)
 	req.Header.Set("X-API-Username", account)
+	req.Header.Set("X-API-Key-ID", keyID)
 	req.Header.Set("X-API-Key", public)
 	req.Header.Set("X-API-Timestamp", strconv.FormatInt(ts.Unix(), 10))
 	req.Header.Set("X-API-Nonce", nonce)
 
 	bodyHash := portal.Sha256Hex([]byte(body))
-	canonical := portal.BuildCanonical(method, req.URL, account, public, req.Header.Get("X-API-Timestamp"), nonce, bodyHash)
+	canonical := portal.BuildCanonical(method, req.URL, account, keyID, public, req.Header.Get("X-API-Timestamp"), nonce, bodyHash)
 	sig := auth.CreateSignatureFrom(canonical, signingKey)
 	req.Header.Set("X-API-Signature", sig)
 	return req
@@ -252,6 +254,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 	repo := &repository.ApiKeys{DB: conn}
 	if _, err := repo.Create(database.APIKeyAttr{
 		AccountName: seed.AccountName,
+		KeyID:       seed.KeyID,
 		PublicKey:   seed.EncryptedPublicKey,
 		SecretKey:   seed.EncryptedSecretKey,
 	}); err != nil {
@@ -278,6 +281,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 		"https://api.test.local/v1/posts?z=9&a=1",
 		"{\"title\":\"ok\"}",
 		seed.AccountName,
+		seed.KeyID,
 		seed.PublicKey,
 		seed.PublicKey,
 		now,
@@ -299,6 +303,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 		"https://api.test.local/v1/ping",
 		"",
 		"no-such-user",
+		seed.KeyID,
 		seed.PublicKey,
 		seed.PublicKey,
 		now,
@@ -331,6 +336,7 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 	repo := &repository.ApiKeys{DB: conn}
 	if _, err := repo.Create(database.APIKeyAttr{
 		AccountName: seed.AccountName,
+		KeyID:       seed.KeyID,
 		PublicKey:   seed.EncryptedPublicKey,
 		SecretKey:   seed.EncryptedSecretKey,
 	}); err != nil {
@@ -355,6 +361,7 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 		"https://api.test.local/v1/resource?b=2&a=1",
 		"{\"x\":123}",
 		seed.AccountName,
+		seed.KeyID,
 		seed.PublicKey,
 		seed.PublicKey,
 		time.Now(),
@@ -421,6 +428,7 @@ func TestTokenMiddleware_RejectsFutureTimestamps(t *testing.T) {
 		"https://api.test.local/v1/test",
 		"",
 		seed.AccountName,
+		seed.KeyID,
 		seed.PublicKey,
 		seed.PublicKey,
 		futureTime,
@@ -438,5 +446,52 @@ func TestTokenMiddleware_RejectsFutureTimestamps(t *testing.T) {
 	// Next handler should not be called
 	if nextCalled {
 		t.Fatalf("next should not be called when future timestamp is rejected")
+	}
+}
+
+// TestTokenMiddleware_KeyRotation verifies that multiple keys per account can be used
+func TestTokenMiddleware_KeyRotation(t *testing.T) {
+	conn := setupDB(t)
+
+	th, err := auth.MakeTokensHandler(generate32(t))
+	if err != nil {
+		t.Fatalf("MakeTokensHandler: %v", err)
+	}
+
+	seed1, err := th.SetupNewAccount("acme-rot")
+	if err != nil {
+		t.Fatalf("SetupNewAccount1: %v", err)
+	}
+
+	seed2, err := th.SetupNewAccount("acme-rot")
+	if err != nil {
+		t.Fatalf("SetupNewAccount2: %v", err)
+	}
+
+	repo := &repository.ApiKeys{DB: conn}
+	if _, err := repo.Create(database.APIKeyAttr{AccountName: seed1.AccountName, KeyID: seed1.KeyID, PublicKey: seed1.EncryptedPublicKey, SecretKey: seed1.EncryptedSecretKey}); err != nil {
+		t.Fatalf("repo.Create1: %v", err)
+	}
+	if _, err := repo.Create(database.APIKeyAttr{AccountName: seed2.AccountName, KeyID: seed2.KeyID, PublicKey: seed2.EncryptedPublicKey, SecretKey: seed2.EncryptedSecretKey}); err != nil {
+		t.Fatalf("repo.Create2: %v", err)
+	}
+
+	tm := MakeTokenMiddleware(th, repo)
+	tm.clockSkew = 2 * time.Minute
+	tm.nonceTTL = 1 * time.Minute
+
+	called := false
+	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		called = true
+		return nil
+	})
+
+	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/rot", "", seed2.AccountName, seed2.KeyID, seed2.PublicKey, seed2.PublicKey, time.Now(), "nonce-rot", "req-rot")
+	rec := httptest.NewRecorder()
+	if err := handler(rec, req); err != nil {
+		t.Fatalf("expected success with rotated key, got %#v", err)
+	}
+	if !called {
+		t.Fatalf("next not called")
 	}
 }

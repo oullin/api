@@ -26,6 +26,7 @@ const signatureHeader = "X-API-Signature"
 const timestampHeader = "X-API-Timestamp"
 const nonceHeader = "X-API-Nonce"
 const requestIDHeader = "X-Request-ID"
+const keyIDHeader = "X-API-Key-ID"
 
 // Context keys for propagating auth info downstream
 // Use unexported custom type to avoid collisions
@@ -110,7 +111,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 		}
 
 		// Extract and validate required headers
-		accountName, publicToken, signature, ts, nonce, hdrErr := t.validateAndGetHeaders(r, logger)
+		accountName, keyID, publicToken, signature, ts, nonce, hdrErr := t.validateAndGetHeaders(r, logger)
 		if hdrErr != nil {
 			return hdrErr
 		}
@@ -128,11 +129,11 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 		}
 
 		// Build a canonical request string
-		canonical := portal.BuildCanonical(r.Method, r.URL, accountName, publicToken, ts, nonce, bodyHash)
+		canonical := portal.BuildCanonical(r.Method, r.URL, accountName, keyID, publicToken, ts, nonce, bodyHash)
 
 		clientIP := portal.ParseClientIP(r)
 
-		if err := t.shallReject(logger, accountName, publicToken, signature, canonical, nonce, clientIP); err != nil {
+		if err := t.shallReject(logger, accountName, keyID, publicToken, signature, canonical, nonce, clientIP); err != nil {
 			return err
 		}
 
@@ -172,24 +173,25 @@ func (t TokenCheckMiddleware) guardDependencies(logger *slog.Logger) *http.ApiEr
 	return nil
 }
 
-func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, logger *slog.Logger) (accountName, publicToken, signature, ts, nonce string, apiErr *http.ApiError) {
+func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, logger *slog.Logger) (accountName, keyID, publicToken, signature, ts, nonce string, apiErr *http.ApiError) {
 	accountName = strings.TrimSpace(r.Header.Get(usernameHeader))
+	keyID = strings.TrimSpace(r.Header.Get(keyIDHeader))
 	publicToken = strings.TrimSpace(r.Header.Get(tokenHeader))
 	signature = strings.TrimSpace(r.Header.Get(signatureHeader))
 	ts = strings.TrimSpace(r.Header.Get(timestampHeader))
 	nonce = strings.TrimSpace(r.Header.Get(nonceHeader))
 
-	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" {
+	if accountName == "" || keyID == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" {
 		logger.Warn("missing authentication headers")
-		return "", "", "", "", "", t.getInvalidRequestError()
+		return "", "", "", "", "", "", t.getInvalidRequestError()
 	}
 
 	if err := auth.ValidateTokenFormat(publicToken); err != nil {
 		logger.Warn("invalid token format")
-		return "", "", "", "", "", t.getInvalidTokenFormatError()
+		return "", "", "", "", "", "", t.getInvalidTokenFormatError()
 	}
 
-	return accountName, publicToken, signature, ts, nonce, nil
+	return accountName, keyID, publicToken, signature, ts, nonce, nil
 }
 
 func (t TokenCheckMiddleware) readBodyHash(r *baseHttp.Request, logger *slog.Logger) (string, *http.ApiError) {
@@ -216,7 +218,7 @@ func (t TokenCheckMiddleware) attachContext(r *baseHttp.Request, accountName, re
 	return r.WithContext(ctx)
 }
 
-func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) *http.ApiError {
+func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, keyID, publicToken, signature, canonical, nonce, clientIP string) *http.ApiError {
 	limiterKey := clientIP + "|" + strings.ToLower(accountName)
 
 	if t.rateLimiter.TooMany(limiterKey) {
@@ -225,7 +227,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	}
 
 	var item *database.APIKey
-	if item = t.ApiKeys.FindBy(accountName); item == nil {
+	if item = t.ApiKeys.FindByAccountAndKeyID(accountName, keyID); item == nil {
 		t.rateLimiter.Fail(limiterKey)
 		logger.Warn("account not found")
 		return t.getUnauthenticatedError()
@@ -234,6 +236,7 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 	// Fetch account to understand its keys
 	token, err := t.TokenHandler.DecodeTokensFor(
 		item.AccountName,
+		item.KeyID,
 		item.SecretKey,
 		item.PublicKey,
 	)

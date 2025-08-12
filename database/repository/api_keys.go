@@ -16,6 +16,7 @@ func (a ApiKeys) Create(attrs database.APIKeyAttr) (*database.APIKey, error) {
 	key := database.APIKey{
 		UUID:        uuid.NewString(),
 		AccountName: attrs.AccountName,
+		KeyID:       attrs.KeyID,
 		PublicKey:   attrs.PublicKey,
 		SecretKey:   attrs.SecretKey,
 	}
@@ -37,6 +38,24 @@ func (a ApiKeys) FindBy(accountName string) *database.APIKey {
 
 	result := a.DB.Sql().
 		Where("LOWER(account_name) = ?", strings.ToLower(accountName)).
+		First(&key)
+
+	if gorm.HasDbIssues(result.Error) {
+		return nil
+	}
+
+	if result.RowsAffected > 0 {
+		return &key
+	}
+
+	return nil
+}
+
+func (a ApiKeys) FindByAccountAndKeyID(accountName, keyID string) *database.APIKey {
+	key := database.APIKey{}
+
+	result := a.DB.Sql().
+		Where("LOWER(account_name) = ? AND key_id = ?", strings.ToLower(accountName), keyID).
 		First(&key)
 
 	if gorm.HasDbIssues(result.Error) {

@@ -21,7 +21,7 @@ func TestTokenHandlerLifecycle(t *testing.T) {
 		t.Fatalf("setup: %v", err)
 	}
 
-	decoded, err := h.DecodeTokensFor(token.AccountName, token.EncryptedSecretKey, token.EncryptedPublicKey)
+	decoded, err := h.DecodeTokensFor(token.AccountName, token.KeyID, token.EncryptedSecretKey, token.EncryptedPublicKey)
 
 	if err != nil {
 		t.Fatalf("decode: %v", err)
@@ -77,7 +77,7 @@ func TestDecodeTokensForError(t *testing.T) {
 		t.Fatalf("make handler: %v", err)
 	}
 
-	if _, err := h.DecodeTokensFor("acc", []byte("bad"), []byte("bad")); err == nil {
+	if _, err := h.DecodeTokensFor("acc", "kid", []byte("bad"), []byte("bad")); err == nil {
 		t.Fatalf("expected error")
 	}
 }

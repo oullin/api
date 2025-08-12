@@ -29,15 +29,15 @@ func TestSortedQuery(t *testing.T) {
 func TestBuildCanonical(t *testing.T) {
 	u, _ := url.Parse("https://x.test/api/v1/resource?z=9&a=1&a=0")
 	bodyHash := "abc123"
-	got := BuildCanonical("post", u, "Alice", "pk_123", "1700000000", "nonce-1", bodyHash)
-	expected := "POST\n/api/v1/resource\na=0&a=1&z=9\nAlice\npk_123\n1700000000\nnonce-1\nabc123"
+	got := BuildCanonical("post", u, "Alice", "kid-1", "pk_123", "1700000000", "nonce-1", bodyHash)
+	expected := "POST\n/api/v1/resource\na=0&a=1&z=9\nAlice\nkid-1\npk_123\n1700000000\nnonce-1\nabc123"
 	if got != expected {
 		t.Fatalf("unexpected canonical string:\nexpected: %q\n     got: %q", expected, got)
 	}
 
 	// Default path handling when URL is nil or empty
-	got = BuildCanonical("GET", nil, "u", "p", "1", "n", "h")
-	if got != "GET\n/\n\nu\np\n1\nn\nh" {
+	got = BuildCanonical("GET", nil, "u", "k", "p", "1", "n", "h")
+	if got != "GET\n/\n\nu\nk\np\n1\nn\nh" {
 		t.Fatalf("unexpected canonical for nil URL: %q", got)
 	}
 }

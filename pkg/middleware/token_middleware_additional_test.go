@@ -66,6 +66,7 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	if err := db.Create(&database.APIKey{
 		UUID:        uuid.NewString(),
 		AccountName: seed.AccountName,
+		KeyID:       seed.KeyID,
 		PublicKey:   seed.EncryptedPublicKey,
 		SecretKey:   seed.EncryptedSecretKey,
 	}).Error; err != nil {
@@ -97,7 +98,7 @@ func TestTokenMiddleware_PublicTokenMismatch(t *testing.T) {
 	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
 	handler := tm.Handle(next)
 
-	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/x", "", seed.AccountName, "wrong-"+seed.PublicKey, seed.PublicKey, time.Now(), "nonce-mm", "req-mm")
+	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/x", "", seed.AccountName, seed.KeyID, "wrong-"+seed.PublicKey, seed.PublicKey, time.Now(), "nonce-mm", "req-mm")
 	req.Header.Set("X-Forwarded-For", "1.1.1.1")
 	rec := httptest.NewRecorder()
 	if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
@@ -112,7 +113,7 @@ func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
 	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
 	handler := tm.Handle(next)
 
-	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "body", seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-sig", "req-sig")
+	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "body", seed.AccountName, seed.KeyID, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-sig", "req-sig")
 	req.Header.Set("X-Forwarded-For", "1.1.1.1")
 	req.Header.Set("X-API-Signature", req.Header.Get("X-API-Signature")+"tamper")
 	rec := httptest.NewRecorder()
@@ -133,7 +134,7 @@ func TestTokenMiddleware_NonceReplay(t *testing.T) {
 	}
 	handler := tm.Handle(next)
 
-	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "{}", seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-rp", "req-rp")
+	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "{}", seed.AccountName, seed.KeyID, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-rp", "req-rp")
 	req.Header.Set("X-Forwarded-For", "1.1.1.1")
 	rec := httptest.NewRecorder()
 	if err := handler(rec, req); err != nil {
@@ -163,7 +164,7 @@ func TestTokenMiddleware_RateLimiter(t *testing.T) {
 	for i := 0; i < tm.maxFailPerScope; i++ {
 		req := makeSignedRequest(
 			t, http.MethodGet, "https://api.test.local/v1/rl", "",
-			seed.AccountName, seed.PublicKey, "wrong-secret", time.Now(),
+			seed.AccountName, seed.KeyID, seed.PublicKey, "wrong-secret", time.Now(),
 			fmt.Sprintf("nonce-rl-%d", i), fmt.Sprintf("req-rl-%d", i),
 		)
 		req.Header.Set("X-Forwarded-For", "9.9.9.9")
@@ -174,7 +175,7 @@ func TestTokenMiddleware_RateLimiter(t *testing.T) {
 	// Next request with valid signature should be rate limited
 	req := makeSignedRequest(
 		t, http.MethodGet, "https://api.test.local/v1/rl", "",
-		seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(),
+		seed.AccountName, seed.KeyID, seed.PublicKey, seed.PublicKey, time.Now(),
 		"nonce-rl-final", "req-rl-final",
 	)
 	req.Header.Set("X-Forwarded-For", "9.9.9.9")

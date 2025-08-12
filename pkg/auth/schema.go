@@ -10,6 +10,7 @@ const (
 
 type Token struct {
 	AccountName        string
+	KeyID              string
 	PublicKey          string
 	EncryptedPublicKey []byte
 	SecretKey          string

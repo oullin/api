@@ -26,9 +26,10 @@ func isValidTable(seed string) bool {
 type APIKey struct {
 	ID          int64  `gorm:"primaryKey"`
 	UUID        string `gorm:"type:uuid;unique;not null"`
-	AccountName string `gorm:"column:account_name;not null;unique;uniqueIndex:uq_account_keys"`
-	PublicKey   []byte `gorm:"column:public_key;not null;unique;index;uniqueIndex:uq_account_keys"`
-	SecretKey   []byte `gorm:"column:secret_key;not null;unique;index;uniqueIndex:uq_account_keys"`
+	AccountName string `gorm:"column:account_name;not null;index;uniqueIndex:uq_account_key"`
+	KeyID       string `gorm:"column:key_id;not null;index;uniqueIndex:uq_account_key"`
+	PublicKey   []byte `gorm:"column:public_key;not null"`
+	SecretKey   []byte `gorm:"column:secret_key;not null"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`

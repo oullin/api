@@ -80,6 +80,7 @@ func TestApiKeysWithTestContainer(t *testing.T) {
 
 	created, err := repo.Create(database.APIKeyAttr{
 		AccountName: "demo",
+		KeyID:       "kid-demo",
 		PublicKey:   []byte("pub"),
 		SecretKey:   []byte("sec"),
 	})
