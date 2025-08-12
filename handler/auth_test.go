@@ -1,7 +1,9 @@
-package middleware
+package handler
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	baseHttp "net/http"
 	"net/http/httptest"
 	"os/exec"
@@ -10,14 +12,14 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/auth"
-	"github.com/oullin/pkg/http"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-func setupJWTHandler(t *testing.T) auth.JWTHandler {
+func setupAuth(t *testing.T) AuthHandler {
 	t.Helper()
 
 	if _, err := exec.LookPath("docker"); err != nil {
@@ -76,62 +78,50 @@ func setupJWTHandler(t *testing.T) auth.JWTHandler {
 
 	repo := &repository.ApiKeys{DB: conn}
 	if _, err := repo.Create(database.APIKeyAttr{
-		AccountName: "bob",
+		AccountName: "alice",
 		PublicKey:   []byte("pub"),
-		SecretKey:   []byte("mysecretjwtkey12345"),
+		SecretKey:   []byte("secret"),
 	}); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 
-	h, err := auth.MakeJWTHandler(repo, time.Minute)
+	jwtHandler, err := auth.MakeJWTHandler(repo, time.Minute)
 	if err != nil {
-		t.Fatalf("make handler err: %v", err)
+		t.Fatalf("jwt handler: %v", err)
 	}
 
-	return h
+	return MakeAuthHandler(repo, jwtHandler)
 }
 
-func TestJWTMiddlewareHandle(t *testing.T) {
-	handler := setupJWTHandler(t)
-	m := JWTMiddleware{Handler: handler}
+func TestAuthHandlerToken(t *testing.T) {
+	h := setupAuth(t)
 
-	next := func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-		claims, ok := GetJWTClaims(r.Context())
-		if !ok {
-			t.Fatalf("claims missing from context")
-		}
-		if claims.AccountName != "bob" {
-			t.Fatalf("expected bob got %s", claims.AccountName)
-		}
-		return nil
-	}
+	body, _ := json.Marshal(payload.TokenRequest{AccountName: "alice", SecretKey: "secret"})
+	req := httptest.NewRequest(baseHttp.MethodPost, "/auth/token", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
 
-	token, err := handler.Generate("bob")
-	if err != nil {
-		t.Fatalf("generate token err: %v", err)
-	}
-
-	req := httptest.NewRequest(baseHttp.MethodGet, "/", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-	rr := httptest.NewRecorder()
-
-	if err := m.Handle(next)(rr, req); err != nil {
+	if err := h.Token(rec, req); err != nil {
 		t.Fatalf("expected nil got %v", err)
 	}
+
+	var resp payload.TokenResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Token == "" {
+		t.Fatalf("expected token in response")
+	}
 }
 
-func TestJWTMiddlewareUnauthorized(t *testing.T) {
-	handler := setupJWTHandler(t)
-	m := JWTMiddleware{Handler: handler}
+func TestAuthHandlerTokenUnauthorized(t *testing.T) {
+	h := setupAuth(t)
 
-	req := httptest.NewRequest(baseHttp.MethodGet, "/", nil)
-	rr := httptest.NewRecorder()
+	body, _ := json.Marshal(payload.TokenRequest{AccountName: "alice", SecretKey: "wrong"})
+	req := httptest.NewRequest(baseHttp.MethodPost, "/auth/token", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
 
-	errResp := m.Handle(func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError { return nil })(rr, req)
-	if errResp == nil {
-		t.Fatalf("expected error for missing token")
-	}
-	if errResp.Status != baseHttp.StatusUnauthorized {
-		t.Fatalf("expected unauthorized got %d", errResp.Status)
+	err := h.Token(rec, req)
+	if err == nil || err.Status != baseHttp.StatusUnauthorized {
+		t.Fatalf("expected unauthorized got %#v", err)
 	}
 }

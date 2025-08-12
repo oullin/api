@@ -3,6 +3,7 @@ package kernel
 import (
 	"fmt"
 	baseHttp "net/http"
+	"time"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
@@ -33,6 +34,13 @@ func MakeApp(env *env.Environment, validator *portal.Validator) (*App, error) {
 
 	db := MakeDbConnection(env)
 
+	apiKeys := &repository.ApiKeys{DB: db}
+
+	jwtHandler, err := auth.MakeJWTHandler(apiKeys, time.Hour)
+	if err != nil {
+		return nil, fmt.Errorf("bootstrapping error > could not create jwt handler: %w", err)
+	}
+
 	app := App{
 		env:       env,
 		validator: validator,
@@ -47,8 +55,9 @@ func MakeApp(env *env.Environment, validator *portal.Validator) (*App, error) {
 		Mux: baseHttp.NewServeMux(),
 		Pipeline: middleware.Pipeline{
 			Env:          env,
-			ApiKeys:      &repository.ApiKeys{DB: db},
+			ApiKeys:      apiKeys,
 			TokenHandler: tokenHandler,
+			JWTHandler:   jwtHandler,
 		},
 	}
 
@@ -64,6 +73,7 @@ func (a *App) Boot() {
 
 	router := *a.router
 
+	router.Auth()
 	router.Profile()
 	router.Experience()
 	router.Projects()

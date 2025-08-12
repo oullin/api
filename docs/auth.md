@@ -9,8 +9,8 @@ in their claims.
 1. Obtain a token from the authentication endpoint:
 
 ```bash
-curl -X POST http://localhost:8080/login \
-  -d '{"account_name":"alice","password":"secret"}'
+curl -X POST http://localhost:8080/auth/token \
+  -d '{"account_name":"alice","secret_key":"secret"}'
 # => {"token":"<JWT_TOKEN>"}
 ```
 

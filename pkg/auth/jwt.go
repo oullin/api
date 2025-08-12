@@ -1,23 +1,18 @@
 package auth
 
 import (
-	"errors"
-	"time"
+        "errors"
+        "time"
 
-	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/oullin/database"
+        jwt "github.com/golang-jwt/jwt/v5"
+        "github.com/oullin/database/repository"
 )
-
-// APIKeyFinder retrieves API key information for an account.
-type APIKeyFinder interface {
-	FindBy(accountName string) *database.APIKey
-}
 
 // JWTHandler manages creation and validation of JSON Web Tokens.
 type JWTHandler struct {
-	Keys APIKeyFinder
-	// TTL defines how long generated tokens remain valid.
-	TTL time.Duration
+        Keys *repository.ApiKeys
+        // TTL defines how long generated tokens remain valid.
+        TTL time.Duration
 }
 
 // Claims represents application specific JWT claims.
@@ -27,11 +22,11 @@ type Claims struct {
 }
 
 // MakeJWTHandler returns a configured handler using the provided API key repository.
-func MakeJWTHandler(keys APIKeyFinder, ttl time.Duration) (JWTHandler, error) {
-	if keys == nil {
-		return JWTHandler{}, errors.New("api key repository is nil")
-	}
-	return JWTHandler{Keys: keys, TTL: ttl}, nil
+func MakeJWTHandler(keys *repository.ApiKeys, ttl time.Duration) (JWTHandler, error) {
+        if keys == nil {
+                return JWTHandler{}, errors.New("api key repository is nil")
+        }
+        return JWTHandler{Keys: keys, TTL: ttl}, nil
 }
 
 // Generate creates a signed JWT for the provided account name.

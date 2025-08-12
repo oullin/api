@@ -33,13 +33,22 @@ func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 		r.Pipeline.TokenHandler,
 		r.Pipeline.ApiKeys,
 	)
+	jwtMiddleware := middleware.JWTMiddleware{Handler: r.Pipeline.JWTHandler}
 
 	return http.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
+			jwtMiddleware.Handle,
 			tokenMiddleware.Handle,
 		),
 	)
+}
+
+func (r *Router) Auth() {
+	repo := repository.ApiKeys{DB: r.Db}
+	abstract := handler.MakeAuthHandler(&repo, r.Pipeline.JWTHandler)
+	resolver := http.MakeApiHandler(abstract.Token)
+	r.Mux.HandleFunc("POST /auth/token", resolver)
 }
 
 func (r *Router) Posts() {
