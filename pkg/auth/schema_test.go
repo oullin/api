@@ -1,6 +1,9 @@
 package auth
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestSchemaConstants(t *testing.T) {
 	tests := []struct {
@@ -18,7 +21,7 @@ func TestSchemaConstants(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.want {
+			if !reflect.DeepEqual(tt.got, tt.want) {
 				t.Errorf("%s = %v, want %v", tt.name, tt.got, tt.want)
 			}
 		})
