@@ -1,12 +1,15 @@
 package cli
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestColourConstants(t *testing.T) {
 	tests := []struct {
 		name string
-		got  string
-		want string
+		got  any
+		want any
 	}{
 		{"Reset", Reset, "\033[0m"},
 		{"RedColour", RedColour, "\033[31m"},
@@ -22,7 +25,7 @@ func TestColourConstants(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.got != tt.want {
+			if !reflect.DeepEqual(tt.got, tt.want) {
 				t.Errorf("%s = %q, want %q", tt.name, tt.got, tt.want)
 			}
 		})
