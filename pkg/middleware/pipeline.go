@@ -11,6 +11,7 @@ type Pipeline struct {
 	Env          *env.Environment
 	ApiKeys      *repository.ApiKeys
 	TokenHandler *auth.TokenHandler
+	JWTHandler   auth.JWTHandler
 }
 
 // Chain applies a list of middleware handlers to a final ApiHandler.
