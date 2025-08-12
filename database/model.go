@@ -1,9 +1,10 @@
 package database
 
 import (
-	"gorm.io/gorm"
 	"slices"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const DriverName = "postgres"
@@ -32,6 +33,17 @@ type APIKey struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
+}
+
+type APIKeySignature struct {
+	ID        int64     `gorm:"primaryKey"`
+	UUID      string    `gorm:"type:uuid;unique;not null"`
+	APIKeyID  int64     `gorm:"not null"`
+	APIKey    APIKey    `gorm:"foreignKey:APIKeyID"`
+	Signature []byte    `gorm:"not null;uniqueIndex:uq_signature_created_at;index:idx_signature"`
+	CreatedAt time.Time `gorm:"uniqueIndex:uq_signature_created_at;index:idx_signature_created_at"`
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index:idx_signature_deleted_at"`
 }
 
 type User struct {
