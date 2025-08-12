@@ -9,7 +9,7 @@ configuration into a clean, maintainable service, making it the indispensable ba
 :hearts: In short, **oullin/api** isn’t just another code repository—it’s the beating heart of my web application. It translates
 every user action into data operations and returns precisely what the frontend needs.
 
-:closed_lock_with_key: Authentication is handled with JSON Web Tokens powered by [github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt), enabling stateless session management across requests.
+:closed_lock_with_key: Authentication is handled with JSON Web Tokens powered by [github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt), enabling stateless session management across requests. Tokens are signed using per-account secrets stored in the `api_keys` table.
 
 :rocket: Feel free to explore the folders, clone the repository and run it locally via Docker Compose. If you feel adventurous,
 consider contributing to the project by making improvements or fixing issues by sending a pull request.

@@ -5,35 +5,44 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/oullin/database"
 )
+
+// APIKeyFinder retrieves API key information for an account.
+type APIKeyFinder interface {
+	FindBy(accountName string) *database.APIKey
+}
 
 // JWTHandler manages creation and validation of JSON Web Tokens.
 type JWTHandler struct {
-	// SecretKey is used to sign tokens.
-	SecretKey []byte
+	Keys APIKeyFinder
 	// TTL defines how long generated tokens remain valid.
 	TTL time.Duration
 }
 
 // Claims represents application specific JWT claims.
 type Claims struct {
-	Username string `json:"username"`
+	AccountName string `json:"account_name"`
 	jwt.RegisteredClaims
 }
 
-// MakeJWTHandler validates the provided secret and returns a configured handler.
-func MakeJWTHandler(secret []byte, ttl time.Duration) (JWTHandler, error) {
-	if len(secret) < 16 {
-		return JWTHandler{}, errors.New("secret key too short")
+// MakeJWTHandler returns a configured handler using the provided API key repository.
+func MakeJWTHandler(keys APIKeyFinder, ttl time.Duration) (JWTHandler, error) {
+	if keys == nil {
+		return JWTHandler{}, errors.New("api key repository is nil")
 	}
-
-	return JWTHandler{SecretKey: secret, TTL: ttl}, nil
+	return JWTHandler{Keys: keys, TTL: ttl}, nil
 }
 
-// Generate creates a signed JWT for the provided username.
-func (j JWTHandler) Generate(username string) (string, error) {
+// Generate creates a signed JWT for the provided account name.
+func (j JWTHandler) Generate(accountName string) (string, error) {
+	apiKey := j.Keys.FindBy(accountName)
+	if apiKey == nil {
+		return "", errors.New("api key not found")
+	}
+
 	claims := Claims{
-		Username: username,
+		AccountName: accountName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.TTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -41,7 +50,7 @@ func (j JWTHandler) Generate(username string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(j.SecretKey)
+	return token.SignedString(apiKey.SecretKey)
 }
 
 // Validate parses the token string and returns the Claims if valid.
@@ -50,10 +59,16 @@ func (j JWTHandler) Validate(tokenString string) (*Claims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-
-		return j.SecretKey, nil
+		claims, ok := token.Claims.(*Claims)
+		if !ok {
+			return nil, errors.New("invalid token claims")
+		}
+		apiKey := j.Keys.FindBy(claims.AccountName)
+		if apiKey == nil {
+			return nil, errors.New("api key not found")
+		}
+		return apiKey.SecretKey, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +77,5 @@ func (j JWTHandler) Validate(tokenString string) (*Claims, error) {
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token")
 	}
-
 	return claims, nil
 }

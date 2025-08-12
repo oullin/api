@@ -3,15 +3,29 @@ package middleware
 import (
 	baseHttp "net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/oullin/database"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http"
 )
 
+// memRepo implements auth.APIKeyFinder for tests.
+type memRepo struct {
+	keys map[string]*database.APIKey
+}
+
+func (m memRepo) FindBy(accountName string) *database.APIKey {
+	return m.keys[strings.ToLower(accountName)]
+}
+
 func TestJWTMiddlewareHandle(t *testing.T) {
-	handler, err := auth.MakeJWTHandler([]byte("mysecretjwtkey123"), time.Minute)
+	repo := memRepo{keys: map[string]*database.APIKey{
+		"bob": {AccountName: "bob", SecretKey: []byte("mysecretjwtkey12345")},
+	}}
+	handler, err := auth.MakeJWTHandler(repo, time.Minute)
 	if err != nil {
 		t.Fatalf("make handler err: %v", err)
 	}
@@ -23,8 +37,8 @@ func TestJWTMiddlewareHandle(t *testing.T) {
 		if !ok {
 			t.Fatalf("claims missing from context")
 		}
-		if claims.Username != "bob" {
-			t.Fatalf("expected bob got %s", claims.Username)
+		if claims.AccountName != "bob" {
+			t.Fatalf("expected bob got %s", claims.AccountName)
 		}
 		return nil
 	}
@@ -44,7 +58,8 @@ func TestJWTMiddlewareHandle(t *testing.T) {
 }
 
 func TestJWTMiddlewareUnauthorized(t *testing.T) {
-	handler, err := auth.MakeJWTHandler([]byte("anotherjwtsecret"), time.Minute)
+	repo := memRepo{keys: map[string]*database.APIKey{}}
+	handler, err := auth.MakeJWTHandler(repo, time.Minute)
 	if err != nil {
 		t.Fatalf("make handler err: %v", err)
 	}

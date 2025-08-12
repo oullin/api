@@ -1,6 +1,8 @@
 # 🔐 Authentication
 
-This API uses JSON Web Tokens (JWT) for stateless authentication.
+This API uses JSON Web Tokens (JWT) for stateless authentication. Tokens are signed
+with the account's secret stored in the `api_keys` table and include the account name
+in their claims.
 
 ## Example
 
@@ -8,7 +10,7 @@ This API uses JSON Web Tokens (JWT) for stateless authentication.
 
 ```bash
 curl -X POST http://localhost:8080/login \
-  -d '{"username":"alice","password":"secret"}'
+  -d '{"account_name":"alice","password":"secret"}'
 # => {"token":"<JWT_TOKEN>"}
 ```
 
@@ -19,4 +21,5 @@ curl -H "Authorization: Bearer <JWT_TOKEN>" \
   http://localhost:8080/api/protected
 ```
 
-The JWT middleware validates the token and exposes its claims to handlers via the request context.
+The JWT middleware validates the token using the matching secret from `api_keys` and exposes its
+claims to handlers via the request context.
