@@ -210,7 +210,11 @@ func generate32(t *testing.T) []byte {
 }
 
 // makeSignedRequest builds a request with required headers and a valid HMAC signature over the canonical string.
-func makeSignedRequest(t *testing.T, method, rawURL, body, account, public, secret string, ts time.Time, nonce, reqID string) *http.Request {
+//
+// signingKey is the token used to create the signature. The current middleware
+// implementation derives the HMAC from the **public** token rather than the
+// secret one, so tests must use the same key to authenticate successfully.
+func makeSignedRequest(t *testing.T, method, rawURL, body, account, public, signingKey string, ts time.Time, nonce, reqID string) *http.Request {
 	t.Helper()
 	var bodyBuf *bytes.Buffer
 	if body != "" {
@@ -227,7 +231,7 @@ func makeSignedRequest(t *testing.T, method, rawURL, body, account, public, secr
 
 	bodyHash := portal.Sha256Hex([]byte(body))
 	canonical := portal.BuildCanonical(method, req.URL, account, public, req.Header.Get("X-API-Timestamp"), nonce, bodyHash)
-	sig := auth.CreateSignatureFrom(canonical, secret)
+	sig := auth.CreateSignatureFrom(canonical, signingKey)
 	req.Header.Set("X-API-Signature", sig)
 	return req
 }
@@ -275,7 +279,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 		"{\"title\":\"ok\"}",
 		seed.AccountName,
 		seed.PublicKey,
-		seed.SecretKey,
+		seed.PublicKey,
 		now,
 		"nonce-1",
 		"req-001",
@@ -296,7 +300,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 		"",
 		"no-such-user",
 		seed.PublicKey,
-		seed.SecretKey,
+		seed.PublicKey,
 		now,
 		"nonce-2",
 		"req-002",
@@ -352,7 +356,7 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 		"{\"x\":123}",
 		seed.AccountName,
 		seed.PublicKey,
-		seed.SecretKey,
+		seed.PublicKey,
 		time.Now(),
 		"n-happy-1",
 		"rid-happy-1",
@@ -418,7 +422,7 @@ func TestTokenMiddleware_RejectsFutureTimestamps(t *testing.T) {
 		"",
 		seed.AccountName,
 		seed.PublicKey,
-		seed.SecretKey,
+		seed.PublicKey,
 		futureTime,
 		"n-future-1",
 		"rid-future-1",
