@@ -7,12 +7,10 @@ CREATE TABLE api_keys_signatures (
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	deleted_at TIMESTAMP DEFAULT NULL,
 
-	CONSTRAINT uq_signature UNIQUE (signature, created_at),
-
-	-- This constraint requires the 'api_keys' table to have a primary key column named 'id'.
+	CONSTRAINT unique_signature UNIQUE (signature, api_key_id, created_at),
 	CONSTRAINT fk_api_key_id FOREIGN KEY (api_key_id) REFERENCES api_keys(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_signature ON api_keys_signatures(signature);
-CREATE INDEX idx_signature_created_at ON api_keys_signatures(created_at);
-CREATE INDEX idx_signature_deleted_at ON api_keys_signatures(deleted_at);
+CREATE INDEX idx_signature_created_at ON api_keys_signatures(signature, created_at);
+CREATE INDEX idx_created_at ON api_keys_signatures(created_at);
+CREATE INDEX idx_deleted_at ON api_keys_signatures(deleted_at);

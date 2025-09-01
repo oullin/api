@@ -12,7 +12,7 @@ func TestClientTransportAndGet(t *testing.T) {
 	c := MakeDefaultClient(tr)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
+		_, _ = w.Write([]byte("hello"))
 	}))
 	defer srv.Close()
 
@@ -26,7 +26,7 @@ func TestClientTransportAndGet(t *testing.T) {
 func TestClientGetNil(t *testing.T) {
 	var c *Client
 
-	_, err := c.Get(context.Background(), "http://example.com")
+	_, err := c.Get(context.Background(), "https://example.com")
 
 	if err == nil {
 		t.Fatalf("expected error")
