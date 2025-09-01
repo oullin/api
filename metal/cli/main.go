@@ -163,6 +163,7 @@ func generateApiAccountsHTTPSignature(menu panel.Menu) error {
 	return nil
 }
 
+// @todo Remove!
 func generateAppEncryptionKey() error {
 	var err error
 	var key []byte

@@ -9,6 +9,7 @@ import (
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/middleware"
+	"github.com/oullin/pkg/portal"
 )
 
 type StaticRouteResource interface {
@@ -22,10 +23,19 @@ func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker f
 }
 
 type Router struct {
-	Env      *env.Environment
-	Mux      *baseHttp.ServeMux
-	Pipeline middleware.Pipeline
-	Db       *database.Connection
+	Env       *env.Environment
+	Mux       *baseHttp.ServeMux
+	Pipeline  middleware.Pipeline
+	Db        *database.Connection
+	validator *portal.Validator
+}
+
+func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
+	return http.MakeApiHandler(
+		r.Pipeline.Chain(
+			apiHandler,
+		),
+	)
 }
 
 func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
@@ -60,6 +70,13 @@ func (r *Router) Categories() {
 	index := r.PipelineFor(abstract.Index)
 
 	r.Mux.HandleFunc("GET /categories", index)
+}
+
+func (r *Router) Signature() {
+	abstract := handler.MakeSignaturesHandler(r.validator)
+	generate := r.PublicPipelineFor(abstract.Generate)
+
+	r.Mux.HandleFunc("POST /generate-signature", generate)
 }
 
 func (r *Router) Profile() {

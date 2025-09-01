@@ -2,14 +2,15 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
+	baseHttp "net/http"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg/http"
-	"log/slog"
-	baseHttp "net/http"
 )
 
 type CategoriesHandler struct {
