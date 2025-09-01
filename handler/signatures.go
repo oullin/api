@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"log/slog"
 	baseHttp "net/http"
-	"net/url"
 	"strings"
 
 	"github.com/oullin/pkg/http"
@@ -13,13 +13,12 @@ import (
 )
 
 type SignatureRequest struct {
-	Method      string `json:"method"`
-	URL         string `json:"url"`
-	Body        string `json:"body"`
+	Method      string `json:"method" validate:"required,eq=POST"`
+	URL         string `json:"url" validate:"required,uri"`
 	Nonce       string `json:"nonce" validate:"required,lowercase,len=32"`
 	APIKey      string `json:"apiKey" validate:"required,lowercase,min=64,max=67"`
 	APIUsername string `json:"apiUsername" validate:"required,lowercase,min=5"`
-	Timestamp   string `json:"timestamp" validate:"required,lowercase,len=10"`
+	Timestamp   string `json:"timestamp" validate:"required,number,len=10"`
 }
 
 type SignatureResponse struct {
@@ -41,29 +40,25 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 
 	var req SignatureRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		slog.Error("Error reading signatures request", "error", err)
-
-		return http.BadRequestError("could not read signatures data")
-	}
-
-	reqBody, err := io.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		slog.Error("Error reading signatures request body", "error", err)
 
 		return http.BadRequestError("could not read signatures request body")
 	}
 
-	parsedURL, err := url.Parse(req.URL)
-	if err != nil {
-		slog.Error("Error reading parsing the signature request URL", "error", err)
+	if err = json.Unmarshal(bodyBytes, &req); err != nil {
+		slog.Error("Error parsing signatures request", "error", err)
 
-		return http.BadRequestError("could not read signatures URL")
+		return http.BadRequestError("could not parse the given data")
 	}
 
-	req.Method = strings.ToUpper(req.Method)
-	req.URL = parsedURL.String()
-	req.Body = string(reqBody)
+	r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+	req.Method = strings.ToUpper(r.Method)
+	req.URL = portal.GenerateURL(r)
+
+	//fmt.Println("-----> ", req)
 
 	if _, err := s.validator.Rejects(req); err != nil {
 		return http.UnprocessableEntity("The given fields are invalid", s.validator.GetErrors())
@@ -72,7 +67,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 	signature := SignatureResponse{Signature: "TEST"}
 	resp := http.MakeResponseFrom("0.0.1", w, r)
 
-	if err := resp.RespondOk(signature); err != nil {
+	if err = resp.RespondOk(signature); err != nil {
 		slog.Error("Error marshaling JSON for signatures response", "error", err)
 
 		return nil
