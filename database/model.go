@@ -12,8 +12,8 @@ const DriverName = "postgres"
 var schemaTables = []string{
 	"users", "posts", "categories",
 	"post_categories", "tags", "post_tags",
-	"post_views", "comments",
-	"likes", "newsletters", "api_keys",
+	"post_views", "comments", "likes",
+	"newsletters", "api_keys", "api_keys_signatures",
 }
 
 func GetSchemaTables() []string {

@@ -2,10 +2,11 @@ package repository
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/gorm"
-	"strings"
 )
 
 type ApiKeys struct {

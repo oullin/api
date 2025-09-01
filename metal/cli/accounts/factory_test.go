@@ -1,10 +1,10 @@
 package accounts
 
 import (
-	"github.com/oullin/metal/cli/clitest"
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/metal/cli/clitest"
 )
 
 func TestMakeHandler(t *testing.T) {
