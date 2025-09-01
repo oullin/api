@@ -3,13 +3,15 @@ package http
 import baseHttp "net/http"
 
 type ErrorResponse struct {
-	Error  string `json:"error"`
-	Status int    `json:"status"`
+	Error  string         `json:"error"`
+	Status int            `json:"status"`
+	Data   map[string]any `json:"data"`
 }
 
 type ApiError struct {
-	Message string `json:"message"`
-	Status  int    `json:"status"`
+	Message string         `json:"message"`
+	Status  int            `json:"status"`
+	Data    map[string]any `json:"data"`
 }
 
 func (e *ApiError) Error() string {

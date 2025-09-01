@@ -31,7 +31,7 @@ func MakeResponseFrom(salt string, writer baseHttp.ResponseWriter, request *base
 		headers: func(w baseHttp.ResponseWriter) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("X-Content-Type-Options", "nosniff")
-			w.Header().Set("Cache-Control", cacheControl)
+			//w.Header().Set("Cache-Control", cacheControl)
 			w.Header().Set("ETag", etag)
 		},
 	}
@@ -76,6 +76,14 @@ func BadRequestError(msg string) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Bad request error: %s", msg),
 		Status:  baseHttp.StatusBadRequest,
+	}
+}
+
+func UnprocessableEntity(msg string, errors map[string]any) *ApiError {
+	return &ApiError{
+		Message: fmt.Sprintf("Unprocessable entity: %s", msg),
+		Status:  baseHttp.StatusUnprocessableEntity,
+		Data:    errors,
 	}
 }
 
