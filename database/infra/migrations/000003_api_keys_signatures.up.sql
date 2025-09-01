@@ -11,6 +11,6 @@ CREATE TABLE api_keys_signatures (
 	CONSTRAINT fk_api_key_id FOREIGN KEY (api_key_id) REFERENCES api_keys(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_signature_created_at ON api_keys_signatures(signature, created_at);
-CREATE INDEX idx_created_at ON api_keys_signatures(created_at);
-CREATE INDEX idx_deleted_at ON api_keys_signatures(deleted_at);
+CREATE INDEX idx_api_keys_signatures_signature_created_at ON api_keys_signatures(signature, created_at);
+CREATE INDEX idx_api_keys_signatures_created_at ON api_keys_signatures(created_at);
+CREATE INDEX idx_api_keys_signatures_deleted_at ON api_keys_signatures(deleted_at);
