@@ -148,7 +148,7 @@ services:
                 - pg_password
                 - pg_dbname
             entrypoint: /run-migration.sh
-            command: ""
+            command: ["up"]
             depends_on:
                 api-db:
                     condition: service_healthy
