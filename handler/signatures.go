@@ -10,6 +10,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/portal"
 )
@@ -62,8 +63,6 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 	req.Method = strings.ToUpper(r.Method)
 	req.URL = portal.GenerateURL(r)
 
-	//fmt.Println("-----> ", req)
-
 	if _, err := s.Validator.Rejects(req); err != nil {
 		return http.UnprocessableEntity("The given fields are invalid", s.Validator.GetErrors())
 	}
@@ -73,7 +72,13 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 		return http.NotFound("The given username was not found")
 	}
 
-	signature := SignatureResponse{Signature: "TEST"}
+	signature := SignatureResponse{
+		Signature: auth.CreateSignatureFrom(
+			string(auth.GenerateAESKey()),
+			string(token.SecretKey),
+		),
+	}
+
 	resp := http.MakeResponseFrom("0.0.1", w, r)
 
 	if err = resp.RespondOk(signature); err != nil {

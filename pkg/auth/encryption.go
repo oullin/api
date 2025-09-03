@@ -12,14 +12,15 @@ import (
 	"strings"
 )
 
-func GenerateAESKey() ([]byte, error) {
+func GenerateAESKey() []byte {
 	key := make([]byte, EncryptionKeyLength)
 
+	//@todo Fix
 	if _, err := rand.Read(key); err != nil {
-		return nil, fmt.Errorf("failed to generate random key: %w", err)
+		return []byte("")
 	}
 
-	return key, nil
+	return key
 }
 
 func Encrypt(plaintext []byte, key []byte) ([]byte, error) {
