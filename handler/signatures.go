@@ -8,17 +8,19 @@ import (
 	baseHttp "net/http"
 	"strings"
 
+	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/portal"
 )
 
 type SignatureRequest struct {
-	Method      string `json:"method" validate:"required,eq=POST"`
-	URL         string `json:"url" validate:"required,uri"`
-	Nonce       string `json:"nonce" validate:"required,lowercase,len=32"`
-	APIKey      string `json:"apiKey" validate:"required,lowercase,min=64,max=67"`
-	APIUsername string `json:"apiUsername" validate:"required,lowercase,min=5"`
-	Timestamp   string `json:"timestamp" validate:"required,number,len=10"`
+	Method    string `json:"method" validate:"required,eq=POST"`
+	URL       string `json:"url" validate:"required,uri"`
+	Nonce     string `json:"nonce" validate:"required,lowercase,len=32"`
+	PublicKey string `json:"public_key" validate:"required,lowercase,min=64,max=67"`
+	Username  string `json:"username" validate:"required,lowercase,min=5"`
+	Timestamp string `json:"timestamp" validate:"required,number,len=10"`
 }
 
 type SignatureResponse struct {
@@ -26,12 +28,14 @@ type SignatureResponse struct {
 }
 
 type SignaturesHandler struct {
-	validator *portal.Validator
+	Validator *portal.Validator
+	ApiKeys   *repository.ApiKeys
 }
 
-func MakeSignaturesHandler(validator *portal.Validator) SignaturesHandler {
+func MakeSignaturesHandler(validator *portal.Validator, ApiKeys *repository.ApiKeys) SignaturesHandler {
 	return SignaturesHandler{
-		validator: validator,
+		Validator: validator,
+		ApiKeys:   ApiKeys,
 	}
 }
 
@@ -60,8 +64,13 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 
 	//fmt.Println("-----> ", req)
 
-	if _, err := s.validator.Rejects(req); err != nil {
-		return http.UnprocessableEntity("The given fields are invalid", s.validator.GetErrors())
+	if _, err := s.Validator.Rejects(req); err != nil {
+		return http.UnprocessableEntity("The given fields are invalid", s.Validator.GetErrors())
+	}
+
+	var token *database.APIKey
+	if token = s.ApiKeys.FindBy(req.Username); token == nil {
+		return http.NotFound("The given username was not found")
 	}
 
 	signature := SignatureResponse{Signature: "TEST"}

@@ -73,7 +73,7 @@ func (r *Router) Categories() {
 }
 
 func (r *Router) Signature() {
-	abstract := handler.MakeSignaturesHandler(r.validator)
+	abstract := handler.MakeSignaturesHandler(r.validator, r.Pipeline.ApiKeys)
 	generate := r.PublicPipelineFor(abstract.Generate)
 
 	r.Mux.HandleFunc("POST /generate-signature", generate)
