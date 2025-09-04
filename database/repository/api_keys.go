@@ -89,7 +89,7 @@ func (a ApiKeys) FindSignature(key *database.APIKey) *database.APIKeySignatures 
 		Model(&database.APIKeySignatures{}).
 		Where("api_key_id = ?", key.ID).
 		Where("tries <= ?", MaxSignaturesTries).
-		Where("expired_at IS NULL OR expired_at > ?", time.Now()).
+		Where("expires_at > ?", time.Now()).
 		First(&item)
 
 	if gorm.HasDbIssues(result.Error) {
