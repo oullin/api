@@ -102,3 +102,18 @@ func (a ApiKeys) FindSignature(key *database.APIKey) *database.APIKeySignatures 
 
 	return nil
 }
+
+func (a ApiKeys) DisableSignaturesFor(key *database.APIKey, id int64) error {
+	result := a.DB.Sql().
+		Model(&database.APIKeySignatures{}).
+		Where("api_key_id = ?", key.ID).
+		Where("id != ?", id).
+		Where("expired_at is null").
+		Update("expired_at", time.Now())
+
+	if gorm.HasDbIssues(result.Error) {
+		return result.Error
+	}
+
+	return nil
+}
