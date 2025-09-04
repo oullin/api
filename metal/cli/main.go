@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/oullin/database"
 	"github.com/oullin/metal/cli/accounts"
 	"github.com/oullin/metal/cli/panel"
 	"github.com/oullin/metal/cli/posts"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
-	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
 )
@@ -61,13 +58,6 @@ func main() {
 			return
 		case 4:
 			if err = generateApiAccountsHTTPSignature(menu); err != nil {
-				cli.Errorln(err.Error())
-				continue
-			}
-
-			return
-		case 5:
-			if err = generateAppEncryptionKey(); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
@@ -159,26 +149,6 @@ func generateApiAccountsHTTPSignature(menu panel.Menu) error {
 	if err = handler.CreateSignature(account); err != nil {
 		return err
 	}
-
-	return nil
-}
-
-// @todo Remove!
-func generateAppEncryptionKey() error {
-	var err error
-	var key []byte
-
-	if key, err = auth.GenerateAESKey(); err != nil {
-		return err
-	}
-
-	decoded := fmt.Sprintf("%x", key)
-
-	cli.Successln("\n  The key was generated successfully.")
-	cli.Magentaln(fmt.Sprintf("  > Full key: %s", decoded))
-	cli.Cyanln(fmt.Sprintf("  > First half : %s", decoded[:32]))
-	cli.Cyanln(fmt.Sprintf("  > Second half: %s", decoded[32:]))
-	fmt.Println(" ")
 
 	return nil
 }

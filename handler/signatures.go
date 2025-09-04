@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	baseHttp "net/http"
@@ -34,72 +35,88 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 	var bodyBytes []byte
 
 	bodyBytes, err = io.ReadAll(r.Body)
-	if err != nil {
-		slog.Error("Error reading signatures request body", "error", err)
 
-		return http.BadRequestError("could not read signatures request body")
+	if err != nil {
+		return http.LogBadRequestError("could not read signatures request body", err)
 	}
 
 	var req payload.SignatureRequest
 	if err = json.Unmarshal(bodyBytes, &req); err != nil {
-		slog.Error("Error parsing signatures request", "error", err)
-
-		return http.BadRequestError("could not parse the given data.")
+		return http.LogBadRequestError("could not parse the given data.", err)
 	}
 
 	if _, err = s.Validator.Rejects(req); err != nil {
 		return http.UnprocessableEntity("The given fields are invalid", s.Validator.GetErrors())
 	}
 
-	var token *database.APIKey
-	if token = s.ApiKeys.FindBy(req.Username); token == nil {
-		return http.NotFound("The given username was not found")
-	}
-
-	var seed []byte
-	if seed, err = auth.GenerateAESKey(); err != nil {
-		slog.Error("Error generating signatures seeds", "error", err)
-
-		return http.InternalError("We were unable to generate the signature seed. Please try again!")
-	}
-
-	layout := "2006-01-02 15:04:05"
+	serverTime := time.Now()
 	receivedAt := time.Unix(req.Timestamp, 0)
 
-	createdAt := time.Now()
-	expiresAt := createdAt.Add(time.Second * 30)
-
-	if receivedAt.Before(createdAt) {
-		slog.Error("Invalid timestamp while creating signatures", "error", err)
-
-		return http.BadRequestError("The given timestamp is before the current time")
+	if err = s.isRequestWithinTimeframe(serverTime, receivedAt); err != nil {
+		return http.LogBadRequestError(err.Error(), err)
 	}
 
-	hash := auth.CreateSignature(seed, token.SecretKey)
 	var keySignature *database.APIKeySignatures
-
-	if keySignature, err = s.ApiKeys.CreateSignatureFor(token, hash, expiresAt); err != nil {
-		slog.Error("Error creating signature in the db", "error", err)
-
-		return http.InternalError("We were unable to create the signature item. Please try again!: " + err.Error())
+	if keySignature, err = s.createSignature(req.Username, serverTime); err != nil {
+		return http.LogInternalError(err.Error(), err)
 	}
 
 	response := payload.SignatureResponse{
 		Signature: auth.SignatureToString(keySignature.Signature),
 		Tries:     keySignature.Tries,
 		Cadence: payload.SignatureCadenceResponse{
-			ReceivedAt: receivedAt.Format(layout),
-			CreatedAt:  keySignature.CreatedAt.Format(layout),
-			ExpiresAt:  keySignature.ExpiresAt.Format(layout),
+			ReceivedAt: receivedAt.Format(portal.DatesLayout),
+			CreatedAt:  keySignature.CreatedAt.Format(portal.DatesLayout),
+			ExpiresAt:  keySignature.ExpiresAt.Format(portal.DatesLayout),
 		},
 	}
 
 	resp := http.MakeResponseFrom("0.0.1", w, r)
+
 	if err = resp.RespondOk(response); err != nil {
 		slog.Error("Error marshaling JSON for signatures response", "error", err)
-
 		return nil
 	}
 
 	return nil // A nil return indicates success.
+}
+
+func (s *SignaturesHandler) isRequestWithinTimeframe(serverTime, receivedAt time.Time) error {
+	skew := 5 * time.Second
+
+	earliestValidTime := serverTime.Add(-skew)
+	if receivedAt.Before(earliestValidTime) {
+		return fmt.Errorf("the request timestamp [%s] is too old", receivedAt.Format(portal.DatesLayout))
+	}
+
+	latestValidTime := serverTime.Add(skew)
+	if receivedAt.After(latestValidTime) {
+		return fmt.Errorf("the request timestamp [%s] is from the future", receivedAt.Format(portal.DatesLayout))
+	}
+
+	return nil
+}
+
+func (s *SignaturesHandler) createSignature(username string, serverTime time.Time) (*database.APIKeySignatures, error) {
+	var err error
+	var token *database.APIKey
+	var keySignature *database.APIKeySignatures
+
+	if token = s.ApiKeys.FindBy(username); token == nil {
+		return nil, fmt.Errorf("the given username [%s] was not found", username)
+	}
+
+	var seed []byte
+	if seed, err = auth.GenerateAESKey(); err != nil {
+		return nil, fmt.Errorf("unable to generate the signature seed. Please try again")
+	}
+
+	expiresAt := serverTime.Add(time.Second * 30)
+	hash := auth.CreateSignature(seed, token.SecretKey)
+
+	if keySignature, err = s.ApiKeys.CreateSignatureFor(token, hash, expiresAt); err != nil {
+		return nil, fmt.Errorf("unable to create the signature item. Please try again")
+	}
+
+	return keySignature, nil
 }

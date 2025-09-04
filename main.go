@@ -51,7 +51,7 @@ func main() {
 }
 
 func serverHandler() baseHttp.Handler {
-	if app.IsProduction() { // CORS is handled by Caddy.
+	if app.IsProduction() { // Caddy handles CORS.
 		return app.GetMux()
 	}
 
