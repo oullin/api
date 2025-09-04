@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/oullin/database"
@@ -31,6 +32,28 @@ func (a ApiKeys) Create(attrs database.APIKeyAttr) (*database.APIKey, error) {
 	}
 
 	return &key, nil
+}
+
+func (a ApiKeys) CreateSignatureFor(key *database.APIKey, seed []byte, expiresAt time.Time) (*database.APIKeySignatures, error) {
+	signature := database.APIKeySignatures{
+		UUID:      uuid.NewString(),
+		APIKeyID:  key.ID,
+		Signature: seed,
+		Tries:     5,
+		ExpiresAt: expiresAt,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if result := a.DB.Sql().Create(&signature); gorm.HasDbIssues(result.Error) {
+		return nil, fmt.Errorf(
+			"issue creating the given api key signature [%s, %s]: ",
+			key.AccountName,
+			result.Error,
+		)
+	}
+
+	return &signature, nil
 }
 
 func (a ApiKeys) FindBy(accountName string) *database.APIKey {

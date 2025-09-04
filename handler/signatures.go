@@ -75,15 +75,21 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 		return http.BadRequestError("The given timestamp is before the current time")
 	}
 
+	hash := auth.CreateSignature(seed, token.SecretKey)
+	var keySignature *database.APIKeySignatures
+
+	if keySignature, err = s.ApiKeys.CreateSignatureFor(token, hash, expiresAt); err != nil {
+		slog.Error("Error creating signature in the db", "error", err)
+
+		return http.InternalError("We were unable to create the signature item. Please try again!: " + err.Error())
+	}
+
 	response := payload.SignatureResponse{
-		Signature: auth.CreateSignatureFrom(
-			string(seed),
-			string(token.SecretKey),
-		),
+		Signature: auth.SignatureToString(keySignature.Signature),
 		Cadence: payload.SignatureCadenceResponse{
 			ReceivedAt: receivedAt.Format(layout),
-			CreatedAt:  createdAt.Format(layout),
-			ExpiresAt:  expiresAt.Format(layout),
+			CreatedAt:  keySignature.CreatedAt.Format(layout),
+			ExpiresAt:  keySignature.ExpiresAt.Format(layout),
 		},
 	}
 
