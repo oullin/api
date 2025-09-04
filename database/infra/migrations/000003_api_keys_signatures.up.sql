@@ -3,6 +3,8 @@ CREATE TABLE api_keys_signatures (
 	uuid UUID UNIQUE NOT NULL,
 	api_key_id BIGINT NOT NULL,
 	signature BYTEA NOT NULL,
+	tries SMALLINT NOT NULL DEFAULT 1 CHECK (tries > 0),
+	expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	deleted_at TIMESTAMP DEFAULT NULL,
@@ -12,5 +14,6 @@ CREATE TABLE api_keys_signatures (
 );
 
 CREATE INDEX idx_api_keys_signatures_signature_created_at ON api_keys_signatures(signature, created_at);
+CREATE INDEX idx_api_keys_signatures_expires_at ON api_keys_signatures(expires_at);
 CREATE INDEX idx_api_keys_signatures_created_at ON api_keys_signatures(created_at);
 CREATE INDEX idx_api_keys_signatures_deleted_at ON api_keys_signatures(deleted_at);

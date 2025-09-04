@@ -36,14 +36,16 @@ type APIKey struct {
 }
 
 type APIKeySignature struct {
-	ID        int64     `gorm:"primaryKey"`
-	UUID      string    `gorm:"type:uuid;unique;not null"`
-	APIKeyID  int64     `gorm:"not null"`
-	APIKey    APIKey    `gorm:"foreignKey:APIKeyID"`
-	Signature []byte    `gorm:"not null;uniqueIndex:uq_signature_created_at;index:idx_signature"`
-	CreatedAt time.Time `gorm:"uniqueIndex:uq_signature_created_at;index:idx_signature_created_at"`
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index:idx_signature_deleted_at"`
+	ID        int64          `gorm:"primaryKey"`
+	UUID      string         `gorm:"type:uuid;unique;not null"`
+	tries     int            `gorm:"not null"`
+	APIKeyID  int64          `gorm:"not null"`
+	APIKey    APIKey         `gorm:"foreignKey:APIKeyID"`
+	Signature []byte         `gorm:"not null;uniqueIndex:uq_signature_created_at;index:idx_signature"`
+	ExpiresAt time.Time      `gorm:"index:idx_api_keys_signatures_expires_at"`
+	CreatedAt time.Time      `gorm:"uniqueIndex:uq_signature_created_at;index:idx_api_keys_signatures_created_at"`
+	UpdatedAt time.Time      `gorm:"index:idx_api_keys_signatures_updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index:idx_api_keys_signatures_deleted_at"`
 }
 
 type User struct {
