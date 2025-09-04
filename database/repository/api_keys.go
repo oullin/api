@@ -10,6 +10,8 @@ import (
 	"github.com/oullin/pkg/gorm"
 )
 
+const MaxSignaturesTries = 5
+
 type ApiKeys struct {
 	DB *database.Connection
 }
@@ -35,11 +37,17 @@ func (a ApiKeys) Create(attrs database.APIKeyAttr) (*database.APIKey, error) {
 }
 
 func (a ApiKeys) CreateSignatureFor(key *database.APIKey, seed []byte, expiresAt time.Time) (*database.APIKeySignatures, error) {
+	var item *database.APIKeySignatures
+
+	if item = a.FindSignature(key); item != nil {
+		return item, nil
+	}
+
 	signature := database.APIKeySignatures{
 		UUID:      uuid.NewString(),
 		APIKeyID:  key.ID,
 		Signature: seed,
-		Tries:     5,
+		Tries:     MaxSignaturesTries,
 		ExpiresAt: expiresAt,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -69,6 +77,27 @@ func (a ApiKeys) FindBy(accountName string) *database.APIKey {
 
 	if result.RowsAffected > 0 {
 		return &key
+	}
+
+	return nil
+}
+
+func (a ApiKeys) FindSignature(key *database.APIKey) *database.APIKeySignatures {
+	var item database.APIKeySignatures
+
+	result := a.DB.Sql().
+		Model(&database.APIKeySignatures{}).
+		Where("api_key_id = ?", key.ID).
+		Where("tries <= ?", MaxSignaturesTries).
+		Where("expired_at IS NULL OR expired_at > ?", time.Now()).
+		First(&item)
+
+	if gorm.HasDbIssues(result.Error) {
+		return nil
+	}
+
+	if result.RowsAffected > 0 {
+		return &item
 	}
 
 	return nil
