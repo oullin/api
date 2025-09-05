@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/gorm"
 	"github.com/oullin/pkg/portal"
-	baseGorm "gorm.io/gorm"
 )
 
 type ApiKeys struct {
@@ -54,39 +54,34 @@ func (a ApiKeys) FindBy(accountName string) *database.APIKey {
 	return nil
 }
 
-func (a ApiKeys) CreateSignatureFor(key *database.APIKey, seed []byte, expiresAt time.Time) (*database.APIKeySignatures, error) {
+func (a ApiKeys) CreateSignatureFor(entity repoentity.APIKeyCreateSignatureFor) (*database.APIKeySignatures, error) {
 	var item *database.APIKeySignatures
 
-	if item = a.FindActiveSignatureFor(key); item != nil {
-		return item, nil
+	if item = a.FindActiveSignatureFor(entity.Key); item != nil {
+		item.ExpiresAt = entity.ExpiresAt
+		a.DB.Sql().Save(&item)
 	}
 
 	now := time.Now()
 	signature := database.APIKeySignatures{
 		CreatedAt:    now,
 		UpdatedAt:    now,
-		Signature:    seed,
-		APIKeyID:     key.ID,
-		ExpiresAt:    expiresAt,
+		Signature:    entity.Seed,
+		APIKeyID:     entity.Key.ID,
+		ExpiresAt:    entity.ExpiresAt,
 		UUID:         uuid.NewString(),
 		MaxTries:     portal.MaxSignaturesTries,
+		Origin:       entity.Origin,
 		CurrentTries: 1,
 	}
 
-	err := a.DB.Transaction(func(tx *baseGorm.DB) error {
-		if result := a.DB.Sql().Create(&signature); gorm.HasDbIssues(result.Error) {
-			return fmt.Errorf("issue creating the given api key signature [%s, %s]: ", key.AccountName, result.Error)
-		}
+	username := entity.Key.AccountName
+	if result := a.DB.Sql().Create(&signature); gorm.HasDbIssues(result.Error) {
+		return nil, fmt.Errorf("issue creating the given api keys signature [%s, %s]: ", username, result.Error)
+	}
 
-		if result := a.DisablePreviousSignatures(key, signature.UUID); result != nil {
-			return fmt.Errorf("issue creating the given api key signature [%s, %s]: ", key.AccountName, result.Error())
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
+	if result := a.DisablePreviousSignatures(entity.Key, signature.UUID, entity.Origin); result != nil {
+		return nil, fmt.Errorf("issue disabling previous api keys signature [%s, %s]: ", username, result.Error())
 	}
 
 	return &signature, nil
@@ -99,7 +94,7 @@ func (a ApiKeys) FindActiveSignatureFor(key *database.APIKey) *database.APIKeySi
 		Model(&database.APIKeySignatures{}).
 		Where("expired_at IS NULL").
 		Where("api_key_id = ?", key.ID).
-		Where("current_tries < ? ", portal.MaxSignaturesTries).
+		Where("current_tries <= ? ", portal.MaxSignaturesTries).
 		First(&item)
 
 	if gorm.HasDbIssues(result.Error) {
@@ -113,15 +108,17 @@ func (a ApiKeys) FindActiveSignatureFor(key *database.APIKey) *database.APIKeySi
 	return nil
 }
 
-func (a ApiKeys) FindSignatureFrom(key *database.APIKey, signature []byte) *database.APIKeySignatures {
+func (a ApiKeys) FindSignatureFrom(entity repoentity.FindSignatureFrom) *database.APIKeySignatures {
 	var item database.APIKeySignatures
 
 	result := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
-		Where("api_key_id = ?", key.ID).
-		Where("signature = ?", signature).
+		Where("api_key_id = ?", entity.Key.ID).
+		Where("signature = ?", entity.Signature).
+		Where("expires_at >= ? ", entity.ServerTime).
+		Where("origin = ?", entity.Origin).
 		Where("expired_at IS NULL").
-		Where("current_tries < ? ", portal.MaxSignaturesTries).
+		Where("current_tries <= max_tries").
 		First(&item)
 
 	if gorm.HasDbIssues(result.Error) {
@@ -135,7 +132,7 @@ func (a ApiKeys) FindSignatureFrom(key *database.APIKey, signature []byte) *data
 	return nil
 }
 
-func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID string) error {
+func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID, origin string) error {
 	query := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
 		Where(
@@ -143,6 +140,12 @@ func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID s
 				Where("expired_at IS NULL").Or("current_tries > max_tries"),
 		).
 		Where("api_key_id = ?", key.ID).
+		Where(
+			a.DB.Sql().
+				Where("origin = ?", origin).
+				Or("TRIM(origin) = ''"),
+		).
+		Where("origin = ?", origin).
 		Where("uuid NOT IN (?)", []string{signatureUUID}).
 		Update("expired_at", time.Now())
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/http"
@@ -51,13 +52,14 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 
 	serverTime := time.Now()
 	receivedAt := time.Unix(req.Timestamp, 0)
+	req.Origin = r.Header.Get("X-API-Intended-Origin")
 
 	if err = s.isRequestWithinTimeframe(serverTime, receivedAt); err != nil {
 		return http.LogBadRequestError(err.Error(), err)
 	}
 
 	var keySignature *database.APIKeySignatures
-	if keySignature, err = s.CreateSignature(req.Username, serverTime); err != nil {
+	if keySignature, err = s.CreateSignature(req, serverTime); err != nil {
 		return http.LogInternalError(err.Error(), err)
 	}
 
@@ -97,13 +99,13 @@ func (s *SignaturesHandler) isRequestWithinTimeframe(serverTime, receivedAt time
 	return nil
 }
 
-func (s *SignaturesHandler) CreateSignature(username string, serverTime time.Time) (*database.APIKeySignatures, error) {
+func (s *SignaturesHandler) CreateSignature(request payload.SignatureRequest, serverTime time.Time) (*database.APIKeySignatures, error) {
 	var err error
 	var token *database.APIKey
 	var keySignature *database.APIKeySignatures
 
-	if token = s.ApiKeys.FindBy(username); token == nil {
-		return nil, fmt.Errorf("the given username [%s] was not found", username)
+	if token = s.ApiKeys.FindBy(request.Username); token == nil {
+		return nil, fmt.Errorf("the given username [%s] was not found", request.Username)
 	}
 
 	var seed []byte
@@ -114,7 +116,14 @@ func (s *SignaturesHandler) CreateSignature(username string, serverTime time.Tim
 	expiresAt := serverTime.Add(time.Second * 30)
 	hash := auth.CreateSignature(seed, token.SecretKey)
 
-	if keySignature, err = s.ApiKeys.CreateSignatureFor(token, hash, expiresAt); err != nil {
+	entity := repoentity.APIKeyCreateSignatureFor{
+		Key:       token,
+		ExpiresAt: expiresAt,
+		Seed:      hash,
+		Origin:    request.Origin,
+	}
+
+	if keySignature, err = s.ApiKeys.CreateSignatureFor(entity); err != nil {
 		return nil, fmt.Errorf("unable to create the signature item. Please try again")
 	}
 

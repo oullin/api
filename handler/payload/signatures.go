@@ -5,6 +5,7 @@ type SignatureRequest struct {
 	PublicKey string `json:"public_key" validate:"required,lowercase,min=64,max=67"`
 	Username  string `json:"username" validate:"required,lowercase,min=5"`
 	Timestamp int64  `json:"timestamp" validate:"required,number,min=10"`
+	Origin    string `json:"origin"`
 }
 
 type SignatureResponse struct {

@@ -7,6 +7,7 @@ CREATE TABLE api_key_signatures (
 	current_tries SMALLINT NOT NULL DEFAULT 1 CHECK (current_tries > 0),
 	expires_at TIMESTAMP DEFAULT NULL,
 	expired_at TIMESTAMP DEFAULT NULL,
+	origin TEXT,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	deleted_at TIMESTAMP DEFAULT NULL,

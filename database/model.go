@@ -46,6 +46,7 @@ type APIKeySignatures struct {
 	CurrentTries int            `gorm:"not null"`
 	APIKey       APIKey         `gorm:"foreignKey:APIKeyID"`
 	Signature    []byte         `gorm:"not null;uniqueIndex:uq_signature_created_at;index:idx_signature"`
+	Origin       string         `gorm:"type:varchar(255);not null"`
 	ExpiresAt    time.Time      `gorm:"index:idx_api_key_signatures_expires_at"`
 	ExpiredAt    *time.Time     `gorm:"index:idx_api_key_signatures_expired_at"`
 	CreatedAt    time.Time      `gorm:"uniqueIndex:uq_signature_created_at;index:idx_api_key_signatures_created_at"`

@@ -10,6 +10,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
@@ -24,6 +25,7 @@ const signatureHeader = "X-API-Signature"
 const timestampHeader = "X-API-Timestamp"
 const nonceHeader = "X-API-Nonce"
 const requestIDHeader = "X-Request-ID"
+const intendedOrigin = "X-API-Intended-Origin"
 
 // Context keys for propagating auth info downstream
 // Use unexported custom type to avoid collisions
@@ -171,8 +173,9 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, request
 	ts := strings.TrimSpace(r.Header.Get(timestampHeader))
 	nonce := strings.TrimSpace(r.Header.Get(nonceHeader))
 	ip := portal.ParseClientIP(r)
+	intendedOriginURL := strings.TrimSpace(r.Header.Get(intendedOrigin))
 
-	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" || ip == "" {
+	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" || ip == "" || intendedOriginURL == "" {
 		return AuthTokenHeaders{}, mwguards.InvalidRequestError(
 			"Invalid authentication headers / or missing headers",
 			"",
@@ -184,13 +187,14 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, request
 	}
 
 	return AuthTokenHeaders{
-		AccountName: accountName,
-		PublicKey:   publicToken,
-		Signature:   signature,
-		Timestamp:   ts,
-		Nonce:       nonce,
-		ClientIP:    ip,
-		RequestID:   requestId,
+		AccountName:       accountName,
+		PublicKey:         publicToken,
+		Signature:         signature,
+		Timestamp:         ts,
+		Nonce:             nonce,
+		ClientIP:          ip,
+		RequestID:         requestId,
+		IntendedOriginURL: intendedOriginURL,
 	}, nil
 }
 
@@ -253,7 +257,14 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 		return mwguards.NotFound("error decoding signature string", "")
 	}
 
-	signature := t.ApiKeys.FindSignatureFrom(apiKey, byteSignature)
+	entity := repoentity.FindSignatureFrom{
+		Key:        apiKey,
+		Signature:  byteSignature,
+		Origin:     headers.IntendedOriginURL,
+		ServerTime: time.Now(),
+	}
+
+	signature := t.ApiKeys.FindSignatureFrom(entity)
 
 	if signature == nil {
 		return mwguards.NotFound("signature not found", "")
