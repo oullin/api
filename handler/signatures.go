@@ -118,9 +118,5 @@ func (s *SignaturesHandler) createSignature(username string, serverTime time.Tim
 		return nil, fmt.Errorf("unable to create the signature item. Please try again")
 	}
 
-	if result := s.ApiKeys.DisableSignaturesFor(token, keySignature.ID); result != nil {
-		return nil, fmt.Errorf("unable to disable the old signature items. Please try again")
-	}
-
 	return keySignature, nil
 }
