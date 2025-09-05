@@ -256,8 +256,9 @@ func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publ
 		return t.getUnauthenticatedError()
 	}
 
-	// Compute local signature over canonical request and compare in constant time (hash to fixed-length first)
-	localSignature := auth.CreateSignatureFrom(canonical, token.PublicKey) //@todo Change!
+        // Compute local signature over canonical request using the account's secret key
+        // and compare in constant time (hash to fixed-length first)
+        localSignature := auth.CreateSignatureFrom(canonical, token.SecretKey)
 	hSig := sha256.Sum256([]byte(strings.TrimSpace(signature)))
 	hLocal := sha256.Sum256([]byte(localSignature))
 
