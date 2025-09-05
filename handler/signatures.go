@@ -52,7 +52,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 
 	serverTime := time.Now()
 	receivedAt := time.Unix(req.Timestamp, 0)
-	req.Origin = r.Header.Get("X-API-Intended-Origin")
+	req.Origin = r.Header.Get(portal.IntendedOriginHeader)
 
 	if err = s.isRequestWithinTimeframe(serverTime, receivedAt); err != nil {
 		return http.LogBadRequestError(err.Error(), err)

@@ -11,7 +11,7 @@ const SignatureHeader = "X-API-Signature"
 const TimestampHeader = "X-API-Timestamp"
 const NonceHeader = "X-API-Nonce"
 const RequestIDHeader = "X-Request-ID"
-const IntendedOrigin = "X-API-Intended-Origin"
+const IntendedOriginHeader = "X-API-Intended-Origin"
 
 // ---- Middleware / Context
 

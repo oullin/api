@@ -17,6 +17,7 @@ CREATE TABLE api_key_signatures (
 );
 
 CREATE INDEX idx_api_key_signatures_signature_created_at ON api_key_signatures(signature, created_at);
+CREATE INDEX idx_api_key_signatures_origin ON api_key_signatures(origin);
 CREATE INDEX idx_api_key_signatures_expires_at ON api_key_signatures(expires_at);
 CREATE INDEX idx_api_key_signatures_expired_at ON api_key_signatures(expired_at);
 CREATE INDEX idx_api_key_signatures_created_at ON api_key_signatures(created_at);

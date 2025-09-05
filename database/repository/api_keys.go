@@ -57,7 +57,7 @@ func (a ApiKeys) FindBy(accountName string) *database.APIKey {
 func (a ApiKeys) CreateSignatureFor(entity repoentity.APIKeyCreateSignatureFor) (*database.APIKeySignatures, error) {
 	var item *database.APIKeySignatures
 
-	if item = a.FindActiveSignatureFor(entity.Key); item != nil {
+	if item = a.FindActiveSignatureFor(entity.Key, entity.Origin); item != nil {
 		item.ExpiresAt = entity.ExpiresAt
 		a.DB.Sql().Save(&item)
 	}
@@ -87,13 +87,14 @@ func (a ApiKeys) CreateSignatureFor(entity repoentity.APIKeyCreateSignatureFor) 
 	return &signature, nil
 }
 
-func (a ApiKeys) FindActiveSignatureFor(key *database.APIKey) *database.APIKeySignatures {
+func (a ApiKeys) FindActiveSignatureFor(key *database.APIKey, origin string) *database.APIKeySignatures {
 	var item database.APIKeySignatures
 
 	result := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
 		Where("expired_at IS NULL").
 		Where("api_key_id = ?", key.ID).
+		Where("origin = ?", origin).
 		Where("current_tries <= ? ", portal.MaxSignaturesTries).
 		First(&item)
 
