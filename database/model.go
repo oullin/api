@@ -39,17 +39,18 @@ type APIKey struct {
 }
 
 type APIKeySignatures struct {
-	ID        int64          `gorm:"primaryKey"`
-	UUID      string         `gorm:"type:uuid;unique;not null"`
-	APIKeyID  int64          `gorm:"not null"`
-	Tries     int            `gorm:"not null"`
-	APIKey    APIKey         `gorm:"foreignKey:APIKeyID"`
-	Signature []byte         `gorm:"not null;uniqueIndex:uq_signature_created_at;index:idx_signature"`
-	ExpiresAt time.Time      `gorm:"index:idx_api_key_signatures_expires_at"`
-	ExpiredAt *time.Time     `gorm:"index:idx_api_key_signatures_expired_at"`
-	CreatedAt time.Time      `gorm:"uniqueIndex:uq_signature_created_at;index:idx_api_key_signatures_created_at"`
-	UpdatedAt time.Time      `gorm:"index:idx_api_key_signatures_updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index:idx_api_key_signatures_deleted_at"`
+	ID           int64          `gorm:"primaryKey"`
+	UUID         string         `gorm:"type:uuid;unique;not null"`
+	APIKeyID     int64          `gorm:"not null"`
+	MaxTries     int            `gorm:"not null"`
+	CurrentTries int            `gorm:"not null"`
+	APIKey       APIKey         `gorm:"foreignKey:APIKeyID"`
+	Signature    []byte         `gorm:"not null;uniqueIndex:uq_signature_created_at;index:idx_signature"`
+	ExpiresAt    time.Time      `gorm:"index:idx_api_key_signatures_expires_at"`
+	ExpiredAt    *time.Time     `gorm:"index:idx_api_key_signatures_expired_at"`
+	CreatedAt    time.Time      `gorm:"uniqueIndex:uq_signature_created_at;index:idx_api_key_signatures_created_at"`
+	UpdatedAt    time.Time      `gorm:"index:idx_api_key_signatures_updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index:idx_api_key_signatures_deleted_at"`
 }
 
 type User struct {

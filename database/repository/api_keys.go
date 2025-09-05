@@ -63,13 +63,14 @@ func (a ApiKeys) CreateSignatureFor(key *database.APIKey, seed []byte, expiresAt
 
 	now := time.Now()
 	signature := database.APIKeySignatures{
-		CreatedAt: now,
-		UpdatedAt: now,
-		Signature: seed,
-		APIKeyID:  key.ID,
-		ExpiresAt: expiresAt,
-		UUID:      uuid.NewString(),
-		Tries:     portal.MaxSignaturesTries,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+		Signature:    seed,
+		APIKeyID:     key.ID,
+		ExpiresAt:    expiresAt,
+		UUID:         uuid.NewString(),
+		MaxTries:     portal.MaxSignaturesTries,
+		CurrentTries: 1,
 	}
 
 	err := a.DB.Transaction(func(tx *baseGorm.DB) error {
@@ -98,7 +99,7 @@ func (a ApiKeys) FindActiveSignatureFor(key *database.APIKey) *database.APIKeySi
 		Model(&database.APIKeySignatures{}).
 		Where("expired_at IS NULL").
 		Where("api_key_id = ?", key.ID).
-		Where("tries <=", portal.MaxSignaturesTries).
+		Where("current_tries < ? ", portal.MaxSignaturesTries).
 		First(&item)
 
 	if gorm.HasDbIssues(result.Error) {
@@ -120,7 +121,7 @@ func (a ApiKeys) FindSignatureFrom(key *database.APIKey, signature []byte) *data
 		Where("api_key_id = ?", key.ID).
 		Where("signature = ?", signature).
 		Where("expired_at IS NULL").
-		Where("tries <=", portal.MaxSignaturesTries).
+		Where("current_tries < ? ", portal.MaxSignaturesTries).
 		First(&item)
 
 	if gorm.HasDbIssues(result.Error) {
@@ -137,7 +138,10 @@ func (a ApiKeys) FindSignatureFrom(key *database.APIKey, signature []byte) *data
 func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID string) error {
 	query := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
-		Where("expired_at IS NULL").
+		Where(
+			a.DB.Sql().
+				Where("expired_at IS NULL").Or("current_tries > max_tries"),
+		).
 		Where("api_key_id = ?", key.ID).
 		Where("uuid NOT IN (?)", []string{signatureUUID}).
 		Update("expired_at", time.Now())
@@ -149,8 +153,8 @@ func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID s
 	return nil
 }
 
-func (a ApiKeys) IncreaseSignatureTries(signatureUUID string, tries int) error {
-	if tries < portal.MaxSignaturesTries {
+func (a ApiKeys) IncreaseSignatureTries(signatureUUID string, currentTries int) error {
+	if currentTries < portal.MaxSignaturesTries {
 		return nil
 	}
 
@@ -167,7 +171,7 @@ func (a ApiKeys) IncreaseSignatureTries(signatureUUID string, tries int) error {
 
 	update := a.DB.Sql().
 		Model(&item).
-		Update("tries", tries)
+		Update("current_tries", currentTries)
 
 	if gorm.HasDbIssues(update.Error) {
 		return update.Error

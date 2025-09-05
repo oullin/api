@@ -259,7 +259,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 		return mwguards.NotFound("signature not found", "")
 	}
 
-	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.Tries+1); err != nil {
+	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {
 		return mwguards.InvalidRequestError("could not increase signature tries", err.Error())
 	}
 

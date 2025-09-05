@@ -9,7 +9,7 @@ type SignatureRequest struct {
 
 type SignatureResponse struct {
 	Signature string                   `json:"signature"`
-	Tries     int                      `json:"tries"`
+	MaxTries  int                      `json:"max_tries"`
 	Cadence   SignatureCadenceResponse `json:"cadence"`
 }
 

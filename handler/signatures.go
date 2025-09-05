@@ -63,7 +63,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 
 	response := payload.SignatureResponse{
 		Signature: auth.SignatureToString(keySignature.Signature),
-		Tries:     keySignature.Tries,
+		MaxTries:  keySignature.MaxTries,
 		Cadence: payload.SignatureCadenceResponse{
 			ReceivedAt: receivedAt.Format(portal.DatesLayout),
 			CreatedAt:  keySignature.CreatedAt.Format(portal.DatesLayout),
