@@ -8,10 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/gorm"
+	"github.com/oullin/pkg/portal"
 	baseGorm "gorm.io/gorm"
 )
-
-const MaxSignaturesTries = 5
 
 type ApiKeys struct {
 	DB *database.Connection
@@ -58,19 +57,19 @@ func (a ApiKeys) FindBy(accountName string) *database.APIKey {
 func (a ApiKeys) CreateSignatureFor(key *database.APIKey, seed []byte, expiresAt time.Time) (*database.APIKeySignatures, error) {
 	var item *database.APIKeySignatures
 
-	if item = a.FindSignature(key); item != nil {
+	if item = a.FindActiveSignatureFor(key); item != nil {
 		return item, nil
 	}
 
 	now := time.Now()
 	signature := database.APIKeySignatures{
-		UUID:      uuid.NewString(),
-		APIKeyID:  key.ID,
-		Signature: seed,
-		Tries:     MaxSignaturesTries,
-		ExpiresAt: expiresAt,
 		CreatedAt: now,
 		UpdatedAt: now,
+		Signature: seed,
+		APIKeyID:  key.ID,
+		ExpiresAt: expiresAt,
+		UUID:      uuid.NewString(),
+		Tries:     portal.MaxSignaturesTries,
 	}
 
 	err := a.DB.Transaction(func(tx *baseGorm.DB) error {
@@ -92,14 +91,36 @@ func (a ApiKeys) CreateSignatureFor(key *database.APIKey, seed []byte, expiresAt
 	return &signature, nil
 }
 
-func (a ApiKeys) FindSignature(key *database.APIKey) *database.APIKeySignatures {
+func (a ApiKeys) FindActiveSignatureFor(key *database.APIKey) *database.APIKeySignatures {
+	var item database.APIKeySignatures
+
+	result := a.DB.Sql().
+		Model(&database.APIKeySignatures{}).
+		Where("expired_at IS NULL").
+		Where("api_key_id = ?", key.ID).
+		Where("tries <=", portal.MaxSignaturesTries).
+		First(&item)
+
+	if gorm.HasDbIssues(result.Error) {
+		return nil
+	}
+
+	if result.RowsAffected > 0 {
+		return &item
+	}
+
+	return nil
+}
+
+func (a ApiKeys) FindSignatureFrom(key *database.APIKey, signature []byte) *database.APIKeySignatures {
 	var item database.APIKeySignatures
 
 	result := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
 		Where("api_key_id = ?", key.ID).
-		Where("tries <= ?", MaxSignaturesTries).
-		Where("expires_at > ?", time.Now()).
+		Where("signature = ?", signature).
+		Where("expired_at IS NULL").
+		Where("tries <=", portal.MaxSignaturesTries).
 		First(&item)
 
 	if gorm.HasDbIssues(result.Error) {
@@ -114,15 +135,42 @@ func (a ApiKeys) FindSignature(key *database.APIKey) *database.APIKeySignatures 
 }
 
 func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID string) error {
-	result := a.DB.Sql().
+	query := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
+		Where("expired_at IS NULL").
 		Where("api_key_id = ?", key.ID).
-		Where("uuid != ?", signatureUUID).
-		Where("expired_at is null").
+		Where("uuid NOT IN (?)", []string{signatureUUID}).
 		Update("expired_at", time.Now())
 
-	if gorm.HasDbIssues(result.Error) {
-		return result.Error
+	if gorm.HasDbIssues(query.Error) {
+		return query.Error
+	}
+
+	return nil
+}
+
+func (a ApiKeys) IncreaseSignatureTries(signatureUUID string, tries int) error {
+	if tries < portal.MaxSignaturesTries {
+		return nil
+	}
+
+	var item database.APIKeySignatures
+
+	query := a.DB.Sql().
+		Model(&database.APIKeySignatures{}).
+		Where("uuid = ?", signatureUUID).
+		First(&item)
+
+	if gorm.HasDbIssues(query.Error) {
+		return query.Error
+	}
+
+	update := a.DB.Sql().
+		Model(&item).
+		Update("tries", tries)
+
+	if gorm.HasDbIssues(update.Error) {
+		return update.Error
 	}
 
 	return nil

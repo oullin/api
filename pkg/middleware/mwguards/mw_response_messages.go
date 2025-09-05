@@ -81,6 +81,18 @@ func RateLimitedError(message, logMessage string, data ...map[string]any) *http.
 	}
 }
 
+func NotFound(message, logMessage string, data ...map[string]any) *http.ApiError {
+	message, logMessage = normaliseMessages(message, logMessage)
+
+	slog.Error(logMessage, "error")
+
+	return &http.ApiError{
+		Message: message,
+		Status:  baseHttp.StatusNotFound,
+		Data:    normaliseData(data...),
+	}
+}
+
 func TimestampTooOldError(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 

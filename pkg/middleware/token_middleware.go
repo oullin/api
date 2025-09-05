@@ -2,11 +2,13 @@ package middleware
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	baseHttp "net/http"
 	"strings"
 	"time"
 
+	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
@@ -49,7 +51,7 @@ type TokenCheckMiddleware struct {
 	// TokenHandler performs encoding/decoding of tokens and signature creation/verification.
 	TokenHandler *auth.TokenHandler
 
-	// nonceCache stores recently seen nonce's to prevent replaying the same request
+	// nonceCache stores recently seen nonce to prevent replaying the same request
 	// within the configured TTL window.
 	nonceCache *cache.TTLCache
 
@@ -115,11 +117,15 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return tsErr
 		}
 
-		if err = t.HasInvalidFormat(headers); err != nil {
+		var apiKey *database.APIKey
+		if apiKey, err = t.HasInvalidFormat(headers); err != nil {
 			return err
 		}
 
-		// Update the request context
+		if err = t.HasInvalidSignature(headers, apiKey); err != nil {
+			return err
+		}
+
 		r = t.AttachContext(r, headers)
 
 		return next(w, r)
@@ -195,11 +201,11 @@ func (t TokenCheckMiddleware) AttachContext(r *baseHttp.Request, headers AuthTok
 	return r.WithContext(ctx)
 }
 
-func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) *http.ApiError {
+func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*database.APIKey, *http.ApiError) {
 	limiterKey := headers.ClientIP + "|" + strings.ToLower(headers.AccountName)
 
 	if t.rateLimiter.TooMany(limiterKey) {
-		return mwguards.RateLimitedError(
+		return nil, mwguards.RateLimitedError(
 			"Too many authentication attempts",
 			"Too many authentication attempts for key: "+limiterKey,
 		)
@@ -215,7 +221,7 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) *http.A
 	if guard.Rejects(rejectsRequest) {
 		t.rateLimiter.Fail(headers.AccountName)
 
-		return mwguards.UnauthenticatedError(
+		return nil, mwguards.UnauthenticatedError(
 			"Invalid public token",
 			guard.Error.Error(),
 			rejectsRequest.ToMap(),
@@ -228,12 +234,33 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) *http.A
 		if t.nonceCache.UseOnce(key, t.nonceTTL) {
 			t.rateLimiter.Fail(limiterKey)
 
-			return mwguards.UnauthenticatedError(
+			return nil, mwguards.UnauthenticatedError(
 				"Invalid nonce",
 				"Invalid nonce using key: "+key,
 				map[string]any{"key": key, "limiter_key": limiterKey},
 			)
 		}
+	}
+
+	return guard.ApiKey, nil
+}
+
+func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *http.ApiError {
+	var err error
+	var byteSignature []byte
+
+	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
+		return mwguards.NotFound("error decoding signature string", "")
+	}
+
+	signature := t.ApiKeys.FindSignatureFrom(apiKey, byteSignature)
+
+	if signature == nil {
+		return mwguards.NotFound("signature not found", "")
+	}
+
+	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.Tries+1); err != nil {
+		return mwguards.InvalidRequestError("could not increase signature tries", err.Error())
 	}
 
 	return nil

@@ -57,7 +57,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 	}
 
 	var keySignature *database.APIKeySignatures
-	if keySignature, err = s.createSignature(req.Username, serverTime); err != nil {
+	if keySignature, err = s.CreateSignature(req.Username, serverTime); err != nil {
 		return http.LogInternalError(err.Error(), err)
 	}
 
@@ -97,7 +97,7 @@ func (s *SignaturesHandler) isRequestWithinTimeframe(serverTime, receivedAt time
 	return nil
 }
 
-func (s *SignaturesHandler) createSignature(username string, serverTime time.Time) (*database.APIKeySignatures, error) {
+func (s *SignaturesHandler) CreateSignature(username string, serverTime time.Time) (*database.APIKeySignatures, error) {
 	var err error
 	var token *database.APIKey
 	var keySignature *database.APIKeySignatures
