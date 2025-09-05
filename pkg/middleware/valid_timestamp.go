@@ -8,14 +8,8 @@ import (
 	"github.com/oullin/pkg/http"
 )
 
-// ValidTimestamp encapsulates timestamp validation context.
-// It accepts: the raw timestamp string (ts), a logger, and a clock (now) function.
-// Use Validate to check against a provided skew window and future-time policy.
 type ValidTimestamp struct {
-	// ts is the timestamp string (expected Unix epoch in seconds).
-	ts string
-
-	// now returns the current time; useful to inject a deterministic clock in tests.
+	ts  string
 	now func() time.Time
 }
 

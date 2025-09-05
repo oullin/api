@@ -19,86 +19,37 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-const tokenHeader = "X-API-Key"
-const usernameHeader = "X-API-Username"
-const signatureHeader = "X-API-Signature"
-const timestampHeader = "X-API-Timestamp"
-const nonceHeader = "X-API-Nonce"
-const requestIDHeader = "X-Request-ID"
-const intendedOrigin = "X-API-Intended-Origin"
-
-// Context keys for propagating auth info downstream
-// Use unexported custom type to avoid collisions
-type contextKey string
-
-const (
-	authAccountNameKey contextKey = "auth.account_name"
-	requestIdKey       contextKey = "request.id"
-)
-
-// TokenCheckMiddleware authenticates signed API requests using account tokens.
-// It validates required headers, enforces a timestamp skew window, prevents
-// replay attacks via nonce tracking, compares tokens/signatures in constant time,
-// and applies a basic failure-based rate limiter per client scope.
-//
-// Error handling:
-// - Rate limiting errors return 429 Too Many Requests
-// - Timestamp errors return 401 with specific messages for expired or future timestamps
-// - Other authentication errors return 401 with generic messages
 type TokenCheckMiddleware struct {
-	// ApiKeys provides access to persisted API key records used to resolve
-	// account credentials (account name, public key, and secret key).
-	ApiKeys *repository.ApiKeys
-
-	// TokenHandler performs encoding/decoding of tokens and signature creation/verification.
-	TokenHandler *auth.TokenHandler
-
-	// nonceCache stores recently seen nonce to prevent replaying the same request
-	// within the configured TTL window.
-	nonceCache *cache.TTLCache
-
-	// rateLimiter throttles repeated authentication failures per "clientIP|account" scope.
-	rateLimiter *limiter.MemoryLimiter
-
-	// clockSkew defines the allowed difference between client and server time when
-	// validating the request timestamp.
-	clockSkew time.Duration
-
-	// Now is an injectable time source for deterministic tests. If nil, time.Now is used.
-	now func() time.Time
-
-	// disallowFuture, if true, rejects timestamps greater than the current server time,
-	// even if they are within the positive skew window.
-	disallowFuture bool
-
-	// nonceTTL is how long nonce remains invalid after its first use (replay-protection window).
-	nonceTTL time.Duration
-
-	// failWindow indicates the sliding time window used to evaluate authentication failures.
-	failWindow time.Duration
-
-	// maxFailPerScope is the maximum number of failures allowed within the failWindow for a given scope.
 	maxFailPerScope int
+	disallowFuture  bool
+	nonceTTL        time.Duration
+	failWindow      time.Duration
+	clockSkew       time.Duration
+	nonceCache      *cache.TTLCache
+	now             func() time.Time
+	TokenHandler    *auth.TokenHandler
+	ApiKeys         *repository.ApiKeys
+	rateLimiter     *limiter.MemoryLimiter
 }
 
 func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
 	return TokenCheckMiddleware{
+		maxFailPerScope: 10,
+		disallowFuture:  true,
 		ApiKeys:         apiKeys,
+		now:             time.Now,
 		TokenHandler:    tokenHandler,
+		clockSkew:       5 * time.Minute,
+		failWindow:      1 * time.Minute,
+		nonceTTL:        5 * time.Minute,
 		nonceCache:      cache.NewTTLCache(),
 		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
-		clockSkew:       5 * time.Minute,
-		now:             time.Now,
-		disallowFuture:  true,
-		nonceTTL:        5 * time.Minute,
-		failWindow:      1 * time.Minute,
-		maxFailPerScope: 10,
 	}
 }
 
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-		reqID := strings.TrimSpace(r.Header.Get(requestIDHeader))
+		reqID := strings.TrimSpace(r.Header.Get(portal.RequestIDHeader))
 
 		if reqID == "" {
 			return mwguards.InvalidRequestError(fmt.Sprintf("Invalid request ID for URL [%s].", r.URL.Path), "")
@@ -167,13 +118,13 @@ func (t TokenCheckMiddleware) GuardDependencies() *http.ApiError {
 }
 
 func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, requestId string) (AuthTokenHeaders, *http.ApiError) {
-	accountName := strings.TrimSpace(r.Header.Get(usernameHeader))
-	signature := strings.TrimSpace(r.Header.Get(signatureHeader))
-	publicToken := strings.TrimSpace(r.Header.Get(tokenHeader))
-	ts := strings.TrimSpace(r.Header.Get(timestampHeader))
-	nonce := strings.TrimSpace(r.Header.Get(nonceHeader))
+	intendedOriginURL := strings.TrimSpace(r.Header.Get(portal.IntendedOrigin))
+	accountName := strings.TrimSpace(r.Header.Get(portal.UsernameHeader))
+	signature := strings.TrimSpace(r.Header.Get(portal.SignatureHeader))
+	publicToken := strings.TrimSpace(r.Header.Get(portal.TokenHeader))
+	ts := strings.TrimSpace(r.Header.Get(portal.TimestampHeader))
+	nonce := strings.TrimSpace(r.Header.Get(portal.NonceHeader))
 	ip := portal.ParseClientIP(r)
-	intendedOriginURL := strings.TrimSpace(r.Header.Get(intendedOrigin))
 
 	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" || ip == "" || intendedOriginURL == "" {
 		return AuthTokenHeaders{}, mwguards.InvalidRequestError(
@@ -187,20 +138,20 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, request
 	}
 
 	return AuthTokenHeaders{
+		Timestamp:         ts,
+		ClientIP:          ip,
+		Nonce:             nonce,
+		Signature:         signature,
+		RequestID:         requestId,
 		AccountName:       accountName,
 		PublicKey:         publicToken,
-		Signature:         signature,
-		Timestamp:         ts,
-		Nonce:             nonce,
-		ClientIP:          ip,
-		RequestID:         requestId,
 		IntendedOriginURL: intendedOriginURL,
 	}, nil
 }
 
 func (t TokenCheckMiddleware) AttachContext(r *baseHttp.Request, headers AuthTokenHeaders) *baseHttp.Request {
-	ctx := context.WithValue(r.Context(), authAccountNameKey, headers.AccountName)
-	ctx = context.WithValue(r.Context(), requestIdKey, headers.RequestID)
+	ctx := context.WithValue(r.Context(), portal.AuthAccountNameKey, headers.AccountName)
+	ctx = context.WithValue(r.Context(), portal.RequestIdKey, headers.RequestID)
 
 	return r.WithContext(ctx)
 }
