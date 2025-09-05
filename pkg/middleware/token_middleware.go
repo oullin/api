@@ -2,20 +2,18 @@ package middleware
 
 import (
 	"context"
-	"crypto/sha256"
-	"crypto/subtle"
 	"fmt"
 	"log/slog"
 	baseHttp "net/http"
 	"strings"
 	"time"
 
-	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/limiter"
+	"github.com/oullin/pkg/middleware/mwguards"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -133,7 +131,7 @@ func (t TokenCheckMiddleware) guardDependencies() *http.ApiError {
 	missing := make([]string, 0, 4)
 
 	if t.ApiKeys == nil {
-		missing = append(missing, "ApiKeys")
+		missing = append(missing, "KeysRepository")
 	}
 
 	if t.TokenHandler == nil {
@@ -198,59 +196,28 @@ func (t TokenCheckMiddleware) shallReject(headers AuthTokenHeaders) *http.ApiErr
 		return t.getRateLimitedError("Too many authentication attempts for key: " + limiterKey)
 	}
 
-	var item *database.APIKey
-	if item = t.ApiKeys.FindBy(headers.AccountName); item == nil {
+	guard := mwguards.NewMWTokenGuard(t.ApiKeys, t.TokenHandler)
+
+	rejectsRequest := mwguards.MWTokenGuardData{
+		Username:  headers.AccountName,
+		PublicKey: headers.PublicKey,
+	}
+
+	if guard.Rejects(rejectsRequest) {
 		t.rateLimiter.Fail(headers.AccountName)
 
-		return t.getUnauthenticatedError("Account not found: " + headers.AccountName + ".")
+		return t.getUnauthenticatedError(guard.Error.Error())
 	}
 
-	// Fetch account to understand its keys
-	token, err := t.TokenHandler.DecodeTokensFor(
-		item.AccountName,
-		item.SecretKey,
-		item.PublicKey,
-	)
+	if t.nonceCache != nil {
+		key := strings.ToLower(headers.AccountName) + "|" + headers.Nonce
 
-	if err != nil {
-		t.rateLimiter.Fail(limiterKey)
+		if t.nonceCache.UseOnce(key, t.nonceTTL) {
+			t.rateLimiter.Fail(limiterKey)
 
-		return t.getUnauthenticatedError(err.Error())
+			return t.getUnauthenticatedError("Invalid nonce: " + headers.Nonce + ".")
+		}
 	}
-
-	// Constant-time compare (fixed-length by hashing) of provided public token vs. stored one
-	pBytes := []byte(strings.TrimSpace(headers.PublicKey))
-	eBytes := []byte(strings.TrimSpace(token.PublicKey))
-	hP := sha256.Sum256(pBytes)
-	hE := sha256.Sum256(eBytes)
-
-	if subtle.ConstantTimeCompare(hP[:], hE[:]) != 1 {
-		t.rateLimiter.Fail(limiterKey)
-
-		return t.getUnauthenticatedError("Invalid public token: " + headers.PublicKey + ".")
-	}
-
-	//// Compute local signature over canonical request and compare in constant time (hash to fixed-length first)
-	//localSignature := auth.CreateSignatureFrom("", token.PublicKey) //@todo Change!
-	//hSig := sha256.Sum256([]byte(strings.TrimSpace(headers.Signature)))
-	//hLocal := sha256.Sum256([]byte(localSignature))
-	//
-	//if subtle.ConstantTimeCompare(hSig[:], hLocal[:]) != 1 {
-	//	t.rateLimiter.Fail(limiterKey)
-	//
-	//	return t.getUnauthenticatedError("Invalid signature: " + headers.Signature + ".")
-	//}
-	//
-	//// Nonce replay protection: atomically check-and-mark (UseOnce)
-	//if t.nonceCache != nil {
-	//	key := item.AccountName + "|" + headers.Nonce
-	//
-	//	if t.nonceCache.UseOnce(key, t.nonceTTL) {
-	//		t.rateLimiter.Fail(limiterKey)
-	//
-	//		return t.getUnauthenticatedError("Invalid nonce: " + headers.Nonce + ".")
-	//	}
-	//}
 
 	return nil
 }
@@ -268,7 +235,7 @@ func (t TokenCheckMiddleware) getInvalidTokenFormatError(logMessage string) *htt
 	slog.Error(logMessage, "error")
 
 	return &http.ApiError{
-		Message: "Invalid credentials",
+		Message: "1- Invalid credentials: " + logMessage,
 		Status:  baseHttp.StatusUnauthorized,
 	}
 }
@@ -277,7 +244,7 @@ func (t TokenCheckMiddleware) getUnauthenticatedError(logMessage string) *http.A
 	slog.Error(logMessage, "error")
 
 	return &http.ApiError{
-		Message: "Invalid credentials",
+		Message: "2- Invalid credentials: " + logMessage,
 		Status:  baseHttp.StatusUnauthorized,
 	}
 }
