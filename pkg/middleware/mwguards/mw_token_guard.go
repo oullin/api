@@ -95,3 +95,10 @@ func (g *MWTokenGuard) HasInvalidFormat(publicKey string) bool {
 func (g *MWTokenGuard) GetError() error {
 	return g.Error
 }
+
+func (receiver MWTokenGuardData) ToMap() map[string]any {
+	return map[string]any{
+		"username":   receiver.Username,
+		"public_key": receiver.PublicKey,
+	}
+}

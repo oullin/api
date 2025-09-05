@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	baseHttp "net/http"
 	"strings"
 	"time"
@@ -98,14 +97,14 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 		reqID := strings.TrimSpace(r.Header.Get(requestIDHeader))
 
 		if reqID == "" {
-			return t.getInvalidRequestError(fmt.Sprintf("Invalid request ID for URL [%s].", r.URL.Path))
+			return mwguards.InvalidRequestError(fmt.Sprintf("Invalid request ID for URL [%s].", r.URL.Path), "")
 		}
 
-		if err := t.guardDependencies(); err != nil {
+		if err := t.GuardDependencies(); err != nil {
 			return err
 		}
 
-		headers, err := t.validateAndGetHeaders(r, reqID)
+		headers, err := t.ValidateAndGetHeaders(r, reqID)
 		if err != nil {
 			return err
 		}
@@ -116,18 +115,18 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return tsErr
 		}
 
-		if err = t.shallReject(headers); err != nil {
+		if err = t.HasInvalidFormat(headers); err != nil {
 			return err
 		}
 
 		// Update the request context
-		r = t.attachContext(r, headers)
+		r = t.AttachContext(r, headers)
 
 		return next(w, r)
 	}
 }
 
-func (t TokenCheckMiddleware) guardDependencies() *http.ApiError {
+func (t TokenCheckMiddleware) GuardDependencies() *http.ApiError {
 	missing := make([]string, 0, 4)
 
 	if t.ApiKeys == nil {
@@ -147,15 +146,19 @@ func (t TokenCheckMiddleware) guardDependencies() *http.ApiError {
 	}
 
 	if len(missing) > 0 {
-		return t.getUnauthenticatedError(
-			"token middleware missing dependencies: " + strings.Join(missing, ",") + ".",
+		return mwguards.UnauthenticatedError(
+			"token middleware missing dependencies",
+			"token middleware missing dependencies: "+strings.Join(missing, ",")+".",
+			map[string]any{
+				"missing": missing,
+			},
 		)
 	}
 
 	return nil
 }
 
-func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, requestId string) (AuthTokenHeaders, *http.ApiError) {
+func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, requestId string) (AuthTokenHeaders, *http.ApiError) {
 	accountName := strings.TrimSpace(r.Header.Get(usernameHeader))
 	signature := strings.TrimSpace(r.Header.Get(signatureHeader))
 	publicToken := strings.TrimSpace(r.Header.Get(tokenHeader))
@@ -164,11 +167,14 @@ func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, request
 	ip := portal.ParseClientIP(r)
 
 	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" || ip == "" {
-		return AuthTokenHeaders{}, t.getInvalidRequestError("Invalid authentication headers / or missing headers")
+		return AuthTokenHeaders{}, mwguards.InvalidRequestError(
+			"Invalid authentication headers / or missing headers",
+			"",
+		)
 	}
 
 	if err := auth.ValidateTokenFormat(publicToken); err != nil {
-		return AuthTokenHeaders{}, t.getInvalidTokenFormatError(err.Error())
+		return AuthTokenHeaders{}, mwguards.InvalidTokenFormatError(err.Error(), "", map[string]any{})
 	}
 
 	return AuthTokenHeaders{
@@ -182,18 +188,21 @@ func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, request
 	}, nil
 }
 
-func (t TokenCheckMiddleware) attachContext(r *baseHttp.Request, headers AuthTokenHeaders) *baseHttp.Request {
+func (t TokenCheckMiddleware) AttachContext(r *baseHttp.Request, headers AuthTokenHeaders) *baseHttp.Request {
 	ctx := context.WithValue(r.Context(), authAccountNameKey, headers.AccountName)
 	ctx = context.WithValue(r.Context(), requestIdKey, headers.RequestID)
 
 	return r.WithContext(ctx)
 }
 
-func (t TokenCheckMiddleware) shallReject(headers AuthTokenHeaders) *http.ApiError {
+func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) *http.ApiError {
 	limiterKey := headers.ClientIP + "|" + strings.ToLower(headers.AccountName)
 
 	if t.rateLimiter.TooMany(limiterKey) {
-		return t.getRateLimitedError("Too many authentication attempts for key: " + limiterKey)
+		return mwguards.RateLimitedError(
+			"Too many authentication attempts",
+			"Too many authentication attempts for key: "+limiterKey,
+		)
 	}
 
 	guard := mwguards.NewMWTokenGuard(t.ApiKeys, t.TokenHandler)
@@ -206,7 +215,11 @@ func (t TokenCheckMiddleware) shallReject(headers AuthTokenHeaders) *http.ApiErr
 	if guard.Rejects(rejectsRequest) {
 		t.rateLimiter.Fail(headers.AccountName)
 
-		return t.getUnauthenticatedError(guard.Error.Error())
+		return mwguards.UnauthenticatedError(
+			"Invalid public token",
+			guard.Error.Error(),
+			rejectsRequest.ToMap(),
+		)
 	}
 
 	if t.nonceCache != nil {
@@ -215,63 +228,13 @@ func (t TokenCheckMiddleware) shallReject(headers AuthTokenHeaders) *http.ApiErr
 		if t.nonceCache.UseOnce(key, t.nonceTTL) {
 			t.rateLimiter.Fail(limiterKey)
 
-			return t.getUnauthenticatedError("Invalid nonce: " + headers.Nonce + ".")
+			return mwguards.UnauthenticatedError(
+				"Invalid nonce",
+				"Invalid nonce using key: "+key,
+				map[string]any{"key": key, "limiter_key": limiterKey},
+			)
 		}
 	}
 
 	return nil
-}
-
-func (t TokenCheckMiddleware) getInvalidRequestError(logMessage string) *http.ApiError {
-	slog.Error(logMessage, "error")
-
-	return &http.ApiError{
-		Message: "Invalid authentication headers",
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getInvalidTokenFormatError(logMessage string) *http.ApiError {
-	slog.Error(logMessage, "error")
-
-	return &http.ApiError{
-		Message: "1- Invalid credentials: " + logMessage,
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getUnauthenticatedError(logMessage string) *http.ApiError {
-	slog.Error(logMessage, "error")
-
-	return &http.ApiError{
-		Message: "2- Invalid credentials: " + logMessage,
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getRateLimitedError(logMessage string) *http.ApiError {
-	slog.Error(logMessage, "error")
-
-	return &http.ApiError{
-		Message: "Too many authentication attempts",
-		Status:  baseHttp.StatusTooManyRequests,
-	}
-}
-
-func (t TokenCheckMiddleware) getTimestampTooOldError(logMessage string) *http.ApiError {
-	slog.Error(logMessage, "error")
-
-	return &http.ApiError{
-		Message: "Request timestamp expired",
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getTimestampTooNewError(logMessage string) *http.ApiError {
-	slog.Error(logMessage, "error")
-
-	return &http.ApiError{
-		Message: "Request timestamp invalid",
-		Status:  baseHttp.StatusUnauthorized,
-	}
 }

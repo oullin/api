@@ -95,7 +95,7 @@ func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
 	logger := slogNoop()
 	req := httptest.NewRequest("GET", "/", nil)
 	// All empty
-	if _, _, _, _, _, apiErr := tm.validateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
+	if _, _, _, _, _, apiErr := tm.ValidateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
 		t.Fatalf("expected error for missing headers")
 	}
 
@@ -105,7 +105,7 @@ func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
 	req.Header.Set("X-API-Signature", "sig")
 	req.Header.Set("X-API-Timestamp", "1700000000")
 	req.Header.Set("X-API-Nonce", "n1")
-	if _, _, _, _, _, apiErr := tm.validateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
+	if _, _, _, _, _, apiErr := tm.ValidateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
 		t.Fatalf("expected error for invalid token format")
 	}
 }
@@ -129,7 +129,7 @@ func TestReadBodyHash_RestoresBody(t *testing.T) {
 func TestAttachContext(t *testing.T) {
 	tm := MakeTokenMiddleware(nil, nil)
 	req := httptest.NewRequest("GET", "/", nil)
-	r := tm.attachContext(req, "Alice", "RID-123")
+	r := tm.AttachContext(req, "Alice", "RID-123")
 	if r == req {
 		t.Fatalf("expected a new request with updated context")
 	}
