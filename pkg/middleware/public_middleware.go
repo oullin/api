@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	baseHttp "net/http"
 	"strings"
 	"time"
@@ -87,11 +88,8 @@ func (p PublicMiddleware) guardDependencies() *http.ApiError {
 		missing = append(missing, "rateLimiter")
 	}
 	if len(missing) > 0 {
-		return mwguards.UnauthenticatedError(
-			"public middleware missing dependencies",
-			"public middleware missing dependencies: "+strings.Join(missing, ","),
-			map[string]any{"missing": missing},
-		)
+		err := fmt.Errorf("public middleware missing dependencies: %s", strings.Join(missing, ","))
+		return http.LogInternalError("public middleware missing dependencies", err)
 	}
 	return nil
 }
