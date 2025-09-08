@@ -17,10 +17,11 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/repoentity"
-	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/auth"
 	pkgHttp "github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/portal"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {
@@ -99,40 +100,34 @@ func setupDB(t *testing.T) *database.Connection {
 		postgrescontainer.WithPassword("secret"),
 	)
 	if err != nil {
-		t.Fatalf("container run err: %v", err)
+		t.Skipf("container run err: %v", err)
 	}
 	t.Cleanup(func() {
 		cctx, ccancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer ccancel()
 		_ = pgC.Terminate(cctx)
 	})
-
-	host, err := pgC.Host(ctx)
+	dsn, err := pgC.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		t.Fatalf("host err: %v", err)
-	}
-	port, err := pgC.MappedPort(ctx, "5432/tcp")
-	if err != nil {
-		t.Fatalf("port err: %v", err)
+		t.Skipf("connection string: %v", err)
 	}
 
-	e := &env.Environment{
-		DB: env.DBEnvironment{
-			UserName:     "test",
-			UserPassword: "secret",
-			DatabaseName: "testdb",
-			Port:         port.Int(),
-			Host:         host,
-			DriverName:   database.DriverName,
-			SSLMode:      "disable",
-			TimeZone:     "UTC",
-		},
+	var gdb *gorm.DB
+	for i := 0; i < 10; i++ {
+		gdb, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if err != nil {
+		t.Skipf("gorm open: %v", err)
+	}
+	if sqlDB, err := gdb.DB(); err == nil {
+		t.Cleanup(func() { _ = sqlDB.Close() })
 	}
 
-	conn, err := database.MakeConnection(e)
-	if err != nil {
-		t.Fatalf("make connection: %v", err)
-	}
+	conn := database.NewConnectionFromGorm(gdb)
 	t.Cleanup(func() { _ = conn.Close() })
 
 	if err := conn.Sql().AutoMigrate(&database.APIKey{}, &database.APIKeySignatures{}); err != nil {
