@@ -1,13 +1,10 @@
 package middleware
 
 import (
-	"encoding/hex"
-
 	baseHttp "net/http"
 	"strings"
 	"time"
 
-	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/limiter"
@@ -25,20 +22,17 @@ type PublicMiddleware struct {
 	requestTTL     time.Duration
 	rateLimiter    *limiter.MemoryLimiter
 	requestCache   *cache.TTLCache
-	signingSecret  []byte
 	now            func() time.Time
 }
 
 // MakePublicMiddleware constructs a PublicMiddleware with sane defaults.
-// A non-nil signing secret is required to validate request signatures.
-func MakePublicMiddleware(secret []byte) PublicMiddleware {
+func MakePublicMiddleware() PublicMiddleware {
 	return PublicMiddleware{
 		clockSkew:      5 * time.Minute,
 		disallowFuture: true,
 		requestTTL:     5 * time.Minute,
 		rateLimiter:    limiter.NewMemoryLimiter(1*time.Minute, 10),
 		requestCache:   cache.NewTTLCache(),
-		signingSecret:  secret,
 		now:            time.Now,
 	}
 }
@@ -70,32 +64,7 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return err
 		}
 
-		sig := strings.TrimSpace(r.Header.Get(portal.SignatureHeader))
-		if sig == "" {
-			return mwguards.InvalidRequestError("Invalid authentication headers", "")
-		}
-
-		byteSig, err := hex.DecodeString(sig)
-		if err != nil {
-			p.rateLimiter.Fail(limiterKey)
-			return mwguards.UnauthenticatedError(
-				"Invalid signature",
-				"error decoding signature",
-				map[string]any{"limiter_key": limiterKey},
-			)
-		}
-
-		payload := reqID + "|" + ts + "|" + ip
-		if !auth.VerifySignature([]byte(payload), p.signingSecret, byteSig) {
-			p.rateLimiter.Fail(limiterKey)
-			return mwguards.UnauthenticatedError(
-				"Invalid signature",
-				"signature mismatch",
-				map[string]any{"limiter_key": limiterKey},
-			)
-		}
-
-		key := limiterKey + "|" + reqID + ip
+		key := strings.Join([]string{limiterKey, reqID, ip}, "|")
 		if p.requestCache.UseOnce(key, p.requestTTL) {
 			p.rateLimiter.Fail(limiterKey)
 			return mwguards.UnauthenticatedError(
@@ -116,9 +85,6 @@ func (p PublicMiddleware) guardDependencies() *http.ApiError {
 	}
 	if p.rateLimiter == nil {
 		missing = append(missing, "rateLimiter")
-	}
-	if len(p.signingSecret) == 0 {
-		missing = append(missing, "signingSecret")
 	}
 	if len(missing) > 0 {
 		return mwguards.UnauthenticatedError(
