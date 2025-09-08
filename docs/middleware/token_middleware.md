@@ -1,7 +1,8 @@
-# Token middleware analysis (v2)
+# Token middleware
 
-Date: 2025-08-11
-Scope: pkg/middleware/token_middleware.go and related helpers (valid_timestamp.go, pkg/portal/support.go)
+This document describes the TokenCheckMiddleware found in
+`pkg/middleware/token_middleware.go` and its supporting helpers such as
+`valid_timestamp.go` and `pkg/portal/support.go`.
 
 ---
 
@@ -24,7 +25,10 @@ Main steps:
    - X-API-Nonce (unique per request)
 
 2) Dependency guard
-   - Ensures ApiKeys repo, TokenHandler, nonce cache, and rate limiter exist. If missing, fails with 401.
+   - Ensures ApiKeys repo, TokenHandler, nonce cache, and rate limiter
+     exist. If any dependency is missing the middleware now logs the
+     configuration error and returns a generic 500 Internal Server
+     Error.
 
 3) Header validation
    - Rejects if any required header is missing (401: "Invalid authentication headers").
