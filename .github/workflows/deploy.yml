@@ -7,8 +7,6 @@ name: VPS
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +14,6 @@ concurrency:
 
 jobs:
   build-and-push:
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && (github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'test-deployment'))) }}
     strategy:
       matrix:
         os: [ubuntu-24.04]
@@ -58,7 +55,6 @@ jobs:
         run: make build-release BUILD_VERSION=${{ steps.set-tag.outputs.IMAGE_TAG }}
 
   deploy-to-vps:
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && (github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'test-deployment'))) }}
     name: Deploy to VPS
     needs: build-and-push
     runs-on: ubuntu-24.04
