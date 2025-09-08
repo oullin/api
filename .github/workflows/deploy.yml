@@ -96,4 +96,11 @@ jobs:
             echo "🧹 Pruning old, unused Docker images ..."
             docker image prune -f
 
-            echo "✅ Latest images pulled successfully to VPS!"
+            echo "📂 Updating repository at ${{ secrets.VPS_TARGET_DIR }} ..."
+            cd ${{ secrets.VPS_TARGET_DIR }}
+            git pull origin main
+
+            echo "🚀 Restarting containers ..."
+            docker compose --env-file .env --profile prod up -d
+
+            echo "✅ Deployment completed!"
