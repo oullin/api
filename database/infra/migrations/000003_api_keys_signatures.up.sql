@@ -12,10 +12,11 @@ CREATE TABLE api_key_signatures (
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	deleted_at TIMESTAMP DEFAULT NULL,
 
-	CONSTRAINT api_key_signatures_unique_signature UNIQUE (signature, api_key_id, created_at),
+	CONSTRAINT uq_api_key_signatures_signature UNIQUE (signature),
 	CONSTRAINT api_key_signatures_fk_api_key_id FOREIGN KEY (api_key_id) REFERENCES api_keys(id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_api_key_signatures_api_key_id ON api_key_signatures(api_key_id);
 CREATE INDEX idx_api_key_signatures_signature_created_at ON api_key_signatures(signature, created_at);
 CREATE INDEX idx_api_key_signatures_origin ON api_key_signatures(origin);
 CREATE INDEX idx_api_key_signatures_expires_at ON api_key_signatures(expires_at);

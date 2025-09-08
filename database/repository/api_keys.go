@@ -169,27 +169,21 @@ func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID, 
 }
 
 func (a ApiKeys) IncreaseSignatureTries(signatureUUID string, currentTries int) error {
-	if currentTries < portal.MaxSignaturesTries {
+	if currentTries >= portal.MaxSignaturesTries {
 		return nil
 	}
 
-	var item database.APIKeySignatures
-
-	query := a.DB.Sql().
+	response := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
-		Where("uuid = ?", signatureUUID).
-		First(&item)
+		Where("uuid = ? AND current_tries < max_tries", signatureUUID).
+		UpdateColumn("current_tries", baseGorm.Expr("current_tries + 1"))
 
-	if gorm.HasDbIssues(query.Error) {
-		return query.Error
+	if gorm.HasDbIssues(response.Error) {
+		return response.Error
 	}
 
-	update := a.DB.Sql().
-		Model(&item).
-		Update("current_tries", currentTries)
-
-	if gorm.HasDbIssues(update.Error) {
-		return update.Error
+	if response.RowsAffected == 0 {
+		return nil
 	}
 
 	return nil
