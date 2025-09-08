@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	baseHttp "net/http"
 	"time"
@@ -37,8 +36,10 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 		req payload.SignatureRequest
 	)
 
-	limited := io.LimitReader(r.Body, http.MaxRequestSize)
-	if err = json.NewDecoder(limited).Decode(&req); err != nil {
+	r.Body = baseHttp.MaxBytesReader(w, r.Body, http.MaxRequestSize)
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err = dec.Decode(&req); err != nil {
 		return http.LogBadRequestError("could not parse the given data.", err)
 	}
 
