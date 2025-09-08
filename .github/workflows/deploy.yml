@@ -75,30 +75,30 @@ jobs:
             IMAGE_TAG=${{ needs.build-and-push.outputs.IMAGE_TAG }}
 
             echo "🔑 Logging into GitHub Container Registry ..."
-            echo ${{ secrets.DOCKER_REGISTRY_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin >/dev/null 2>&1
+            echo ${{ secrets.DOCKER_REGISTRY_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             echo "🚚 Pulling latest images with tag: $IMAGE_TAG"
-            docker pull ghcr.io/oullin/oullin_api:$IMAGE_TAG >/dev/null 2>&1
-            docker pull ghcr.io/oullin/oullin_proxy:$IMAGE_TAG >/dev/null 2>&1
+            docker pull ghcr.io/oullin/oullin_api:$IMAGE_TAG
+            docker pull ghcr.io/oullin/oullin_proxy:$IMAGE_TAG
 
             echo "🏷️ Retagging for Compose…"
             docker tag ghcr.io/oullin/oullin_api:$IMAGE_TAG    api-api:latest
             docker tag ghcr.io/oullin/oullin_proxy:$IMAGE_TAG  api-caddy_prod:latest
 
             echo "🧹 Pruning old, unused Docker images ..."
-            docker image prune -f >/dev/null 2>&1
+            docker image prune -f
 
             echo "📂 Updating repository ..."
             TARGET_DIR="${{ secrets.VPS_TARGET_DIR }}"
             if [ ! -d "$TARGET_DIR/.git" ]; then
               echo "Target directory is not a git repository. Cloning..."
-              git clone --quiet https://github.com/${{ github.repository }}.git "$TARGET_DIR" >/dev/null 2>&1
+              git clone https://github.com/${{ github.repository }}.git "$TARGET_DIR"
             fi
             cd "$TARGET_DIR"
             git config --global --add safe.directory "$PWD" || true
-            git fetch --prune origin main >/dev/null 2>&1
-            (git checkout -q main || git switch -q main) >/dev/null 2>&1
-            git reset --hard origin/main >/dev/null 2>&1
+            git fetch --prune origin main
+            (git checkout main || git switch main)
+            git reset --hard origin/main
 
             echo "🚀 Restarting containers ..."
             cd ~/Sites/infra/
