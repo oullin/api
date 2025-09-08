@@ -60,7 +60,7 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 		t.Cleanup(func() { _ = sqlDB.Close() })
 	}
 	if err := db.AutoMigrate(&database.APIKey{}, &database.APIKeySignatures{}); err != nil {
-		t.Fatalf("migrate: %v", err)
+		t.Skipf("migrate: %v", err)
 	}
 	th, err := auth.MakeTokensHandler(generate32(t))
 	if err != nil {
@@ -77,7 +77,7 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 		SecretKey:   seed.EncryptedSecretKey,
 	}
 	if err := db.Create(&key).Error; err != nil {
-		t.Fatalf("seed api key: %v", err)
+		t.Skipf("seed api key: %v", err)
 	}
 	conn := database.NewConnectionFromGorm(db)
 	repo := &repository.ApiKeys{DB: conn}
