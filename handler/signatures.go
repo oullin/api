@@ -81,7 +81,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 }
 
 func (s *SignaturesHandler) isRequestWithinTimeframe(serverTime, receivedAt time.Time) error {
-	skew := 5 * time.Second
+	skew := 15 * time.Second
 
 	earliestValidTime := serverTime.Add(-skew)
 	if receivedAt.Before(earliestValidTime) {
