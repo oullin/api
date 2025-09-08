@@ -102,6 +102,6 @@ jobs:
 
             echo "🚀 Restarting containers ..."
             cd ~/Sites/infra/
-            ./deployment >/dev/null 2>&1
+            ./deployment
 
             echo "✅ Deployment completed!"
