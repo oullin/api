@@ -122,7 +122,7 @@ func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
 	handler := tm.Handle(next)
 
 	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "body", seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-sig", "req-sig")
-	seedSignature(t, repo, key, req)
+	seedSignature(t, repo, key, req, time.Now().Add(time.Hour))
 	req.Header.Set("X-Forwarded-For", "1.1.1.1")
 
 	// mutate signature while keeping valid hex encoding
@@ -152,7 +152,7 @@ func TestTokenMiddleware_NonceReplay(t *testing.T) {
 	handler := tm.Handle(next)
 
 	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "{}", seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-rp", "req-rp")
-	seedSignature(t, repo, key, req)
+	seedSignature(t, repo, key, req, time.Now().Add(time.Hour))
 	req.Header.Set("X-Forwarded-For", "1.1.1.1")
 	rec := httptest.NewRecorder()
 	if err := handler(rec, req); err != nil {
@@ -196,7 +196,7 @@ func TestTokenMiddleware_RateLimiter(t *testing.T) {
 		seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(),
 		"nonce-rl-final", "req-rl-final",
 	)
-	seedSignature(t, repo, key, req)
+	seedSignature(t, repo, key, req, time.Now().Add(time.Hour))
 	req.Header.Set("X-Forwarded-For", "9.9.9.9")
 	rec := httptest.NewRecorder()
 	err := handler(rec, req)
@@ -206,5 +206,30 @@ func TestTokenMiddleware_RateLimiter(t *testing.T) {
 
 	if nextCalled != 0 {
 		t.Fatalf("expected next not to be invoked when rate limited, got %d calls", nextCalled)
+	}
+}
+
+func TestTokenMiddleware_CustomClockValidatesSignature(t *testing.T) {
+	repo, th, seed, key := makeRepo(t, "clock")
+	tm := MakeTokenMiddleware(th, repo)
+	tm.clockSkew = time.Minute
+	past := time.Now().Add(-10 * time.Minute)
+	tm.now = func() time.Time { return past }
+
+	nextCalled := false
+	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		nextCalled = true
+		return nil
+	})
+
+	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/clock", "", seed.AccountName, seed.PublicKey, seed.PublicKey, past, "nonce-clock", "req-clock")
+	seedSignature(t, repo, key, req, past.Add(5*time.Minute))
+	req.Header.Set("X-Forwarded-For", "1.1.1.1")
+	rec := httptest.NewRecorder()
+	if err := handler(rec, req); err != nil {
+		t.Fatalf("expected success with injected clock, got %#v", err)
+	}
+	if !nextCalled {
+		t.Fatalf("expected next to be called")
 	}
 }
