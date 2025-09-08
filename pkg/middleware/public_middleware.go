@@ -1,14 +1,13 @@
 package middleware
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
 	"encoding/hex"
 
 	baseHttp "net/http"
 	"strings"
 	"time"
 
+	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/limiter"
@@ -76,11 +75,18 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return mwguards.InvalidRequestError("Invalid authentication headers", "")
 		}
 
+		byteSig, err := hex.DecodeString(sig)
+		if err != nil {
+			p.rateLimiter.Fail(limiterKey)
+			return mwguards.UnauthenticatedError(
+				"Invalid signature",
+				"error decoding signature",
+				map[string]any{"limiter_key": limiterKey},
+			)
+		}
+
 		payload := reqID + "|" + ts + "|" + ip
-		mac := hmac.New(sha256.New, p.signingSecret)
-		mac.Write([]byte(payload))
-		expected := hex.EncodeToString(mac.Sum(nil))
-		if !hmac.Equal([]byte(strings.ToLower(sig)), []byte(expected)) {
+		if !auth.VerifySignature([]byte(payload), p.signingSecret, byteSig) {
 			p.rateLimiter.Fail(limiterKey)
 			return mwguards.UnauthenticatedError(
 				"Invalid signature",

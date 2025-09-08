@@ -105,6 +105,25 @@ func TestPublicMiddleware_InvalidSignature(t *testing.T) {
 	}
 }
 
+func TestPublicMiddleware_BadSignatureEncoding(t *testing.T) {
+	pm := MakePublicMiddleware([]byte("test-secret"))
+	base := time.Unix(1_700_000_000, 0)
+	pm.now = func() time.Time { return base }
+	handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil })
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("X-Request-ID", "req-1")
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+	ts := strconv.FormatInt(base.Unix(), 10)
+	req.Header.Set("X-API-Timestamp", ts)
+	// malformed hex string
+	req.Header.Set("X-API-Signature", "zzzz")
+	if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
+		t.Fatalf("expected unauthorized for malformed signature, got %#v", err)
+	}
+}
+
 func sign(secret []byte, reqID, ts, ip string) string {
 	mac := hmac.New(sha256.New, secret)
 	mac.Write([]byte(reqID + "|" + ts + "|" + ip))
