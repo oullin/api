@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -123,7 +124,15 @@ func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
 	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "body", seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-sig", "req-sig")
 	seedSignature(t, repo, key, req)
 	req.Header.Set("X-Forwarded-For", "1.1.1.1")
-	req.Header.Set("X-API-Signature", req.Header.Get("X-API-Signature")+"tamper")
+
+	// mutate signature while keeping valid hex encoding
+	sigHex := req.Header.Get("X-API-Signature")
+	sigBytes, err := hex.DecodeString(sigHex)
+	if err != nil {
+		t.Fatalf("decode signature: %v", err)
+	}
+	sigBytes[0] ^= 0xFF
+	req.Header.Set("X-API-Signature", hex.EncodeToString(sigBytes))
 	rec := httptest.NewRecorder()
 	if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
 		t.Fatalf("expected unauthorized for signature mismatch, got %#v", err)
