@@ -151,7 +151,7 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, request
 
 func (t TokenCheckMiddleware) AttachContext(r *baseHttp.Request, headers AuthTokenHeaders) *baseHttp.Request {
 	ctx := context.WithValue(r.Context(), portal.AuthAccountNameKey, headers.AccountName)
-	ctx = context.WithValue(r.Context(), portal.RequestIdKey, headers.RequestID)
+	ctx = context.WithValue(r.Context(), portal.RequestIDKey, headers.RequestID)
 
 	return r.WithContext(ctx)
 }
@@ -174,7 +174,7 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*datab
 	}
 
 	if guard.Rejects(rejectsRequest) {
-		t.rateLimiter.Fail(headers.AccountName)
+		t.rateLimiter.Fail(limiterKey)
 
 		return nil, mwguards.UnauthenticatedError(
 			"Invalid public token",
@@ -203,8 +203,11 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*datab
 func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *http.ApiError {
 	var err error
 	var byteSignature []byte
+	limiterKey := headers.ClientIP + "|" + strings.ToLower(headers.AccountName)
 
 	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
+		t.rateLimiter.Fail(limiterKey)
+
 		return mwguards.NotFound("error decoding signature string", "")
 	}
 
@@ -218,10 +221,14 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	signature := t.ApiKeys.FindSignatureFrom(entity)
 
 	if signature == nil {
+		t.rateLimiter.Fail(limiterKey)
+
 		return mwguards.NotFound("signature not found", "")
 	}
 
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {
+		t.rateLimiter.Fail(limiterKey)
+
 		return mwguards.InvalidRequestError("could not increase signature tries", err.Error())
 	}
 

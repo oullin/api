@@ -84,7 +84,7 @@ func (g *MWTokenGuard) HasInvalidFormat(publicKey string) bool {
 	hE := sha256.Sum256(eBytes)
 
 	if subtle.ConstantTimeCompare(hP[:], hE[:]) != 1 {
-		g.Error = fmt.Errorf("invalid provided public token: %s", publicKey)
+		g.Error = fmt.Errorf("invalid provided public token: %s", auth.SafeDisplay(publicKey))
 
 		return true
 	}

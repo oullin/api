@@ -18,4 +18,4 @@ const IntendedOriginHeader = "X-API-Intended-Origin"
 type contextKey string
 
 const AuthAccountNameKey contextKey = "auth.account_name"
-const RequestIdKey contextKey = "request.id"
+const RequestIDKey contextKey = "request.id"
