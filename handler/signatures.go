@@ -32,17 +32,13 @@ func MakeSignaturesHandler(validator *portal.Validator, ApiKeys *repository.ApiK
 func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	defer portal.CloseWithLog(r.Body)
 
-	var err error
-	var bodyBytes []byte
+	var (
+		err error
+		req payload.SignatureRequest
+	)
 
-	bodyBytes, err = io.ReadAll(r.Body)
-
-	if err != nil {
-		return http.LogBadRequestError("could not read signatures request body", err)
-	}
-
-	var req payload.SignatureRequest
-	if err = json.Unmarshal(bodyBytes, &req); err != nil {
+	limited := io.LimitReader(r.Body, http.MaxRequestSize)
+	if err = json.NewDecoder(limited).Decode(&req); err != nil {
 		return http.LogBadRequestError("could not parse the given data.", err)
 	}
 
@@ -77,7 +73,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 
 	if err = resp.RespondOk(response); err != nil {
 		slog.Error("Error marshaling JSON for signatures response", "error", err)
-		return nil
+		return http.LogInternalError("could not encode signatures response", err)
 	}
 
 	return nil // A nil return indicates success.
