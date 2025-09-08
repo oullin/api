@@ -104,6 +104,7 @@ jobs:
             git reset --hard origin/main
 
             echo "🚀 Restarting containers ..."
-            docker compose --env-file .env --profile prod up -d
+            cd ~/Sites/infra/
+            ./deployment
 
             echo "✅ Deployment completed!"
