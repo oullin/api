@@ -71,7 +71,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -e
+            set -Eeuo pipefail
             IMAGE_TAG=${{ needs.build-and-push.outputs.IMAGE_TAG }}
 
             echo "🔑 Logging into GitHub Container Registry ..."
@@ -96,4 +96,15 @@ jobs:
             echo "🧹 Pruning old, unused Docker images ..."
             docker image prune -f
 
-            echo "✅ Latest images pulled successfully to VPS!"
+            echo "📂 Updating repository ..."
+            cd "${{ secrets.VPS_TARGET_DIR }}"
+            git config --global --add safe.directory "$PWD" || true
+            git fetch --prune origin main
+            (git checkout -q main || git switch -q main)
+            git reset --hard origin/main
+
+            echo "🚀 Restarting containers ..."
+            cd ~/Sites/infra/
+            ./deployment
+
+            echo "✅ Deployment completed!"
