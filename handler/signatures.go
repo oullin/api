@@ -84,17 +84,17 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 }
 
 func (s *SignaturesHandler) isRequestWithinTimeframe(serverTime, receivedAt time.Time) error {
-	//skew := 5 * time.Second
+	skew := 5 * time.Second
 
-	//earliestValidTime := serverTime.Add(-skew)
-	//if receivedAt.Before(earliestValidTime) {
-	//	return fmt.Errorf("the request timestamp [%s] is too old", receivedAt.Format(portal.DatesLayout))
-	//}
-	//
-	//latestValidTime := serverTime.Add(skew)
-	//if receivedAt.After(latestValidTime) {
-	//	return fmt.Errorf("the request timestamp [%s] is from the future", receivedAt.Format(portal.DatesLayout))
-	//}
+	earliestValidTime := serverTime.Add(-skew)
+	if receivedAt.Before(earliestValidTime) {
+		return fmt.Errorf("the request timestamp [%s] is too old", receivedAt.Format(portal.DatesLayout))
+	}
+
+	latestValidTime := serverTime.Add(skew)
+	if receivedAt.After(latestValidTime) {
+		return fmt.Errorf("the request timestamp [%s] is from the future", receivedAt.Format(portal.DatesLayout))
+	}
 
 	return nil
 }

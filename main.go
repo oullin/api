@@ -43,11 +43,6 @@ func main() {
 		slog.Error("Error starting server", "error", err)
 		panic("Error starting server." + err.Error())
 	}
-
-	//if err := baseHttp.ListenAndServe(app.GetEnv().Network.GetHostURL(), app.GetMux()); err != nil {
-	//	slog.Error("Error starting server", "error", err)
-	//	panic("Error starting server." + err.Error())
-	//}
 }
 
 func serverHandler() baseHttp.Handler {
