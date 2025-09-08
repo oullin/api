@@ -215,7 +215,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 		Key:        apiKey,
 		Signature:  byteSignature,
 		Origin:     headers.IntendedOriginURL,
-		ServerTime: time.Now(),
+		ServerTime: t.now(),
 	}
 
 	signature := t.ApiKeys.FindSignatureFrom(entity)

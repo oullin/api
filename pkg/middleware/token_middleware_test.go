@@ -177,7 +177,8 @@ func makeSignedRequest(t *testing.T, method, rawURL, body, account, public, sign
 }
 
 // seedSignature stores the request signature for the given API key in the repository.
-func seedSignature(t *testing.T, repo *repository.ApiKeys, key *database.APIKey, req *http.Request) {
+// expiresAt allows tests to control the validity window for the stored signature.
+func seedSignature(t *testing.T, repo *repository.ApiKeys, key *database.APIKey, req *http.Request, expiresAt time.Time) {
 	t.Helper()
 	sigHex := req.Header.Get("X-API-Signature")
 	sigBytes, err := hex.DecodeString(sigHex)
@@ -188,7 +189,7 @@ func seedSignature(t *testing.T, repo *repository.ApiKeys, key *database.APIKey,
 		Key:       key,
 		Seed:      sigBytes,
 		Origin:    req.Header.Get("X-API-Intended-Origin"),
-		ExpiresAt: time.Now().Add(time.Hour),
+		ExpiresAt: expiresAt,
 	})
 	if err != nil {
 		t.Skipf("create signature: %v", err)
@@ -244,7 +245,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 		"nonce-1",
 		"req-001",
 	)
-	seedSignature(t, repo, apiKey, req)
+	seedSignature(t, repo, apiKey, req, time.Now().Add(time.Hour))
 	rec := httptest.NewRecorder()
 	if err := handler(rec, req); err != nil {
 		t.Fatalf("expected success, got error: %#v", err)
@@ -323,7 +324,7 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 		"n-happy-1",
 		"rid-happy-1",
 	)
-	seedSignature(t, repo, apiKey, req)
+	seedSignature(t, repo, apiKey, req, time.Now().Add(time.Hour))
 	rec := httptest.NewRecorder()
 	if err := handler(rec, req); err != nil {
 		t.Fatalf("happy path failed: %#v", err)
