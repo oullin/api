@@ -77,17 +77,16 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 }
 
 func TestTokenMiddlewareGuardDependencies(t *testing.T) {
-	logger := slogNoop()
-	tm := TokenCheckMiddleware{}
-	if err := tm.GuardDependencies(logger); err == nil || err.Status != http.StatusUnauthorized {
-		t.Fatalf("expected unauthorized when dependencies missing")
-	}
-	tm.ApiKeys, tm.TokenHandler, _ = makeRepo(t, "guard1")
-	tm.nonceCache = cache.NewTTLCache()
-	tm.rateLimiter = limiter.NewMemoryLimiter(time.Minute, 1)
-	if err := tm.GuardDependencies(logger); err != nil {
-		t.Fatalf("expected no error when dependencies provided, got %#v", err)
-	}
+        tm := TokenCheckMiddleware{}
+        if err := tm.GuardDependencies(); err == nil || err.Status != http.StatusUnauthorized {
+                t.Fatalf("expected unauthorized when dependencies missing")
+        }
+        tm.ApiKeys, tm.TokenHandler, _ = makeRepo(t, "guard1")
+        tm.nonceCache = cache.NewTTLCache()
+        tm.rateLimiter = limiter.NewMemoryLimiter(time.Minute, 1)
+        if err := tm.GuardDependencies(); err != nil {
+                t.Fatalf("expected no error when dependencies provided, got %#v", err)
+        }
 }
 
 func TestTokenMiddleware_PublicTokenMismatch(t *testing.T) {

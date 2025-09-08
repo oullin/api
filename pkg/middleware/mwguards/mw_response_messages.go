@@ -36,7 +36,7 @@ func normaliseMessages(message, logMessage string) (string, string) {
 func InvalidRequestError(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
-	slog.Error(logMessage, "error")
+        slog.Error(logMessage)
 
 	return &http.ApiError{
 		Message: message,
@@ -48,7 +48,7 @@ func InvalidRequestError(message, logMessage string, data ...map[string]any) *ht
 func InvalidTokenFormatError(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
-	slog.Error(logMessage, "error")
+        slog.Error(logMessage)
 
 	return &http.ApiError{
 		Message: message,
@@ -60,7 +60,7 @@ func InvalidTokenFormatError(message, logMessage string, data ...map[string]any)
 func UnauthenticatedError(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
-	slog.Error(logMessage, "error")
+        slog.Error(logMessage)
 
 	return &http.ApiError{
 		Message: "2- Invalid credentials: " + logMessage,
@@ -72,7 +72,7 @@ func UnauthenticatedError(message, logMessage string, data ...map[string]any) *h
 func RateLimitedError(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
-	slog.Error(logMessage, "error")
+        slog.Error(logMessage)
 
 	return &http.ApiError{
 		Message: "Too many authentication attempts",
@@ -84,7 +84,7 @@ func RateLimitedError(message, logMessage string, data ...map[string]any) *http.
 func NotFound(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
-	slog.Error(logMessage, "error")
+        slog.Error(logMessage)
 
 	return &http.ApiError{
 		Message: message,
@@ -96,7 +96,7 @@ func NotFound(message, logMessage string, data ...map[string]any) *http.ApiError
 func TimestampTooOldError(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
-	slog.Error(logMessage, "error")
+        slog.Error(logMessage)
 
 	return &http.ApiError{
 		Message: "Request timestamp expired",
@@ -108,7 +108,7 @@ func TimestampTooOldError(message, logMessage string, data ...map[string]any) *h
 func TimestampTooNewError(message, logMessage string, data ...map[string]any) *http.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
-	slog.Error(logMessage, "error")
+        slog.Error(logMessage)
 
 	return &http.ApiError{
 		Message: "Request timestamp invalid",

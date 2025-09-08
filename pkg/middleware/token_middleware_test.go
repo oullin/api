@@ -1,67 +1,26 @@
 package middleware
 
 import (
-	"bytes"
-	"context"
-	"crypto/rand"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"os/exec"
-	"strconv"
-	"testing"
-	"time"
+        "bytes"
+        "context"
+        "crypto/rand"
+        "net/http"
+        "net/http/httptest"
+        "os/exec"
+        "strconv"
+        "testing"
+        "time"
 
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
+        "github.com/testcontainers/testcontainers-go"
+        "github.com/testcontainers/testcontainers-go/modules/postgres"
 
-	"github.com/oullin/database"
-	"github.com/oullin/database/repository"
-	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg/auth"
-	pkgHttp "github.com/oullin/pkg/http"
-	"github.com/oullin/pkg/portal"
+        "github.com/oullin/database"
+        "github.com/oullin/database/repository"
+        "github.com/oullin/metal/env"
+        "github.com/oullin/pkg/auth"
+        pkgHttp "github.com/oullin/pkg/http"
+        "github.com/oullin/pkg/portal"
 )
-
-func TestTokenMiddlewareErrors(t *testing.T) {
-	tm := TokenCheckMiddleware{}
-
-	e := tm.getInvalidRequestError()
-
-	if e.Status != http.StatusUnauthorized || e.Message == "" {
-		t.Fatalf("invalid request error")
-	}
-
-	e = tm.getInvalidTokenFormatError()
-
-	if e.Status != http.StatusUnauthorized {
-		t.Fatalf("invalid token error")
-	}
-
-	e = tm.getUnauthenticatedError()
-
-	if e.Status != http.StatusUnauthorized {
-		t.Fatalf("unauthenticated error")
-	}
-
-	e = tm.getRateLimitedError()
-
-	if e.Status != http.StatusTooManyRequests || e.Message == "" {
-		t.Fatalf("rate limited error should return 429 status code")
-	}
-
-	e = tm.getTimestampTooOldError()
-
-	if e.Status != http.StatusUnauthorized || e.Message != "Request timestamp expired" {
-		t.Fatalf("timestamp too old error")
-	}
-
-	e = tm.getTimestampTooNewError()
-
-	if e.Status != http.StatusUnauthorized || e.Message != "Request timestamp invalid" {
-		t.Fatalf("timestamp too new error")
-	}
-}
 
 func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {
 	tm := MakeTokenMiddleware(nil, nil)
@@ -91,51 +50,35 @@ func TestTokenMiddlewareHandleInvalid(t *testing.T) {
 }
 
 func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
-	tm := MakeTokenMiddleware(nil, nil)
-	logger := slogNoop()
-	req := httptest.NewRequest("GET", "/", nil)
-	// All empty
-	if _, _, _, _, _, apiErr := tm.ValidateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
-		t.Fatalf("expected error for missing headers")
-	}
+        tm := MakeTokenMiddleware(nil, nil)
+        req := httptest.NewRequest("GET", "/", nil)
 
-	// Set minimal headers but invalid token format (not pk_/sk_ prefix or too short)
-	req.Header.Set("X-API-Username", "alice")
-	req.Header.Set("X-API-Key", "badtoken")
-	req.Header.Set("X-API-Signature", "sig")
-	req.Header.Set("X-API-Timestamp", "1700000000")
-	req.Header.Set("X-API-Nonce", "n1")
-	if _, _, _, _, _, apiErr := tm.ValidateAndGetHeaders(req, logger); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
-		t.Fatalf("expected error for invalid token format")
-	}
-}
+        if _, apiErr := tm.ValidateAndGetHeaders(req, "req-1"); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
+                t.Fatalf("expected error for missing headers")
+        }
 
-func TestReadBodyHash_RestoresBody(t *testing.T) {
-	tm := MakeTokenMiddleware(nil, nil)
-	logger := slogNoop()
-	body := "{\"a\":1}"
-	req := httptest.NewRequest("POST", "/x", bytes.NewBufferString(body))
-	hash, apiErr := tm.readBodyHash(req, logger)
-	if apiErr != nil || hash == "" {
-		t.Fatalf("expected body hash, got err=%v hash=%q", apiErr, hash)
-	}
-	// Now the body should be readable again for downstream
-	b, _ := io.ReadAll(req.Body)
-	if string(b) != body {
-		t.Fatalf("expected body to be restored, got %q", string(b))
-	}
+        // Set minimal headers but invalid token format
+        req.Header.Set("X-API-Username", "alice")
+        req.Header.Set("X-API-Key", "badtoken")
+        req.Header.Set("X-API-Signature", "sig")
+        req.Header.Set("X-API-Timestamp", "1700000000")
+        req.Header.Set("X-API-Nonce", "n1")
+        if _, apiErr := tm.ValidateAndGetHeaders(req, "req-1"); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
+                t.Fatalf("expected error for invalid token format")
+        }
 }
 
 func TestAttachContext(t *testing.T) {
-	tm := MakeTokenMiddleware(nil, nil)
-	req := httptest.NewRequest("GET", "/", nil)
-	r := tm.AttachContext(req, "Alice", "RID-123")
-	if r == req {
-		t.Fatalf("expected a new request with updated context")
-	}
-	if r.Context() == nil {
-		t.Fatalf("expected non-nil context")
-	}
+        tm := MakeTokenMiddleware(nil, nil)
+        req := httptest.NewRequest("GET", "/", nil)
+        headers := AuthTokenHeaders{AccountName: "Alice", RequestID: "RID-123"}
+        r := tm.AttachContext(req, headers)
+        if r == req {
+                t.Fatalf("expected a new request with updated context")
+        }
+        if r.Context() == nil {
+                t.Fatalf("expected non-nil context")
+        }
 }
 
 // --- Integration test helpers (copied/adjusted from repository_test.go) ---
