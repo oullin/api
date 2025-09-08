@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"fmt"
+
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"

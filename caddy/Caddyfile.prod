@@ -34,7 +34,7 @@ oullin.io {
 		header {
 			Access-Control-Allow-Origin "https://oullin.io"
 			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-			Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match"
+			Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
 			Access-Control-Expose-Headers "ETag, X-Request-ID"
 		}
 
@@ -47,7 +47,7 @@ oullin.io {
 			# Reflect the Origin back so it's always allowed
 			header Access-Control-Allow-Origin "{http.request.header.Origin}"
 			header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-			header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match"
+			header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
 			header Access-Control-Max-Age "86400"
 			respond 204
 		}
@@ -63,6 +63,7 @@ oullin.io {
 			header_up Content-Type {http.request.header.Content-Type}
 			header_up User-Agent {http.request.header.User-Agent}
 			header_up If-None-Match {http.request.header.If-None-Match}
+			header_up X-API-Intended-Origin {http.request.header.X-API-Intended-Origin}
 
 			transport http {
 				dial_timeout 10s

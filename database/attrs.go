@@ -39,9 +39,9 @@ type CommentsAttrs struct {
 }
 
 type LikesAttrs struct {
-	UUID   string `gorm:"type:uuid;unique;not null"`
-	PostID uint64 `gorm:"not null;index;uniqueIndex:idx_likes_post_user"`
-	UserID uint64 `gorm:"not null;index;uniqueIndex:idx_likes_post_user"`
+	UUID   string
+	PostID uint64
+	UserID uint64
 }
 
 type NewsletterAttrs struct {

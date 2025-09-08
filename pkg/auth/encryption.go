@@ -16,7 +16,7 @@ func GenerateAESKey() ([]byte, error) {
 	key := make([]byte, EncryptionKeyLength)
 
 	if _, err := rand.Read(key); err != nil {
-		return nil, fmt.Errorf("failed to generate random key: %w", err)
+		return []byte(""), err
 	}
 
 	return key, nil

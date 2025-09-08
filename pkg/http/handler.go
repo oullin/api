@@ -17,6 +17,7 @@ func MakeApiHandler(fn ApiHandler) baseHttp.HandlerFunc {
 			resp := ErrorResponse{
 				Error:  err.Message,
 				Status: err.Status,
+				Data:   err.Data,
 			}
 
 			if result := json.NewEncoder(w).Encode(resp); result != nil {

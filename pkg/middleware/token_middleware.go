@@ -1,155 +1,95 @@
 package middleware
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
-	"crypto/subtle"
-	"io"
-	"log/slog"
+	"encoding/hex"
+	"fmt"
 	baseHttp "net/http"
 	"strings"
 	"time"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/limiter"
+	"github.com/oullin/pkg/middleware/mwguards"
 	"github.com/oullin/pkg/portal"
 )
 
-const tokenHeader = "X-API-Key"
-const usernameHeader = "X-API-Username"
-const signatureHeader = "X-API-Signature"
-const timestampHeader = "X-API-Timestamp"
-const nonceHeader = "X-API-Nonce"
-const requestIDHeader = "X-Request-ID"
-
-// Context keys for propagating auth info downstream
-// Use unexported custom type to avoid collisions
-type contextKey string
-
-const (
-	authAccountNameKey contextKey = "auth.account_name"
-	requestIdKey       contextKey = "request.id"
-)
-
-// TokenCheckMiddleware authenticates signed API requests using account tokens.
-// It validates required headers, enforces a timestamp skew window, prevents
-// replay attacks via nonce tracking, compares tokens/signatures in constant time,
-// and applies a basic failure-based rate limiter per client scope.
-//
-// Error handling:
-// - Rate limiting errors return 429 Too Many Requests
-// - Timestamp errors return 401 with specific messages for expired or future timestamps
-// - Other authentication errors return 401 with generic messages
 type TokenCheckMiddleware struct {
-	// ApiKeys provides access to persisted API key records used to resolve
-	// account credentials (account name, public key, and secret key).
-	ApiKeys *repository.ApiKeys
-
-	// TokenHandler performs encoding/decoding of tokens and signature creation/verification.
-	TokenHandler *auth.TokenHandler
-
-	// nonceCache stores recently seen nonce's to prevent replaying the same request
-	// within the configured TTL window.
-	nonceCache *cache.TTLCache
-
-	// rateLimiter throttles repeated authentication failures per "clientIP|account" scope.
-	rateLimiter *limiter.MemoryLimiter
-
-	// clockSkew defines the allowed difference between client and server time when
-	// validating the request timestamp.
-	clockSkew time.Duration
-
-	// now is an injectable time source for deterministic tests. If nil, time.Now is used.
-	now func() time.Time
-
-	// disallowFuture, if true, rejects timestamps greater than the current server time,
-	// even if they are within the positive skew window.
-	disallowFuture bool
-
-	// nonceTTL is how long nonce remains invalid after its first use (replay-protection window).
-	nonceTTL time.Duration
-
-	// failWindow indicates the sliding time window used to evaluate authentication failures.
-	failWindow time.Duration
-
-	// maxFailPerScope is the maximum number of failures allowed within failWindow for a given scope.
 	maxFailPerScope int
+	disallowFuture  bool
+	nonceTTL        time.Duration
+	failWindow      time.Duration
+	clockSkew       time.Duration
+	nonceCache      *cache.TTLCache
+	now             func() time.Time
+	TokenHandler    *auth.TokenHandler
+	ApiKeys         *repository.ApiKeys
+	rateLimiter     *limiter.MemoryLimiter
 }
 
 func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
 	return TokenCheckMiddleware{
+		maxFailPerScope: 10,
+		disallowFuture:  true,
 		ApiKeys:         apiKeys,
+		now:             time.Now,
 		TokenHandler:    tokenHandler,
+		clockSkew:       5 * time.Minute,
+		failWindow:      1 * time.Minute,
+		nonceTTL:        5 * time.Minute,
 		nonceCache:      cache.NewTTLCache(),
 		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
-		clockSkew:       5 * time.Minute,
-		now:             time.Now,
-		disallowFuture:  true,
-		nonceTTL:        5 * time.Minute,
-		failWindow:      1 * time.Minute,
-		maxFailPerScope: 10,
 	}
 }
 
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-		reqID := strings.TrimSpace(r.Header.Get(requestIDHeader))
-		logger := slog.With("request_id", reqID, "path", r.URL.Path, "method", r.Method)
+		reqID := strings.TrimSpace(r.Header.Get(portal.RequestIDHeader))
 
-		if reqID == "" || logger == nil {
-			return t.getInvalidRequestError()
+		if reqID == "" {
+			return mwguards.InvalidRequestError(fmt.Sprintf("Invalid request ID for URL [%s].", r.URL.Path), "")
 		}
 
-		if depErr := t.guardDependencies(logger); depErr != nil {
-			return depErr
+		if err := t.GuardDependencies(); err != nil {
+			return err
 		}
 
-		// Extract and validate required headers
-		accountName, publicToken, signature, ts, nonce, hdrErr := t.validateAndGetHeaders(r, logger)
-		if hdrErr != nil {
-			return hdrErr
+		headers, err := t.ValidateAndGetHeaders(r, reqID)
+		if err != nil {
+			return err
 		}
 
 		// Validate timestamp within allowed skew using ValidTimestamp helper
-		vt := NewValidTimestamp(ts, logger, t.now)
+		vt := NewValidTimestamp(headers.Timestamp, t.now)
 		if tsErr := vt.Validate(t.clockSkew, t.disallowFuture); tsErr != nil {
 			return tsErr
 		}
 
-		// Read body and compute hash
-		bodyHash, bodyErr := t.readBodyHash(r, logger)
-		if bodyErr != nil {
-			return bodyErr
-		}
-
-		// Build a canonical request string
-		canonical := portal.BuildCanonical(r.Method, r.URL, accountName, publicToken, ts, nonce, bodyHash)
-
-		clientIP := portal.ParseClientIP(r)
-
-		if err := t.shallReject(logger, accountName, publicToken, signature, canonical, nonce, clientIP); err != nil {
+		var apiKey *database.APIKey
+		if apiKey, err = t.HasInvalidFormat(headers); err != nil {
 			return err
 		}
 
-		// Update the request context
-		r = t.attachContext(r, accountName, reqID)
+		if err = t.HasInvalidSignature(headers, apiKey); err != nil {
+			return err
+		}
 
-		logger.Info("authentication successful")
+		r = t.AttachContext(r, headers)
 
 		return next(w, r)
 	}
 }
 
-func (t TokenCheckMiddleware) guardDependencies(logger *slog.Logger) *http.ApiError {
+func (t TokenCheckMiddleware) GuardDependencies() *http.ApiError {
 	missing := make([]string, 0, 4)
 
 	if t.ApiKeys == nil {
-		missing = append(missing, "ApiKeys")
+		missing = append(missing, "KeysRepository")
 	}
 
 	if t.TokenHandler == nil {
@@ -165,160 +105,132 @@ func (t TokenCheckMiddleware) guardDependencies(logger *slog.Logger) *http.ApiEr
 	}
 
 	if len(missing) > 0 {
-		logger.Error("token middleware missing dependencies", "missing", strings.Join(missing, ","))
-		return t.getUnauthenticatedError()
+		return mwguards.UnauthenticatedError(
+			"token middleware missing dependencies",
+			"token middleware missing dependencies: "+strings.Join(missing, ",")+".",
+			map[string]any{
+				"missing": missing,
+			},
+		)
 	}
 
 	return nil
 }
 
-func (t TokenCheckMiddleware) validateAndGetHeaders(r *baseHttp.Request, logger *slog.Logger) (accountName, publicToken, signature, ts, nonce string, apiErr *http.ApiError) {
-	accountName = strings.TrimSpace(r.Header.Get(usernameHeader))
-	publicToken = strings.TrimSpace(r.Header.Get(tokenHeader))
-	signature = strings.TrimSpace(r.Header.Get(signatureHeader))
-	ts = strings.TrimSpace(r.Header.Get(timestampHeader))
-	nonce = strings.TrimSpace(r.Header.Get(nonceHeader))
+func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, requestId string) (AuthTokenHeaders, *http.ApiError) {
+	intendedOriginURL := strings.TrimSpace(r.Header.Get(portal.IntendedOriginHeader))
+	accountName := strings.TrimSpace(r.Header.Get(portal.UsernameHeader))
+	signature := strings.TrimSpace(r.Header.Get(portal.SignatureHeader))
+	publicToken := strings.TrimSpace(r.Header.Get(portal.TokenHeader))
+	ts := strings.TrimSpace(r.Header.Get(portal.TimestampHeader))
+	nonce := strings.TrimSpace(r.Header.Get(portal.NonceHeader))
+	ip := portal.ParseClientIP(r)
 
-	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" {
-		logger.Warn("missing authentication headers")
-		return "", "", "", "", "", t.getInvalidRequestError()
+	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" || ip == "" || intendedOriginURL == "" {
+		return AuthTokenHeaders{}, mwguards.InvalidRequestError(
+			"Invalid authentication headers / or missing headers",
+			"",
+		)
 	}
 
 	if err := auth.ValidateTokenFormat(publicToken); err != nil {
-		logger.Warn("invalid token format")
-		return "", "", "", "", "", t.getInvalidTokenFormatError()
+		return AuthTokenHeaders{}, mwguards.InvalidTokenFormatError(err.Error(), "", map[string]any{})
 	}
 
-	return accountName, publicToken, signature, ts, nonce, nil
+	return AuthTokenHeaders{
+		Timestamp:         ts,
+		ClientIP:          ip,
+		Nonce:             nonce,
+		Signature:         signature,
+		RequestID:         requestId,
+		AccountName:       accountName,
+		PublicKey:         publicToken,
+		IntendedOriginURL: intendedOriginURL,
+	}, nil
 }
 
-func (t TokenCheckMiddleware) readBodyHash(r *baseHttp.Request, logger *slog.Logger) (string, *http.ApiError) {
-	if r.Body == nil {
-		return portal.Sha256Hex(nil), nil
-	}
-
-	b, err := portal.ReadWithSizeLimit(r.Body)
-	if err != nil {
-		logger.Warn("unable to read body for signing")
-		return "", t.getInvalidRequestError()
-	}
-
-	// restore for downstream handlers
-	r.Body = io.NopCloser(bytes.NewReader(b))
-
-	return portal.Sha256Hex(b), nil
-}
-
-func (t TokenCheckMiddleware) attachContext(r *baseHttp.Request, accountName, reqID string) *baseHttp.Request {
-	ctx := context.WithValue(r.Context(), authAccountNameKey, accountName)
-	ctx = context.WithValue(r.Context(), requestIdKey, reqID)
+func (t TokenCheckMiddleware) AttachContext(r *baseHttp.Request, headers AuthTokenHeaders) *baseHttp.Request {
+	ctx := context.WithValue(r.Context(), portal.AuthAccountNameKey, headers.AccountName)
+	ctx = context.WithValue(r.Context(), portal.RequestIDKey, headers.RequestID)
 
 	return r.WithContext(ctx)
 }
 
-func (t TokenCheckMiddleware) shallReject(logger *slog.Logger, accountName, publicToken, signature, canonical, nonce, clientIP string) *http.ApiError {
-	limiterKey := clientIP + "|" + strings.ToLower(accountName)
+func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*database.APIKey, *http.ApiError) {
+	limiterKey := headers.ClientIP + "|" + strings.ToLower(headers.AccountName)
 
 	if t.rateLimiter.TooMany(limiterKey) {
-		logger.Warn("too many authentication failures", "ip", clientIP)
-		return t.getRateLimitedError()
+		return nil, mwguards.RateLimitedError(
+			"Too many authentication attempts",
+			"Too many authentication attempts for key: "+limiterKey,
+		)
 	}
 
-	var item *database.APIKey
-	if item = t.ApiKeys.FindBy(accountName); item == nil {
+	guard := mwguards.NewMWTokenGuard(t.ApiKeys, t.TokenHandler)
+
+	rejectsRequest := mwguards.MWTokenGuardData{
+		Username:  headers.AccountName,
+		PublicKey: headers.PublicKey,
+	}
+
+	if guard.Rejects(rejectsRequest) {
 		t.rateLimiter.Fail(limiterKey)
-		logger.Warn("account not found")
-		return t.getUnauthenticatedError()
+
+		return nil, mwguards.UnauthenticatedError(
+			"Invalid public token",
+			guard.Error.Error(),
+			rejectsRequest.ToMap(),
+		)
 	}
 
-	// Fetch account to understand its keys
-	token, err := t.TokenHandler.DecodeTokensFor(
-		item.AccountName,
-		item.SecretKey,
-		item.PublicKey,
-	)
-
-	if err != nil {
-		t.rateLimiter.Fail(limiterKey)
-		logger.Error("failed to decode account keys", "account", item.AccountName, "error", err)
-		return t.getUnauthenticatedError()
-	}
-
-	// Constant-time compare (fixed-length by hashing) of provided public token vs stored one
-	pBytes := []byte(strings.TrimSpace(publicToken))
-	eBytes := []byte(strings.TrimSpace(token.PublicKey))
-	hP := sha256.Sum256(pBytes)
-	hE := sha256.Sum256(eBytes)
-
-	if subtle.ConstantTimeCompare(hP[:], hE[:]) != 1 {
-		t.rateLimiter.Fail(limiterKey)
-		logger.Warn("public token mismatch", "account", item.AccountName)
-		return t.getUnauthenticatedError()
-	}
-
-	// Compute local signature over canonical request and compare in constant time (hash to fixed-length first)
-	localSignature := auth.CreateSignatureFrom(canonical, token.PublicKey) //@todo Change!
-	hSig := sha256.Sum256([]byte(strings.TrimSpace(signature)))
-	hLocal := sha256.Sum256([]byte(localSignature))
-
-	if subtle.ConstantTimeCompare(hSig[:], hLocal[:]) != 1 {
-		t.rateLimiter.Fail(limiterKey)
-		logger.Warn("signature mismatch", "account", item.AccountName)
-		return t.getUnauthenticatedError()
-	}
-
-	// Nonce replay protection: atomically check-and-mark (UseOnce)
 	if t.nonceCache != nil {
-		key := item.AccountName + "|" + nonce
+		key := strings.ToLower(headers.AccountName) + "|" + headers.Nonce
 
 		if t.nonceCache.UseOnce(key, t.nonceTTL) {
 			t.rateLimiter.Fail(limiterKey)
-			logger.Warn("replay detected: nonce already used", "account", item.AccountName)
-			return t.getUnauthenticatedError()
+
+			return nil, mwguards.UnauthenticatedError(
+				"Invalid nonce",
+				"Invalid nonce using key: "+key,
+				map[string]any{"key": key, "limiter_key": limiterKey},
+			)
 		}
 	}
 
+	return guard.ApiKey, nil
+}
+
+func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *http.ApiError {
+	var err error
+	var byteSignature []byte
+	limiterKey := headers.ClientIP + "|" + strings.ToLower(headers.AccountName)
+
+	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
+		t.rateLimiter.Fail(limiterKey)
+
+		return mwguards.NotFound("error decoding signature string", "")
+	}
+
+	entity := repoentity.FindSignatureFrom{
+		Key:        apiKey,
+		Signature:  byteSignature,
+		Origin:     headers.IntendedOriginURL,
+		ServerTime: time.Now(),
+	}
+
+	signature := t.ApiKeys.FindSignatureFrom(entity)
+
+	if signature == nil {
+		t.rateLimiter.Fail(limiterKey)
+
+		return mwguards.NotFound("signature not found", "")
+	}
+
+	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {
+		t.rateLimiter.Fail(limiterKey)
+
+		return mwguards.InvalidRequestError("could not increase signature tries", err.Error())
+	}
+
 	return nil
-}
-
-func (t TokenCheckMiddleware) getInvalidRequestError() *http.ApiError {
-	return &http.ApiError{
-		Message: "Invalid authentication headers",
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getInvalidTokenFormatError() *http.ApiError {
-	return &http.ApiError{
-		Message: "Invalid credentials",
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getUnauthenticatedError() *http.ApiError {
-	return &http.ApiError{
-		Message: "Invalid credentials",
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getRateLimitedError() *http.ApiError {
-	return &http.ApiError{
-		Message: "Too many authentication attempts",
-		Status:  baseHttp.StatusTooManyRequests,
-	}
-}
-
-func (t TokenCheckMiddleware) getTimestampTooOldError() *http.ApiError {
-	return &http.ApiError{
-		Message: "Request timestamp expired",
-		Status:  baseHttp.StatusUnauthorized,
-	}
-}
-
-func (t TokenCheckMiddleware) getTimestampTooNewError() *http.ApiError {
-	return &http.ApiError{
-		Message: "Request timestamp invalid",
-		Status:  baseHttp.StatusUnauthorized,
-	}
 }

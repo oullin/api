@@ -42,9 +42,10 @@ func MakeApp(env *env.Environment, validator *portal.Validator) (*App, error) {
 	}
 
 	router := Router{
-		Env: env,
-		Db:  db,
-		Mux: baseHttp.NewServeMux(),
+		Env:       env,
+		Db:        db,
+		Mux:       baseHttp.NewServeMux(),
+		validator: validator,
 		Pipeline: middleware.Pipeline{
 			Env:          env,
 			ApiKeys:      &repository.ApiKeys{DB: db},
@@ -73,4 +74,5 @@ func (a *App) Boot() {
 	router.Recommendations()
 	router.Posts()
 	router.Categories()
+	router.Signature()
 }

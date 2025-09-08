@@ -1,9 +1,10 @@
 package database
 
 import (
-	"gorm.io/gorm"
 	"slices"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const DriverName = "postgres"
@@ -11,8 +12,8 @@ const DriverName = "postgres"
 var schemaTables = []string{
 	"users", "posts", "categories",
 	"post_categories", "tags", "post_tags",
-	"post_views", "comments",
-	"likes", "newsletters", "api_keys",
+	"post_views", "comments", "likes",
+	"newsletters", "api_keys", "api_key_signatures",
 }
 
 func GetSchemaTables() []string {
@@ -32,6 +33,25 @@ type APIKey struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
+
+	//Associations
+	APIKeySignature []APIKeySignatures `gorm:"foreignKey:APIKeyID"`
+}
+
+type APIKeySignatures struct {
+	ID           int64          `gorm:"primaryKey"`
+	UUID         string         `gorm:"type:uuid;unique;not null"`
+	APIKeyID     int64          `gorm:"not null;index:idx_api_key_signatures_api_key_id"`
+	MaxTries     int            `gorm:"not null"`
+	CurrentTries int            `gorm:"not null"`
+	APIKey       APIKey         `gorm:"foreignKey:APIKeyID;references:ID;constraint:OnDelete:CASCADE"`
+	Signature    []byte         `gorm:"not null;uniqueIndex:uq_api_key_signatures_signature"`
+	Origin       string         `gorm:"type:varchar(255);not null;index:idx_api_key_signatures_origin"`
+	ExpiresAt    time.Time      `gorm:"index:idx_api_key_signatures_expires_at"`
+	ExpiredAt    *time.Time     `gorm:"index:idx_api_key_signatures_expired_at"`
+	CreatedAt    time.Time      `gorm:"index:idx_api_key_signatures_created_at"`
+	UpdatedAt    time.Time      `gorm:"index:idx_api_key_signatures_updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index:idx_api_key_signatures_deleted_at"`
 }
 
 type User struct {

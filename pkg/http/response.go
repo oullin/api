@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	baseHttp "net/http"
 	"strings"
 )
@@ -72,10 +73,36 @@ func InternalError(msg string) *ApiError {
 	}
 }
 
+func LogInternalError(msg string, err error) *ApiError {
+	slog.Error(err.Error(), "error", err)
+
+	return &ApiError{
+		Message: fmt.Sprintf("Internal server error: %s", msg),
+		Status:  baseHttp.StatusInternalServerError,
+	}
+}
+
 func BadRequestError(msg string) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Bad request error: %s", msg),
 		Status:  baseHttp.StatusBadRequest,
+	}
+}
+
+func LogBadRequestError(msg string, err error) *ApiError {
+	slog.Error(err.Error(), "error", err)
+
+	return &ApiError{
+		Message: fmt.Sprintf("Bad request error: %s", msg),
+		Status:  baseHttp.StatusBadRequest,
+	}
+}
+
+func UnprocessableEntity(msg string, errors map[string]any) *ApiError {
+	return &ApiError{
+		Message: fmt.Sprintf("Unprocessable entity: %s", msg),
+		Status:  baseHttp.StatusUnprocessableEntity,
+		Data:    errors,
 	}
 }
 

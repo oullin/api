@@ -8,10 +8,10 @@ import (
 // TestTTLCache_UseOnce verifies the behavior of UseOnce for first use,
 // repeated use before expiry and reuse after the TTL has elapsed.
 func TestTTLCache_UseOnce(t *testing.T) {
-        t.Parallel()
-        c := NewTTLCache()
-        key := "nonce"
-        ttl := 100 * time.Millisecond
+	t.Parallel()
+	c := NewTTLCache()
+	key := "nonce"
+	ttl := 100 * time.Millisecond
 
 	t.Run("first use", func(t *testing.T) {
 		if used := c.UseOnce(key, ttl); used {
@@ -25,12 +25,12 @@ func TestTTLCache_UseOnce(t *testing.T) {
 		}
 	})
 
-        t.Run("use after expiry", func(t *testing.T) {
-                time.Sleep(ttl + 50*time.Millisecond)
-                if used := c.UseOnce(key, ttl); used {
-                        t.Fatalf("expected UseOnce to return false for an expired key")
-                }
-        })
+	t.Run("use after expiry", func(t *testing.T) {
+		time.Sleep(ttl + 50*time.Millisecond)
+		if used := c.UseOnce(key, ttl); used {
+			t.Fatalf("expected UseOnce to return false for an expired key")
+		}
+	})
 }
 
 // TestTTLCache_Mark_PrunesExpiredEntries ensures that calling Mark prunes

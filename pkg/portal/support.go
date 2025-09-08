@@ -23,6 +23,24 @@ func CloseWithLog(c io.Closer) {
 	}
 }
 
+func GenerateURL(r *baseHttp.Request) string {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+
+	if v := r.Header.Get("X-Forwarded-Proto"); v != "" {
+		scheme = v
+	}
+
+	host := r.Host
+	if v := r.Header.Get("X-Forwarded-Host"); v != "" {
+		host = v
+	}
+
+	return scheme + "://" + host + r.URL.RequestURI()
+}
+
 func Sha256Hex(b []byte) string {
 	h := sha256.Sum256(b)
 	return hex.EncodeToString(h[:])
