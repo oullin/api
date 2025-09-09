@@ -31,9 +31,12 @@ type Router struct {
 }
 
 func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
+	pm := middleware.MakePublicMiddleware()
+
 	return http.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
+			pm.Handle,
 		),
 	)
 }

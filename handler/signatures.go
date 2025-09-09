@@ -51,10 +51,6 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 	receivedAt := time.Unix(req.Timestamp, 0)
 	req.Origin = r.Header.Get(portal.IntendedOriginHeader)
 
-	if err = s.isRequestWithinTimeframe(serverTime, receivedAt); err != nil {
-		return http.LogBadRequestError(err.Error(), err)
-	}
-
 	var keySignature *database.APIKeySignatures
 	if keySignature, err = s.CreateSignature(req, serverTime); err != nil {
 		return http.LogInternalError(err.Error(), err)
@@ -78,22 +74,6 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 	}
 
 	return nil // A nil return indicates success.
-}
-
-func (s *SignaturesHandler) isRequestWithinTimeframe(serverTime, receivedAt time.Time) error {
-	skew := 15 * time.Second
-
-	earliestValidTime := serverTime.Add(-skew)
-	if receivedAt.Before(earliestValidTime) {
-		return fmt.Errorf("the request timestamp [%s] is too old", receivedAt.Format(portal.DatesLayout))
-	}
-
-	latestValidTime := serverTime.Add(skew)
-	if receivedAt.After(latestValidTime) {
-		return fmt.Errorf("the request timestamp [%s] is from the future", receivedAt.Format(portal.DatesLayout))
-	}
-
-	return nil
 }
 
 func (s *SignaturesHandler) CreateSignature(request payload.SignatureRequest, serverTime time.Time) (*database.APIKeySignatures, error) {
