@@ -12,6 +12,7 @@ type Environment struct {
 	Logs    LogsEnvironment
 	Network NetEnvironment
 	Sentry  SentryEnvironment
+	Ping    Ping
 }
 
 // SecretsDir defines where secret files are read from. It can be overridden in
