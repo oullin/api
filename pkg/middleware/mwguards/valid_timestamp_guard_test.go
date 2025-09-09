@@ -1,4 +1,4 @@
-package middleware
+package mwguards
 
 import (
 	baseHttp "net/http"

@@ -67,7 +67,7 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return err
 		}
 
-		vt := NewValidTimestamp(ts, p.now)
+		vt := mwguards.NewValidTimestamp(ts, p.now)
 		if err := vt.Validate(p.clockSkew, p.disallowFuture); err != nil {
 			p.rateLimiter.Fail(limiterKey)
 

@@ -65,7 +65,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 		}
 
 		// Validate timestamp within allowed skew using ValidTimestamp helper
-		vt := NewValidTimestamp(headers.Timestamp, t.now)
+		vt := mwguards.NewValidTimestamp(headers.Timestamp, t.now)
 		if tsErr := vt.Validate(t.clockSkew, t.disallowFuture); tsErr != nil {
 			return tsErr
 		}
