@@ -95,6 +95,11 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		CSP: env.GetEnvVar("ENV_SENTRY_CSP"),
 	}
 
+	pingEnvironment := env.Ping{
+		Username: env.GetEnvVar("PING_USERNAME"),
+		Password: env.GetEnvVar("PING_PASSWORD"),
+	}
+
 	if _, err := validate.Rejects(app); err != nil {
 		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJson())
 	}
@@ -115,12 +120,17 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		panic(errorSuffix + "invalid [SENTRY] model: " + validate.GetErrorsAsJson())
 	}
 
+	if _, err := validate.Rejects(pingEnvironment); err != nil {
+		panic(errorSuffix + "invalid [ping] model: " + validate.GetErrorsAsJson())
+	}
+
 	blog := &env.Environment{
 		App:     app,
 		DB:      db,
 		Logs:    logsCreds,
 		Network: net,
 		Sentry:  sentryEnvironment,
+		Ping:    pingEnvironment,
 	}
 
 	if _, err := validate.Rejects(blog); err != nil {

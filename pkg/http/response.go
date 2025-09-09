@@ -98,6 +98,15 @@ func LogBadRequestError(msg string, err error) *ApiError {
 	}
 }
 
+func LogUnauthorisedError(msg string, err error) *ApiError {
+	slog.Error(err.Error(), "error", err)
+
+	return &ApiError{
+		Message: fmt.Sprintf("Unauthorised request: %s", msg),
+		Status:  baseHttp.StatusUnauthorized,
+	}
+}
+
 func UnprocessableEntity(msg string, errors map[string]any) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Unprocessable entity: %s", msg),

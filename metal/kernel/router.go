@@ -80,6 +80,16 @@ func (r *Router) Signature() {
 	r.Mux.HandleFunc("POST /generate-signature", generate)
 }
 
+func (r *Router) Ping() {
+	abstract := handler.MakePingHandler(&r.Env.Ping)
+
+	apiHandler := http.MakeApiHandler(
+		r.Pipeline.Chain(abstract.Handle),
+	)
+
+	r.Mux.HandleFunc("GET /ping", apiHandler)
+}
+
 func (r *Router) Profile() {
 	addStaticRoute(r, "/profile", "./storage/fixture/profile.json", handler.MakeProfileHandler)
 }
