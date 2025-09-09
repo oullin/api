@@ -16,7 +16,7 @@ jobs:
         if: github.event.action == 'labeled' && contains(github.event.pull_request.labels.*.name, 'style')
         strategy:
             matrix:
-                go-version: [1.24.5]
+                go-version: [1.25.1]
                 os: [ubuntu-latest]
 
         runs-on: ${{ matrix.os }}
