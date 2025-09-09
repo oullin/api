@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/metal/env"
+	"github.com/oullin/pkg/portal"
 )
 
 func TestPingHandler(t *testing.T) {
-	t.Setenv("PING_USERNAME", "user")
-	t.Setenv("PING_PASSWORD", "pass")
-	h := MakePingHandler()
+	e := env.Ping{Username: "user", Password: "pass"}
+	h := MakePingHandler(&e)
 
 	t.Run("valid credentials", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/ping", nil)
@@ -32,11 +33,8 @@ func TestPingHandler(t *testing.T) {
 		if resp.Message != "pong" {
 			t.Fatalf("unexpected message: %s", resp.Message)
 		}
-		if _, err := time.Parse("2006-01-02", resp.Date); err != nil {
-			t.Fatalf("invalid date: %v", err)
-		}
-		if _, err := time.Parse("15:04:05", resp.Time); err != nil {
-			t.Fatalf("invalid time: %v", err)
+		if _, err := time.Parse(portal.DatesLayout, resp.DateTime); err != nil {
+			t.Fatalf("invalid datetime: %v", err)
 		}
 	})
 
