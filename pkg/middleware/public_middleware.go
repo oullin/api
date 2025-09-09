@@ -18,30 +18,30 @@ import (
 // a simple in-memory rate limiter keyed by client IP. Reuse of a
 // request ID within a TTL window is rejected via TTLCache.
 type PublicMiddleware struct {
-        clockSkew      time.Duration
-        disallowFuture bool
-        requestTTL     time.Duration
-        rateLimiter    *limiter.MemoryLimiter
-        requestCache   *cache.TTLCache
-        now            func() time.Time
-       allowedIP      string
-       isProduction   bool
+	clockSkew      time.Duration
+	disallowFuture bool
+	requestTTL     time.Duration
+	rateLimiter    *limiter.MemoryLimiter
+	requestCache   *cache.TTLCache
+	now            func() time.Time
+	allowedIP      string
+	isProduction   bool
 }
 
 // MakePublicMiddleware constructs a PublicMiddleware with sane defaults.
 // allowedIP restricts traffic to a specific client IP when isProduction is true.
 // When not in production or allowedIP is blank, all IPs are permitted.
 func MakePublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware {
-       return PublicMiddleware{
-               clockSkew:      5 * time.Minute,
-               disallowFuture: true,
-               requestTTL:     5 * time.Minute,
-               rateLimiter:    limiter.NewMemoryLimiter(1*time.Minute, 10),
-               requestCache:   cache.NewTTLCache(),
-               now:            time.Now,
-               allowedIP:      strings.TrimSpace(allowedIP),
-               isProduction:   isProduction,
-       }
+	return PublicMiddleware{
+		clockSkew:      5 * time.Minute,
+		disallowFuture: true,
+		requestTTL:     5 * time.Minute,
+		rateLimiter:    limiter.NewMemoryLimiter(1*time.Minute, 10),
+		requestCache:   cache.NewTTLCache(),
+		now:            time.Now,
+		allowedIP:      strings.TrimSpace(allowedIP),
+		isProduction:   isProduction,
+	}
 }
 
 func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
@@ -56,14 +56,14 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return mwguards.InvalidRequestError("Invalid authentication headers", "")
 		}
 
-               ip := portal.ParseClientIP(r)
-               if ip == "" {
-                       return mwguards.InvalidRequestError("Invalid client IP", "")
-               }
+		ip := portal.ParseClientIP(r)
+		if ip == "" {
+			return mwguards.InvalidRequestError("Invalid client IP", "")
+		}
 
-               if p.isProduction && p.allowedIP != "" && ip != p.allowedIP {
-                       return mwguards.InvalidRequestError("Invalid client IP", "unauthorised ip: "+ip)
-               }
+		if p.isProduction && ip != p.allowedIP {
+			return mwguards.InvalidRequestError("Invalid client IP", "unauthorised ip: "+ip)
+		}
 
 		limiterKey := ip
 		if p.rateLimiter.TooMany(limiterKey) {

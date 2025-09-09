@@ -42,15 +42,15 @@ func MakeApp(e *env.Environment, validator *portal.Validator) (*App, error) {
 	}
 
 	router := Router{
-		Env:              e,
-		Db:               db,
-		Mux:              baseHttp.NewServeMux(),
-		validator:        validator,
-		publicMiddleware: middleware.MakePublicMiddleware(e.PublicAllowedIP, e.App.IsProduction()),
+		Env:       e,
+		Db:        db,
+		Mux:       baseHttp.NewServeMux(),
+		validator: validator,
 		Pipeline: middleware.Pipeline{
-			Env:          e,
-			ApiKeys:      &repository.ApiKeys{DB: db},
-			TokenHandler: tokenHandler,
+			Env:              e,
+			ApiKeys:          &repository.ApiKeys{DB: db},
+			TokenHandler:     tokenHandler,
+			PublicMiddleware: middleware.MakePublicMiddleware(e.Network.PublicAllowedIP, e.App.IsProduction()),
 		},
 	}
 

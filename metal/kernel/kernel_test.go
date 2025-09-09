@@ -45,9 +45,23 @@ func TestMakeEnv(t *testing.T) {
 		t.Fatalf("env not loaded")
 	}
 
-	if env.PublicAllowedIP != "1.2.3.4" {
+	if env.Network.PublicAllowedIP != "1.2.3.4" {
 		t.Fatalf("expected public allowed ip to be loaded")
 	}
+}
+
+func TestMakeEnvRequiresIPInProduction(t *testing.T) {
+	validEnvVars(t)
+	t.Setenv("ENV_APP_ENV_TYPE", "production")
+	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "")
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic")
+		}
+	}()
+
+	MakeEnv(portal.GetDefaultValidator())
 }
 
 func TestIgnite(t *testing.T) {
@@ -101,7 +115,7 @@ func TestAppHelpers(t *testing.T) {
 	app := &App{}
 
 	mux := http.NewServeMux()
-	r := Router{Mux: mux, publicMiddleware: middleware.MakePublicMiddleware("", false)}
+	r := Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)}}
 
 	app.SetRouter(r)
 
@@ -142,12 +156,12 @@ func TestAppBootRoutes(t *testing.T) {
 		Env: env,
 		Mux: http.NewServeMux(),
 		Pipeline: middleware.Pipeline{
-			Env:          env,
-			ApiKeys:      &repository.ApiKeys{DB: &database.Connection{}},
-			TokenHandler: handler,
+			Env:              env,
+			ApiKeys:          &repository.ApiKeys{DB: &database.Connection{}},
+			TokenHandler:     handler,
+			PublicMiddleware: middleware.MakePublicMiddleware("", false),
 		},
-		Db:               &database.Connection{},
-		publicMiddleware: middleware.MakePublicMiddleware("", false),
+		Db: &database.Connection{},
 	}
 
 	app := &App{}

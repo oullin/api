@@ -84,16 +84,16 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 	}
 
 	net := env.NetEnvironment{
-		HttpHost: env.GetEnvVar("ENV_HTTP_HOST"),
-		HttpPort: env.GetEnvVar("ENV_HTTP_PORT"),
+		HttpHost:        env.GetEnvVar("ENV_HTTP_HOST"),
+		HttpPort:        env.GetEnvVar("ENV_HTTP_PORT"),
+		PublicAllowedIP: env.GetEnvVar("ENV_PUBLIC_ALLOWED_IP"),
+		IsProduction:    app.IsProduction(),
 	}
 
 	sentryEnvironment := env.SentryEnvironment{
 		DSN: env.GetEnvVar("ENV_SENTRY_DSN"),
 		CSP: env.GetEnvVar("ENV_SENTRY_CSP"),
 	}
-
-	publicAllowedIP := env.GetEnvVar("ENV_PUBLIC_ALLOWED_IP")
 
 	if _, err := validate.Rejects(app); err != nil {
 		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJson())
@@ -116,12 +116,11 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 	}
 
 	blog := &env.Environment{
-		App:             app,
-		DB:              db,
-		Logs:            logsCreds,
-		Network:         net,
-		Sentry:          sentryEnvironment,
-		PublicAllowedIP: publicAllowedIP,
+		App:     app,
+		DB:      db,
+		Logs:    logsCreds,
+		Network: net,
+		Sentry:  sentryEnvironment,
 	}
 
 	if _, err := validate.Rejects(blog); err != nil {

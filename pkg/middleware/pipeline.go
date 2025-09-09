@@ -8,9 +8,10 @@ import (
 )
 
 type Pipeline struct {
-	Env          *env.Environment
-	ApiKeys      *repository.ApiKeys
-	TokenHandler *auth.TokenHandler
+	Env              *env.Environment
+	ApiKeys          *repository.ApiKeys
+	TokenHandler     *auth.TokenHandler
+	PublicMiddleware PublicMiddleware
 }
 
 func (m Pipeline) Chain(h http.ApiHandler, handlers ...http.Middleware) http.ApiHandler {

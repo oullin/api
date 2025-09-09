@@ -23,19 +23,18 @@ func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker f
 }
 
 type Router struct {
-	Env              *env.Environment
-	Mux              *baseHttp.ServeMux
-	Pipeline         middleware.Pipeline
-	Db               *database.Connection
-	validator        *portal.Validator
-	publicMiddleware middleware.PublicMiddleware
+	Env       *env.Environment
+	Mux       *baseHttp.ServeMux
+	Pipeline  middleware.Pipeline
+	Db        *database.Connection
+	validator *portal.Validator
 }
 
 func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 	return http.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
-			r.publicMiddleware.Handle,
+			r.Pipeline.PublicMiddleware.Handle,
 		),
 	)
 }
