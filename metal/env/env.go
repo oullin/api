@@ -7,11 +7,12 @@ import (
 )
 
 type Environment struct {
-	App     AppEnvironment
-	DB      DBEnvironment
-	Logs    LogsEnvironment
-	Network NetEnvironment
-	Sentry  SentryEnvironment
+	App             AppEnvironment
+	DB              DBEnvironment
+	Logs            LogsEnvironment
+	Network         NetEnvironment
+	Sentry          SentryEnvironment
+	PublicAllowedIP string
 }
 
 // SecretsDir defines where secret files are read from. It can be overridden in

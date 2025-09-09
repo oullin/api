@@ -93,6 +93,8 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		CSP: env.GetEnvVar("ENV_SENTRY_CSP"),
 	}
 
+	publicAllowedIP := env.GetEnvVar("ENV_PUBLIC_ALLOWED_IP")
+
 	if _, err := validate.Rejects(app); err != nil {
 		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJson())
 	}
@@ -114,11 +116,12 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 	}
 
 	blog := &env.Environment{
-		App:     app,
-		DB:      db,
-		Logs:    logsCreds,
-		Network: net,
-		Sentry:  sentryEnvironment,
+		App:             app,
+		DB:              db,
+		Logs:            logsCreds,
+		Network:         net,
+		Sentry:          sentryEnvironment,
+		PublicAllowedIP: publicAllowedIP,
 	}
 
 	if _, err := validate.Rejects(blog); err != nil {

@@ -33,6 +33,7 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_HTTP_PORT", "8080")
 	t.Setenv("ENV_SENTRY_DSN", "dsn")
 	t.Setenv("ENV_SENTRY_CSP", "csp")
+	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "1.2.3.4")
 }
 
 func TestMakeEnv(t *testing.T) {
@@ -42,6 +43,10 @@ func TestMakeEnv(t *testing.T) {
 
 	if env.App.Name != "guss" {
 		t.Fatalf("env not loaded")
+	}
+
+	if env.PublicAllowedIP != "1.2.3.4" {
+		t.Fatalf("expected public allowed ip to be loaded")
 	}
 }
 
@@ -96,7 +101,7 @@ func TestAppHelpers(t *testing.T) {
 	app := &App{}
 
 	mux := http.NewServeMux()
-        r := Router{Mux: mux, publicMiddleware: middleware.MakePublicMiddleware("", false)}
+	r := Router{Mux: mux, publicMiddleware: middleware.MakePublicMiddleware("", false)}
 
 	app.SetRouter(r)
 
@@ -142,7 +147,7 @@ func TestAppBootRoutes(t *testing.T) {
 			TokenHandler: handler,
 		},
 		Db:               &database.Connection{},
-                publicMiddleware: middleware.MakePublicMiddleware("", false),
+		publicMiddleware: middleware.MakePublicMiddleware("", false),
 	}
 
 	app := &App{}
