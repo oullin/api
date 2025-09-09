@@ -1,0 +1,5 @@
+package payload
+
+type KeepAliveResponse struct {
+	Message string `json:"message"`
+}

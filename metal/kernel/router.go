@@ -80,6 +80,13 @@ func (r *Router) Signature() {
 	r.Mux.HandleFunc("POST /generate-signature", generate)
 }
 
+func (r *Router) KeepAlive() {
+	abstract := handler.MakeKeepAliveHandler()
+	handle := r.PublicPipelineFor(abstract.Handle)
+
+	r.Mux.HandleFunc("GET /keep-alive", handle)
+}
+
 func (r *Router) Profile() {
 	addStaticRoute(r, "/profile", "./storage/fixture/profile.json", handler.MakeProfileHandler)
 }
