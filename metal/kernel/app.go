@@ -47,10 +47,13 @@ func MakeApp(e *env.Environment, validator *portal.Validator) (*App, error) {
 		Mux:       baseHttp.NewServeMux(),
 		validator: validator,
 		Pipeline: middleware.Pipeline{
-			Env:              e,
-			ApiKeys:          &repository.ApiKeys{DB: db},
-			TokenHandler:     tokenHandler,
-			PublicMiddleware: middleware.MakePublicMiddleware(e.Network.PublicAllowedIP, e.App.IsProduction()),
+			Env:          e,
+			ApiKeys:      &repository.ApiKeys{DB: db},
+			TokenHandler: tokenHandler,
+			PublicMiddleware: middleware.MakePublicMiddleware(
+				e.Network.PublicAllowedIP,
+				e.Network.IsProduction,
+			),
 		},
 	}
 

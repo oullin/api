@@ -87,7 +87,7 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		HttpHost:        env.GetEnvVar("ENV_HTTP_HOST"),
 		HttpPort:        env.GetEnvVar("ENV_HTTP_PORT"),
 		PublicAllowedIP: env.GetEnvVar("ENV_PUBLIC_ALLOWED_IP"),
-		IsProduction:    app.IsProduction(),
+		IsProduction:    app.IsProduction(), // --- only needed for validation purposes
 	}
 
 	sentryEnvironment := env.SentryEnvironment{

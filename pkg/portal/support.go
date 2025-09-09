@@ -94,6 +94,7 @@ func BuildCanonical(method string, u *url.URL, username, public, ts, nonce, body
 
 func ParseClientIP(r *baseHttp.Request) string {
 	// prefer X-Forwarded-For if present
+
 	xff := strings.TrimSpace(r.Header.Get("X-Forwarded-For"))
 	if xff != "" {
 		// take first IP

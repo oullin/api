@@ -28,9 +28,6 @@ type PublicMiddleware struct {
 	isProduction   bool
 }
 
-// MakePublicMiddleware constructs a PublicMiddleware with sane defaults.
-// allowedIP restricts traffic to a specific client IP when isProduction is true.
-// When not in production or allowedIP is blank, all IPs are permitted.
 func MakePublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware {
 	return PublicMiddleware{
 		clockSkew:      5 * time.Minute,
@@ -46,38 +43,41 @@ func MakePublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware 
 
 func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-		if err := p.guardDependencies(); err != nil {
+		if err := p.GuardDependencies(); err != nil {
 			return err
 		}
 
-		reqID := strings.TrimSpace(r.Header.Get(portal.RequestIDHeader))
+		uri := portal.GenerateURL(r)
 		ts := strings.TrimSpace(r.Header.Get(portal.TimestampHeader))
+		reqID := strings.TrimSpace(r.Header.Get(portal.RequestIDHeader))
+
 		if reqID == "" || ts == "" {
 			return mwguards.InvalidRequestError("Invalid authentication headers", "")
 		}
 
-		ip := portal.ParseClientIP(r)
-		if ip == "" {
-			return mwguards.InvalidRequestError("Invalid client IP", "")
-		}
+		limiterKey := strings.Join([]string{uri, reqID, ts}, "|")
 
-		if p.isProduction && ip != p.allowedIP {
-			return mwguards.InvalidRequestError("Invalid client IP", "unauthorised ip: "+ip)
-		}
-
-		limiterKey := ip
 		if p.rateLimiter.TooMany(limiterKey) {
 			return mwguards.RateLimitedError("Too many requests", "Too many requests for key: "+limiterKey)
 		}
 
-		vt := NewValidTimestamp(ts, p.now)
-		if err := vt.Validate(p.clockSkew, p.disallowFuture); err != nil {
+		if err := p.HasInvalidIP(r); err != nil {
+			p.rateLimiter.Fail(limiterKey)
+
 			return err
 		}
 
-		key := strings.Join([]string{limiterKey, reqID, ip}, "|")
+		vt := NewValidTimestamp(ts, p.now)
+		if err := vt.Validate(p.clockSkew, p.disallowFuture); err != nil {
+			p.rateLimiter.Fail(limiterKey)
+
+			return err
+		}
+
+		key := strings.Join([]string{limiterKey, reqID}, "|")
 		if p.requestCache.UseOnce(key, p.requestTTL) {
 			p.rateLimiter.Fail(limiterKey)
+
 			return mwguards.UnauthenticatedError(
 				"Invalid request id",
 				"duplicate request id: "+key,
@@ -89,17 +89,35 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	}
 }
 
-func (p PublicMiddleware) guardDependencies() *http.ApiError {
+func (p PublicMiddleware) HasInvalidIP(r *baseHttp.Request) *http.ApiError {
+	ip := portal.ParseClientIP(r)
+
+	if ip == "" {
+		return mwguards.InvalidRequestError("Clients IPs are required to access this endpoint", "")
+	}
+
+	if p.isProduction && ip != p.allowedIP {
+		return mwguards.InvalidRequestError("The given IP is not allowed", "unauthorised ip: "+ip)
+	}
+
+	return nil
+}
+
+func (p PublicMiddleware) GuardDependencies() *http.ApiError {
 	missing := []string{}
+
 	if p.requestCache == nil {
 		missing = append(missing, "requestCache")
 	}
+
 	if p.rateLimiter == nil {
 		missing = append(missing, "rateLimiter")
 	}
+
 	if len(missing) > 0 {
 		err := fmt.Errorf("public middleware missing dependencies: %s", strings.Join(missing, ","))
 		return http.LogInternalError("public middleware missing dependencies", err)
 	}
+
 	return nil
 }
