@@ -81,10 +81,13 @@ func (r *Router) Signature() {
 }
 
 func (r *Router) Ping() {
-	abstract := handler.MakePingHandler()
-	handle := r.PublicPipelineFor(abstract.Handle)
+	abstract := handler.MakePingHandler(&r.Env.Ping)
 
-	r.Mux.HandleFunc("GET /ping", handle)
+	apiHandler := http.MakeApiHandler(
+		r.Pipeline.Chain(abstract.Handle),
+	)
+
+	r.Mux.HandleFunc("GET /ping", apiHandler)
 }
 
 func (r *Router) Profile() {
