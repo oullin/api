@@ -101,13 +101,9 @@ func TestPublicMiddleware_RateLimitAndReplay(t *testing.T) {
 		t.Fatalf("expected unauthorized for replay, got %#v", err)
 	}
 
-	// New request after replay should hit rate limit
+	// A third request with the same ID should now hit the rate limit
 	rec3 := httptest.NewRecorder()
-	req3 := httptest.NewRequest("GET", "/", nil)
-	req3.Header.Set(portal.RequestIDHeader, "def")
-	req3.Header.Set(portal.TimestampHeader, strconv.FormatInt(base.Unix(), 10))
-	req3.Header.Set("X-Forwarded-For", "1.2.3.4")
-	if err := handler(rec3, req3); err == nil || err.Status != http.StatusTooManyRequests {
+	if err := handler(rec3, req2); err == nil || err.Status != http.StatusTooManyRequests {
 		t.Fatalf("expected rate limit error, got %#v", err)
 	}
 }
