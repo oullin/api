@@ -22,34 +22,38 @@ type App struct {
 	db        *database.Connection
 }
 
-func MakeApp(env *env.Environment, validator *portal.Validator) (*App, error) {
+func MakeApp(e *env.Environment, validator *portal.Validator) (*App, error) {
 	tokenHandler, err := auth.MakeTokensHandler(
-		[]byte(env.App.MasterKey),
+		[]byte(e.App.MasterKey),
 	)
 
 	if err != nil {
 		return nil, fmt.Errorf("bootstrapping error > could not create a token handler: %w", err)
 	}
 
-	db := MakeDbConnection(env)
+	db := MakeDbConnection(e)
 
 	app := App{
-		env:       env,
+		env:       e,
 		validator: validator,
-		logs:      MakeLogs(env),
-		sentry:    MakeSentry(env),
+		logs:      MakeLogs(e),
+		sentry:    MakeSentry(e),
 		db:        db,
 	}
 
 	router := Router{
-		Env:       env,
+		Env:       e,
 		Db:        db,
 		Mux:       baseHttp.NewServeMux(),
 		validator: validator,
 		Pipeline: middleware.Pipeline{
-			Env:          env,
+			Env:          e,
 			ApiKeys:      &repository.ApiKeys{DB: db},
 			TokenHandler: tokenHandler,
+			PublicMiddleware: middleware.MakePublicMiddleware(
+				e.Network.PublicAllowedIP,
+				e.Network.IsProduction,
+			),
 		},
 	}
 

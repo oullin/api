@@ -33,6 +33,7 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_HTTP_PORT", "8080")
 	t.Setenv("ENV_SENTRY_DSN", "dsn")
 	t.Setenv("ENV_SENTRY_CSP", "csp")
+	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "1.2.3.4")
 }
 
 func TestMakeEnv(t *testing.T) {
@@ -43,6 +44,24 @@ func TestMakeEnv(t *testing.T) {
 	if env.App.Name != "guss" {
 		t.Fatalf("env not loaded")
 	}
+
+	if env.Network.PublicAllowedIP != "1.2.3.4" {
+		t.Fatalf("expected public allowed ip to be loaded")
+	}
+}
+
+func TestMakeEnvRequiresIPInProduction(t *testing.T) {
+	validEnvVars(t)
+	t.Setenv("ENV_APP_ENV_TYPE", "production")
+	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "")
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic")
+		}
+	}()
+
+	MakeEnv(portal.GetDefaultValidator())
 }
 
 func TestIgnite(t *testing.T) {
@@ -96,7 +115,7 @@ func TestAppHelpers(t *testing.T) {
 	app := &App{}
 
 	mux := http.NewServeMux()
-	r := Router{Mux: mux}
+	r := Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)}}
 
 	app.SetRouter(r)
 
@@ -137,9 +156,10 @@ func TestAppBootRoutes(t *testing.T) {
 		Env: env,
 		Mux: http.NewServeMux(),
 		Pipeline: middleware.Pipeline{
-			Env:          env,
-			ApiKeys:      &repository.ApiKeys{DB: &database.Connection{}},
-			TokenHandler: handler,
+			Env:              env,
+			ApiKeys:          &repository.ApiKeys{DB: &database.Connection{}},
+			TokenHandler:     handler,
+			PublicMiddleware: middleware.MakePublicMiddleware("", false),
 		},
 		Db: &database.Connection{},
 	}

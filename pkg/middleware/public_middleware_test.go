@@ -13,7 +13,7 @@ import (
 )
 
 func TestPublicMiddleware_InvalidHeaders(t *testing.T) {
-	pm := MakePublicMiddleware()
+	pm := MakePublicMiddleware("", false)
 	handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil })
 
 	base := time.Unix(1_700_000_000, 0)
@@ -58,7 +58,7 @@ func TestPublicMiddleware_InvalidHeaders(t *testing.T) {
 }
 
 func TestPublicMiddleware_TimestampExpired(t *testing.T) {
-	pm := MakePublicMiddleware()
+	pm := MakePublicMiddleware("", false)
 	base := time.Unix(1_700_000_000, 0)
 	pm.now = func() time.Time { return base }
 	handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil })
@@ -75,7 +75,7 @@ func TestPublicMiddleware_TimestampExpired(t *testing.T) {
 }
 
 func TestPublicMiddleware_RateLimitAndReplay(t *testing.T) {
-	pm := MakePublicMiddleware()
+	pm := MakePublicMiddleware("", false)
 	pm.rateLimiter = limiter.NewMemoryLimiter(time.Minute, 1)
 	base := time.Unix(1_700_000_000, 0)
 	pm.now = func() time.Time { return base }
@@ -110,4 +110,47 @@ func TestPublicMiddleware_RateLimitAndReplay(t *testing.T) {
 	if err := handler(rec3, req3); err == nil || err.Status != http.StatusTooManyRequests {
 		t.Fatalf("expected rate limit error, got %#v", err)
 	}
+}
+
+func TestPublicMiddleware_IPWhitelist(t *testing.T) {
+	base := time.Unix(1_700_000_000, 0)
+	pm := MakePublicMiddleware("31.97.60.190", true)
+	pm.now = func() time.Time { return base }
+	handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil })
+
+	t.Run("allowed ip passes", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set(portal.RequestIDHeader, "req-1")
+		req.Header.Set(portal.TimestampHeader, strconv.FormatInt(base.Unix(), 10))
+		req.Header.Set("X-Forwarded-For", "31.97.60.190")
+		if err := handler(rec, req); err != nil {
+			t.Fatalf("expected request to pass, got %#v", err)
+		}
+	})
+
+	t.Run("other ip rejected in production", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set(portal.RequestIDHeader, "req-1")
+		req.Header.Set(portal.TimestampHeader, strconv.FormatInt(base.Unix(), 10))
+		req.Header.Set("X-Forwarded-For", "1.2.3.4")
+		if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
+			t.Fatalf("expected unauthorized, got %#v", err)
+		}
+	})
+
+	t.Run("non-production skips restriction", func(t *testing.T) {
+		pm := MakePublicMiddleware("31.97.60.190", false)
+		pm.now = func() time.Time { return base }
+		handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil })
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set(portal.RequestIDHeader, "req-1")
+		req.Header.Set(portal.TimestampHeader, strconv.FormatInt(base.Unix(), 10))
+		req.Header.Set("X-Forwarded-For", "1.2.3.4")
+		if err := handler(rec, req); err != nil {
+			t.Fatalf("expected request to pass, got %#v", err)
+		}
+	})
 }

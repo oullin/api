@@ -34,6 +34,7 @@ func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerF
 	return http.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
+			r.Pipeline.PublicMiddleware.Handle,
 		),
 	)
 }
