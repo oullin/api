@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/oullin/handler/payload"
 )
 
-func TestKeepAliveHandler(t *testing.T) {
-	h := MakeKeepAliveHandler()
-	req := httptest.NewRequest("GET", "/keep-alive", nil)
+func TestPingHandler(t *testing.T) {
+	h := MakePingHandler()
+	req := httptest.NewRequest("GET", "/ping", nil)
 	rec := httptest.NewRecorder()
 	if err := h.Handle(rec, req); err != nil {
 		t.Fatalf("handle err: %v", err)
@@ -19,11 +20,17 @@ func TestKeepAliveHandler(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d", rec.Code)
 	}
-	var resp payload.KeepAliveResponse
+	var resp payload.PingResponse
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if resp.Message != "alive" {
+	if resp.Message != "pong" {
 		t.Fatalf("unexpected message: %s", resp.Message)
+	}
+	if _, err := time.Parse("2006-01-02", resp.Date); err != nil {
+		t.Fatalf("invalid date: %v", err)
+	}
+	if _, err := time.Parse("15:04:05", resp.Time); err != nil {
+		t.Fatalf("invalid time: %v", err)
 	}
 }

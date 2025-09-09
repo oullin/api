@@ -80,11 +80,11 @@ func (r *Router) Signature() {
 	r.Mux.HandleFunc("POST /generate-signature", generate)
 }
 
-func (r *Router) KeepAlive() {
-	abstract := handler.MakeKeepAliveHandler()
+func (r *Router) Ping() {
+	abstract := handler.MakePingHandler()
 	handle := r.PublicPipelineFor(abstract.Handle)
 
-	r.Mux.HandleFunc("GET /keep-alive", handle)
+	r.Mux.HandleFunc("GET /ping", handle)
 }
 
 func (r *Router) Profile() {
