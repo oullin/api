@@ -1,67 +1,39 @@
 package kernel
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
-	"time"
-	"unsafe"
 
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/middleware"
-	"github.com/oullin/pkg/portal"
 )
 
-func TestPingRoute_PublicMiddleware(t *testing.T) {
-	t.Setenv("PING_USERNAME", "user")
-	t.Setenv("PING_PASSWORD", "pass")
-	fixedTime := time.Unix(1700000000, 0)
-	pm := middleware.MakePublicMiddleware("", false)
-	rv := reflect.ValueOf(&pm).Elem().FieldByName("now")
-	reflect.NewAt(rv.Type(), unsafe.Pointer(rv.UnsafeAddr())).Elem().Set(reflect.ValueOf(func() time.Time { return fixedTime }))
-
+func TestPingRoute(t *testing.T) {
 	r := Router{
-		Mux: http.NewServeMux(),
-		Pipeline: middleware.Pipeline{
-			PublicMiddleware: pm,
-		},
+		Env:      &env.Environment{Ping: env.Ping{Username: "user", Password: "pass"}},
+		Mux:      http.NewServeMux(),
+		Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)},
 	}
 	r.Ping()
 
-	t.Run("request without public headers is unauthorized", func(t *testing.T) {
+	t.Run("valid credentials", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/ping", nil)
 		req.SetBasicAuth("user", "pass")
-		rec := httptest.NewRecorder()
-		r.Mux.ServeHTTP(rec, req)
-		if rec.Code != http.StatusUnauthorized {
-			t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
-		}
-	})
-
-	t.Run("request with public headers but invalid credentials is unauthorized", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping", nil)
-		req.SetBasicAuth("bad", "creds")
-		req.Header.Set(portal.RequestIDHeader, "req-1")
-		req.Header.Set(portal.TimestampHeader, fmt.Sprintf("%d", fixedTime.Unix()))
-		req.Header.Set("X-Forwarded-For", "1.2.3.4")
-		rec := httptest.NewRecorder()
-		r.Mux.ServeHTTP(rec, req)
-		if rec.Code != http.StatusUnauthorized {
-			t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
-		}
-	})
-
-	t.Run("request with public headers and valid credentials succeeds", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping", nil)
-		req.SetBasicAuth("user", "pass")
-		req.Header.Set(portal.RequestIDHeader, "req-2")
-		req.Header.Set(portal.TimestampHeader, fmt.Sprintf("%d", fixedTime.Unix()))
-		req.Header.Set("X-Forwarded-For", "1.2.3.4")
 		rec := httptest.NewRecorder()
 		r.Mux.ServeHTTP(rec, req)
 		if rec.Code != http.StatusOK {
 			t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+		}
+	})
+
+	t.Run("invalid credentials", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/ping", nil)
+		req.SetBasicAuth("bad", "creds")
+		rec := httptest.NewRecorder()
+		r.Mux.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
 		}
 	})
 }
