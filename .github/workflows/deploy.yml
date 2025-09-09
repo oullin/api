@@ -97,7 +97,7 @@ jobs:
             git reset --hard origin/main
 
             echo "🚀 Restarting containers ..."
-            cd ~/Sites/infra/
+            cd ${{ secrets.VPS_INFRA_DIR }}
             ./deployment
 
             echo "✅ Deployment completed!"
