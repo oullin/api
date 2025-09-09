@@ -96,7 +96,7 @@ func TestAppHelpers(t *testing.T) {
 	app := &App{}
 
 	mux := http.NewServeMux()
-	r := Router{Mux: mux}
+	r := Router{Mux: mux, publicMiddleware: middleware.MakePublicMiddleware()}
 
 	app.SetRouter(r)
 
@@ -141,7 +141,8 @@ func TestAppBootRoutes(t *testing.T) {
 			ApiKeys:      &repository.ApiKeys{DB: &database.Connection{}},
 			TokenHandler: handler,
 		},
-		Db: &database.Connection{},
+		Db:               &database.Connection{},
+		publicMiddleware: middleware.MakePublicMiddleware(),
 	}
 
 	app := &App{}
