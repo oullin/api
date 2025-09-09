@@ -5,16 +5,28 @@ import (
 	"time"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/http"
 )
 
-type PingHandler struct{}
+type PingHandler struct {
+	username string
+	password string
+}
 
 func MakePingHandler() PingHandler {
-	return PingHandler{}
+	return PingHandler{
+		username: env.GetSecretOrEnv("ping_username", "PING_USERNAME"),
+		password: env.GetSecretOrEnv("ping_password", "PING_PASSWORD"),
+	}
 }
 
 func (h PingHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+	user, pass, ok := r.BasicAuth()
+	if !ok || user != h.username || pass != h.password {
+		return &http.ApiError{Message: "Unauthorized", Status: baseHttp.StatusUnauthorized}
+	}
+
 	resp := http.MakeResponseFrom("0.0.1", w, r)
 	now := time.Now().UTC()
 	data := payload.PingResponse{

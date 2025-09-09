@@ -14,6 +14,8 @@ import (
 )
 
 func TestPingRoute_PublicMiddleware(t *testing.T) {
+	t.Setenv("PING_USERNAME", "user")
+	t.Setenv("PING_PASSWORD", "pass")
 	fixedTime := time.Unix(1700000000, 0)
 	pm := middleware.MakePublicMiddleware("", false)
 	rv := reflect.ValueOf(&pm).Elem().FieldByName("now")
@@ -29,6 +31,7 @@ func TestPingRoute_PublicMiddleware(t *testing.T) {
 
 	t.Run("request without public headers is unauthorized", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/ping", nil)
+		req.SetBasicAuth("user", "pass")
 		rec := httptest.NewRecorder()
 		r.Mux.ServeHTTP(rec, req)
 		if rec.Code != http.StatusUnauthorized {
@@ -36,9 +39,23 @@ func TestPingRoute_PublicMiddleware(t *testing.T) {
 		}
 	})
 
-	t.Run("request with public headers succeeds", func(t *testing.T) {
+	t.Run("request with public headers but invalid credentials is unauthorized", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/ping", nil)
+		req.SetBasicAuth("bad", "creds")
 		req.Header.Set(portal.RequestIDHeader, "req-1")
+		req.Header.Set(portal.TimestampHeader, fmt.Sprintf("%d", fixedTime.Unix()))
+		req.Header.Set("X-Forwarded-For", "1.2.3.4")
+		rec := httptest.NewRecorder()
+		r.Mux.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
+		}
+	})
+
+	t.Run("request with public headers and valid credentials succeeds", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/ping", nil)
+		req.SetBasicAuth("user", "pass")
+		req.Header.Set(portal.RequestIDHeader, "req-2")
 		req.Header.Set(portal.TimestampHeader, fmt.Sprintf("%d", fixedTime.Unix()))
 		req.Header.Set("X-Forwarded-For", "1.2.3.4")
 		rec := httptest.NewRecorder()
