@@ -1,6 +1,6 @@
 module github.com/oullin
 
-go 1.24.5
+go 1.25.1
 
 require (
 	github.com/getsentry/sentry-go v0.35.0
