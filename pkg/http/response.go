@@ -38,6 +38,21 @@ func MakeResponseFrom(salt string, writer baseHttp.ResponseWriter, request *base
 	}
 }
 
+func MakeNoCacheResponse(writer baseHttp.ResponseWriter, request *baseHttp.Request) *Response {
+	cacheControl := "no-store"
+
+	return &Response{
+		writer:       writer,
+		request:      request,
+		cacheControl: cacheControl,
+		headers: func(w baseHttp.ResponseWriter) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("Cache-Control", cacheControl)
+		},
+	}
+}
+
 func (r *Response) WithHeaders(callback func(w baseHttp.ResponseWriter)) {
 	callback(r.writer)
 }
@@ -53,6 +68,10 @@ func (r *Response) RespondOk(payload any) error {
 }
 
 func (r *Response) HasCache() bool {
+	if r.etag == "" {
+		return false
+	}
+
 	request := r.request
 
 	match := strings.TrimSpace(

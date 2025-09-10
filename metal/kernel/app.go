@@ -69,7 +69,8 @@ func (a *App) Boot() {
 
 	router := *a.router
 
-	router.Ping()
+	router.KeepAlive()
+	router.KeepAliveDB()
 	router.Profile()
 	router.Experience()
 	router.Projects()

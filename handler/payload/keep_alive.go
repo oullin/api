@@ -1,6 +1,6 @@
 package payload
 
-type PingResponse struct {
+type KeepAliveResponse struct {
 	Message  string `json:"message"`
 	DateTime string `json:"date_time"`
 }

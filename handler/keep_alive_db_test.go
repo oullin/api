@@ -8,16 +8,18 @@ import (
 	"time"
 
 	"github.com/oullin/handler/payload"
+	handlertests "github.com/oullin/handler/tests"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/portal"
 )
 
-func TestPingHandler(t *testing.T) {
+func TestKeepAliveDBHandler(t *testing.T) {
+	db, _ := handlertests.MakeTestDB(t)
 	e := env.Ping{Username: "user", Password: "pass"}
-	h := MakePingHandler(&e)
+	h := MakeKeepAliveDBHandler(&e, db)
 
 	t.Run("valid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping", nil)
+		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("user", "pass")
 		rec := httptest.NewRecorder()
 		if err := h.Handle(rec, req); err != nil {
@@ -26,7 +28,7 @@ func TestPingHandler(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Fatalf("status %d", rec.Code)
 		}
-		var resp payload.PingResponse
+		var resp payload.KeepAliveResponse
 		if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 			t.Fatalf("decode: %v", err)
 		}
@@ -39,11 +41,21 @@ func TestPingHandler(t *testing.T) {
 	})
 
 	t.Run("invalid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping", nil)
+		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("bad", "creds")
 		rec := httptest.NewRecorder()
 		if err := h.Handle(rec, req); err == nil || err.Status != http.StatusUnauthorized {
 			t.Fatalf("expected unauthorized, got %#v", err)
+		}
+	})
+
+	t.Run("db ping failure", func(t *testing.T) {
+		db.Close()
+		req := httptest.NewRequest("GET", "/ping-db", nil)
+		req.SetBasicAuth("user", "pass")
+		rec := httptest.NewRecorder()
+		if err := h.Handle(rec, req); err == nil || err.Status != http.StatusInternalServerError {
+			t.Fatalf("expected internal error, got %#v", err)
 		}
 	})
 }

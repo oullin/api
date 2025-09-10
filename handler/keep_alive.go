@@ -11,15 +11,15 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-type PingHandler struct {
+type KeepAliveHandler struct {
 	env *env.Ping
 }
 
-func MakePingHandler(e *env.Ping) PingHandler {
-	return PingHandler{env: e}
+func MakeKeepAliveHandler(e *env.Ping) KeepAliveHandler {
+	return KeepAliveHandler{env: e}
 }
 
-func (h PingHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h KeepAliveHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	user, pass, ok := r.BasicAuth()
 
 	if !ok || h.env.HasInvalidCreds(user, pass) {
@@ -29,16 +29,16 @@ func (h PingHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *htt
 		)
 	}
 
-	resp := http.MakeResponseFrom("0.0.1", w, r)
+	resp := http.MakeNoCacheResponse(w, r)
 	now := time.Now().UTC()
 
-	data := payload.PingResponse{
+	data := payload.KeepAliveResponse{
 		Message:  "pong",
 		DateTime: now.Format(portal.DatesLayout),
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		return http.LogInternalError("could not encode ping response", err)
+		return http.LogInternalError("could not encode keep-alive response", err)
 	}
 
 	return nil
