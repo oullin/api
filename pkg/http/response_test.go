@@ -31,6 +31,33 @@ func TestResponse_RespondOkAndHasCache(t *testing.T) {
 	}
 }
 
+func TestResponse_NoCache(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+
+	r := MakeNoCacheResponse(rec, req)
+
+	if err := r.RespondOk(map[string]string{"a": "b"}); err != nil {
+		t.Fatalf("respond: %v", err)
+	}
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d", rec.Code)
+	}
+
+	if rec.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("unexpected cache-control: %s", rec.Header().Get("Cache-Control"))
+	}
+
+	if rec.Header().Get("ETag") != "" {
+		t.Fatalf("etag should be empty")
+	}
+
+	if r.HasCache() {
+		t.Fatalf("expected no cache")
+	}
+}
+
 func TestResponse_WithHeaders(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()

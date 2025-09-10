@@ -35,7 +35,7 @@ func main() {
 	app.Boot()
 
 	// --- Testing
-	if ok, err := app.GetDB().Ping(); !ok {
+	if err := app.GetDB().Ping(); err != nil {
 		slog.Error("database ping failed", "error", err)
 	}
 	slog.Info("Starting new server on :" + app.GetEnv().Network.HttpPort)

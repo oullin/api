@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"log/slog"
 
@@ -47,21 +46,17 @@ func (c *Connection) Close() bool {
 	return true
 }
 
-func (c *Connection) Ping() (bool, error) {
-	var driver *sql.DB
-
+func (c *Connection) Ping() error {
 	conn, err := c.driver.DB()
 	if err != nil {
-		return false, fmt.Errorf("error retrieving the db driver: %w", err)
+		return fmt.Errorf("error retrieving the db driver: %w", err)
 	}
 
-	driver = conn
-
-	if err := driver.Ping(); err != nil {
-		return false, fmt.Errorf("error pinging the db driver: %w", err)
+	if err := conn.Ping(); err != nil {
+		return fmt.Errorf("error pinging the db driver: %w", err)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (c *Connection) Sql() *gorm.DB {

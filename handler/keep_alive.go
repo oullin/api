@@ -29,7 +29,7 @@ func (h KeepAliveHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request)
 		)
 	}
 
-	resp := http.MakeResponseFrom("0.0.1", w, r)
+	resp := http.MakeNoCacheResponse(w, r)
 	now := time.Now().UTC()
 
 	data := payload.KeepAliveResponse{
