@@ -2,7 +2,8 @@ name: Go Fmt
 
 on:
   pull_request:
-    types: [labeled]
+    branches: [master]
+    types: [closed]
 
 permissions:
     contents: write
@@ -10,7 +11,7 @@ permissions:
 
 jobs:
     gofmt:
-        if: github.event.label.name == 'style'
+        if: github.event.pull_request.merged == true
         strategy:
             matrix:
                 go-version: [1.25.1]
@@ -22,8 +23,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
               with:
-                  repository: ${{ github.event.pull_request.head.repo.full_name }}
-                  ref: ${{ github.event.pull_request.head.ref }}
+                  ref: ${{ github.event.pull_request.base.ref }}
                   fetch-depth: 0
 
             - name: Install Go
@@ -39,8 +39,7 @@ jobs:
                 git diff --exit-code || echo "::warning::Formatting changes would be applied in normal mode"
               continue-on-error: true
 
-            - name: Commit Changes to PR
-              if: github.event.pull_request.head.repo.full_name == github.repository
+            - name: Commit Changes
               uses: stefanzweifel/git-auto-commit-action@v6.0.1
               with:
                   commit_message: apply coding style fixes
@@ -50,4 +49,4 @@ jobs:
                   commit_user_name: GitHub Actions
                   commit_user_email: ${{ secrets.GUS_GH_EMAIL }}
                   commit_author: gocanto <gocanto@users.noreply.github.com>
-                  branch: ${{ github.event.pull_request.head.ref }}
+                  branch: ${{ github.event.pull_request.base.ref }}
