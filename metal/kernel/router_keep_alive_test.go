@@ -5,23 +5,20 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	handlertests "github.com/oullin/handler/tests"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/middleware"
 )
 
-func TestPingDBRoute(t *testing.T) {
-	db, _ := handlertests.MakeTestDB(t)
+func TestKeepAliveRoute(t *testing.T) {
 	r := Router{
 		Env:      &env.Environment{Ping: env.Ping{Username: "user", Password: "pass"}},
-		Db:       db,
 		Mux:      http.NewServeMux(),
 		Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)},
 	}
-	r.PingDB()
+	r.KeepAlive()
 
 	t.Run("valid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping-db", nil)
+		req := httptest.NewRequest("GET", "/ping", nil)
 		req.SetBasicAuth("user", "pass")
 		rec := httptest.NewRecorder()
 		r.Mux.ServeHTTP(rec, req)
@@ -31,7 +28,7 @@ func TestPingDBRoute(t *testing.T) {
 	})
 
 	t.Run("invalid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping-db", nil)
+		req := httptest.NewRequest("GET", "/ping", nil)
 		req.SetBasicAuth("bad", "creds")
 		rec := httptest.NewRecorder()
 		r.Mux.ServeHTTP(rec, req)

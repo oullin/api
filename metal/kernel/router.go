@@ -80,7 +80,7 @@ func (r *Router) Signature() {
 	r.Mux.HandleFunc("POST /generate-signature", generate)
 }
 
-func (r *Router) Ping() {
+func (r *Router) KeepAlive() {
 	abstract := handler.MakeKeepAliveHandler(&r.Env.Ping)
 
 	apiHandler := http.MakeApiHandler(
@@ -90,7 +90,7 @@ func (r *Router) Ping() {
 	r.Mux.HandleFunc("GET /ping", apiHandler)
 }
 
-func (r *Router) PingDB() {
+func (r *Router) KeepAliveDB() {
 	abstract := handler.MakeKeepAliveDBHandler(&r.Env.Ping, r.Db)
 
 	apiHandler := http.MakeApiHandler(
