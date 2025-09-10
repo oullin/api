@@ -61,11 +61,12 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return mwguards.RateLimitedError("Too many requests", "Too many requests for key: "+limiterKey)
 		}
 
-		if err := p.HasInvalidIP(r); err != nil {
-			p.rateLimiter.Fail(limiterKey)
-
-			return err
-		}
+		// @deprecated
+		//if err := p.HasInvalidIP(r); err != nil {
+		//	p.rateLimiter.Fail(limiterKey)
+		//
+		//	return err
+		//}
 
 		vt := mwguards.NewValidTimestamp(ts, p.now)
 		if err := vt.Validate(p.clockSkew, p.disallowFuture); err != nil {
