@@ -21,7 +21,7 @@ func TestPingDBRoute(t *testing.T) {
 	r.PingDB()
 
 	t.Run("valid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping/db", nil)
+		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("user", "pass")
 		rec := httptest.NewRecorder()
 		r.Mux.ServeHTTP(rec, req)
@@ -31,7 +31,7 @@ func TestPingDBRoute(t *testing.T) {
 	})
 
 	t.Run("invalid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping/db", nil)
+		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("bad", "creds")
 		rec := httptest.NewRecorder()
 		r.Mux.ServeHTTP(rec, req)

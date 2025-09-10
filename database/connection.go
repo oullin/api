@@ -50,25 +50,16 @@ func (c *Connection) Close() bool {
 func (c *Connection) Ping() (bool, error) {
 	var driver *sql.DB
 
-	slog.Info("Database ping started", "separator", "---------")
-
 	conn, err := c.driver.DB()
 	if err != nil {
-		slog.Error("Error retrieving the db driver", "error", err.Error())
-		return false, err
+		return false, fmt.Errorf("error retrieving the db driver: %w", err)
 	}
 
 	driver = conn
-	slog.Info("Database driver acquired", "type", fmt.Sprintf("%T", driver))
 
 	if err := driver.Ping(); err != nil {
-		slog.Error("Error pinging the db driver", "error", err.Error())
-		return false, err
+		return false, fmt.Errorf("error pinging the db driver: %w", err)
 	}
-
-	slog.Info("Database driver is healthy", "stats", driver.Stats())
-
-	slog.Info("Database ping completed", "separator", "---------")
 
 	return true, nil
 }

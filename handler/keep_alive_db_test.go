@@ -19,7 +19,7 @@ func TestKeepAliveDBHandler(t *testing.T) {
 	h := MakeKeepAliveDBHandler(&e, db)
 
 	t.Run("valid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping", nil)
+		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("user", "pass")
 		rec := httptest.NewRecorder()
 		if err := h.Handle(rec, req); err != nil {
@@ -41,7 +41,7 @@ func TestKeepAliveDBHandler(t *testing.T) {
 	})
 
 	t.Run("invalid credentials", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/ping", nil)
+		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("bad", "creds")
 		rec := httptest.NewRecorder()
 		if err := h.Handle(rec, req); err == nil || err.Status != http.StatusUnauthorized {
@@ -51,7 +51,7 @@ func TestKeepAliveDBHandler(t *testing.T) {
 
 	t.Run("db ping failure", func(t *testing.T) {
 		db.Close()
-		req := httptest.NewRequest("GET", "/ping", nil)
+		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("user", "pass")
 		rec := httptest.NewRecorder()
 		if err := h.Handle(rec, req); err == nil || err.Status != http.StatusInternalServerError {

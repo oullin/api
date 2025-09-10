@@ -97,7 +97,7 @@ func (r *Router) PingDB() {
 		r.Pipeline.Chain(abstract.Handle),
 	)
 
-	r.Mux.HandleFunc("GET /ping/db", apiHandler)
+	r.Mux.HandleFunc("GET /ping-db", apiHandler)
 }
 
 func (r *Router) Profile() {
