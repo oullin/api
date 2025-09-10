@@ -31,7 +31,9 @@ func (h KeepAliveDBHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Reques
 		)
 	}
 
-	h.db.Ping()
+	if ok, err := h.db.Ping(); !ok {
+		return http.LogInternalError("database ping failed", err)
+	}
 
 	resp := http.MakeResponseFrom("0.0.1", w, r)
 	now := time.Now().UTC()

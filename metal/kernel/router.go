@@ -90,6 +90,16 @@ func (r *Router) Ping() {
 	r.Mux.HandleFunc("GET /ping", apiHandler)
 }
 
+func (r *Router) PingDB() {
+	abstract := handler.MakeKeepAliveDBHandler(&r.Env.Ping, r.Db)
+
+	apiHandler := http.MakeApiHandler(
+		r.Pipeline.Chain(abstract.Handle),
+	)
+
+	r.Mux.HandleFunc("GET /ping/db", apiHandler)
+}
+
 func (r *Router) Profile() {
 	addStaticRoute(r, "/profile", "./storage/fixture/profile.json", handler.MakeProfileHandler)
 }

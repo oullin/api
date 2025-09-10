@@ -48,4 +48,14 @@ func TestKeepAliveDBHandler(t *testing.T) {
 			t.Fatalf("expected unauthorized, got %#v", err)
 		}
 	})
+
+	t.Run("db ping failure", func(t *testing.T) {
+		db.Close()
+		req := httptest.NewRequest("GET", "/ping", nil)
+		req.SetBasicAuth("user", "pass")
+		rec := httptest.NewRecorder()
+		if err := h.Handle(rec, req); err == nil || err.Status != http.StatusInternalServerError {
+			t.Fatalf("expected internal error, got %#v", err)
+		}
+	})
 }
