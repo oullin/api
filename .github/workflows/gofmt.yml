@@ -3,6 +3,9 @@ name: Go Fmt
 on:
   pull_request:
     types: [labeled]
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -10,8 +13,11 @@ permissions:
 
 jobs:
   gofmt:
-    # Run only when a PR is labeled 'style'
-    if: github.event.action == 'labeled' && github.event.label.name == 'style'
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       github.event.action == 'labeled' &&
+       github.event.label.name == 'style')
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,8 +27,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
           fetch-depth: 0
 
       - name: Install Go
@@ -53,3 +59,34 @@ jobs:
           commit_user_email: ${{ secrets.GUS_GH_EMAIL }}
           commit_author: gocanto <gocanto@users.noreply.github.com>
           branch: ${{ github.event.pull_request.head.ref }}
+
+      - name: Create branch for formatting changes
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          if ! git diff --quiet; then
+            BRANCH_NAME="gofmt-fixes-$(date +%Y%m%d-%H%M%S)"
+            git checkout -b $BRANCH_NAME
+            git config user.name "GitHub Actions"
+            git config user.email "${{ secrets.GUS_GH_EMAIL }}"
+            git add .
+            git commit -m "Apply Go formatting fixes"
+            git push origin $BRANCH_NAME
+            echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+            echo "HAS_CHANGES=true" >> $GITHUB_ENV
+          else
+            echo "No formatting changes needed"
+            echo "HAS_CHANGES=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create Pull Request
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_CHANGES == 'true' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Apply Go formatting fixes
+          title: "Auto: Apply Go formatting fixes"
+          body: |
+            This PR was automatically created by the Go Fmt GitHub Action.
+            It applies Go formatting standards to the codebase.
+          branch: ${{ env.BRANCH_NAME }}
+          base: main
