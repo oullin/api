@@ -5,21 +5,23 @@ import (
 	baseHttp "net/http"
 	"time"
 
+	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/portal"
 )
 
-type PingHandler struct {
+type KeepAliveDBHandler struct {
 	env *env.Ping
+	db  *database.Connection
 }
 
-func MakePingHandler(e *env.Ping) PingHandler {
-	return PingHandler{env: e}
+func MakeKeepAliveDBHandler(e *env.Ping, db *database.Connection) KeepAliveDBHandler {
+	return KeepAliveDBHandler{env: e, db: db}
 }
 
-func (h PingHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h KeepAliveDBHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
 	user, pass, ok := r.BasicAuth()
 
 	if !ok || h.env.HasInvalidCreds(user, pass) {
@@ -29,16 +31,18 @@ func (h PingHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *htt
 		)
 	}
 
+	h.db.Ping()
+
 	resp := http.MakeResponseFrom("0.0.1", w, r)
 	now := time.Now().UTC()
 
-	data := payload.PingResponse{
+	data := payload.KeepAliveResponse{
 		Message:  "pong",
 		DateTime: now.Format(portal.DatesLayout),
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		return http.LogInternalError("could not encode ping response", err)
+		return http.LogInternalError("could not encode keep-alive response", err)
 	}
 
 	return nil

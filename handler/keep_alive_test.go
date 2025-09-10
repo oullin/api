@@ -12,9 +12,9 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-func TestPingHandler(t *testing.T) {
+func TestKeepAliveHandler(t *testing.T) {
 	e := env.Ping{Username: "user", Password: "pass"}
-	h := MakePingHandler(&e)
+	h := MakeKeepAliveHandler(&e)
 
 	t.Run("valid credentials", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/ping", nil)
@@ -26,7 +26,7 @@ func TestPingHandler(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Fatalf("status %d", rec.Code)
 		}
-		var resp payload.PingResponse
+		var resp payload.KeepAliveResponse
 		if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 			t.Fatalf("decode: %v", err)
 		}

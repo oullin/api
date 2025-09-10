@@ -81,7 +81,7 @@ func (r *Router) Signature() {
 }
 
 func (r *Router) Ping() {
-	abstract := handler.MakePingHandler(&r.Env.Ping)
+	abstract := handler.MakeKeepAliveHandler(&r.Env.Ping)
 
 	apiHandler := http.MakeApiHandler(
 		r.Pipeline.Chain(abstract.Handle),
