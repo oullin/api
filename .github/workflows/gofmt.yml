@@ -31,7 +31,7 @@ jobs:
                   go-version: ${{ matrix.go-version }}
 
             - name: Run Formatter
-              run: gofmt -w -s .
+              run: git ls-files '*.go' | xargs gofmt -w -s
 
             - name: Check for formatting changes (dry run)
               run: |
