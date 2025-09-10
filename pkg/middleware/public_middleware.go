@@ -61,6 +61,12 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 			return mwguards.RateLimitedError("Too many requests", "Too many requests for key: "+limiterKey)
 		}
 
+		if err := p.HasInvalidIP(r); err != nil {
+			p.rateLimiter.Fail(limiterKey)
+
+			return err
+		}
+
 		vt := mwguards.NewValidTimestamp(ts, p.now)
 		if err := vt.Validate(p.clockSkew, p.disallowFuture); err != nil {
 			p.rateLimiter.Fail(limiterKey)
@@ -81,6 +87,20 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 
 		return next(w, r)
 	}
+}
+
+func (p PublicMiddleware) HasInvalidIP(r *baseHttp.Request) *http.ApiError {
+	ip := portal.ParseClientIP(r)
+
+	if ip == "" {
+		return mwguards.InvalidRequestError("Clients IPs are required to access this endpoint", "")
+	}
+
+	if p.isProduction && ip != p.allowedIP {
+		return mwguards.InvalidRequestError("The given IP is not allowed", "unauthorised ip: "+ip)
+	}
+
+	return nil
 }
 
 func (p PublicMiddleware) GuardDependencies() *http.ApiError {
