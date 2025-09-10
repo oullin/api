@@ -22,7 +22,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
               with:
-                  ref: ${{ github.head_ref }}
+                  repository: ${{ github.event.pull_request.head.repo.full_name }}
+                  ref: ${{ github.event.pull_request.head.ref }}
                   fetch-depth: 0
 
             - name: Install Go
@@ -39,6 +40,7 @@ jobs:
               continue-on-error: true
 
             - name: Commit Changes to PR
+              if: github.event.pull_request.head.repo.full_name == github.repository
               uses: stefanzweifel/git-auto-commit-action@v6.0.1
               with:
                   commit_message: apply coding style fixes
@@ -48,4 +50,4 @@ jobs:
                   commit_user_name: GitHub Actions
                   commit_user_email: ${{ secrets.GUS_GH_EMAIL }}
                   commit_author: gocanto <gocanto@users.noreply.github.com>
-                  branch: ${{ github.head_ref }}
+                  branch: ${{ github.event.pull_request.head.ref }}
