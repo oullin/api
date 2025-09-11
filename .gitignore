@@ -5,6 +5,10 @@ tmp
 
 database/infra/data
 
+# --- [Caddy]: mtls
+caddy/mtls/*.*
+!caddy/mtls/.gitkeep
+
 # --- [API]: Bin
 bin/*
 !bin/.gitkeep
@@ -12,10 +16,10 @@ bin/*
 # --- [API]: Storage
 storage/logs/*.*
 storage/media/*.*
+storage/logs/caddy/*.*
 storage/media/posts/*.*
 storage/media/users/*.*
 !storage/logs/.gitkeep
-!storage/logs/caddy
 !storage/logs/caddy/.gitkeep
 !storage/media/.gitkeep
 !storage/media/posts/.gitkeep

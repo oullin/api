@@ -40,6 +40,7 @@ include ./metal/makefile/app.mk
 include ./metal/makefile/logs.mk
 include ./metal/makefile/build.mk
 include ./metal/makefile/infra.mk
+include ./metal/makefile/caddy.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
