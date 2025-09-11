@@ -97,4 +97,8 @@ help:
 	@printf "  $(BOLD)$(GREEN)supv:api:logs$(NC)    : Show the the API service supervisor logs.\n"
 	@printf "  $(BOLD)$(GREEN)supv:api:logs-err$(NC): Show the the API service supervisor error logs.\n"
 
+	@printf "$(BOLD)$(BLUE)Caddy Commands:$(NC)\n"
+	@printf "  $(BOLD)$(GREEN)caddy-gen-cert$(NC)   : Generate the caddy's mtls certificates.\n"
+	@printf "  $(BOLD)$(GREEN)caddy-validate$(NC)   : Validates caddy's files syntax.\n"
+
 	@printf "$(NC)\n"

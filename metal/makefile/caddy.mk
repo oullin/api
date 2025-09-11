@@ -1,9 +1,8 @@
-.PHONY:
-
-APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
-APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
+.PHONY: caddy-gen-cert caddy-validate
 
 CADDY_MTLS_DIR = $(ROOT_PATH)/caddy/mtls
+APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
+APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
 
 caddy-gen-cert:
 	openssl genrsa -out $(CADDY_MTLS_DIR)/ca.key 4096
@@ -11,3 +10,10 @@ caddy-gen-cert:
 	chmod 600 $(CADDY_MTLS_DIR)/ca.key
 	chmod 644 $(CADDY_MTLS_DIR)/ca.pem
 
+# --- Mac:
+#     Needs to be locally installed: https://formulae.brew.sh/formula/caddy
+caddy-validate:
+	caddy fmt --overwrite $(APP_CADDY_CONFIG_PROD_FILE)
+	caddy validate --config $(APP_CADDY_CONFIG_PROD_FILE)
+	caddy fmt --overwrite $(APP_CADDY_CONFIG_LOCAL_FILE)
+	caddy validate --config $(APP_CADDY_CONFIG_LOCAL_FILE)
