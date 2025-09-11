@@ -1,8 +1,5 @@
 .PHONY: fresh destroy audit watch format run-cli validate-caddy test-all run-cli-local
 
-APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
-APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
-
 format:
 	gofmt -w -s .
 
@@ -38,9 +35,6 @@ install-air:
 	@echo "Installing air ..."
 	@go install github.com/air-verse/air@latest
 
-# ./database/infra/secrets/pg_username
-# ./database/infra/secrets/pg_password
-# ./database/infra/secrets/pg_dbname
 run-cli:
 	@if [ -z "$(DB_SECRET_USERNAME)" ] || [ -z "$(DB_SECRET_PASSWORD)" ] || [ -z "$(DB_SECRET_DBNAME)" ]; then \
     	  printf "\n$(RED)⚠️ Usage: make run-cli \n$(NC)"; \
@@ -61,13 +55,6 @@ run-cli:
 
 run-cli-local:
 	make run-cli DB_SECRET_USERNAME=./database/infra/secrets/pg_username DB_SECRET_PASSWORD=./database/infra/secrets/pg_password DB_SECRET_DBNAME=./database/infra/secrets/pg_dbname
+
 test-all:
 	go test ./...
-
-# --- Mac:
-#     Needs to be locally installed: https://formulae.brew.sh/formula/caddy
-validate-caddy:
-	caddy fmt --overwrite $(APP_CADDY_CONFIG_PROD_FILE)
-	caddy validate --config $(APP_CADDY_CONFIG_PROD_FILE)
-	caddy fmt --overwrite $(APP_CADDY_CONFIG_LOCAL_FILE)
-	caddy validate --config $(APP_CADDY_CONFIG_LOCAL_FILE)

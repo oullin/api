@@ -25,7 +25,13 @@ oullin.io {
 		format json
 	}
 
-	# API handler.
+	# --- API: block the protected path on the public listener.
+	@protected_public path /api/generate-signature*
+	handle @protected_public {
+		respond 403
+	}
+
+	# --- API handler.
 	# 	- Reverse-proxy all requests to the Go API, forwarding Host + auth headers.
 	#	- to: Tell Caddy which upstream to send to.
 	#	- header_up: Preserve the original Host header.
@@ -72,11 +78,35 @@ oullin.io {
 		}
 	}
 
-	# Default handler.
+	# --- Default handler.
 	# 	- Route all other traffic to the Vue frontend app.
 	#	- `web_caddy_prod` is the Vue app's container name.
 	# 	- source: https://github.com/oullin/web
 	handle {
 		reverse_proxy web_caddy_prod:80
+	}
+}
+
+# INTERNAL mTLS entrypoint for the single protected path
+:8443 {
+	tls internal {
+		client_auth {
+			mode require_and_verify
+			trust_pool file {
+				pem_file /etc/caddy/mtls/ca.pem
+			}
+		}
+	}
+
+	encode gzip zstd
+
+	# Only this path is reachable here
+	handle_path /api/generate-signature* {
+		reverse_proxy api:8080
+	}
+
+	# Everything else is denied on this listener.
+	handle {
+		respond 403
 	}
 }
