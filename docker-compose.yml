@@ -49,7 +49,7 @@ services:
                 - caddy_config:/config
                 - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile
                 - ${CADDY_LOGS_PATH}:/var/log/caddy
-                - ./caddy/mtls/ca.pem:/etc/caddy/mtls/ca.pem:ro
+                - ./caddy/mtls:/etc/caddy/mtls:ro
             networks:
                 - caddy_net
 
