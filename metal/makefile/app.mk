@@ -1,4 +1,4 @@
-.PHONY: fresh destroy audit watch format run-cli validate-caddy test-all run-cli-local
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-local
 
 format:
 	gofmt -w -s .

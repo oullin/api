@@ -31,6 +31,11 @@ oullin.io {
 		respond 403
 	}
 
+	@preflight {
+		method OPTIONS
+		header Origin *
+	}
+
 	# --- API handler.
 	# 	- Reverse-proxy all requests to the Go API, forwarding Host + auth headers.
 	#	- to: Tell Caddy which upstream to send to.
@@ -42,11 +47,6 @@ oullin.io {
 			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 			Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
 			Access-Control-Expose-Headers "ETag, X-Request-ID"
-		}
-
-		@preflight {
-			method OPTIONS
-			header Origin *
 		}
 
 		handle @preflight {

@@ -99,6 +99,7 @@ help:
 
 	@printf "$(BOLD)$(BLUE)Caddy Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)caddy-gen-cert$(NC)   : Generate the caddy's mtls certificates.\n"
+	@printf "  $(BOLD)$(GREEN)caddy-del-cert$(NC)   : Remove the caddy's mtls certificates.\n"
 	@printf "  $(BOLD)$(GREEN)caddy-validate$(NC)   : Validates caddy's files syntax.\n"
 
 	@printf "$(NC)\n"
