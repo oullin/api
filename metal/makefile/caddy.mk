@@ -1,8 +1,11 @@
-.PHONY: caddy-gen-certs caddy-del-certs caddy-validate caddy-fresh
+.PHONY: caddy-gen-certs caddy-del-certs caddy-validate caddy-fresh caddy-restart
 
 CADDY_MTLS_DIR = $(ROOT_PATH)/caddy/mtls
 APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
 APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
+
+caddy-restart:
+	docker compose up -d --force-recreate caddy_prod
 
 caddy-fresh:
 	@make caddy-del-certs
