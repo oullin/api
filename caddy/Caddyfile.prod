@@ -1,14 +1,8 @@
 # Caddy will automatically provision a Let's Encrypt certificate.
 
 oullin.io {
-	# Enable compression to reduce bandwidth usage.
 	encode gzip zstd
 
-	# Add security-related headers to protect against common attacks.
-	# 	- Strict-Transport-Security: Enable HSTS to ensure browsers only connect via HTTPS.
-	# 	- X-Frame-Options: Prevent clickjacking attacks.
-	# 	- X-Content-Type-Options: Prevent content type sniffing.
-	# 	- Referrer-Policy: Enhances user privacy.
 	header {
 		Strict-Transport-Security "max-age=31536000;"
 		X-Frame-Options "SAMEORIGIN"
@@ -18,14 +12,13 @@ oullin.io {
 
 	log {
 		output file /var/log/caddy/oullin.io.log {
-			roll_size 10mb # Rotate logs after they reach 10MB
-			roll_keep 5 # Keep the last 5 rotated log files
+			roll_size 10mb
+			roll_keep 5
 		}
-
 		format json
 	}
 
-	# --- API: block the protected path on the public listener.
+	# --- Public listener: block protected path
 	@protected_public path /api/generate-signature*
 	handle @protected_public {
 		respond 403
@@ -36,13 +29,11 @@ oullin.io {
 		header Origin *
 	}
 
-	# --- API handler.
-	# 	- Reverse-proxy all requests to the Go API, forwarding Host + auth headers.
-	#	- to: Tell Caddy which upstream to send to.
-	#	- header_up: Preserve the original Host header.
-	#	- header_up X-*: Forward the client headers.
+	# --- API handler (public)
 	handle_path /api/* {
 		header {
+			# If you serve both apex and www, consider reflecting origin:
+			# Access-Control-Allow-Origin "{http.request.header.Origin}"
 			Access-Control-Allow-Origin "https://oullin.io"
 			Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 			Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
@@ -50,7 +41,6 @@ oullin.io {
 		}
 
 		handle @preflight {
-			# Reflect the Origin back so it's always allowed
 			header Access-Control-Allow-Origin "{http.request.header.Origin}"
 			header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 			header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
@@ -59,7 +49,13 @@ oullin.io {
 		}
 
 		reverse_proxy api:8080 {
+			# preserve original host/proto/client ip to the app
 			header_up Host {host}
+			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-For {remote}
+
+			# pass through app-specific headers
 			header_up X-API-Username {http.request.header.X-API-Username}
 			header_up X-API-Key {http.request.header.X-API-Key}
 			header_up X-API-Signature {http.request.header.X-API-Signature}
@@ -78,32 +74,33 @@ oullin.io {
 		}
 	}
 
-	# --- Default handler.
-	# 	- Route all other traffic to the Vue frontend app.
-	#	- `web` is the Vue app's container name.
-	# 	- source: https://github.com/oullin/web
+	# --- Default handler: proxy to web, preserving Host (ALL inside reverse_proxy)
 	handle {
-		reverse_proxy web:80
+		reverse_proxy web:80 {
+			header_up Host {host}
+			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-For {remote}
+		}
 	}
 }
 
 # INTERNAL mTLS entrypoint for the single protected path
 :8443 {
-    tls /etc/caddy/mtls/server.pem /etc/caddy/mtls/server.key {
+	tls /etc/caddy/mtls/server.pem /etc/caddy/mtls/server.key {
 		client_auth {
 			mode require_and_verify
-			# The client must present a cert trusted by the CA
 			trust_pool file /etc/caddy/mtls/ca.pem
 		}
 	}
 
-    encode gzip zstd
+	encode gzip zstd
 
-    handle_path /api/generate-signature* {
-       reverse_proxy api:8080
-    }
+	handle_path /api/generate-signature* {
+		reverse_proxy api:8080
+	}
 
-    handle {
-       respond 403
-    }
+	handle {
+		respond 403
+	}
 }
