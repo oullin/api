@@ -1,8 +1,12 @@
-.PHONY: caddy-gen-certs caddy-del-certs caddy-validate
+.PHONY: caddy-gen-certs caddy-del-certs caddy-validate caddy-fresh
 
 CADDY_MTLS_DIR = $(ROOT_PATH)/caddy/mtls
 APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
 APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
+
+caddy-fresh:
+	@make caddy-del-certs;
+	@make caddy-gen-certs;
 
 caddy-gen-certs:
 	@set -eu; \
@@ -27,10 +31,33 @@ caddy-gen-certs:
 	  printf "$(WHITE)🔍 CA fingerprint:$(NC)\n"; \
 	  openssl x509 -noout -fingerprint -sha256 -in "$(CADDY_MTLS_DIR)/ca.pem" | sed 's/^/   /'; \
 	fi
+	if [ -e "$(CADDY_MTLS_DIR)/server.key" ] || [ -e "$(CADDY_MTLS_DIR)/server.pem" ]; then \
+	  printf "$(YELLOW)⚠️  Server certificate already exists.$(NC)\n"; \
+	else \
+	  umask 077; \
+	  printf "$(BLUE)🔑 Generating Server private key...$(NC)\n"; \
+	  openssl genrsa -out "$(CADDY_MTLS_DIR)/server.key" 4096; \
+	  printf "$(WHITE)📜 Creating Server signing request...$(NC)"; \
+	  openssl req -new -key "$(CADDY_MTLS_DIR)/server.key" -subj "/CN=oullin_proxy_prod" -out "$(CADDY_MTLS_DIR)/server.csr"; \
+	  printf "$(NC)🖊️ Signing Server certificate with CA...$(NC)\n"; \
+	  openssl x509 -req -in "$(CADDY_MTLS_DIR)/server.csr" \
+		-CA "$(CADDY_MTLS_DIR)/ca.pem" -CAkey "$(CADDY_MTLS_DIR)/ca.key" -CAserial "$(CADDY_MTLS_DIR)/ca.srl" \
+		-out "$(CADDY_MTLS_DIR)/server.pem" -days 1095 -sha256; \
+	  chmod 600 "$(CADDY_MTLS_DIR)/server.key"; \
+	  chmod 644 "$(CADDY_MTLS_DIR)/server.pem"; \
+	  rm "$(CADDY_MTLS_DIR)/server.csr"; \
+	  printf "$(NC)✅ Server certificate written to %s\033[0m\n" "$(CADDY_MTLS_DIR)$(NC)\n"; \
+	fi; \
+	printf "$(NC)🔎 Verifying server cert against CA...$(NC)\n"; \
+	openssl verify -CAfile "$(CADDY_MTLS_DIR)/ca.pem" "$(CADDY_MTLS_DIR)/server.pem";
 
 caddy-del-certs:
 	@set -eu; \
-	rm -f "$(CADDY_MTLS_DIR)/ca.key" "$(CADDY_MTLS_DIR)/ca.pem" "$(CADDY_MTLS_DIR)/ca.srl"; \
+	rm -f "$(CADDY_MTLS_DIR)/ca.key" \
+		"$(CADDY_MTLS_DIR)/ca.pem" \
+		"$(CADDY_MTLS_DIR)/ca.srl" \
+		"$(CADDY_MTLS_DIR)/server.key" \
+		"$(CADDY_MTLS_DIR)/server.pem" \; \
 	printf "$(BLUE)✅ files removed from [$(NC)$(CADDY_MTLS_DIR)$(BLUE)]$(NC)\n"
 
 caddy-validate:
