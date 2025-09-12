@@ -80,10 +80,10 @@ oullin.io {
 
 	# --- Default handler.
 	# 	- Route all other traffic to the Vue frontend app.
-	#	- `web_caddy_prod` is the Vue app's container name.
+	#	- `web` is the Vue app's container name.
 	# 	- source: https://github.com/oullin/web
 	handle {
-		reverse_proxy web_caddy_prod:80
+		reverse_proxy web:80
 	}
 }
 
