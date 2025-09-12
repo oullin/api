@@ -52,7 +52,8 @@ services:
                 - ./caddy/mtls:/etc/caddy/mtls:ro
             networks:
                 caddy_net:
-                  aliases: [proxy]
+                  aliases:
+                    - proxy
 
         caddy_local:
             build:
@@ -136,7 +137,8 @@ services:
             networks:
                 oullin_net: {}
                 caddy_net:
-                  - aliases: [api]
+                    aliases:
+                      - api
 
         api-db-migrate:
             image: migrate/migrate:v4.18.3
