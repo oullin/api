@@ -89,24 +89,21 @@ oullin.io {
 
 # INTERNAL mTLS entrypoint for the single protected path
 :8443 {
-	tls internal {
+    tls /etc/caddy/mtls/server.pem /etc/caddy/mtls/server.key {
 		client_auth {
 			mode require_and_verify
-			trust_pool file {
-				pem_file /etc/caddy/mtls/ca.pem
-			}
+			# The client must present a cert trusted by the CA
+			trust_pool file /etc/caddy/mtls/ca.pem
 		}
 	}
 
-	encode gzip zstd
+    encode gzip zstd
 
-	# Only this path is reachable here
-	handle_path /api/generate-signature* {
-		reverse_proxy api:8080
-	}
+    handle_path /api/generate-signature* {
+       reverse_proxy api:8080
+    }
 
-	# Everything else is denied on this listener.
-	handle {
-		respond 403
-	}
+    handle {
+       respond 403
+    }
 }
