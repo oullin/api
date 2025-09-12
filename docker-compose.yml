@@ -21,7 +21,7 @@ volumes:
 networks:
     caddy_net:
         name: caddy_net
-        driver: bridge
+        external: true
     oullin_net:
         name: oullin_net
         driver: bridge
@@ -51,7 +51,8 @@ services:
                 - ${CADDY_LOGS_PATH}:/var/log/caddy
                 - ./caddy/mtls:/etc/caddy/mtls:ro
             networks:
-                - caddy_net
+                caddy_net:
+                  aliases: [proxy]
 
         caddy_local:
             build:
@@ -133,8 +134,9 @@ services:
             expose:
                 - ${ENV_HTTP_PORT}
             networks:
-                - caddy_net
-                - oullin_net
+                oullin_net: {}
+                caddy_net:
+                  - aliases: [api]
 
         api-db-migrate:
             image: migrate/migrate:v4.18.3
