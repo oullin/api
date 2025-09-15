@@ -96,7 +96,9 @@ oullin.io {
 
 	encode gzip zstd
 
-	handle_path /api/generate-signature* {
+	@sig path /api/generate-signature*
+	handle @sig {
+		uri strip_prefix /api
 		reverse_proxy api:8080
 	}
 
