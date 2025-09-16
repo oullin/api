@@ -16,8 +16,8 @@ DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
 # --- Migrations
 DB_MIGRATE_DOCKER_ENV_FLAGS = -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
                               -e ENV_DB_SSL_MODE=require \
-                              -e PING_USERNAME=0101010101010101 \
-                              -e PING_PASSWORD=0101010101010101
+                              -e ENV_PING_USERNAME=0101010101010101 \
+                              -e ENV_PING_PASSWORD=0101010101010101
 
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
