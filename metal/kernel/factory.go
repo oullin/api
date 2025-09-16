@@ -96,8 +96,8 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 	}
 
 	pingEnvironment := env.Ping{
-		Username: env.GetEnvVar("PING_USERNAME"),
-		Password: env.GetEnvVar("PING_PASSWORD"),
+		Username: env.GetEnvVar("ENV_PING_USERNAME"),
+		Password: env.GetEnvVar("ENV_PING_PASSWORD"),
 	}
 
 	if _, err := validate.Rejects(app); err != nil {

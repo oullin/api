@@ -34,8 +34,8 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_SENTRY_DSN", "dsn")
 	t.Setenv("ENV_SENTRY_CSP", "csp")
 	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "1.2.3.4")
-	t.Setenv("PING_USERNAME", "1234567890abcdef")
-	t.Setenv("PING_PASSWORD", "abcdef1234567890")
+	t.Setenv("ENV_PING_USERNAME", "1234567890abcdef")
+	t.Setenv("ENV_PING_PASSWORD", "abcdef1234567890")
 }
 
 func TestMakeEnv(t *testing.T) {
@@ -84,8 +84,8 @@ func TestIgnite(t *testing.T) {
 		"ENV_HTTP_PORT=8080\n" +
 		"ENV_SENTRY_DSN=dsn\n" +
 		"ENV_SENTRY_CSP=csp\n" +
-		"PING_USERNAME=1234567890abcdef\n" +
-		"PING_PASSWORD=abcdef1234567890\n"
+		"ENV_PING_USERNAME=1234567890abcdef\n" +
+		"ENV_PING_PASSWORD=abcdef1234567890\n"
 
 	f, err := os.CreateTemp("", "envfile")
 
