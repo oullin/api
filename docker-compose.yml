@@ -89,6 +89,8 @@ services:
           environment:
               ENV_DB_HOST: api-db
               ENV_DB_PORT: ${ENV_DB_PORT:-5432}
+              PING_USERNAME: ${PING_USERNAME}
+              PING_PASSWORD: ${PING_PASSWORD}
           networks:
             - oullin_net
           secrets:
