@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/oullin/database"
 	"github.com/oullin/metal/cli/accounts"
 	"github.com/oullin/metal/cli/panel"
 	"github.com/oullin/metal/cli/posts"
+	"github.com/oullin/metal/cli/staticgen"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg/cli"
@@ -58,6 +61,13 @@ func main() {
 			return
 		case 4:
 			if err = generateApiAccountsHTTPSignature(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+		case 5:
+			if err = generateStaticRoutes(); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
@@ -148,6 +158,26 @@ func generateApiAccountsHTTPSignature(menu panel.Menu) error {
 
 	if err = handler.CreateSignature(account); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func generateStaticRoutes() error {
+	routes := kernel.StaticRouteDefinitions()
+	if len(routes) == 0 {
+		return fmt.Errorf("no static routes defined")
+	}
+
+	generator := staticgen.NewGenerator("./storage/static")
+	files, err := generator.Generate(routes)
+	if err != nil {
+		return err
+	}
+
+	cli.Successln("Generated static files:")
+	for _, file := range files {
+		cli.Blueln(" - " + file)
 	}
 
 	return nil

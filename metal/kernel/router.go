@@ -16,10 +16,16 @@ type StaticRouteResource interface {
 	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *http.ApiError
 }
 
-func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
-	abstract := maker(file)
-	resolver := r.PipelineFor(abstract.Handle)
-	r.Mux.HandleFunc("GET "+path, resolver)
+type StaticRouteDefinition struct {
+	Path  string
+	File  string
+	Maker func(string) StaticRouteResource
+}
+
+func addStaticRoute(r *Router, route StaticRouteDefinition) {
+	resource := route.Maker(route.File)
+	resolver := r.PipelineFor(resource.Handle)
+	r.Mux.HandleFunc("GET "+route.Path, resolver)
 }
 
 type Router struct {
@@ -100,30 +106,69 @@ func (r *Router) KeepAliveDB() {
 	r.Mux.HandleFunc("GET /ping-db", apiHandler)
 }
 
-func (r *Router) Profile() {
-	addStaticRoute(r, "/profile", "./storage/fixture/profile.json", handler.MakeProfileHandler)
+func (r *Router) StaticRoutes() {
+	for _, route := range StaticRouteDefinitions() {
+		addStaticRoute(r, route)
+	}
 }
 
-func (r *Router) Experience() {
-	addStaticRoute(r, "/experience", "./storage/fixture/experience.json", handler.MakeExperienceHandler)
-}
-
-func (r *Router) Projects() {
-	addStaticRoute(r, "/projects", "./storage/fixture/projects.json", handler.MakeProjectsHandler)
-}
-
-func (r *Router) Social() {
-	addStaticRoute(r, "/social", "./storage/fixture/social.json", handler.MakeSocialHandler)
-}
-
-func (r *Router) Talks() {
-	addStaticRoute(r, "/talks", "./storage/fixture/talks.json", handler.MakeTalksHandler)
-}
-
-func (r *Router) Education() {
-	addStaticRoute(r, "/education", "./storage/fixture/education.json", handler.MakeEducationHandler)
-}
-
-func (r *Router) Recommendations() {
-	addStaticRoute(r, "/recommendations", "./storage/fixture/recommendations.json", handler.MakeRecommendationsHandler)
+func StaticRouteDefinitions() []StaticRouteDefinition {
+	return []StaticRouteDefinition{
+		{
+			Path: "/profile",
+			File: "./storage/fixture/profile.json",
+			Maker: func(file string) StaticRouteResource {
+				handler := handler.MakeProfileHandler(file)
+				return handler
+			},
+		},
+		{
+			Path: "/experience",
+			File: "./storage/fixture/experience.json",
+			Maker: func(file string) StaticRouteResource {
+				handler := handler.MakeExperienceHandler(file)
+				return handler
+			},
+		},
+		{
+			Path: "/projects",
+			File: "./storage/fixture/projects.json",
+			Maker: func(file string) StaticRouteResource {
+				handler := handler.MakeProjectsHandler(file)
+				return handler
+			},
+		},
+		{
+			Path: "/social",
+			File: "./storage/fixture/social.json",
+			Maker: func(file string) StaticRouteResource {
+				handler := handler.MakeSocialHandler(file)
+				return handler
+			},
+		},
+		{
+			Path: "/talks",
+			File: "./storage/fixture/talks.json",
+			Maker: func(file string) StaticRouteResource {
+				handler := handler.MakeTalksHandler(file)
+				return handler
+			},
+		},
+		{
+			Path: "/education",
+			File: "./storage/fixture/education.json",
+			Maker: func(file string) StaticRouteResource {
+				handler := handler.MakeEducationHandler(file)
+				return handler
+			},
+		},
+		{
+			Path: "/recommendations",
+			File: "./storage/fixture/recommendations.json",
+			Maker: func(file string) StaticRouteResource {
+				handler := handler.MakeRecommendationsHandler(file)
+				return handler
+			},
+		},
+	}
 }
