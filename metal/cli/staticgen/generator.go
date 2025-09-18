@@ -15,16 +15,15 @@ import (
 	"github.com/oullin/metal/kernel"
 )
 
-//go:embed templates/protected_index.oullin.html
+//go:embed templates/public_share.oullin.html
 var templatesFS embed.FS
 
 const (
-	protectedIndexTemplate = "templates/protected_index.oullin.html"
+	publicShareTemplate = "templates/public_share.oullin.html"
 )
 
 type AssetConfig struct {
 	BuildRev      string
-	AppCSS        string
 	CanonicalBase string
 	DefaultLang   string
 	SiteName      string
@@ -37,17 +36,48 @@ type Generator struct {
 }
 
 type templateData struct {
-	Lang        string
-	Title       string
-	Description string
-	Canonical   string
-	OG          ogData
-	AppCSS      string
-	BuildRev    string
+	Lang           string
+	Title          string
+	Description    string
+	Canonical      string
+	Robots         string
+	ThemeColor     string
+	JsonLD         htmltemplate.JS
+	OG             ogData
+	Twitter        twitterData
+	Hreflangs      []hreflangData
+	Favicons       []faviconData
+	Manifest       string
+	AppleTouchIcon string
+	BuildRev       string
 }
 
 type ogData struct {
-	Image string
+	Type        string
+	Image       string
+	ImageAlt    string
+	ImageWidth  string
+	ImageHeight string
+	SiteName    string
+	Locale      string
+}
+
+type twitterData struct {
+	Card     string
+	Image    string
+	ImageAlt string
+}
+
+type hreflangData struct {
+	Lang string
+	Href string
+}
+
+type faviconData struct {
+	Rel   string
+	Href  string
+	Type  string
+	Sizes string
 }
 
 func NewGenerator(outputDir string, config AssetConfig) (Generator, error) {
@@ -73,7 +103,6 @@ func (c AssetConfig) normalized() AssetConfig {
 	normalized := c
 
 	normalized.BuildRev = strings.TrimSpace(normalized.BuildRev)
-	normalized.AppCSS = strings.TrimSpace(normalized.AppCSS)
 	normalized.CanonicalBase = strings.TrimRight(strings.TrimSpace(normalized.CanonicalBase), "/")
 	normalized.DefaultLang = strings.TrimSpace(normalized.DefaultLang)
 	normalized.SiteName = strings.TrimSpace(normalized.SiteName)
@@ -167,15 +196,112 @@ func (g Generator) Generate(routes []kernel.StaticRouteDefinition) ([]string, er
 }
 
 func (g Generator) templateData(route kernel.StaticRouteDefinition) templateData {
-	return templateData{
-		Lang:        g.langFor(route),
-		Title:       g.titleFor(route),
-		Description: g.descriptionFor(route),
-		Canonical:   g.canonicalFor(route),
-		OG:          ogData{Image: strings.TrimSpace(route.Page.OGImage)},
-		AppCSS:      g.assets.AppCSS,
-		BuildRev:    g.assets.BuildRev,
+	page := route.Page
+
+	data := templateData{
+		Lang:           g.langFor(route),
+		Title:          g.titleFor(route),
+		Description:    g.descriptionFor(route),
+		Canonical:      g.canonicalFor(route),
+		Robots:         strings.TrimSpace(page.Robots),
+		ThemeColor:     strings.TrimSpace(page.ThemeColor),
+		JsonLD:         g.jsonLDFor(page.JsonLD),
+		OG:             g.ogFor(route),
+		Twitter:        g.twitterFor(page),
+		Hreflangs:      g.hreflangsFor(page.Hreflangs),
+		Favicons:       g.faviconsFor(page.Favicons),
+		Manifest:       strings.TrimSpace(page.Manifest),
+		AppleTouchIcon: strings.TrimSpace(page.AppleTouchIcon),
+		BuildRev:       g.assets.BuildRev,
 	}
+
+	if data.OG.SiteName == "" {
+		data.OG.SiteName = g.assets.SiteName
+	}
+
+	if data.OG.Locale == "" {
+		data.OG.Locale = g.langFor(route)
+	}
+
+	return data
+}
+
+func (g Generator) jsonLDFor(raw string) htmltemplate.JS {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return ""
+	}
+
+	return htmltemplate.JS(trimmed)
+}
+
+func (g Generator) ogFor(route kernel.StaticRouteDefinition) ogData {
+	og := route.Page.OG
+
+	return ogData{
+		Type:        strings.TrimSpace(og.Type),
+		Image:       strings.TrimSpace(og.Image),
+		ImageAlt:    strings.TrimSpace(og.ImageAlt),
+		ImageWidth:  strings.TrimSpace(og.ImageWidth),
+		ImageHeight: strings.TrimSpace(og.ImageHeight),
+		SiteName:    strings.TrimSpace(og.SiteName),
+		Locale:      strings.TrimSpace(og.Locale),
+	}
+}
+
+func (g Generator) twitterFor(page kernel.SharePage) twitterData {
+	twitter := page.Twitter
+
+	return twitterData{
+		Card:     strings.TrimSpace(twitter.Card),
+		Image:    strings.TrimSpace(twitter.Image),
+		ImageAlt: strings.TrimSpace(twitter.ImageAlt),
+	}
+}
+
+func (g Generator) hreflangsFor(items []kernel.Hreflang) []hreflangData {
+	if len(items) == 0 {
+		return nil
+	}
+
+	hreflangs := make([]hreflangData, 0, len(items))
+	for _, item := range items {
+		lang := strings.TrimSpace(item.Lang)
+		href := strings.TrimSpace(item.Href)
+
+		if lang == "" || href == "" {
+			continue
+		}
+
+		hreflangs = append(hreflangs, hreflangData{Lang: lang, Href: href})
+	}
+
+	return hreflangs
+}
+
+func (g Generator) faviconsFor(items []kernel.Favicon) []faviconData {
+	if len(items) == 0 {
+		return nil
+	}
+
+	favicons := make([]faviconData, 0, len(items))
+	for _, item := range items {
+		rel := strings.TrimSpace(item.Rel)
+		href := strings.TrimSpace(item.Href)
+
+		if rel == "" || href == "" {
+			continue
+		}
+
+		favicons = append(favicons, faviconData{
+			Rel:   rel,
+			Href:  href,
+			Type:  strings.TrimSpace(item.Type),
+			Sizes: strings.TrimSpace(item.Sizes),
+		})
+	}
+
+	return favicons
 }
 
 func (g Generator) langFor(route kernel.StaticRouteDefinition) string {
@@ -306,12 +432,12 @@ func capitalize(word string) string {
 }
 
 func loadTemplate() (*htmltemplate.Template, error) {
-	raw, err := templatesFS.ReadFile(protectedIndexTemplate)
+	raw, err := templatesFS.ReadFile(publicShareTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("read template: %w", err)
 	}
 
-	tmpl, err := htmltemplate.New("protected_index").Parse(string(raw))
+	tmpl, err := htmltemplate.New("public_share").Parse(string(raw))
 	if err != nil {
 		return nil, err
 	}

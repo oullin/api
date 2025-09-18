@@ -171,13 +171,12 @@ func generateStaticRoutes() error {
 
 	assets := staticgen.AssetConfig{
 		BuildRev:      environment.Static.BuildRev,
-		AppCSS:        environment.Static.AppCSS,
 		CanonicalBase: environment.Static.CanonicalBase,
 		DefaultLang:   environment.Static.DefaultLang,
 		SiteName:      environment.App.Name,
 	}
 
-	generator, err := staticgen.NewGenerator("./dist/pages", assets)
+	generator, err := staticgen.NewGenerator("./dist", assets)
 	if err != nil {
 		return err
 	}

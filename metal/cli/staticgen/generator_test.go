@@ -14,7 +14,6 @@ import (
 func testAssetConfig() AssetConfig {
 	return AssetConfig{
 		BuildRev:      "build-123",
-		AppCSS:        "/static/app.css",
 		CanonicalBase: "https://example.com",
 		DefaultLang:   "en",
 		SiteName:      "Test Site",
@@ -48,6 +47,34 @@ func TestGenerator_GenerateCreatesFiles(t *testing.T) {
 	}
 
 	routes := kernel.StaticRouteDefinitions()
+	if len(routes) > 0 {
+		routes[0].Page.Robots = "noindex,nofollow"
+		routes[0].Page.ThemeColor = "#111827"
+		routes[0].Page.JsonLD = `{"@context":"https://schema.org","@type":"WebPage"}`
+		routes[0].Page.OG = kernel.OGSpec{
+			Type:       "article",
+			Image:      "https://cdn.example.com/profile.jpg",
+			ImageAlt:   "Profile preview",
+			ImageWidth: "1200",
+		}
+		routes[0].Page.Twitter = kernel.TwitterSpec{
+			Card:     "summary",
+			Image:    "https://cdn.example.com/profile.jpg",
+			ImageAlt: "Profile preview",
+		}
+		routes[0].Page.Hreflangs = []kernel.Hreflang{
+			{Lang: "en", Href: "https://example.com/profile"},
+			{Lang: "es", Href: "https://example.com/es/profile"},
+			{Lang: "", Href: ""},
+		}
+		routes[0].Page.Favicons = []kernel.Favicon{
+			{Rel: "icon", Href: "/favicon.ico", Type: "image/x-icon"},
+			{Rel: "icon", Href: "/icon-192.png", Type: "image/png", Sizes: "192x192"},
+			{Rel: "", Href: "/ignored.png"},
+		}
+		routes[0].Page.Manifest = "/manifest.json"
+		routes[0].Page.AppleTouchIcon = "/apple-touch-icon.png"
+	}
 	files, err := generator.Generate(routes)
 	if err != nil {
 		t.Fatalf("expected no error generating static routes, got %v", err)
@@ -99,6 +126,28 @@ func TestGenerator_GenerateCreatesFiles(t *testing.T) {
 			t.Fatalf("expected description meta for %s", file)
 		}
 
+		expectedRobots := data.Robots
+		if expectedRobots == "" {
+			expectedRobots = "index,follow"
+		}
+		if !strings.Contains(htmlBody, fmt.Sprintf("<meta name=\"robots\" content=\"%s\">", html.EscapeString(expectedRobots))) {
+			t.Fatalf("expected robots meta for %s", file)
+		}
+
+		if !strings.Contains(htmlBody, "<meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">") {
+			t.Fatalf("expected referrer policy meta for %s", file)
+		}
+
+		if !strings.Contains(htmlBody, "<meta name=\"color-scheme\" content=\"light dark\">") {
+			t.Fatalf("expected color-scheme meta for %s", file)
+		}
+
+		if data.ThemeColor != "" {
+			if !strings.Contains(htmlBody, fmt.Sprintf("<meta name=\"theme-color\" content=\"%s\">", html.EscapeString(data.ThemeColor))) {
+				t.Fatalf("expected theme color meta for %s", file)
+			}
+		}
+
 		if !strings.Contains(htmlBody, fmt.Sprintf("<meta name=\"x-build-rev\" content=\"%s\">", html.EscapeString(data.BuildRev))) {
 			t.Fatalf("expected build rev meta for %s", file)
 		}
@@ -109,15 +158,99 @@ func TestGenerator_GenerateCreatesFiles(t *testing.T) {
 			}
 		}
 
-		if data.AppCSS != "" {
-			expectedStylesheet := fmt.Sprintf("<link rel=%q href=%q>", "stylesheet", html.EscapeString(data.AppCSS))
-			if !strings.Contains(htmlBody, expectedStylesheet) {
-				t.Fatalf("expected stylesheet link for %s", file)
+		expectedOGType := data.OG.Type
+		if expectedOGType == "" {
+			expectedOGType = "website"
+		}
+		if !strings.Contains(htmlBody, fmt.Sprintf("<meta property=\"og:type\" content=\"%s\">", html.EscapeString(expectedOGType))) {
+			t.Fatalf("expected og:type meta for %s", file)
+		}
+
+		if data.OG.Image != "" {
+			if !strings.Contains(htmlBody, fmt.Sprintf("<meta property=\"og:image\" content=\"%s\">", html.EscapeString(data.OG.Image))) {
+				t.Fatalf("expected og:image meta for %s", file)
 			}
 		}
 
-		if !strings.Contains(htmlBody, "hello world") {
-			t.Fatalf("expected hello world in body for %s", file)
+		expectedOGSiteName := data.OG.SiteName
+		if expectedOGSiteName == "" {
+			expectedOGSiteName = assets.SiteName
+		}
+		if expectedOGSiteName != "" {
+			if !strings.Contains(htmlBody, fmt.Sprintf("<meta property=\"og:site_name\" content=\"%s\">", html.EscapeString(expectedOGSiteName))) {
+				t.Fatalf("expected og:site_name meta for %s", file)
+			}
+		}
+
+		if data.OG.Locale != "" {
+			if !strings.Contains(htmlBody, fmt.Sprintf("<meta property=\"og:locale\" content=\"%s\">", html.EscapeString(data.OG.Locale))) {
+				t.Fatalf("expected og:locale meta for %s", file)
+			}
+		}
+
+		expectedTwitterCard := data.Twitter.Card
+		if expectedTwitterCard == "" {
+			expectedTwitterCard = "summary_large_image"
+		}
+		if !strings.Contains(htmlBody, fmt.Sprintf("<meta name=\"twitter:card\" content=\"%s\">", html.EscapeString(expectedTwitterCard))) {
+			t.Fatalf("expected twitter:card meta for %s", file)
+		}
+
+		if data.Twitter.Image != "" {
+			if !strings.Contains(htmlBody, fmt.Sprintf("<meta name=\"twitter:image\" content=\"%s\">", html.EscapeString(data.Twitter.Image))) {
+				t.Fatalf("expected twitter:image meta for %s", file)
+			}
+		}
+
+		jsonLD := strings.TrimSpace(string(data.JsonLD))
+		if jsonLD != "" {
+			scriptTag := fmt.Sprintf("<script type=\"application/ld+json\">%s</script>", jsonLD)
+			if !strings.Contains(htmlBody, scriptTag) {
+				t.Fatalf("expected json-ld script for %s", file)
+			}
+		}
+
+		for _, hreflang := range data.Hreflangs {
+			expected := fmt.Sprintf("<link rel=\"alternate\" hreflang=\"%s\" href=\"%s\">", html.EscapeString(hreflang.Lang), html.EscapeString(hreflang.Href))
+			if !strings.Contains(htmlBody, expected) {
+				t.Fatalf("expected hreflang link %s for %s", expected, file)
+			}
+		}
+
+		for _, favicon := range data.Favicons {
+			builder := strings.Builder{}
+			builder.WriteString("<link rel=\"")
+			builder.WriteString(html.EscapeString(favicon.Rel))
+			builder.WriteString("\" href=\"")
+			builder.WriteString(html.EscapeString(favicon.Href))
+			builder.WriteString("\"")
+			if favicon.Type != "" {
+				builder.WriteString(" type=\"")
+				builder.WriteString(html.EscapeString(favicon.Type))
+				builder.WriteString("\"")
+			}
+			if favicon.Sizes != "" {
+				builder.WriteString(" sizes=\"")
+				builder.WriteString(html.EscapeString(favicon.Sizes))
+				builder.WriteString("\"")
+			}
+			builder.WriteString(">")
+
+			if !strings.Contains(htmlBody, builder.String()) {
+				t.Fatalf("expected favicon link %s for %s", builder.String(), file)
+			}
+		}
+
+		if data.Manifest != "" {
+			if !strings.Contains(htmlBody, fmt.Sprintf("<link rel=\"manifest\" href=\"%s\">", html.EscapeString(data.Manifest))) {
+				t.Fatalf("expected manifest link for %s", file)
+			}
+		}
+
+		if data.AppleTouchIcon != "" {
+			if !strings.Contains(htmlBody, fmt.Sprintf("<link rel=\"apple-touch-icon\" href=\"%s\">", html.EscapeString(data.AppleTouchIcon))) {
+				t.Fatalf("expected apple-touch-icon link for %s", file)
+			}
 		}
 
 		if !strings.HasPrefix(filepath.Clean(file), filepath.Clean(outputDir)) {

@@ -1,0 +1,52 @@
+{{- /* templates/public_share.oullin.html */ -}}
+<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  <meta name="robots" content="{{or .Robots "index,follow"}}">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="color-scheme" content="light dark">
+  {{- if .ThemeColor }}<meta name="theme-color" content="{{.ThemeColor}}">{{ end }}
+
+  {{- if .Canonical }}<link rel="canonical" href="{{.Canonical}}">{{ end }}
+  {{- range .Hreflangs }}<link rel="alternate" hreflang="{{.Lang}}" href="{{.Href}}">{{ end }}
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="{{or .OG.Type "website"}}">
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  {{- if .Canonical }}<meta property="og:url" content="{{.Canonical}}">{{ end }}
+  {{- if .OG.Image }}<meta property="og:image" content="{{.OG.Image}}">{{ end }}
+  {{- if .OG.ImageAlt }}<meta property="og:image:alt" content="{{.OG.ImageAlt}}">{{ end }}
+  {{- if .OG.ImageWidth }}<meta property="og:image:width" content="{{.OG.ImageWidth}}">{{ end }}
+  {{- if .OG.ImageHeight }}<meta property="og:image:height" content="{{.OG.ImageHeight}}">{{ end }}
+  {{- if .OG.SiteName }}<meta property="og:site_name" content="{{.OG.SiteName}}">{{ end }}
+  {{- if .OG.Locale }}<meta property="og:locale" content="{{.OG.Locale}}">{{ end }}
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="{{or .Twitter.Card "summary_large_image"}}">
+  <meta name="twitter:title" content="{{.Title}}">
+  <meta name="twitter:description" content="{{.Description}}">
+  {{- if .Twitter.Image }}<meta name="twitter:image" content="{{.Twitter.Image}}">{{ end }}
+  {{- if .Twitter.ImageAlt }}<meta name="twitter:image:alt" content="{{.Twitter.ImageAlt}}">{{ end }}
+
+  <!-- Structured data (optional) -->
+  {{- if .JsonLD }}<script type="application/ld+json">{{.JsonLD}}</script>{{ end }}
+
+  <!-- Icons/manifest (optional) -->
+  {{- range .Favicons }}
+    <link rel="{{.Rel}}" href="{{.Href}}"{{if .Type}} type="{{.Type}}"{{end}}{{if .Sizes}} sizes="{{.Sizes}}"{{end}}>
+  {{- end }}
+  {{- if .Manifest }}<link rel="manifest" href="{{.Manifest}}">{{ end }}
+  {{- if .AppleTouchIcon }}<link rel="apple-touch-icon" href="{{.AppleTouchIcon}}">{{ end }}
+
+  {{- if .BuildRev }}<meta name="x-build-rev" content="{{.BuildRev}}">{{ end }}
+</head>
+<body>
+  <!-- Static share-only document. No CSS/JS by design. -->
+</body>
+</html>

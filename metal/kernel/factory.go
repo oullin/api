@@ -103,7 +103,6 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 
 	staticEnv := env.StaticEnvironment{
 		BuildRev:      env.GetEnvVar("ENV_STATIC_BUILD_REV"),
-		AppCSS:        env.GetEnvVar("ENV_STATIC_APP_CSS"),
 		CanonicalBase: strings.TrimRight(env.GetEnvVar("ENV_STATIC_CANONICAL_BASE"), "/"),
 		DefaultLang:   env.GetEnvVar("ENV_STATIC_DEFAULT_LANG"),
 	}
