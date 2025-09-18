@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"fmt"
 	baseHttp "net/http"
 
 	"github.com/oullin/database"
@@ -69,8 +70,17 @@ type StaticRouteDefinition struct {
 }
 
 func addStaticRoute(r *Router, route StaticRouteDefinition) {
-	resource := route.Maker(route.File)
-	resolver := r.PipelineFor(resource.Handle)
+	if route.Maker == nil {
+		panic(fmt.Sprintf("static route %q has no Maker", route.Path))
+	}
+	if route.Path == "" || route.File == "" {
+		panic(fmt.Sprintf("static route %q has empty Path or File", route.Path))
+	}
+	res := route.Maker(route.File)
+	if res == nil {
+		panic(fmt.Sprintf("static route %q produced nil resource", route.Path))
+	}
+	resolver := r.PipelineFor(res.Handle)
 	r.Mux.HandleFunc("GET "+route.Path, resolver)
 }
 
@@ -164,8 +174,7 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Path: "/profile",
 			File: "./storage/fixture/profile.json",
 			Maker: func(file string) StaticRouteResource {
-				handler := handler.MakeProfileHandler(file)
-				return handler
+				return handler.MakeProfileHandler(file)
 			},
 			Page: SharePage{
 				Lang:        "en",
@@ -177,8 +186,7 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Path: "/experience",
 			File: "./storage/fixture/experience.json",
 			Maker: func(file string) StaticRouteResource {
-				handler := handler.MakeExperienceHandler(file)
-				return handler
+				return handler.MakeExperienceHandler(file)
 			},
 			Page: SharePage{
 				Lang:        "en",
@@ -190,8 +198,7 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Path: "/projects",
 			File: "./storage/fixture/projects.json",
 			Maker: func(file string) StaticRouteResource {
-				handler := handler.MakeProjectsHandler(file)
-				return handler
+				return handler.MakeProjectsHandler(file)
 			},
 			Page: SharePage{
 				Lang:        "en",
@@ -203,8 +210,7 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Path: "/social",
 			File: "./storage/fixture/social.json",
 			Maker: func(file string) StaticRouteResource {
-				handler := handler.MakeSocialHandler(file)
-				return handler
+				return handler.MakeSocialHandler(file)
 			},
 			Page: SharePage{
 				Lang:        "en",
@@ -216,8 +222,7 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Path: "/talks",
 			File: "./storage/fixture/talks.json",
 			Maker: func(file string) StaticRouteResource {
-				handler := handler.MakeTalksHandler(file)
-				return handler
+				return handler.MakeTalksHandler(file)
 			},
 			Page: SharePage{
 				Lang:        "en",
@@ -229,8 +234,7 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Path: "/education",
 			File: "./storage/fixture/education.json",
 			Maker: func(file string) StaticRouteResource {
-				handler := handler.MakeEducationHandler(file)
-				return handler
+				return handler.MakeEducationHandler(file)
 			},
 			Page: SharePage{
 				Lang:        "en",
@@ -242,8 +246,7 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Path: "/recommendations",
 			File: "./storage/fixture/recommendations.json",
 			Maker: func(file string) StaticRouteResource {
-				handler := handler.MakeRecommendationsHandler(file)
-				return handler
+				return handler.MakeRecommendationsHandler(file)
 			},
 			Page: SharePage{
 				Lang:        "en",

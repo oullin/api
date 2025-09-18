@@ -5,6 +5,7 @@ import (
 	"html"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -21,23 +22,11 @@ func testAssetConfig() AssetConfig {
 }
 
 func TestGenerator_GenerateCreatesFiles(t *testing.T) {
-	t.Parallel()
-
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed getting working directory: %v", err)
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
 	}
-
-	repoRoot := filepath.Clean(filepath.Join(wd, "..", "..", ".."))
-	if err := os.Chdir(repoRoot); err != nil {
-		t.Fatalf("failed changing directory to repository root: %v", err)
-	}
-
-	t.Cleanup(func() {
-		if err := os.Chdir(wd); err != nil {
-			t.Fatalf("failed restoring working directory: %v", err)
-		}
-	})
+	repoRoot := filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..", "..", ".."))
 
 	outputDir := t.TempDir()
 	assets := testAssetConfig()
@@ -47,6 +36,11 @@ func TestGenerator_GenerateCreatesFiles(t *testing.T) {
 	}
 
 	routes := kernel.StaticRouteDefinitions()
+	for i := range routes {
+		if routes[i].File != "" && !filepath.IsAbs(routes[i].File) {
+			routes[i].File = filepath.Join(repoRoot, routes[i].File)
+		}
+	}
 	if len(routes) > 0 {
 		routes[0].Page.Robots = "noindex,nofollow"
 		routes[0].Page.ThemeColor = "#111827"
