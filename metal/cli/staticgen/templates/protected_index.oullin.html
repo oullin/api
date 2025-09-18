@@ -1,0 +1,49 @@
+{{- /* templates/protected_index.oullin.html */ -}}
+<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  <meta name="robots" content="noindex,nofollow">
+
+  {{- if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+
+  <!-- Minimal OG/Twitter to avoid empty shares; still noindex -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  {{- if .OG.Image}}<meta property="og:image" content="{{.OG.Image}}">{{end}}
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{.Title}}">
+  <meta name="twitter:description" content="{{.Description}}">
+
+  {{- if .AppCSS}}<link rel="preload" as="style" href="{{.AppCSS}}">{{end}}
+  {{- if .AppCSS}}<link rel="stylesheet" href="{{.AppCSS}}">{{end}}
+
+  <!-- Build marker -->
+  <meta name="x-build-rev" content="{{.BuildRev}}">
+</head>
+<body>
+  <noscript>Authentication requires JavaScript. Please enable it.</noscript>
+
+  <!-- Small neutral shell while auth is checked -->
+  <div id="app">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:60vh">
+      <p>Checking your session...</p>
+    </div>
+  </div>
+
+  <!-- Auth bootstrap: external script to satisfy strict CSP -->
+  <script
+    src="{{.AuthBootstrapJS}}"
+    defer
+    data-api-base="{{.APIBase}}"
+    data-session-path="{{.SessionPath}}"         <!-- e.g. /auth/session -->
+    data-login-url="{{.LoginURL}}"               <!-- absolute SSO login URL -->
+    data-app-js="{{.AppJS}}"                     <!-- SPA bundle to inject on success -->
+  ></script>
+</body>
+</html>

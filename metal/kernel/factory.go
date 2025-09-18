@@ -3,6 +3,7 @@ package kernel
 import (
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -100,6 +101,22 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		Password: env.GetEnvVar("ENV_PING_PASSWORD"),
 	}
 
+	staticEnv := env.StaticEnvironment{
+		BuildRev:        env.GetEnvVar("ENV_STATIC_BUILD_REV"),
+		AuthBootstrapJS: env.GetEnvVar("ENV_STATIC_AUTH_BOOTSTRAP_JS"),
+		APIBase:         env.GetEnvVar("ENV_STATIC_API_BASE"),
+		SessionPath:     env.GetEnvVar("ENV_STATIC_SESSION_PATH"),
+		LoginURL:        env.GetEnvVar("ENV_STATIC_LOGIN_URL"),
+		AppJS:           env.GetEnvVar("ENV_STATIC_APP_JS"),
+		AppCSS:          env.GetEnvVar("ENV_STATIC_APP_CSS"),
+		CanonicalBase:   strings.TrimRight(env.GetEnvVar("ENV_STATIC_CANONICAL_BASE"), "/"),
+		DefaultLang:     env.GetEnvVar("ENV_STATIC_DEFAULT_LANG"),
+	}
+
+	if strings.TrimSpace(staticEnv.DefaultLang) == "" {
+		staticEnv.DefaultLang = "en"
+	}
+
 	if _, err := validate.Rejects(app); err != nil {
 		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJson())
 	}
@@ -124,12 +141,17 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		panic(errorSuffix + "invalid [ping] model: " + validate.GetErrorsAsJson())
 	}
 
+	if _, err := validate.Rejects(staticEnv); err != nil {
+		panic(errorSuffix + "invalid [static] model: " + validate.GetErrorsAsJson())
+	}
+
 	blog := &env.Environment{
 		App:     app,
 		DB:      db,
 		Logs:    logsCreds,
 		Network: net,
 		Sentry:  sentryEnvironment,
+		Static:  staticEnv,
 		Ping:    pingEnvironment,
 	}
 

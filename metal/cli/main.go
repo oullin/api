@@ -169,13 +169,30 @@ func generateStaticRoutes() error {
 		return fmt.Errorf("no static routes defined")
 	}
 
-	generator := staticgen.NewGenerator("./storage/static")
+	assets := staticgen.AssetConfig{
+		BuildRev:        environment.Static.BuildRev,
+		AuthBootstrapJS: environment.Static.AuthBootstrapJS,
+		APIBase:         environment.Static.APIBase,
+		SessionPath:     environment.Static.SessionPath,
+		LoginURL:        environment.Static.LoginURL,
+		AppJS:           environment.Static.AppJS,
+		AppCSS:          environment.Static.AppCSS,
+		CanonicalBase:   environment.Static.CanonicalBase,
+		DefaultLang:     environment.Static.DefaultLang,
+		SiteName:        environment.App.Name,
+	}
+
+	generator, err := staticgen.NewGenerator("./dist", assets)
+	if err != nil {
+		return err
+	}
+
 	files, err := generator.Generate(routes)
 	if err != nil {
 		return err
 	}
 
-	cli.Successln("Generated static files:")
+	cli.Successln("Generated static pages:")
 	for _, file := range files {
 		cli.Blueln(" - " + file)
 	}

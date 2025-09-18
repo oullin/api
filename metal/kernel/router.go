@@ -16,10 +16,19 @@ type StaticRouteResource interface {
 	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *http.ApiError
 }
 
+type StaticRoutePage struct {
+	Lang        string
+	Title       string
+	Description string
+	Canonical   string
+	OGImage     string
+}
+
 type StaticRouteDefinition struct {
 	Path  string
 	File  string
 	Maker func(string) StaticRouteResource
+	Page  StaticRoutePage
 }
 
 func addStaticRoute(r *Router, route StaticRouteDefinition) {
@@ -121,6 +130,11 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 				handler := handler.MakeProfileHandler(file)
 				return handler
 			},
+			Page: StaticRoutePage{
+				Lang:        "en",
+				Title:       "Professional profile",
+				Description: "Review Gustavo Ocanto's profile, skills, and contact information.",
+			},
 		},
 		{
 			Path: "/experience",
@@ -128,6 +142,11 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Maker: func(file string) StaticRouteResource {
 				handler := handler.MakeExperienceHandler(file)
 				return handler
+			},
+			Page: StaticRoutePage{
+				Lang:        "en",
+				Title:       "Experience & leadership",
+				Description: "Explore career experience and leadership milestones from Gustavo Ocanto.",
 			},
 		},
 		{
@@ -137,6 +156,11 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 				handler := handler.MakeProjectsHandler(file)
 				return handler
 			},
+			Page: StaticRoutePage{
+				Lang:        "en",
+				Title:       "Highlighted projects",
+				Description: "Browse selected projects delivered by Gustavo Ocanto.",
+			},
 		},
 		{
 			Path: "/social",
@@ -144,6 +168,11 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Maker: func(file string) StaticRouteResource {
 				handler := handler.MakeSocialHandler(file)
 				return handler
+			},
+			Page: StaticRoutePage{
+				Lang:        "en",
+				Title:       "Social presence",
+				Description: "Follow Gustavo Ocanto across social channels.",
 			},
 		},
 		{
@@ -153,6 +182,11 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 				handler := handler.MakeTalksHandler(file)
 				return handler
 			},
+			Page: StaticRoutePage{
+				Lang:        "en",
+				Title:       "Talks & presentations",
+				Description: "Catch recordings and details from Gustavo Ocanto's speaking engagements.",
+			},
 		},
 		{
 			Path: "/education",
@@ -161,6 +195,11 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 				handler := handler.MakeEducationHandler(file)
 				return handler
 			},
+			Page: StaticRoutePage{
+				Lang:        "en",
+				Title:       "Education & certifications",
+				Description: "See the academic background and certifications earned by Gustavo Ocanto.",
+			},
 		},
 		{
 			Path: "/recommendations",
@@ -168,6 +207,11 @@ func StaticRouteDefinitions() []StaticRouteDefinition {
 			Maker: func(file string) StaticRouteResource {
 				handler := handler.MakeRecommendationsHandler(file)
 				return handler
+			},
+			Page: StaticRoutePage{
+				Lang:        "en",
+				Title:       "Recommendations",
+				Description: "Read testimonials and endorsements for Gustavo Ocanto.",
 			},
 		},
 	}
