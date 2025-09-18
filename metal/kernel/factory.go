@@ -102,15 +102,10 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 	}
 
 	staticEnv := env.StaticEnvironment{
-		BuildRev:        env.GetEnvVar("ENV_STATIC_BUILD_REV"),
-		AuthBootstrapJS: env.GetEnvVar("ENV_STATIC_AUTH_BOOTSTRAP_JS"),
-		APIBase:         env.GetEnvVar("ENV_STATIC_API_BASE"),
-		SessionPath:     env.GetEnvVar("ENV_STATIC_SESSION_PATH"),
-		LoginURL:        env.GetEnvVar("ENV_STATIC_LOGIN_URL"),
-		AppJS:           env.GetEnvVar("ENV_STATIC_APP_JS"),
-		AppCSS:          env.GetEnvVar("ENV_STATIC_APP_CSS"),
-		CanonicalBase:   strings.TrimRight(env.GetEnvVar("ENV_STATIC_CANONICAL_BASE"), "/"),
-		DefaultLang:     env.GetEnvVar("ENV_STATIC_DEFAULT_LANG"),
+		BuildRev:      env.GetEnvVar("ENV_STATIC_BUILD_REV"),
+		AppCSS:        env.GetEnvVar("ENV_STATIC_APP_CSS"),
+		CanonicalBase: strings.TrimRight(env.GetEnvVar("ENV_STATIC_CANONICAL_BASE"), "/"),
+		DefaultLang:   env.GetEnvVar("ENV_STATIC_DEFAULT_LANG"),
 	}
 
 	if strings.TrimSpace(staticEnv.DefaultLang) == "" {

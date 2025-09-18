@@ -170,19 +170,14 @@ func generateStaticRoutes() error {
 	}
 
 	assets := staticgen.AssetConfig{
-		BuildRev:        environment.Static.BuildRev,
-		AuthBootstrapJS: environment.Static.AuthBootstrapJS,
-		APIBase:         environment.Static.APIBase,
-		SessionPath:     environment.Static.SessionPath,
-		LoginURL:        environment.Static.LoginURL,
-		AppJS:           environment.Static.AppJS,
-		AppCSS:          environment.Static.AppCSS,
-		CanonicalBase:   environment.Static.CanonicalBase,
-		DefaultLang:     environment.Static.DefaultLang,
-		SiteName:        environment.App.Name,
+		BuildRev:      environment.Static.BuildRev,
+		AppCSS:        environment.Static.AppCSS,
+		CanonicalBase: environment.Static.CanonicalBase,
+		DefaultLang:   environment.Static.DefaultLang,
+		SiteName:      environment.App.Name,
 	}
 
-	generator, err := staticgen.NewGenerator("./dist", assets)
+	generator, err := staticgen.NewGenerator("./dist/pages", assets)
 	if err != nil {
 		return err
 	}

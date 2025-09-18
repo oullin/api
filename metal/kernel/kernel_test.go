@@ -20,11 +20,6 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_APP_ENV_TYPE", "local")
 	t.Setenv("ENV_APP_MASTER_KEY", "12345678901234567890123456789012")
 	t.Setenv("ENV_STATIC_BUILD_REV", "build-123")
-	t.Setenv("ENV_STATIC_AUTH_BOOTSTRAP_JS", "https://cdn.example.com/auth.js")
-	t.Setenv("ENV_STATIC_API_BASE", "https://api.example.com")
-	t.Setenv("ENV_STATIC_SESSION_PATH", "/auth/session")
-	t.Setenv("ENV_STATIC_LOGIN_URL", "https://example.com/login")
-	t.Setenv("ENV_STATIC_APP_JS", "https://cdn.example.com/app.js")
 	t.Setenv("ENV_STATIC_APP_CSS", "https://cdn.example.com/app.css")
 	t.Setenv("ENV_STATIC_CANONICAL_BASE", "https://example.com")
 	t.Setenv("ENV_STATIC_DEFAULT_LANG", "en")
@@ -80,11 +75,6 @@ func TestIgnite(t *testing.T) {
 		"ENV_APP_ENV_TYPE=local\n" +
 		"ENV_APP_MASTER_KEY=12345678901234567890123456789012\n" +
 		"ENV_STATIC_BUILD_REV=build-123\n" +
-		"ENV_STATIC_AUTH_BOOTSTRAP_JS=https://cdn.example.com/auth.js\n" +
-		"ENV_STATIC_API_BASE=https://api.example.com\n" +
-		"ENV_STATIC_SESSION_PATH=/auth/session\n" +
-		"ENV_STATIC_LOGIN_URL=https://example.com/login\n" +
-		"ENV_STATIC_APP_JS=https://cdn.example.com/app.js\n" +
 		"ENV_STATIC_APP_CSS=https://cdn.example.com/app.css\n" +
 		"ENV_STATIC_CANONICAL_BASE=https://example.com\n" +
 		"ENV_STATIC_DEFAULT_LANG=en\n" +

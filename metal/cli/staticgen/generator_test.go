@@ -13,16 +13,11 @@ import (
 
 func testAssetConfig() AssetConfig {
 	return AssetConfig{
-		BuildRev:        "build-123",
-		AuthBootstrapJS: "/static/auth.js",
-		APIBase:         "https://api.example.com",
-		SessionPath:     "/auth/session",
-		LoginURL:        "https://example.com/login",
-		AppJS:           "/static/app.js",
-		AppCSS:          "/static/app.css",
-		CanonicalBase:   "https://example.com",
-		DefaultLang:     "en",
-		SiteName:        "Test Site",
+		BuildRev:      "build-123",
+		AppCSS:        "/static/app.css",
+		CanonicalBase: "https://example.com",
+		DefaultLang:   "en",
+		SiteName:      "Test Site",
 	}
 }
 
@@ -69,8 +64,7 @@ func TestGenerator_GenerateCreatesFiles(t *testing.T) {
 			t.Fatalf("expected file %s to exist: %v", file, err)
 		}
 
-		expectedDir := generator.directoryFor(route.Path)
-		expectedPath := filepath.Join(expectedDir, "index.html")
+		expectedPath := generator.filePathFor(route.Path)
 		if filepath.Clean(file) != filepath.Clean(expectedPath) {
 			t.Fatalf("unexpected file path for %s: expected %s got %s", route.Path, expectedPath, file)
 		}
@@ -116,44 +110,14 @@ func TestGenerator_GenerateCreatesFiles(t *testing.T) {
 		}
 
 		if data.AppCSS != "" {
-			if !strings.Contains(htmlBody, fmt.Sprintf("<link rel=\"stylesheet\" href=\"%s\">", html.EscapeString(data.AppCSS))) {
+			expectedStylesheet := fmt.Sprintf("<link rel=%q href=%q>", "stylesheet", html.EscapeString(data.AppCSS))
+			if !strings.Contains(htmlBody, expectedStylesheet) {
 				t.Fatalf("expected stylesheet link for %s", file)
 			}
 		}
 
-		if !strings.Contains(htmlBody, fmt.Sprintf("src=\"%s\"", html.EscapeString(data.AuthBootstrapJS))) {
-			t.Fatalf("expected auth bootstrap script src for %s", file)
-		}
-
-		if !strings.Contains(htmlBody, fmt.Sprintf("data-api-base=\"%s\"", html.EscapeString(data.APIBase))) {
-			t.Fatalf("expected api base data attribute for %s", file)
-		}
-
-		if !strings.Contains(htmlBody, fmt.Sprintf("data-session-path=\"%s\"", html.EscapeString(data.SessionPath))) {
-			t.Fatalf("expected session path data attribute for %s", file)
-		}
-
-		expectedSession := fmt.Sprintf("data-session-path=\"%s\"%s", html.EscapeString(data.SessionPath), sessionComment)
-		if !strings.Contains(htmlBody, expectedSession) {
-			t.Fatalf("expected inline session comment for %s", file)
-		}
-
-		if !strings.Contains(htmlBody, fmt.Sprintf("data-login-url=\"%s\"", html.EscapeString(data.LoginURL))) {
-			t.Fatalf("expected login url data attribute for %s", file)
-		}
-
-		expectedLogin := fmt.Sprintf("data-login-url=\"%s\"%s", html.EscapeString(data.LoginURL), loginComment)
-		if !strings.Contains(htmlBody, expectedLogin) {
-			t.Fatalf("expected inline login comment for %s", file)
-		}
-
-		if !strings.Contains(htmlBody, fmt.Sprintf("data-app-js=\"%s\"", html.EscapeString(data.AppJS))) {
-			t.Fatalf("expected app js data attribute for %s", file)
-		}
-
-		expectedApp := fmt.Sprintf("data-app-js=\"%s\"%s", html.EscapeString(data.AppJS), appComment)
-		if !strings.Contains(htmlBody, expectedApp) {
-			t.Fatalf("expected inline app comment for %s", file)
+		if !strings.Contains(htmlBody, "hello world") {
+			t.Fatalf("expected hello world in body for %s", file)
 		}
 
 		if !strings.HasPrefix(filepath.Clean(file), filepath.Clean(outputDir)) {

@@ -20,22 +20,14 @@ var templatesFS embed.FS
 
 const (
 	protectedIndexTemplate = "templates/protected_index.oullin.html"
-	sessionComment         = "         <!-- e.g. /auth/session -->"
-	loginComment           = "               <!-- absolute SSO login URL -->"
-	appComment             = "                     <!-- SPA bundle to inject on success -->"
 )
 
 type AssetConfig struct {
-	BuildRev        string
-	AuthBootstrapJS string
-	APIBase         string
-	SessionPath     string
-	LoginURL        string
-	AppJS           string
-	AppCSS          string
-	CanonicalBase   string
-	DefaultLang     string
-	SiteName        string
+	BuildRev      string
+	AppCSS        string
+	CanonicalBase string
+	DefaultLang   string
+	SiteName      string
 }
 
 type Generator struct {
@@ -45,18 +37,13 @@ type Generator struct {
 }
 
 type templateData struct {
-	Lang            string
-	Title           string
-	Description     string
-	Canonical       string
-	OG              ogData
-	AppCSS          string
-	BuildRev        string
-	AuthBootstrapJS string
-	APIBase         string
-	SessionPath     string
-	LoginURL        string
-	AppJS           string
+	Lang        string
+	Title       string
+	Description string
+	Canonical   string
+	OG          ogData
+	AppCSS      string
+	BuildRev    string
 }
 
 type ogData struct {
@@ -86,11 +73,6 @@ func (c AssetConfig) normalized() AssetConfig {
 	normalized := c
 
 	normalized.BuildRev = strings.TrimSpace(normalized.BuildRev)
-	normalized.AuthBootstrapJS = strings.TrimSpace(normalized.AuthBootstrapJS)
-	normalized.APIBase = strings.TrimSpace(normalized.APIBase)
-	normalized.SessionPath = normalizePath(strings.TrimSpace(normalized.SessionPath))
-	normalized.LoginURL = strings.TrimSpace(normalized.LoginURL)
-	normalized.AppJS = strings.TrimSpace(normalized.AppJS)
 	normalized.AppCSS = strings.TrimSpace(normalized.AppCSS)
 	normalized.CanonicalBase = strings.TrimRight(strings.TrimSpace(normalized.CanonicalBase), "/")
 	normalized.DefaultLang = strings.TrimSpace(normalized.DefaultLang)
@@ -104,30 +86,10 @@ func (c AssetConfig) normalized() AssetConfig {
 }
 
 func (c AssetConfig) validate() error {
-	missing := make([]string, 0, 6)
+	missing := make([]string, 0, 1)
 
 	if c.BuildRev == "" {
 		missing = append(missing, "BuildRev")
-	}
-
-	if c.AuthBootstrapJS == "" {
-		missing = append(missing, "AuthBootstrapJS")
-	}
-
-	if c.APIBase == "" {
-		missing = append(missing, "APIBase")
-	}
-
-	if c.SessionPath == "" {
-		missing = append(missing, "SessionPath")
-	}
-
-	if c.LoginURL == "" {
-		missing = append(missing, "LoginURL")
-	}
-
-	if c.AppJS == "" {
-		missing = append(missing, "AppJS")
 	}
 
 	if len(missing) > 0 {
@@ -188,16 +150,13 @@ func (g Generator) Generate(routes []kernel.StaticRouteDefinition) ([]string, er
 			return nil, fmt.Errorf("rendering template for %s: %w", route.Path, err)
 		}
 
-		dir := g.directoryFor(route.Path)
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		filePath := g.filePathFor(route.Path)
+
+		if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 			return nil, fmt.Errorf("creating directory for %s: %w", route.Path, err)
 		}
 
-		filePath := filepath.Join(dir, "index.html")
-
-		rendered := g.injectInlineComments(buffer.String(), data)
-
-		if err := os.WriteFile(filePath, []byte(rendered), 0o644); err != nil {
+		if err := os.WriteFile(filePath, buffer.Bytes(), 0o644); err != nil {
 			return nil, fmt.Errorf("writing %s: %w", filePath, err)
 		}
 
@@ -209,18 +168,13 @@ func (g Generator) Generate(routes []kernel.StaticRouteDefinition) ([]string, er
 
 func (g Generator) templateData(route kernel.StaticRouteDefinition) templateData {
 	return templateData{
-		Lang:            g.langFor(route),
-		Title:           g.titleFor(route),
-		Description:     g.descriptionFor(route),
-		Canonical:       g.canonicalFor(route),
-		OG:              ogData{Image: strings.TrimSpace(route.Page.OGImage)},
-		AppCSS:          g.assets.AppCSS,
-		BuildRev:        g.assets.BuildRev,
-		AuthBootstrapJS: g.assets.AuthBootstrapJS,
-		APIBase:         g.assets.APIBase,
-		SessionPath:     g.assets.SessionPath,
-		LoginURL:        g.assets.LoginURL,
-		AppJS:           g.assets.AppJS,
+		Lang:        g.langFor(route),
+		Title:       g.titleFor(route),
+		Description: g.descriptionFor(route),
+		Canonical:   g.canonicalFor(route),
+		OG:          ogData{Image: strings.TrimSpace(route.Page.OGImage)},
+		AppCSS:      g.assets.AppCSS,
+		BuildRev:    g.assets.BuildRev,
 	}
 }
 
@@ -294,13 +248,26 @@ func (g Generator) canonicalFor(route kernel.StaticRouteDefinition) string {
 	return g.assets.CanonicalBase + path
 }
 
-func (g Generator) directoryFor(path string) string {
+func (g Generator) filePathFor(path string) string {
 	trimmed := strings.Trim(path, "/")
 	if trimmed == "" {
-		return g.OutputDir
+		return filepath.Join(g.OutputDir, "index.html")
 	}
 
-	return filepath.Join(g.OutputDir, trimmed)
+	parts := strings.Split(trimmed, "/")
+	if len(parts) == 1 {
+		name := parts[0]
+		if name == "" {
+			name = "index"
+		}
+
+		return filepath.Join(g.OutputDir, name+".html")
+	}
+
+	dir := filepath.Join(append([]string{g.OutputDir}, parts[:len(parts)-1]...)...)
+	file := parts[len(parts)-1] + ".html"
+
+	return filepath.Join(dir, file)
 }
 
 func (g Generator) humanizeRoute(path string) string {
@@ -338,64 +305,16 @@ func capitalize(word string) string {
 	return string(runes)
 }
 
-func normalizePath(value string) string {
-	trimmed := strings.TrimSpace(value)
-	if trimmed == "" {
-		return ""
-	}
-
-	if strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://") {
-		return trimmed
-	}
-
-	if !strings.HasPrefix(trimmed, "/") {
-		return "/" + trimmed
-	}
-
-	return trimmed
-}
-
 func loadTemplate() (*htmltemplate.Template, error) {
 	raw, err := templatesFS.ReadFile(protectedIndexTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("read template: %w", err)
 	}
 
-	sanitized := sanitizeTemplate(string(raw))
-
-	tmpl, err := htmltemplate.New("protected_index").Parse(sanitized)
+	tmpl, err := htmltemplate.New("protected_index").Parse(string(raw))
 	if err != nil {
 		return nil, err
 	}
 
 	return tmpl, nil
-}
-
-func sanitizeTemplate(content string) string {
-	sanitized := strings.ReplaceAll(content, sessionComment, "")
-	sanitized = strings.ReplaceAll(sanitized, loginComment, "")
-	sanitized = strings.ReplaceAll(sanitized, appComment, "")
-	return sanitized
-}
-
-func (g Generator) injectInlineComments(rendered string, data templateData) string {
-	withSession := insertComment(rendered, `data-session-path="%s"`, data.SessionPath, sessionComment)
-	withLogin := insertComment(withSession, `data-login-url="%s"`, data.LoginURL, loginComment)
-	withApp := insertComment(withLogin, `data-app-js="%s"`, data.AppJS, appComment)
-	return withApp
-}
-
-func insertComment(rendered string, pattern string, value string, comment string) string {
-	if strings.TrimSpace(value) == "" {
-		return rendered
-	}
-
-	escaped := htmltemplate.HTMLEscapeString(value)
-	needle := fmt.Sprintf(pattern, escaped)
-
-	if !strings.Contains(rendered, needle) {
-		return rendered
-	}
-
-	return strings.Replace(rendered, needle, needle+comment, 1)
 }
