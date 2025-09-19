@@ -1,4 +1,4 @@
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-cli-local
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal
 
 format:
 	gofmt -w -s .
@@ -59,5 +59,5 @@ run-cli-docker:
 test-all:
 	go test ./...
 
-run-cli-local:
+run-metal:
 	go run metal/cli/main.go

@@ -57,7 +57,7 @@ help:
 	@printf "  $(BOLD)$(GREEN)test-all$(NC)         : Run all the application tests.\n"
 	@printf "  $(BOLD)$(GREEN)run-cli$(NC)          : Run the application CLI interface.\n"
 	@printf "  $(BOLD)$(GREEN)run-cli-docker$(NC)   : Run the application [docker] dev's CLI interface.\n\n"
-	@printf "  $(BOLD)$(GREEN)run-cli-local$(NC)    : Run the application dev's CLI interface.\n\n"
+	@printf "  $(BOLD)$(GREEN)run-metal$(NC)        : Run the application dev's CLI interface.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)build-local$(NC)      : Build the main application for development.\n"
