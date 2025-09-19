@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"fmt"
 	baseHttp "net/http"
 
 	"github.com/oullin/database"
@@ -16,10 +17,71 @@ type StaticRouteResource interface {
 	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *http.ApiError
 }
 
-func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
-	abstract := maker(file)
-	resolver := r.PipelineFor(abstract.Handle)
-	r.Mux.HandleFunc("GET "+path, resolver)
+type Hreflang struct {
+	Lang string
+	Href string
+}
+
+type Favicon struct {
+	Rel   string
+	Href  string
+	Type  string
+	Sizes string
+}
+
+type OGSpec struct {
+	Type        string
+	Image       string
+	ImageAlt    string
+	ImageWidth  string
+	ImageHeight string
+	SiteName    string
+	Locale      string
+}
+
+type TwitterSpec struct {
+	Card     string
+	Image    string
+	ImageAlt string
+}
+
+type SharePage struct {
+	Lang           string
+	Title          string
+	Description    string
+	Canonical      string
+	Robots         string
+	ThemeColor     string
+	JsonLD         string
+	OG             OGSpec
+	Twitter        TwitterSpec
+	Hreflangs      []Hreflang
+	Favicons       []Favicon
+	Manifest       string
+	AppleTouchIcon string
+	BuildRev       string
+}
+
+type StaticRouteDefinition struct {
+	Path  string
+	File  string
+	Maker func(string) StaticRouteResource
+	Page  SharePage
+}
+
+func addStaticRoute(r *Router, route StaticRouteDefinition) {
+	if route.Maker == nil {
+		panic(fmt.Sprintf("static route %q has no Maker", route.Path))
+	}
+	if route.Path == "" || route.File == "" {
+		panic(fmt.Sprintf("static route %q has empty Path or File", route.Path))
+	}
+	res := route.Maker(route.File)
+	if res == nil {
+		panic(fmt.Sprintf("static route %q produced nil resource", route.Path))
+	}
+	resolver := r.PipelineFor(res.Handle)
+	r.Mux.HandleFunc("GET "+route.Path, resolver)
 }
 
 type Router struct {
@@ -100,30 +162,97 @@ func (r *Router) KeepAliveDB() {
 	r.Mux.HandleFunc("GET /ping-db", apiHandler)
 }
 
-func (r *Router) Profile() {
-	addStaticRoute(r, "/profile", "./storage/fixture/profile.json", handler.MakeProfileHandler)
+func (r *Router) StaticRoutes() {
+	for _, route := range StaticRouteDefinitions() {
+		addStaticRoute(r, route)
+	}
 }
 
-func (r *Router) Experience() {
-	addStaticRoute(r, "/experience", "./storage/fixture/experience.json", handler.MakeExperienceHandler)
-}
-
-func (r *Router) Projects() {
-	addStaticRoute(r, "/projects", "./storage/fixture/projects.json", handler.MakeProjectsHandler)
-}
-
-func (r *Router) Social() {
-	addStaticRoute(r, "/social", "./storage/fixture/social.json", handler.MakeSocialHandler)
-}
-
-func (r *Router) Talks() {
-	addStaticRoute(r, "/talks", "./storage/fixture/talks.json", handler.MakeTalksHandler)
-}
-
-func (r *Router) Education() {
-	addStaticRoute(r, "/education", "./storage/fixture/education.json", handler.MakeEducationHandler)
-}
-
-func (r *Router) Recommendations() {
-	addStaticRoute(r, "/recommendations", "./storage/fixture/recommendations.json", handler.MakeRecommendationsHandler)
+func StaticRouteDefinitions() []StaticRouteDefinition {
+	return []StaticRouteDefinition{
+		{
+			Path: "/profile",
+			File: "./storage/fixture/profile.json",
+			Maker: func(file string) StaticRouteResource {
+				return handler.MakeProfileHandler(file)
+			},
+			Page: SharePage{
+				Lang:        "en",
+				Title:       "Professional profile",
+				Description: "Review Gustavo Ocanto's profile, skills, and contact information.",
+			},
+		},
+		{
+			Path: "/experience",
+			File: "./storage/fixture/experience.json",
+			Maker: func(file string) StaticRouteResource {
+				return handler.MakeExperienceHandler(file)
+			},
+			Page: SharePage{
+				Lang:        "en",
+				Title:       "Experience & leadership",
+				Description: "Explore career experience and leadership milestones from Gustavo Ocanto.",
+			},
+		},
+		{
+			Path: "/projects",
+			File: "./storage/fixture/projects.json",
+			Maker: func(file string) StaticRouteResource {
+				return handler.MakeProjectsHandler(file)
+			},
+			Page: SharePage{
+				Lang:        "en",
+				Title:       "Highlighted projects",
+				Description: "Browse selected projects delivered by Gustavo Ocanto.",
+			},
+		},
+		{
+			Path: "/social",
+			File: "./storage/fixture/social.json",
+			Maker: func(file string) StaticRouteResource {
+				return handler.MakeSocialHandler(file)
+			},
+			Page: SharePage{
+				Lang:        "en",
+				Title:       "Social presence",
+				Description: "Follow Gustavo Ocanto across social channels.",
+			},
+		},
+		{
+			Path: "/talks",
+			File: "./storage/fixture/talks.json",
+			Maker: func(file string) StaticRouteResource {
+				return handler.MakeTalksHandler(file)
+			},
+			Page: SharePage{
+				Lang:        "en",
+				Title:       "Talks & presentations",
+				Description: "Catch recordings and details from Gustavo Ocanto's speaking engagements.",
+			},
+		},
+		{
+			Path: "/education",
+			File: "./storage/fixture/education.json",
+			Maker: func(file string) StaticRouteResource {
+				return handler.MakeEducationHandler(file)
+			},
+			Page: SharePage{
+				Lang:        "en",
+				Title:       "Education & certifications",
+				Description: "See the academic background and certifications earned by Gustavo Ocanto.",
+			},
+		},
+		{
+			Path: "/recommendations",
+			File: "./storage/fixture/recommendations.json",
+			Maker: func(file string) StaticRouteResource {
+				return handler.MakeRecommendationsHandler(file)
+			},
+			Page: SharePage{
+				Lang:        "en",
+				Title:       "Recommendations",
+				Description: "Read testimonials and endorsements for Gustavo Ocanto.",
+			},
+		},
+	}
 }

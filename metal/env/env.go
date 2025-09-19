@@ -12,6 +12,7 @@ type Environment struct {
 	Logs    LogsEnvironment
 	Network NetEnvironment
 	Sentry  SentryEnvironment
+	Static  StaticEnvironment
 	Ping    Ping
 }
 

@@ -19,6 +19,9 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_APP_NAME", "guss")
 	t.Setenv("ENV_APP_ENV_TYPE", "local")
 	t.Setenv("ENV_APP_MASTER_KEY", "12345678901234567890123456789012")
+	t.Setenv("ENV_STATIC_BUILD_REV", "build-123")
+	t.Setenv("ENV_STATIC_CANONICAL_BASE", "https://example.com")
+	t.Setenv("ENV_STATIC_DEFAULT_LANG", "en")
 	t.Setenv("ENV_DB_USER_NAME", "usernamefoo")
 	t.Setenv("ENV_DB_USER_PASSWORD", "passwordfoo")
 	t.Setenv("ENV_DB_DATABASE_NAME", "dbnamefoo")
@@ -70,6 +73,9 @@ func TestIgnite(t *testing.T) {
 	content := "ENV_APP_NAME=guss\n" +
 		"ENV_APP_ENV_TYPE=local\n" +
 		"ENV_APP_MASTER_KEY=12345678901234567890123456789012\n" +
+		"ENV_STATIC_BUILD_REV=build-123\n" +
+		"ENV_STATIC_CANONICAL_BASE=https://example.com\n" +
+		"ENV_STATIC_DEFAULT_LANG=en\n" +
 		"ENV_DB_USER_NAME=usernamefoo\n" +
 		"ENV_DB_USER_PASSWORD=passwordfoo\n" +
 		"ENV_DB_DATABASE_NAME=dbnamefoo\n" +
