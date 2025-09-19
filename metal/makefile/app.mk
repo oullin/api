@@ -1,4 +1,4 @@
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-local
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-cli-local
 
 format:
 	gofmt -w -s .
@@ -53,8 +53,11 @@ run-cli:
     	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
     	docker compose run --rm api-runner go run ./metal/cli/main.go
 
-run-cli-local:
+run-cli-docker:
 	make run-cli DB_SECRET_USERNAME=./database/infra/secrets/pg_username DB_SECRET_PASSWORD=./database/infra/secrets/pg_password DB_SECRET_DBNAME=./database/infra/secrets/pg_dbname
 
 test-all:
 	go test ./...
+
+run-cli-local:
+	go run metal/cli/main.go
