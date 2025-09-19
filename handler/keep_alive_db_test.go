@@ -15,7 +15,7 @@ import (
 
 func TestKeepAliveDBHandler(t *testing.T) {
 	db, _ := handlertests.MakeTestDB(t)
-	e := env.Ping{Username: "user", Password: "pass"}
+	e := env.PingEnvironment{Username: "user", Password: "pass"}
 	h := MakeKeepAliveDBHandler(&e, db)
 
 	t.Run("valid credentials", func(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 func TestKeepAliveDBRoute(t *testing.T) {
 	db, _ := handlertests.MakeTestDB(t)
 	r := Router{
-		Env:      &env.Environment{Ping: env.Ping{Username: "user", Password: "pass"}},
+		Env:      &env.Environment{Ping: env.PingEnvironment{Username: "user", Password: "pass"}},
 		Db:       db,
 		Mux:      http.NewServeMux(),
 		Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)},
