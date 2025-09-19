@@ -62,6 +62,7 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 
 	app := env.AppEnvironment{
 		Name:      env.GetEnvVar("ENV_APP_NAME"),
+		URL:       env.GetEnvVar("ENV_APP_URL"),
 		Type:      env.GetEnvVar("ENV_APP_ENV_TYPE"),
 		MasterKey: env.GetEnvVar("ENV_APP_MASTER_KEY"),
 	}

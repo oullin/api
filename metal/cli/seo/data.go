@@ -9,7 +9,7 @@ type SEO struct {
 	SiteName     string `validate:"required,min=10"`
 }
 
-type Template struct {
+type TemplateData struct {
 	Lang           string          `validate:"required,oneof=en"`
 	Title          string          `validate:"required,min=10"`
 	Description    string          `validate:"required,min=10"`
@@ -17,15 +17,15 @@ type Template struct {
 	Robots         string          `validate:"required"`     // default: index,follow
 	ThemeColor     string          `validate:"required"`     // default: #0E172B -> dark
 	JsonLD         htmltemplate.JS `validate:"required"`
-	OGTagOg        TagOg           `validate:"required"`
-	Twitter        Twitter         `validate:"required"`
-	HrefLang       []HrefLang      `validate:"required"`
-	Favicons       []Favicon       `validate:"required"`
+	OGTagOg        TagOgData       `validate:"required"`
+	Twitter        TwitterData     `validate:"required"`
+	HrefLang       []HrefLangData  `validate:"required"`
+	Favicons       []FaviconData   `validate:"required"`
 	Manifest       string          `validate:"required"`
 	AppleTouchIcon string          `validate:"required"`
 }
 
-type TagOg struct {
+type TagOgData struct {
 	Type        string `validate:"required,oneof=website"` //website
 	Image       string `validate:"required,url"`           //https://oullin.io/assets/about-Dt5rMl63.jpg
 	ImageAlt    string `validate:"required,min=10"`
@@ -35,18 +35,18 @@ type TagOg struct {
 	Locale      string `validate:"required,min=5"` //en_GB
 }
 
-type Twitter struct {
+type TwitterData struct {
 	Card     string `validate:"required,oneof=summary_large_image"`
 	Image    string `validate:"required,url"` //https://oullin.io/assets/about-Dt5rMl63.jpg
 	ImageAlt string `validate:"required,min=10"`
 }
 
-type HrefLang struct {
+type HrefLangData struct {
 	Lang string `validate:"required,oneof=en"`
 	Href string `validate:"required,url"`
 }
 
-type Favicon struct {
+type FaviconData struct {
 	Rel   string `validate:"required,oneof=icon"`
 	Href  string `validate:"required,url"`
 	Type  string `validate:"required"`
