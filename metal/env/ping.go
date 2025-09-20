@@ -2,20 +2,20 @@ package env
 
 import "strings"
 
-type Ping struct {
+type PingEnvironment struct {
 	Username string `validate:"required,min=16"`
 	Password string `validate:"required,min=16"`
 }
 
-func (p Ping) GetUsername() string {
+func (p PingEnvironment) GetUsername() string {
 	return p.Username
 }
 
-func (p Ping) GetPassword() string {
+func (p PingEnvironment) GetPassword() string {
 	return p.Password
 }
 
-func (p Ping) HasInvalidCreds(username, password string) bool {
+func (p PingEnvironment) HasInvalidCreds(username, password string) bool {
 	return username != strings.TrimSpace(p.Username) ||
 		password != strings.TrimSpace(p.Password)
 }

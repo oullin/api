@@ -10,7 +10,7 @@ import (
 type Pipeline struct {
 	Env              *env.Environment
 	ApiKeys          *repository.ApiKeys
-	TokenHandler     *auth.TokenHandler
+	TokenHandler     *auth.TokenHandler //@todo Remove!
 	PublicMiddleware PublicMiddleware
 }
 

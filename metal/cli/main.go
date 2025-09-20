@@ -57,7 +57,7 @@ func main() {
 
 			return
 		case 4:
-			if err = generateApiAccountsHTTPSignature(menu); err != nil {
+			if err = generateSEO(menu); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
@@ -110,6 +110,10 @@ func createNewApiAccount(menu panel.Menu) error {
 		return err
 	}
 
+	if err = showApiAccount(menu); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -126,29 +130,13 @@ func showApiAccount(menu panel.Menu) error {
 		return err
 	}
 
-	if err = handler.ReadAccount(account); err != nil {
+	if err = handler.ShowAccount(account); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func generateApiAccountsHTTPSignature(menu panel.Menu) error {
-	var err error
-	var account string
-	var handler *accounts.Handler
-
-	if account, err = menu.CaptureAccountName(); err != nil {
-		return err
-	}
-
-	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
-		return err
-	}
-
-	if err = handler.CreateSignature(account); err != nil {
-		return err
-	}
-
+func generateSEO(menu panel.Menu) error {
 	return nil
 }

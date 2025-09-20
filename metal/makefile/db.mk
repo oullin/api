@@ -15,9 +15,7 @@ DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
 
 # --- Migrations
 DB_MIGRATE_DOCKER_ENV_FLAGS = -e ENV_DB_HOST=$(DB_DOCKER_SERVICE_NAME) \
-                              -e ENV_DB_SSL_MODE=require \
-                              -e ENV_PING_USERNAME=0101010101010101 \
-                              -e ENV_PING_PASSWORD=0101010101010101
+                              -e ENV_DB_SSL_MODE=require
 
 # --- SSL Certificate Files
 DB_INFRA_SERVER_CRT := $(DB_INFRA_SSL_PATH)/server.crt
@@ -58,7 +56,8 @@ db\:secure:
 	openssl x509 -req -days 365 -in $(DB_INFRA_SERVER_CSR) -signkey $(DB_INFRA_SERVER_KEY) -out $(DB_INFRA_SERVER_CRT)
 
 db\:seed:
-	docker compose run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) go run ./database/seeder/main.go
+	docker compose --env-file ./.env run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) \
+ 		 go run ./database/seeder/main.go
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # --- Migrations

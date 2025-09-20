@@ -11,7 +11,7 @@ import (
 
 func TestKeepAliveRoute(t *testing.T) {
 	r := Router{
-		Env:      &env.Environment{Ping: env.Ping{Username: "user", Password: "pass"}},
+		Env:      &env.Environment{Ping: env.PingEnvironment{Username: "user", Password: "pass"}},
 		Mux:      http.NewServeMux(),
 		Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)},
 	}

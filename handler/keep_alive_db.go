@@ -13,11 +13,11 @@ import (
 )
 
 type KeepAliveDBHandler struct {
-	env *env.Ping
+	env *env.PingEnvironment
 	db  *database.Connection
 }
 
-func MakeKeepAliveDBHandler(e *env.Ping, db *database.Connection) KeepAliveDBHandler {
+func MakeKeepAliveDBHandler(e *env.PingEnvironment, db *database.Connection) KeepAliveDBHandler {
 	return KeepAliveDBHandler{env: e, db: db}
 }
 
