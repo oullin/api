@@ -7,6 +7,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/metal/env"
+	"github.com/oullin/metal/kernel/web"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"github.com/oullin/pkg/middleware"
@@ -23,48 +24,63 @@ type App struct {
 }
 
 func MakeApp(e *env.Environment, validator *portal.Validator) (*App, error) {
-	tokenHandler, err := auth.MakeTokensHandler(
-		[]byte(e.App.MasterKey),
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("bootstrapping error > could not create a token handler: %w", err)
-	}
-
-	db := MakeDbConnection(e)
-
 	app := App{
 		env:       e,
 		validator: validator,
 		logs:      MakeLogs(e),
 		sentry:    MakeSentry(e),
-		db:        db,
+		db:        MakeDbConnection(e),
 	}
 
-	router := Router{
-		Env:       e,
-		Db:        db,
-		Mux:       baseHttp.NewServeMux(),
-		validator: validator,
-		Pipeline: middleware.Pipeline{
-			Env:          e,
-			ApiKeys:      &repository.ApiKeys{DB: db},
-			TokenHandler: tokenHandler,
-			PublicMiddleware: middleware.MakePublicMiddleware(
-				e.Network.PublicAllowedIP,
-				e.Network.IsProduction,
-			),
-		},
+	if router, err := app.NewRouter(); err != nil {
+		return nil, err
+	} else {
+		app.SetRouter(*router)
 	}
-
-	app.SetRouter(router)
 
 	return &app, nil
 }
 
+func (a *App) NewRouter() (*Router, error) {
+	if a == nil {
+		return nil, fmt.Errorf("kernel error > router: app is nil")
+	}
+
+	envi := a.env
+
+	tokenHandler, err := auth.MakeTokensHandler(
+		[]byte(envi.App.MasterKey),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("kernel error > router: could not create a token handler: %w", err)
+	}
+
+	pipe := middleware.Pipeline{
+		Env:          envi,
+		TokenHandler: tokenHandler,
+		ApiKeys:      &repository.ApiKeys{DB: a.db},
+		PublicMiddleware: middleware.MakePublicMiddleware(
+			envi.Network.PublicAllowedIP,
+			envi.Network.IsProduction,
+		),
+	}
+
+	router := Router{
+		Env:           envi,
+		Db:            a.db,
+		Pipeline:      pipe,
+		validator:     a.validator,
+		WebsiteRoutes: web.NewRoutes(envi),
+		Mux:           baseHttp.NewServeMux(),
+	}
+
+	return &router, nil
+}
+
 func (a *App) Boot() {
 	if a == nil || a.router == nil {
-		panic("bootstrapping error > Invalid setup")
+		panic("kernel error > boot: Invalid setup")
 	}
 
 	router := *a.router
