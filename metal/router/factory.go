@@ -2,7 +2,6 @@ package router
 
 import (
 	baseHttp "net/http"
-	"strings"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
@@ -12,17 +11,6 @@ import (
 	"github.com/oullin/pkg/middleware"
 	"github.com/oullin/pkg/portal"
 )
-
-func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
-	abstract := maker(file)
-	resolver := r.PipelineFor(abstract.Handle)
-
-	r.WebsiteRoutes.AddPageFrom(path, file, func(file string) StaticRouteResource {
-		return maker(file)
-	})
-
-	r.Mux.HandleFunc("GET "+path, resolver)
-}
 
 type Router struct {
 	//@todo
@@ -106,49 +94,101 @@ func (r *Router) KeepAliveDB() {
 }
 
 func (r *Router) Profile() {
-	path, file := r.StaticRouteFor(fixtureProfile)
-	addStaticRoute(r, path, file, handler.MakeProfileHandler)
+	maker := handler.MakeProfileHandler
+
+	r.ComposeFixtures(
+		r.WebsiteRoutes.Fixture.GetProfile(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Experience() {
-	path, file := r.StaticRouteFor(fixtureExperience)
-	addStaticRoute(r, path, file, handler.MakeExperienceHandler)
+	maker := handler.MakeExperienceHandler
+
+	r.ComposeFixtures(
+		r.WebsiteRoutes.Fixture.GetExperience(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Projects() {
-	path, file := r.StaticRouteFor(fixtureProjects)
-	addStaticRoute(r, path, file, handler.MakeProjectsHandler)
+	maker := handler.MakeProjectsHandler
+
+	r.ComposeFixtures(
+		r.WebsiteRoutes.Fixture.GetProjects(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Social() {
-	path, file := r.StaticRouteFor(fixtureSocial)
-	addStaticRoute(r, path, file, handler.MakeSocialHandler)
+	maker := handler.MakeSocialHandler
+
+	r.ComposeFixtures(
+		r.WebsiteRoutes.Fixture.GetSocial(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
+
 }
 
 func (r *Router) Talks() {
-	path, file := r.StaticRouteFor(fixtureTalks)
-	addStaticRoute(r, path, file, handler.MakeTalksHandler)
+	maker := handler.MakeTalksHandler
+
+	r.ComposeFixtures(
+		r.WebsiteRoutes.Fixture.GetTalks(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Education() {
-	path, file := r.StaticRouteFor(fixtureEducation)
-	addStaticRoute(r, path, file, handler.MakeEducationHandler)
+	maker := handler.MakeEducationHandler
+
+	r.ComposeFixtures(
+		r.WebsiteRoutes.Fixture.GetEducation(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Recommendations() {
 	maker := handler.MakeRecommendationsHandler
-	path, file := r.StaticRouteFor(fixtureRecommendations)
+
+	r.ComposeFixtures(
+		r.WebsiteRoutes.Fixture.GetRecommendations(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
+}
+
+func (r *Router) ComposeFixtures(fxt *Fixture, maker func(file string) StaticRouteResource) {
+	file := fxt.file
+	fullPath := fxt.fullPath
+
+	r.WebsiteRoutes.AddPageFrom(file, fullPath, func(file string) StaticRouteResource {
+		return maker(file)
+	})
+
+	addStaticRoute(r, file, fullPath, maker)
+}
+
+func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
+	abstract := maker(file)
+	resolver := r.PipelineFor(abstract.Handle)
 
 	r.WebsiteRoutes.AddPageFrom(path, file, func(file string) StaticRouteResource {
 		return maker(file)
 	})
 
-	addStaticRoute(r, path, file, maker)
-}
-
-func (r *Router) StaticRouteFor(slug string) (path string, file string) {
-	filepath := "/" + strings.Trim(slug, "/")
-	fixture := "./storage/fixture/" + slug + ".json"
-
-	return filepath, fixture
+	r.Mux.HandleFunc("GET "+path, resolver)
 }
