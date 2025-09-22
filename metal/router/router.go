@@ -2,6 +2,7 @@ package router
 
 import (
 	baseHttp "net/http"
+	"strings"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
@@ -34,6 +35,7 @@ func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerF
 
 func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
+		r.Env,
 		r.Pipeline.TokenHandler,
 		r.Pipeline.ApiKeys,
 	)
@@ -182,13 +184,14 @@ func (r *Router) ComposeFixtures(fxt *Fixture, maker func(file string) StaticRou
 	addStaticRoute(r, file, fullPath, maker)
 }
 
-func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
-	abstract := maker(file)
+func addStaticRoute[H StaticRouteResource](r *Router, route, fixture string, maker func(string) H) {
+	abstract := maker(fixture)
 	resolver := r.PipelineFor(abstract.Handle)
 
-	r.WebsiteRoutes.AddPageFrom(path, file, func(file string) StaticRouteResource {
+	r.WebsiteRoutes.AddPageFrom(route, fixture, func(file string) StaticRouteResource {
 		return maker(file)
 	})
 
-	r.Mux.HandleFunc("GET "+path, resolver)
+	route = strings.TrimLeft(route, "/")
+	r.Mux.HandleFunc("GET /"+route, resolver)
 }

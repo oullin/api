@@ -11,6 +11,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/repoentity"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/http"
@@ -30,10 +31,12 @@ type TokenCheckMiddleware struct {
 	TokenHandler    *auth.TokenHandler
 	ApiKeys         *repository.ApiKeys
 	rateLimiter     *limiter.MemoryLimiter
+	env             *env.Environment
 }
 
-func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
+func MakeTokenMiddleware(e *env.Environment, tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
 	return TokenCheckMiddleware{
+		env:             e,
 		maxFailPerScope: 10,
 		disallowFuture:  true,
 		ApiKeys:         apiKeys,
@@ -49,6 +52,10 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+		if t.env.App.IsLocal() { //@todo remove!
+			return next(w, r)
+		}
+
 		reqID := strings.TrimSpace(r.Header.Get(portal.RequestIDHeader))
 
 		if reqID == "" {

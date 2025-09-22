@@ -90,6 +90,7 @@ func (p *Menu) Print() {
 	p.PrintOption("2) Create new API account.", inner)
 	p.PrintOption("3) Show API accounts.", inner)
 	p.PrintOption("4) Generate SEO.", inner)
+	p.PrintOption("5) Print Timestamp.", inner)
 
 	p.PrintOption(" ", inner)
 	p.PrintOption("0) Exit.", inner)

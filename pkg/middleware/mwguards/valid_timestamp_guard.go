@@ -49,11 +49,11 @@ func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.
 	}
 
 	if epoch < minValue {
-		return &http.ApiError{Message: "Request timestamp expired", Status: baseHttp.StatusUnauthorized}
+		return TimestampTooOldError("Request timestamp is too old or invalid", "Request timestamp invalid")
 	}
 
 	if epoch > maxValue {
-		return &http.ApiError{Message: "Request timestamp invalid", Status: baseHttp.StatusUnauthorized}
+		return TimestampTooNewError("Request timestamp is too recent or invalid", "Request timestamp invalid")
 	}
 
 	return nil

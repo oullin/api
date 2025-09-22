@@ -43,6 +43,10 @@ func MakePublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware 
 
 func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+		if !p.isProduction {
+			return next(w, r) //@todo remove!
+		}
+
 		if err := p.GuardDependencies(); err != nil {
 			return err
 		}
