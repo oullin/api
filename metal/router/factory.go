@@ -1,4 +1,4 @@
-package kernel
+package router
 
 import (
 	baseHttp "net/http"
@@ -8,25 +8,16 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/handler"
 	"github.com/oullin/metal/env"
-	"github.com/oullin/metal/kernel/web"
 	"github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/middleware"
 	"github.com/oullin/pkg/portal"
 )
 
-const StaticRouteTalks = "talks"
-const StaticRouteSocial = "social"
-const StaticRouteProfile = "profile"
-const StaticRouteProjects = "projects"
-const StaticRouteEducation = "education"
-const StaticRouteExperience = "experience"
-const StaticRouteRecommendations = "recommendations"
-
-func addStaticRoute[H web.StaticRouteResource](r *Router, path, file string, maker func(string) H) {
+func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
 	abstract := maker(file)
 	resolver := r.PipelineFor(abstract.Handle)
 
-	r.WebsiteRoutes.AddPageFrom(path, file, func(file string) web.StaticRouteResource {
+	r.WebsiteRoutes.AddPageFrom(path, file, func(file string) StaticRouteResource {
 		return maker(file)
 	})
 
@@ -40,8 +31,8 @@ type Router struct {
 	Mux           *baseHttp.ServeMux
 	Pipeline      middleware.Pipeline
 	Db            *database.Connection
-	validator     *portal.Validator
-	WebsiteRoutes *web.Routes
+	Validator     *portal.Validator
+	WebsiteRoutes *WebsiteRoutes
 }
 
 func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
@@ -88,7 +79,7 @@ func (r *Router) Categories() {
 }
 
 func (r *Router) Signature() {
-	abstract := handler.MakeSignaturesHandler(r.validator, r.Pipeline.ApiKeys)
+	abstract := handler.MakeSignaturesHandler(r.Validator, r.Pipeline.ApiKeys)
 	generate := r.PublicPipelineFor(abstract.Generate)
 
 	r.Mux.HandleFunc("POST /generate-signature", generate)
@@ -115,40 +106,40 @@ func (r *Router) KeepAliveDB() {
 }
 
 func (r *Router) Profile() {
-	path, file := r.StaticRouteFor(StaticRouteProfile)
+	path, file := r.StaticRouteFor(fixtureProfile)
 	addStaticRoute(r, path, file, handler.MakeProfileHandler)
 }
 
 func (r *Router) Experience() {
-	path, file := r.StaticRouteFor(StaticRouteExperience)
+	path, file := r.StaticRouteFor(fixtureExperience)
 	addStaticRoute(r, path, file, handler.MakeExperienceHandler)
 }
 
 func (r *Router) Projects() {
-	path, file := r.StaticRouteFor(StaticRouteProjects)
+	path, file := r.StaticRouteFor(fixtureProjects)
 	addStaticRoute(r, path, file, handler.MakeProjectsHandler)
 }
 
 func (r *Router) Social() {
-	path, file := r.StaticRouteFor(StaticRouteSocial)
+	path, file := r.StaticRouteFor(fixtureSocial)
 	addStaticRoute(r, path, file, handler.MakeSocialHandler)
 }
 
 func (r *Router) Talks() {
-	path, file := r.StaticRouteFor(StaticRouteTalks)
+	path, file := r.StaticRouteFor(fixtureTalks)
 	addStaticRoute(r, path, file, handler.MakeTalksHandler)
 }
 
 func (r *Router) Education() {
-	path, file := r.StaticRouteFor(StaticRouteEducation)
+	path, file := r.StaticRouteFor(fixtureEducation)
 	addStaticRoute(r, path, file, handler.MakeEducationHandler)
 }
 
 func (r *Router) Recommendations() {
 	maker := handler.MakeRecommendationsHandler
-	path, file := r.StaticRouteFor(StaticRouteRecommendations)
+	path, file := r.StaticRouteFor(fixtureRecommendations)
 
-	r.WebsiteRoutes.AddPageFrom(path, file, func(file string) web.StaticRouteResource {
+	r.WebsiteRoutes.AddPageFrom(path, file, func(file string) StaticRouteResource {
 		return maker(file)
 	})
 

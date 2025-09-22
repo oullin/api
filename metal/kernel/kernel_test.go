@@ -9,6 +9,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"github.com/oullin/pkg/middleware"
@@ -119,7 +120,7 @@ func TestAppHelpers(t *testing.T) {
 	app := &App{}
 
 	mux := http.NewServeMux()
-	r := Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)}}
+	r := router.Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)}}
 
 	app.SetRouter(r)
 
@@ -156,7 +157,7 @@ func TestAppBootRoutes(t *testing.T) {
 		t.Fatalf("handler err: %v", err)
 	}
 
-	router := Router{
+	router := router.Router{
 		Env: env,
 		Mux: http.NewServeMux(),
 		Pipeline: middleware.Pipeline{

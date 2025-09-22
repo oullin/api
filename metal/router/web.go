@@ -1,4 +1,4 @@
-package web
+package router
 
 import (
 	baseHttp "net/http"
@@ -7,7 +7,7 @@ import (
 	"github.com/oullin/pkg/http"
 )
 
-const HomePage = "/"
+const HomePage = "/" // projects, talks, profile
 const AboutPage = "about"
 const ResumePage = "resume"
 const ProjectsPage = "projects"
@@ -22,31 +22,42 @@ type ApiResource struct {
 	Maker func(string) StaticRouteResource
 }
 
-type Page struct {
+type WebPage struct {
 	Path        string
 	File        string
 	ApiResource map[string]ApiResource
 }
 
-type Routes struct {
+type WebsiteRoutes struct {
 	OutputDir string
 	Lang      string
 	SiteName  string
 	SiteURL   string
-	Pages     map[string]Page
+	Fixture   Fixture
+	Pages     map[string]WebPage
 }
 
-func NewRoutes(e *env.Environment) *Routes {
-	return &Routes{
+func NewWebsiteRoutes(e *env.Environment) *WebsiteRoutes {
+	return &WebsiteRoutes{
 		SiteURL:   e.App.URL,
 		SiteName:  e.App.Name,
 		Lang:      e.App.Lang(),
 		OutputDir: e.Seo.SpaDir,
-		Pages:     make(map[string]Page),
+		Fixture:   NewFixture(),
+		Pages:     make(map[string]WebPage),
 	}
 }
 
-func (r *Routes) AddPageFrom(path, file string, abstract func(string) StaticRouteResource) {
+func (r *WebsiteRoutes) AddHome() {
+	//@todo:  projects, talks, profile
+
+	// 1 - Add the Home page.
+	// 2 - Add the Project fixture.
+	// 3 - Add the Talks fixture.
+	// 4 - Add the Profile fixture.
+}
+
+func (r *WebsiteRoutes) AddPageFrom(path, file string, abstract func(string) StaticRouteResource) {
 	resource := make(map[string]ApiResource, 1)
 
 	resource[path] = ApiResource{
@@ -55,7 +66,7 @@ func (r *Routes) AddPageFrom(path, file string, abstract func(string) StaticRout
 		Maker: abstract,
 	}
 
-	page := Page{
+	page := WebPage{
 		Path:        path,
 		File:        file,
 		ApiResource: resource,
@@ -64,6 +75,6 @@ func (r *Routes) AddPageFrom(path, file string, abstract func(string) StaticRout
 	r.MapResource(page, resource)
 }
 
-func (r *Routes) MapResource(page Page, item map[string]ApiResource) {
+func (r *WebsiteRoutes) MapResource(page WebPage, item map[string]ApiResource) {
 	//WIP
 }
