@@ -8,6 +8,7 @@ import (
 	"github.com/oullin/metal/cli/accounts"
 	"github.com/oullin/metal/cli/panel"
 	"github.com/oullin/metal/cli/posts"
+	"github.com/oullin/metal/cli/seo"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg/cli"
@@ -60,7 +61,7 @@ func main() {
 
 			return
 		case 4:
-			if err = generateSEO(menu); err != nil {
+			if err = generateSEO(); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
@@ -143,7 +144,21 @@ func showApiAccount(menu panel.Menu) error {
 	return nil
 }
 
-func generateSEO(menu panel.Menu) error {
+func generateSEO() error {
+	gen, err := seo.NewGenerator(
+		dbConn,
+		environment,
+		portal.GetDefaultValidator(),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if err = gen.GenerateHome(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -171,8 +186,9 @@ func printTimestamp() error {
 	fmt.Printf("RFC3339: %s\n", rfc3339Timestamp)
 
 	// 5. Custom format (e.g., "YYYY-MM-DD HH:MM:SS")
-	// Go uses a special reference time for layouts: Mon Jan 2 15:04:05 MST 2006
+	// time for layouts: Mon Jan 2 15:04:05 MST 2006
 	customTimestamp := now.Format("2006-01-02 15:04:05")
 	fmt.Printf("Custom (YYYY-MM-DD HH:MM:SS): %s\n", customTimestamp)
+
 	return nil
 }

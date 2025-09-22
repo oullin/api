@@ -48,15 +48,6 @@ func NewWebsiteRoutes(e *env.Environment) *WebsiteRoutes {
 	}
 }
 
-func (r *WebsiteRoutes) AddHome() {
-	//@todo:  projects, talks, profile
-
-	// 1 - Add the Home page.
-	// 2 - Add the Project fixture.
-	// 3 - Add the Talks fixture.
-	// 4 - Add the Profile fixture.
-}
-
 func (r *WebsiteRoutes) AddPageFrom(path, file string, abstract func(string) StaticRouteResource) {
 	resource := make(map[string]ApiResource, 1)
 
@@ -65,16 +56,18 @@ func (r *WebsiteRoutes) AddPageFrom(path, file string, abstract func(string) Sta
 		File:  file,
 		Maker: abstract,
 	}
+	//
+	//page := WebPage{
+	//	Path:        path,
+	//	File:        file,
+	//	ApiResource: resource,
+	//}
 
-	page := WebPage{
-		Path:        path,
-		File:        file,
-		ApiResource: resource,
-	}
-
-	r.MapResource(page, resource)
+	//r.MapResource(page, resource)
 }
 
-func (r *WebsiteRoutes) MapResource(page WebPage, item map[string]ApiResource) {
-	//WIP
+func (r *WebsiteRoutes) MapResource(url string) map[string]ApiResource {
+	resource := make(map[string]ApiResource, 1)
+
+	return resource
 }

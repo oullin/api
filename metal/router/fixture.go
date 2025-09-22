@@ -4,13 +4,13 @@ import (
 	"fmt"
 )
 
-const fixtureTalks = "talks"
-const fixtureSocial = "social"
-const fixtureProfile = "profile"
-const fixtureProjects = "projects"
-const fixtureEducation = "education"
-const fixtureExperience = "experience"
-const fixtureRecommendations = "recommendations"
+const FixtureTalks = "talks"
+const FixtureSocial = "social"
+const FixtureProfile = "profile"
+const FixtureProjects = "projects"
+const FixtureEducation = "education"
+const FixtureExperience = "experience"
+const FixtureRecommendations = "recommendations"
 
 type Fixture struct {
 	file     string
@@ -27,31 +27,44 @@ func NewFixture() Fixture {
 }
 
 func (f *Fixture) GetTalks() *Fixture {
-	return f.resolveFor(fixtureTalks)
+	return f.resolveFor(FixtureTalks)
+}
+
+func (f *Fixture) GetTalksFile() string {
+	return f.resolveFor(FixtureTalks).file
+
 }
 
 func (f *Fixture) GetSocial() *Fixture {
-	return f.resolveFor(fixtureSocial)
+	return f.resolveFor(FixtureSocial)
 }
 
 func (f *Fixture) GetProfile() *Fixture {
-	return f.resolveFor(fixtureProfile)
+	return f.resolveFor(FixtureProfile)
+}
+
+func (f *Fixture) GetProfileFile() string {
+	return f.resolveFor(FixtureProfile).fullPath
 }
 
 func (f *Fixture) GetProjects() *Fixture {
-	return f.resolveFor(fixtureProjects)
+	return f.resolveFor(FixtureProjects)
+}
+
+func (f *Fixture) GetProjectsFile() string {
+	return f.resolveFor(FixtureProjects).file
 }
 
 func (f *Fixture) GetEducation() *Fixture {
-	return f.resolveFor(fixtureEducation)
+	return f.resolveFor(FixtureEducation)
 }
 
 func (f *Fixture) GetExperience() *Fixture {
-	return f.resolveFor(fixtureExperience)
+	return f.resolveFor(FixtureExperience)
 }
 
 func (f *Fixture) GetRecommendations() *Fixture {
-	return f.resolveFor(fixtureRecommendations)
+	return f.resolveFor(FixtureRecommendations)
 }
 
 func (f *Fixture) resolveFor(slug string) *Fixture {

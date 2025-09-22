@@ -177,9 +177,9 @@ func (r *Router) ComposeFixtures(fxt *Fixture, maker func(file string) StaticRou
 	file := fxt.file
 	fullPath := fxt.fullPath
 
-	r.WebsiteRoutes.AddPageFrom(file, fullPath, func(file string) StaticRouteResource {
-		return maker(file)
-	})
+	//r.WebsiteRoutes.AddPageFrom(file, fullPath, func(file string) StaticRouteResource {
+	//	return maker(file)
+	//})
 
 	addStaticRoute(r, file, fullPath, maker)
 }
@@ -188,9 +188,9 @@ func addStaticRoute[H StaticRouteResource](r *Router, route, fixture string, mak
 	abstract := maker(fixture)
 	resolver := r.PipelineFor(abstract.Handle)
 
-	r.WebsiteRoutes.AddPageFrom(route, fixture, func(file string) StaticRouteResource {
-		return maker(file)
-	})
+	//r.WebsiteRoutes.AddPageFrom(route, fixture, func(file string) StaticRouteResource {
+	//	return maker(file)
+	//})
 
 	route = strings.TrimLeft(route, "/")
 	r.Mux.HandleFunc("GET /"+route, resolver)
