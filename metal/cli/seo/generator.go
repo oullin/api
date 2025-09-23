@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	htmltemplate "html/template"
+	"html/template"
 	"os"
 	"path/filepath"
 
@@ -19,22 +19,8 @@ import (
 //go:embed stub.html
 var templatesFS embed.FS
 
-type Template struct {
-	StubPath      string                 `validate:"required,oneof=stub.html"`
-	OutputDir     string                 `validate:"required"`
-	Lang          string                 `validate:"required,oneof=en_GB"`
-	SiteName      string                 `validate:"required"`
-	SiteURL       string                 `validate:"required,uri"`
-	LogoURL       string                 `validate:"required,uri"`
-	SameAsURL     []string               `validate:"required"`
-	WebRepoURL    string                 `validate:"required,uri"`
-	APIRepoURL    string                 `validate:"required,uri"`
-	AboutPhotoUrl string                 `validate:"required,uri"`
-	HTML          *htmltemplate.Template `validate:"required"`
-}
-
 type Generator struct {
-	Tmpl          Template
+	Page          Page
 	Env           *env.Environment
 	Validator     *portal.Validator
 	DB            *database.Connection
@@ -42,35 +28,35 @@ type Generator struct {
 }
 
 func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Validator) (*Generator, error) {
-	tmpl := Template{
+	page := Page{
 		LogoURL:       LogoUrl,
+		StubPath:      StubPath,
 		WebRepoURL:    RepoWebUrl,
 		APIRepoURL:    RepoApiUrl,
-		StubPath:      "stub.html",
 		SiteURL:       env.App.URL,
 		SiteName:      env.App.Name,
 		AboutPhotoUrl: AboutPhotoUrl,
 		Lang:          env.App.Lang(),
 		OutputDir:     env.Seo.SpaDir,
-		HTML:          &htmltemplate.Template{},
+		Template:      &template.Template{},
 		SameAsURL:     []string{RepoApiUrl, RepoWebUrl, GocantoUrl},
 	}
 
-	if _, err := val.Rejects(tmpl); err != nil {
-		return nil, fmt.Errorf("invalid template: %w", err)
+	if _, err := val.Rejects(page); err != nil {
+		return nil, fmt.Errorf("invalid template state: %s", val.GetErrorsAsJson())
 	}
 
-	if html, err := tmpl.Load(); err != nil {
-		return nil, fmt.Errorf("there was an issue loading the template [%s]: %w", tmpl.StubPath, err)
+	if html, err := page.Load(); err != nil {
+		return nil, fmt.Errorf("could not load initial stub: %w", err)
 	} else {
-		tmpl.HTML = html
+		page.Template = html
 	}
 
 	return &Generator{
 		DB:            db,
 		Env:           env,
 		Validator:     val,
-		Tmpl:          tmpl,
+		Page:          page,
 		WebsiteRoutes: router.NewWebsiteRoutes(env),
 	}, nil
 }
@@ -119,15 +105,21 @@ func (g *Generator) GenerateHome() error {
 		Projects: projects,
 	}
 
-	if err = g.Tmpl.HTML.Execute(&buffer, data); err != nil {
+	var tData TemplateData
+
+	if tData, err = g.Generate("index.html", data); err != nil {
+		return fmt.Errorf("home: generating template data: %w", err)
+	}
+
+	if err = g.Page.Template.Execute(&buffer, tData); err != nil {
 		return fmt.Errorf("home: rendering template: %w", err)
 	}
 
-	if err = os.MkdirAll(g.Tmpl.OutputDir, 0o755); err != nil {
-		return fmt.Errorf("home: creating directory for %s: %w", g.Tmpl.OutputDir, err)
+	if err = os.MkdirAll(g.Page.OutputDir, 0o755); err != nil {
+		return fmt.Errorf("home: creating directory for %s: %w", g.Page.OutputDir, err)
 	}
 
-	out := filepath.Join(g.Tmpl.OutputDir, "index.html")
+	out := filepath.Join(g.Page.OutputDir, "index.html")
 	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("writing %s: %w", out, err)
 	}
@@ -137,21 +129,21 @@ func (g *Generator) GenerateHome() error {
 	return nil
 }
 
-func (g *Generator) Generate() (TemplateData, error) {
+func (g *Generator) Generate(filename string, payload any) (TemplateData, error) {
 	og := TagOgData{
 		ImageWidth:  "600",
 		ImageHeight: "400",
 		Type:        "website",
-		Locale:      g.Tmpl.Lang,
-		ImageAlt:    g.Tmpl.SiteName,
-		SiteName:    g.Tmpl.SiteName,
-		Image:       g.Tmpl.AboutPhotoUrl,
+		Locale:      g.Page.Lang,
+		ImageAlt:    g.Page.SiteName,
+		SiteName:    g.Page.SiteName,
+		Image:       g.Page.AboutPhotoUrl,
 	}
 
 	twitter := TwitterData{
 		Card:     "summary_large_image",
-		Image:    g.Tmpl.AboutPhotoUrl,
-		ImageAlt: g.Tmpl.SiteName,
+		Image:    g.Page.AboutPhotoUrl,
+		ImageAlt: g.Page.SiteName,
 	}
 
 	data := TemplateData{
@@ -159,56 +151,61 @@ func (g *Generator) Generate() (TemplateData, error) {
 		Robots:         Robots,
 		Twitter:        twitter,
 		ThemeColor:     ThemeColor,
-		Lang:           g.Tmpl.Lang,
+		Lang:           g.Page.Lang,
 		Description:    Description,
-		Canonical:      g.Tmpl.SiteURL,
-		AppleTouchIcon: g.Tmpl.LogoURL,
-		Title:          g.Tmpl.SiteName,
-		JsonLD:         NewJsonID(g.Tmpl).Render(),
+		Canonical:      g.Page.SiteURL,
+		AppleTouchIcon: g.Page.LogoURL,
+		Title:          g.Page.SiteName,
+		JsonLD:         NewJsonID(g.Page).Render(),
+		BgColor:        ThemeColor,
 		Categories:     []string{"one", "two"}, //@todo Fetch this!
 		HrefLang: []HrefLangData{
-			{Lang: g.Tmpl.Lang, Href: g.Tmpl.SiteURL},
+			{Lang: g.Page.Lang, Href: g.Page.SiteURL},
 		},
 		Favicons: []FaviconData{
 			{
 				Rel:   "icon",
 				Sizes: "48x48",
 				Type:  "image/ico",
-				Href:  g.Tmpl.SiteURL + "/favicon.ico",
+				Href:  g.Page.SiteURL + "/favicon.ico",
 			},
 		},
 	}
 
-	manifest := NewManifest(g.Tmpl, data)
-
-	data.Manifest = manifest.Render()
+	data.Manifest = NewManifest(g.Page, data).Render()
 
 	if _, err := g.Validator.Rejects(og); err != nil {
-		return TemplateData{}, fmt.Errorf("generate: invalid og data: %w", err)
+		return TemplateData{}, fmt.Errorf("invalid og data: %s", g.Validator.GetErrorsAsJson())
 	}
 
 	if _, err := g.Validator.Rejects(twitter); err != nil {
-		return TemplateData{}, fmt.Errorf("generate: invalid twitter data: %w", err)
+		return TemplateData{}, fmt.Errorf("invalid twitter data: %s", g.Validator.GetErrorsAsJson())
 	}
 
 	if _, err := g.Validator.Rejects(twitter); err != nil {
-		return TemplateData{}, fmt.Errorf("generate: invalid twitter data: %w", err)
+		return TemplateData{}, fmt.Errorf("invalid twitter data: %s", g.Validator.GetErrorsAsJson())
 	}
 
 	if _, err := g.Validator.Rejects(data); err != nil {
-		return TemplateData{}, fmt.Errorf("generate: invalid template data: %w", err)
+		return TemplateData{}, fmt.Errorf("invalid template data: %s", g.Validator.GetErrorsAsJson())
 	}
 
 	return data, nil
 }
 
-func (t *Template) Load() (*htmltemplate.Template, error) {
+func (t *Page) Load() (*template.Template, error) {
 	raw, err := templatesFS.ReadFile(t.StubPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading template: %w", err)
 	}
 
-	tmpl, err := htmltemplate.New("seo").Parse(string(raw))
+	tmpl, err := template.
+		New("seo").
+		Funcs(template.FuncMap{
+			"ManifestDataURL": ManifestDataURL,
+		}).
+		Parse(string(raw))
+
 	if err != nil {
 		return nil, fmt.Errorf("parsing template: %w", err)
 	}

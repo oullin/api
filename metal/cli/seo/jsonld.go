@@ -24,7 +24,7 @@ type JsonID struct {
 	WebName    string
 }
 
-func NewJsonID(tmpl Template) *JsonID {
+func NewJsonID(tmpl Page) *JsonID {
 	return &JsonID{
 		Lang:        tmpl.Lang,
 		SiteURL:     tmpl.SiteURL,
@@ -131,7 +131,7 @@ func (j *JsonID) Render() template.JS {
 		"@context": "https://schema.org",
 	}
 
-	// Encode without HTML escaping and compact.
+	// Encode without Template escaping and compact.
 	var buf bytes.Buffer
 
 	enc := json.NewEncoder(&buf)

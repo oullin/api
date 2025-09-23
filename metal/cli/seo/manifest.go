@@ -37,7 +37,7 @@ type ManifestShortcut struct {
 	Desc      string         `json:"description,omitempty"`
 }
 
-func NewManifest(tmpl Template, data TemplateData) *Manifest {
+func NewManifest(tmpl Page, data TemplateData) *Manifest {
 	var icons []ManifestIcon
 
 	if len(data.Favicons) > 0 {

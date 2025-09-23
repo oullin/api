@@ -4,7 +4,7 @@ const local = "local"
 const staging = "staging"
 const production = "production"
 
-const defaultLanguage = "en"
+const defaultLanguage = "en_GB"
 
 type AppEnvironment struct {
 	Name      string `validate:"required,min=4"`
