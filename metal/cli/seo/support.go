@@ -26,7 +26,7 @@ func Fetch[T any](response *T, handler func() router.StaticRouteResource) error 
 		return err
 	}
 
-	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+	if err := json.Unmarshal(rr.Body.Bytes(), response); err != nil {
 		return err
 	}
 

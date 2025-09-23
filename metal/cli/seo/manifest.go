@@ -38,9 +38,13 @@ type ManifestShortcut struct {
 }
 
 func NewManifest(tmpl Template, data TemplateData) *Manifest {
-	favicon := data.Favicons[1]
-	icons := []ManifestIcon{
-		{Src: favicon.Href, Sizes: favicon.Sizes, Type: favicon.Type, Purpose: "any"},
+	var icons []ManifestIcon
+
+	if len(data.Favicons) > 0 {
+		f := data.Favicons[0]
+		icons = []ManifestIcon{{Src: f.Href, Sizes: f.Sizes, Type: f.Type, Purpose: "any"}}
+	} else {
+		icons = []ManifestIcon{{Src: tmpl.LogoURL, Sizes: "512x512", Type: "image/png", Purpose: "any"}}
 	}
 
 	b := &Manifest{

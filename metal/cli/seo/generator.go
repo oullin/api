@@ -102,16 +102,6 @@ func (g *Generator) GenerateHome() error {
 	var profile payload.ProfileResponse
 	var projects payload.ProjectsResponse
 
-	var data = struct {
-		Talks    payload.TalksResponse
-		Profile  payload.ProfileResponse
-		Projects payload.ProjectsResponse
-	}{
-		Talks:    talks,
-		Profile:  profile,
-		Projects: projects,
-	}
-
 	if err = Fetch[payload.ProfileResponse](&profile, resource[router.FixtureProfile]); err != nil {
 		return fmt.Errorf("home: error fetching profile: %w", err)
 	}
@@ -125,16 +115,27 @@ func (g *Generator) GenerateHome() error {
 	}
 
 	var buffer bytes.Buffer
+	var data = struct {
+		Talks    payload.TalksResponse
+		Profile  payload.ProfileResponse
+		Projects payload.ProjectsResponse
+	}{
+		Talks:    talks,
+		Profile:  profile,
+		Projects: projects,
+	}
+
 	if err = g.Tmpl.HTML.Execute(&buffer, data); err != nil {
 		return fmt.Errorf("home: rendering template: %w", err)
 	}
 
-	if err = os.MkdirAll(filepath.Dir(g.Tmpl.OutputDir), 0o755); err != nil {
+	if err = os.MkdirAll(g.Tmpl.OutputDir, 0o755); err != nil {
 		return fmt.Errorf("home: creating directory for %s: %w", g.Tmpl.OutputDir, err)
 	}
 
-	if err = os.WriteFile(g.Tmpl.OutputDir, buffer.Bytes(), 0o644); err != nil {
-		return fmt.Errorf("writing %s: %w", g.Tmpl.OutputDir, err)
+	out := filepath.Join(g.Tmpl.OutputDir, "index.html")
+	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
+		return fmt.Errorf("writing %s: %w", out, err)
 	}
 
 	fmt.Println("Home: Done.")
