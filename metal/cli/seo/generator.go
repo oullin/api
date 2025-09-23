@@ -1,9 +1,12 @@
 package seo
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	htmltemplate "html/template"
+	"os"
+	"path/filepath"
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler"
@@ -22,6 +25,7 @@ type Template struct {
 	Lang      string
 	SiteName  string
 	SiteURL   string
+	HTML      *htmltemplate.Template
 }
 
 type Generator struct {
@@ -34,7 +38,7 @@ type Generator struct {
 }
 
 func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Validator) (*Generator, error) {
-	tmpl := Template{
+	template := Template{
 		StubPath:  "stub.html",
 		SiteURL:   env.App.URL,
 		SiteName:  env.App.Name,
@@ -42,10 +46,16 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		OutputDir: env.Seo.SpaDir,
 	}
 
+	if html, err := template.LoadTemplate(); err != nil {
+		return nil, fmt.Errorf("there was an issue loading the template [%s]: %w", template.StubPath, err)
+	} else {
+		template.HTML = html
+	}
+
 	return &Generator{
 		DB:            db,
 		Env:           env,
-		Tmpl:          tmpl,
+		Tmpl:          template,
 		Validator:     val,
 		Router:        &router.Router{},
 		WebsiteRoutes: router.NewWebsiteRoutes(env),
@@ -53,12 +63,7 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 }
 
 func (g *Generator) GenerateHome() error {
-	_, err := g.Tmpl.LoadTemplate()
-
-	if err != nil {
-		return fmt.Errorf("loading template: %w", err)
-	}
-
+	var err error
 	web := g.WebsiteRoutes
 	resource := make(map[string]func() router.StaticRouteResource)
 
@@ -71,28 +76,49 @@ func (g *Generator) GenerateHome() error {
 	}
 
 	resource[router.FixtureProjects] = func() router.StaticRouteResource {
-		return handler.MakeProjectsHandler(web.Fixture.GetProfileFile())
+		return handler.MakeProjectsHandler(web.Fixture.GetProjectsFile())
 	}
 
 	var talks payload.TalksResponse
 	var profile payload.ProfileResponse
 	var projects payload.ProjectsResponse
 
+	var data = struct {
+		Talks    payload.TalksResponse
+		Projects payload.ProjectsResponse
+		Profile  payload.ProfileResponse
+	}{
+		Talks:    talks,
+		Profile:  profile,
+		Projects: projects,
+	}
+
 	if err = Fetch[payload.ProfileResponse](&profile, resource[router.FixtureProfile]); err != nil {
-		return fmt.Errorf("error fetching profile: %w", err)
+		return fmt.Errorf("home: error fetching profile: %w", err)
 	}
 
 	if err = Fetch[payload.TalksResponse](&talks, resource[router.FixtureTalks]); err != nil {
-		return fmt.Errorf("error fetching talks: %w", err)
+		return fmt.Errorf("home: error fetching talks: %w", err)
 	}
 
 	if err = Fetch[payload.ProjectsResponse](&projects, resource[router.FixtureProjects]); err != nil {
-		return fmt.Errorf("error fetching projects: %w", err)
+		return fmt.Errorf("home: error fetching projects: %w", err)
 	}
 
-	fmt.Println("Here: ", profile)
+	var buffer bytes.Buffer
+	if err = g.Tmpl.HTML.Execute(&buffer, data); err != nil {
+		return fmt.Errorf("home: rendering template: %w", err)
+	}
 
-	//PrintResponse(rr)
+	if err = os.MkdirAll(filepath.Dir(g.Tmpl.OutputDir), 0o755); err != nil {
+		return fmt.Errorf("home: creating directory for %s: %w", g.Tmpl.OutputDir, err)
+	}
+
+	if err = os.WriteFile(g.Tmpl.OutputDir, buffer.Bytes(), 0o644); err != nil {
+		return fmt.Errorf("writing %s: %w", g.Tmpl.OutputDir, err)
+	}
+
+	fmt.Println("Home: Done.")
 
 	return nil
 }

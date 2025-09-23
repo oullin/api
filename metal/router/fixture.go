@@ -31,7 +31,7 @@ func (f *Fixture) GetTalks() *Fixture {
 }
 
 func (f *Fixture) GetTalksFile() string {
-	return f.resolveFor(FixtureTalks).file
+	return f.resolveFor(FixtureTalks).fullPath
 
 }
 
@@ -52,7 +52,7 @@ func (f *Fixture) GetProjects() *Fixture {
 }
 
 func (f *Fixture) GetProjectsFile() string {
-	return f.resolveFor(FixtureProjects).file
+	return f.resolveFor(FixtureProjects).fullPath
 }
 
 func (f *Fixture) GetEducation() *Fixture {
