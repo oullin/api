@@ -68,12 +68,6 @@ func NewManifest(tmpl Template, data TemplateData) *Manifest {
 			},
 			{
 				Icons:     icons,
-				URL:       WebPostUrl,
-				Name:      WebPostName,
-				ShortName: WebPostName,
-			},
-			{
-				Icons:     icons,
 				URL:       WebProjectsUrl,
 				Name:      WebProjectsName,
 				ShortName: WebProjectsName,

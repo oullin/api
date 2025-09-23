@@ -14,14 +14,12 @@ import (
 )
 
 type Router struct {
-	//@todo
-	// --- make these fields required and use the validator to verify them.
+	WebsiteRoutes *WebsiteRoutes
 	Env           *env.Environment
+	Validator     *portal.Validator
 	Mux           *baseHttp.ServeMux
 	Pipeline      middleware.Pipeline
 	Db            *database.Connection
-	Validator     *portal.Validator
-	WebsiteRoutes *WebsiteRoutes
 }
 
 func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
@@ -98,7 +96,7 @@ func (r *Router) KeepAliveDB() {
 func (r *Router) Profile() {
 	maker := handler.MakeProfileHandler
 
-	r.ComposeFixtures(
+	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetProfile(),
 		func(file string) StaticRouteResource {
 			return maker(file)
@@ -109,7 +107,7 @@ func (r *Router) Profile() {
 func (r *Router) Experience() {
 	maker := handler.MakeExperienceHandler
 
-	r.ComposeFixtures(
+	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetExperience(),
 		func(file string) StaticRouteResource {
 			return maker(file)
@@ -120,7 +118,7 @@ func (r *Router) Experience() {
 func (r *Router) Projects() {
 	maker := handler.MakeProjectsHandler
 
-	r.ComposeFixtures(
+	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetProjects(),
 		func(file string) StaticRouteResource {
 			return maker(file)
@@ -131,19 +129,18 @@ func (r *Router) Projects() {
 func (r *Router) Social() {
 	maker := handler.MakeSocialHandler
 
-	r.ComposeFixtures(
+	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetSocial(),
 		func(file string) StaticRouteResource {
 			return maker(file)
 		},
 	)
-
 }
 
 func (r *Router) Talks() {
 	maker := handler.MakeTalksHandler
 
-	r.ComposeFixtures(
+	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetTalks(),
 		func(file string) StaticRouteResource {
 			return maker(file)
@@ -154,7 +151,7 @@ func (r *Router) Talks() {
 func (r *Router) Education() {
 	maker := handler.MakeEducationHandler
 
-	r.ComposeFixtures(
+	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetEducation(),
 		func(file string) StaticRouteResource {
 			return maker(file)
@@ -165,7 +162,7 @@ func (r *Router) Education() {
 func (r *Router) Recommendations() {
 	maker := handler.MakeRecommendationsHandler
 
-	r.ComposeFixtures(
+	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetRecommendations(),
 		func(file string) StaticRouteResource {
 			return maker(file)
@@ -173,13 +170,9 @@ func (r *Router) Recommendations() {
 	)
 }
 
-func (r *Router) ComposeFixtures(fxt *Fixture, maker func(file string) StaticRouteResource) {
+func (r *Router) composeFixtures(fxt *Fixture, maker func(file string) StaticRouteResource) {
 	file := fxt.file
 	fullPath := fxt.fullPath
-
-	//r.WebsiteRoutes.AddPageFrom(file, fullPath, func(file string) StaticRouteResource {
-	//	return maker(file)
-	//})
 
 	addStaticRoute(r, file, fullPath, maker)
 }
@@ -187,10 +180,6 @@ func (r *Router) ComposeFixtures(fxt *Fixture, maker func(file string) StaticRou
 func addStaticRoute[H StaticRouteResource](r *Router, route, fixture string, maker func(string) H) {
 	abstract := maker(fixture)
 	resolver := r.PipelineFor(abstract.Handle)
-
-	//r.WebsiteRoutes.AddPageFrom(route, fixture, func(file string) StaticRouteResource {
-	//	return maker(file)
-	//})
 
 	route = strings.TrimLeft(route, "/")
 	r.Mux.HandleFunc("GET /"+route, resolver)

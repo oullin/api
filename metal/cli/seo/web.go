@@ -11,18 +11,15 @@ const AboutPhotoUrl = "https://oullin.io/assets/about-Dt5rMl63.jpg"
 const WebHomeName = "Home"
 const WebHomeUrl = "/"
 
-const WebPostName = "Post"
-const WebPostUrl = "/post/:slug"
-
 const WebAboutName = "About"
-const WebAboutUrl = "/post/:slug"
+const WebAboutUrl = "/about"
 
 const WebProjectsName = "Projects"
-const WebProjectsUrl = "/post/:slug"
+const WebProjectsUrl = "/projects"
 
 const WebResumeName = "Resume"
-const WebResumeUrl = "/post/:slug"
+const WebResumeUrl = "/resume"
 
-const Description = "Gustavo is a full-stack Software Engineer leader with over two decades of of experience in building complex web systems and products, specialising in areas like e-commerce, banking, cross-payment solutions, cyber security, and customer success."
 const Robots = "index, follow"
 const ThemeColor = "light dark"
+const Description = "Gustavo is a full-stack Software Engineer leader with over two decades of of experience in building complex web systems and products, specialising in areas like e-commerce, banking, cross-payment solutions, cyber security, and customer success."

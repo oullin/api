@@ -52,7 +52,7 @@ func MakeTokenMiddleware(e *env.Environment, tokenHandler *auth.TokenHandler, ap
 
 func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
-		if t.env.App.IsLocal() { //@todo remove!
+		if t.env != nil && t.env.App.IsLocal() { //@todo remove!
 			return next(w, r)
 		}
 
