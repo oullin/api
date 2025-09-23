@@ -20,12 +20,17 @@ import (
 var templatesFS embed.FS
 
 type Template struct {
-	StubPath  string
-	OutputDir string
-	Lang      string
-	SiteName  string
-	SiteURL   string
-	HTML      *htmltemplate.Template
+	StubPath      string
+	OutputDir     string
+	Lang          string
+	SiteName      string
+	SiteURL       string
+	LogoURL       string
+	SameAsURL     []string
+	WebRepoURL    string
+	APIRepoURL    string
+	AboutPhotoUrl string
+	HTML          *htmltemplate.Template
 }
 
 type Generator struct {
@@ -39,11 +44,17 @@ type Generator struct {
 
 func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Validator) (*Generator, error) {
 	template := Template{
-		StubPath:  "stub.html",
-		SiteURL:   env.App.URL,
-		SiteName:  env.App.Name,
-		Lang:      env.App.Lang(),
-		OutputDir: env.Seo.SpaDir,
+		LogoURL:       LogoUrl,
+		WebRepoURL:    RepoWebUrl,
+		APIRepoURL:    RepoApiUrl,
+		StubPath:      "stub.html",
+		SiteURL:       env.App.URL,
+		SiteName:      env.App.Name,
+		AboutPhotoUrl: AboutPhotoUrl,
+		Lang:          env.App.Lang(),
+		OutputDir:     env.Seo.SpaDir,
+		HTML:          &htmltemplate.Template{},
+		SameAsURL:     []string{RepoApiUrl, RepoWebUrl, GocantoUrl},
 	}
 
 	if html, err := template.LoadTemplate(); err != nil {
@@ -55,8 +66,8 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	return &Generator{
 		DB:            db,
 		Env:           env,
-		Tmpl:          template,
 		Validator:     val,
+		Tmpl:          template,
 		Router:        &router.Router{},
 		WebsiteRoutes: router.NewWebsiteRoutes(env),
 	}, nil
@@ -85,8 +96,8 @@ func (g *Generator) GenerateHome() error {
 
 	var data = struct {
 		Talks    payload.TalksResponse
-		Projects payload.ProjectsResponse
 		Profile  payload.ProfileResponse
+		Projects payload.ProjectsResponse
 	}{
 		Talks:    talks,
 		Profile:  profile,
@@ -119,6 +130,55 @@ func (g *Generator) GenerateHome() error {
 	}
 
 	fmt.Println("Home: Done.")
+
+	return nil
+}
+
+func (g *Generator) Generate() error {
+	og := TagOgData{
+		ImageWidth:  "600",
+		ImageHeight: "400",
+		Type:        "website",
+		Locale:      g.Tmpl.Lang,
+		ImageAlt:    g.Tmpl.SiteName,
+		SiteName:    g.Tmpl.SiteName,
+		Image:       g.Tmpl.AboutPhotoUrl,
+	}
+
+	twitter := TwitterData{
+		Card:     "summary_large_image",
+		Image:    g.Tmpl.AboutPhotoUrl,
+		ImageAlt: g.Tmpl.SiteName,
+	}
+
+	data := TemplateData{
+		OGTagOg:        og,
+		Robots:         Robots,
+		Twitter:        twitter,
+		ThemeColor:     ThemeColor,
+		Lang:           g.Tmpl.Lang,
+		Description:    Description,
+		Canonical:      g.Tmpl.SiteURL,
+		AppleTouchIcon: g.Tmpl.LogoURL,
+		Title:          g.Tmpl.SiteName,
+		JsonLD:         NewJsonID(g.Tmpl).Render(),
+		Categories:     []string{"one", "two"}, //@todo Fetch this!
+		HrefLang: []HrefLangData{
+			{Lang: g.Tmpl.Lang, Href: g.Tmpl.SiteURL},
+		},
+		Favicons: []FaviconData{
+			{
+				Rel:   "icon",
+				Sizes: "48x48",
+				Type:  "image/ico",
+				Href:  g.Tmpl.SiteURL + "/favicon.ico",
+			},
+		},
+	}
+
+	manifest := NewManifest(g.Tmpl, data)
+
+	data.Manifest = manifest.Render()
 
 	return nil
 }

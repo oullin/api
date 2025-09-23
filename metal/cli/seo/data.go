@@ -13,31 +13,33 @@ type TemplateData struct {
 	Lang           string          `validate:"required,oneof=en"`
 	Title          string          `validate:"required,min=10"`
 	Description    string          `validate:"required,min=10"`
-	Canonical      string          `validate:"required,url"` //website url
-	Robots         string          `validate:"required"`     // default: index,follow
-	ThemeColor     string          `validate:"required"`     // default: #0E172B -> dark
+	Canonical      string          `validate:"required,url"`
+	Robots         string          `validate:"required"`
+	ThemeColor     string          `validate:"required"`
 	JsonLD         htmltemplate.JS `validate:"required"`
 	OGTagOg        TagOgData       `validate:"required"`
 	Twitter        TwitterData     `validate:"required"`
 	HrefLang       []HrefLangData  `validate:"required"`
 	Favicons       []FaviconData   `validate:"required"`
-	Manifest       string          `validate:"required"`
+	Manifest       htmltemplate.JS `validate:"required"`
 	AppleTouchIcon string          `validate:"required"`
+	Categories     []string        `validate:"required"`
+	BgColor        string          `validate:"required"`
 }
 
 type TagOgData struct {
-	Type        string `validate:"required,oneof=website"` //website
-	Image       string `validate:"required,url"`           //https://oullin.io/assets/about-Dt5rMl63.jpg
+	Type        string `validate:"required,oneof=website"`
+	Image       string `validate:"required,url"`
 	ImageAlt    string `validate:"required,min=10"`
-	ImageWidth  string `validate:"required"` //600
-	ImageHeight string `validate:"required"` //400
+	ImageWidth  string `validate:"required"`
+	ImageHeight string `validate:"required"`
 	SiteName    string `validate:"required,min=5"`
-	Locale      string `validate:"required,min=5"` //en_GB
+	Locale      string `validate:"required,min=5"`
 }
 
 type TwitterData struct {
 	Card     string `validate:"required,oneof=summary_large_image"`
-	Image    string `validate:"required,url"` //https://oullin.io/assets/about-Dt5rMl63.jpg
+	Image    string `validate:"required,url"`
 	ImageAlt string `validate:"required,min=10"`
 }
 

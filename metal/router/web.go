@@ -56,7 +56,7 @@ func (r *WebsiteRoutes) AddPageFrom(path, file string, abstract func(string) Sta
 		File:  file,
 		Maker: abstract,
 	}
-	//
+	//@todo Remove this!
 	//page := WebPage{
 	//	Path:        path,
 	//	File:        file,
