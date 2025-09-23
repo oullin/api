@@ -34,15 +34,15 @@ type Template struct {
 }
 
 type Generator struct {
-	Tmpl          Template              `validate:"required"`
-	Env           *env.Environment      `validate:"required"`
-	Validator     *portal.Validator     `validate:"required"`
-	DB            *database.Connection  `validate:"required"`
-	WebsiteRoutes *router.WebsiteRoutes `validate:"required"`
+	Tmpl          Template
+	Env           *env.Environment
+	Validator     *portal.Validator
+	DB            *database.Connection
+	WebsiteRoutes *router.WebsiteRoutes
 }
 
 func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Validator) (*Generator, error) {
-	template := Template{
+	tmpl := Template{
 		LogoURL:       LogoUrl,
 		WebRepoURL:    RepoWebUrl,
 		APIRepoURL:    RepoApiUrl,
@@ -56,29 +56,23 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		SameAsURL:     []string{RepoApiUrl, RepoWebUrl, GocantoUrl},
 	}
 
-	if html, err := template.LoadTemplate(); err != nil {
-		return nil, fmt.Errorf("there was an issue loading the template [%s]: %w", template.StubPath, err)
-	} else {
-		template.HTML = html
-	}
-
-	if _, err := val.Rejects(template); err != nil {
+	if _, err := val.Rejects(tmpl); err != nil {
 		return nil, fmt.Errorf("invalid template: %w", err)
 	}
 
-	gen := Generator{
+	if html, err := tmpl.Load(); err != nil {
+		return nil, fmt.Errorf("there was an issue loading the template [%s]: %w", tmpl.StubPath, err)
+	} else {
+		tmpl.HTML = html
+	}
+
+	return &Generator{
 		DB:            db,
 		Env:           env,
 		Validator:     val,
-		Tmpl:          template,
+		Tmpl:          tmpl,
 		WebsiteRoutes: router.NewWebsiteRoutes(env),
-	}
-
-	if _, err := val.Rejects(gen); err != nil {
-		return nil, fmt.Errorf("invalid generator: %w", err)
-	}
-
-	return &gen, nil
+	}, nil
 }
 
 func (g *Generator) GenerateHome() error {
@@ -208,7 +202,7 @@ func (g *Generator) Generate() (TemplateData, error) {
 	return data, nil
 }
 
-func (t *Template) LoadTemplate() (*htmltemplate.Template, error) {
+func (t *Template) Load() (*htmltemplate.Template, error) {
 	raw, err := templatesFS.ReadFile(t.StubPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading template: %w", err)
