@@ -20,26 +20,25 @@ import (
 var templatesFS embed.FS
 
 type Template struct {
-	StubPath      string
-	OutputDir     string
-	Lang          string
-	SiteName      string
-	SiteURL       string
-	LogoURL       string
-	SameAsURL     []string
-	WebRepoURL    string
-	APIRepoURL    string
-	AboutPhotoUrl string
-	HTML          *htmltemplate.Template
+	StubPath      string                 `validate:"required,oneof=stub.html"`
+	OutputDir     string                 `validate:"required"`
+	Lang          string                 `validate:"required,oneof=en_GB"`
+	SiteName      string                 `validate:"required"`
+	SiteURL       string                 `validate:"required,uri"`
+	LogoURL       string                 `validate:"required,uri"`
+	SameAsURL     []string               `validate:"required"`
+	WebRepoURL    string                 `validate:"required,uri"`
+	APIRepoURL    string                 `validate:"required,uri"`
+	AboutPhotoUrl string                 `validate:"required,uri"`
+	HTML          *htmltemplate.Template `validate:"required"`
 }
 
 type Generator struct {
-	Tmpl          Template
-	Env           *env.Environment
-	Validator     *portal.Validator
-	DB            *database.Connection
-	WebsiteRoutes *router.WebsiteRoutes
-	Router        *router.Router //@todo Remove!
+	Tmpl          Template              `validate:"required"`
+	Env           *env.Environment      `validate:"required"`
+	Validator     *portal.Validator     `validate:"required"`
+	DB            *database.Connection  `validate:"required"`
+	WebsiteRoutes *router.WebsiteRoutes `validate:"required"`
 }
 
 func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Validator) (*Generator, error) {
@@ -63,14 +62,23 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		template.HTML = html
 	}
 
-	return &Generator{
+	if _, err := val.Rejects(template); err != nil {
+		return nil, fmt.Errorf("invalid template: %w", err)
+	}
+
+	gen := Generator{
 		DB:            db,
 		Env:           env,
 		Validator:     val,
 		Tmpl:          template,
-		Router:        &router.Router{},
 		WebsiteRoutes: router.NewWebsiteRoutes(env),
-	}, nil
+	}
+
+	if _, err := val.Rejects(gen); err != nil {
+		return nil, fmt.Errorf("invalid generator: %w", err)
+	}
+
+	return &gen, nil
 }
 
 func (g *Generator) GenerateHome() error {
@@ -134,7 +142,7 @@ func (g *Generator) GenerateHome() error {
 	return nil
 }
 
-func (g *Generator) Generate() error {
+func (g *Generator) Generate() (TemplateData, error) {
 	og := TagOgData{
 		ImageWidth:  "600",
 		ImageHeight: "400",
@@ -180,7 +188,23 @@ func (g *Generator) Generate() error {
 
 	data.Manifest = manifest.Render()
 
-	return nil
+	if _, err := g.Validator.Rejects(og); err != nil {
+		return TemplateData{}, fmt.Errorf("generate: invalid og data: %w", err)
+	}
+
+	if _, err := g.Validator.Rejects(twitter); err != nil {
+		return TemplateData{}, fmt.Errorf("generate: invalid twitter data: %w", err)
+	}
+
+	if _, err := g.Validator.Rejects(twitter); err != nil {
+		return TemplateData{}, fmt.Errorf("generate: invalid twitter data: %w", err)
+	}
+
+	if _, err := g.Validator.Rejects(data); err != nil {
+		return TemplateData{}, fmt.Errorf("generate: invalid template data: %w", err)
+	}
+
+	return data, nil
 }
 
 func (t *Template) LoadTemplate() (*htmltemplate.Template, error) {

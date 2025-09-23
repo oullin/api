@@ -2,13 +2,6 @@ package seo
 
 import htmltemplate "html/template"
 
-type SEO struct {
-	SpaPublicDir string `validate:"required,dirpath"`
-	SiteURL      string `validate:"required,url"`
-	Lang         string `validate:"required,oneof=en"`
-	SiteName     string `validate:"required,min=10"`
-}
-
 type TemplateData struct {
 	Lang           string          `validate:"required,oneof=en"`
 	Title          string          `validate:"required,min=10"`

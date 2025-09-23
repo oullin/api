@@ -25,7 +25,7 @@ func (h Handler) CreateAccount(accountName string) error {
 		return fmt.Errorf("failed to create account [%s]: %v", accountName, err)
 	}
 
-	if h.print(token, item) != nil {
+	if err = h.print(token, item); err != nil {
 		return fmt.Errorf("could not decode the given account [%s] keys: %v", item.AccountName, err)
 	}
 

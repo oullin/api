@@ -25,12 +25,8 @@ func TestCreateReadSignature(t *testing.T) {
 		t.Fatalf("create: %v", err)
 	}
 
-	if err := h.ReadAccount("tester"); err != nil {
+	if err := h.ShowAccount("tester"); err != nil {
 		t.Fatalf("read: %v", err)
-	}
-
-	if err := h.CreateSignature("tester"); err != nil {
-		t.Fatalf("signature: %v", err)
 	}
 }
 
@@ -42,18 +38,10 @@ func TestCreateAccountInvalid(t *testing.T) {
 	}
 }
 
-func TestReadAccountNotFound(t *testing.T) {
+func TestShowAccountNotFound(t *testing.T) {
 	h := setupAccountHandler(t)
 
-	if err := h.ReadAccount("missing"); err == nil {
-		t.Fatalf("expected error")
-	}
-}
-
-func TestCreateSignatureNotFound(t *testing.T) {
-	h := setupAccountHandler(t)
-
-	if err := h.CreateSignature("missing"); err == nil {
+	if err := h.ShowAccount("missing"); err == nil {
 		t.Fatalf("expected error")
 	}
 }
