@@ -17,21 +17,22 @@ type Page struct {
 }
 
 type TemplateData struct {
-	Lang           string         `validate:"required,oneof=en_GB"`
-	Title          string         `validate:"required,min=10"`
-	Description    string         `validate:"required,min=10"`
-	Canonical      string         `validate:"required,url"`
-	Robots         string         `validate:"required"`
-	ThemeColor     string         `validate:"required"`
-	JsonLD         template.JS    `validate:"required"`
-	OGTagOg        TagOgData      `validate:"required"`
-	Twitter        TwitterData    `validate:"required"`
-	HrefLang       []HrefLangData `validate:"required"`
-	Favicons       []FaviconData  `validate:"required"`
-	Manifest       template.JS    `validate:"required"`
-	AppleTouchIcon string         `validate:"required"`
-	Categories     []string       `validate:"required"`
-	BgColor        string         `validate:"required"`
+	Lang           string          `validate:"required,oneof=en_GB"`
+	Title          string          `validate:"required,min=10"`
+	Description    string          `validate:"required,min=10"`
+	Canonical      string          `validate:"required,url"`
+	Robots         string          `validate:"required"`
+	ThemeColor     string          `validate:"required"`
+	JsonLD         template.JS     `validate:"required"`
+	OGTagOg        TagOgData       `validate:"required"`
+	Twitter        TwitterData     `validate:"required"`
+	HrefLang       []HrefLangData  `validate:"required"`
+	Favicons       []FaviconData   `validate:"required"`
+	Manifest       template.JS     `validate:"required"`
+	AppleTouchIcon string          `validate:"required"`
+	Categories     []string        `validate:"required"`
+	BgColor        string          `validate:"required"`
+	Body           []template.HTML `validate:"required"`
 }
 
 type TagOgData struct {

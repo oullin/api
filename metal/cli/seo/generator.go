@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler"
@@ -64,50 +65,69 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 func (g *Generator) GenerateHome() error {
 	var err error
 	web := g.WebsiteRoutes
-	resource := make(map[string]func() router.StaticRouteResource)
-
-	resource[router.FixtureProfile] = func() router.StaticRouteResource {
-		return handler.MakeProfileHandler(web.Fixture.GetProfileFile())
-	}
-
-	resource[router.FixtureTalks] = func() router.StaticRouteResource {
-		return handler.MakeTalksHandler(web.Fixture.GetTalksFile())
-	}
-
-	resource[router.FixtureProjects] = func() router.StaticRouteResource {
-		return handler.MakeProjectsHandler(web.Fixture.GetProjectsFile())
-	}
-
 	var talks payload.TalksResponse
 	var profile payload.ProfileResponse
 	var projects payload.ProjectsResponse
 
-	if err = Fetch[payload.ProfileResponse](&profile, resource[router.FixtureProfile]); err != nil {
+	fnProfile := func() router.StaticRouteResource {
+		return handler.MakeProfileHandler(web.Fixture.GetProfileFile())
+	}
+
+	fnTalks := func() router.StaticRouteResource {
+		return handler.MakeTalksHandler(web.Fixture.GetTalksFile())
+	}
+
+	fnProjects := func() router.StaticRouteResource {
+		return handler.MakeProjectsHandler(web.Fixture.GetProjectsFile())
+	}
+
+	if err = Fetch[payload.ProfileResponse](&profile, fnProfile); err != nil {
 		return fmt.Errorf("home: error fetching profile: %w", err)
 	}
 
-	if err = Fetch[payload.TalksResponse](&talks, resource[router.FixtureTalks]); err != nil {
+	if err = Fetch[payload.TalksResponse](&talks, fnTalks); err != nil {
 		return fmt.Errorf("home: error fetching talks: %w", err)
 	}
 
-	if err = Fetch[payload.ProjectsResponse](&projects, resource[router.FixtureProjects]); err != nil {
+	if err = Fetch[payload.ProjectsResponse](&projects, fnProjects); err != nil {
 		return fmt.Errorf("home: error fetching projects: %w", err)
 	}
 
-	var buffer bytes.Buffer
-	var data = struct {
-		Talks    payload.TalksResponse
-		Profile  payload.ProfileResponse
-		Projects payload.ProjectsResponse
-	}{
-		Talks:    talks,
-		Profile:  profile,
-		Projects: projects,
+	var bodyData []template.HTML
+
+	bodyData = append(bodyData, "<h1>Profile</h1>")
+	bodyData = append(bodyData, template.HTML("<p>"+profile.Data.Name+","+profile.Data.Profession+"</p>"))
+	bodyData = append(bodyData, "<h1>Skills</h1>")
+
+	var itemsA []string
+	for _, item := range profile.Data.Skills {
+		itemsA = append(itemsA, "<li>"+item.Item+"</li>")
 	}
 
-	var tData TemplateData
+	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsA, "")+"</ul></p>"))
 
-	if tData, err = g.Generate("index.html", data); err != nil {
+	bodyData = append(bodyData, "<h1>Talks</h1>")
+	var itemsB []string
+	for _, item := range talks.Data {
+		itemsB = append(itemsB, "<li>"+item.Title+": "+item.Subject+"</li>")
+	}
+
+	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsB, "")+"</ul></p>"))
+
+	bodyData = append(bodyData, "<h1>Projects</h1>")
+	var itemsC []string
+	for _, item := range projects.Data {
+		itemsC = append(itemsC, "<li>"+item.Title+": "+item.Excerpt+"</li>")
+	}
+
+	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsC, "")+"</ul></p>"))
+
+	// ----- Template Parsing
+
+	var tData TemplateData
+	var buffer bytes.Buffer
+
+	if tData, err = g.Build(bodyData); err != nil {
 		return fmt.Errorf("home: generating template data: %w", err)
 	}
 
@@ -129,7 +149,7 @@ func (g *Generator) GenerateHome() error {
 	return nil
 }
 
-func (g *Generator) Generate(filename string, payload any) (TemplateData, error) {
+func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 	og := TagOgData{
 		ImageWidth:  "600",
 		ImageHeight: "400",
@@ -172,6 +192,7 @@ func (g *Generator) Generate(filename string, payload any) (TemplateData, error)
 		},
 	}
 
+	data.Body = body
 	data.Manifest = NewManifest(g.Page, data).Render()
 
 	if _, err := g.Validator.Rejects(og); err != nil {

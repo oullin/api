@@ -41,15 +41,13 @@
 	<meta name="twitter:description" content="{{.Description}}">
 	<meta name="twitter:image:alt" content="{{.Twitter.ImageAlt}}">
 
-
-
 	<!-- Structured data -->
 	<script type="application/ld+json">{{.JsonLD}}</script>
 	<link rel="manifest" href="{{ ManifestDataURL .Manifest }}">
-
-
 </head>
 <body>
-<!-- Static share-only document. No CSS/JS by design. -->
+	{{- range .Body }}
+	{{.}}
+	{{- end }}
 </body>
 </html>
