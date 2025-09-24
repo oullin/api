@@ -213,10 +213,6 @@ func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 		return TemplateData{}, fmt.Errorf("invalid twitter data: %s", g.Validator.GetErrorsAsJson())
 	}
 
-	if _, err := g.Validator.Rejects(twitter); err != nil {
-		return TemplateData{}, fmt.Errorf("invalid twitter data: %s", g.Validator.GetErrorsAsJson())
-	}
-
 	if _, err := g.Validator.Rejects(data); err != nil {
 		return TemplateData{}, fmt.Errorf("invalid template data: %s", g.Validator.GetErrorsAsJson())
 	}
