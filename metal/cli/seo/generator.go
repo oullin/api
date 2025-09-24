@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/oullin/database"
-	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
+	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -22,6 +22,7 @@ var templatesFS embed.FS
 
 type Generator struct {
 	Page          Page
+	Client        *Client
 	Env           *env.Environment
 	Validator     *portal.Validator
 	DB            *database.Connection
@@ -53,44 +54,34 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		page.Template = html
 	}
 
+	webRoutes := router.NewWebsiteRoutes(env)
+
 	return &Generator{
 		DB:            db,
 		Env:           env,
 		Validator:     val,
 		Page:          page,
-		WebsiteRoutes: router.NewWebsiteRoutes(env),
+		WebsiteRoutes: webRoutes,
+		Client:        NewClient(webRoutes),
 	}, nil
 }
 
 func (g *Generator) GenerateHome() error {
 	var err error
-	web := g.WebsiteRoutes
-	var talks payload.TalksResponse
-	var profile payload.ProfileResponse
-	var projects payload.ProjectsResponse
+	var talks *payload.TalksResponse
+	var profile *payload.ProfileResponse
+	var projects *payload.ProjectsResponse
 
-	fnProfile := func() router.StaticRouteResource {
-		return handler.MakeProfileHandler(web.Fixture.GetProfileFile())
+	if profile, err = g.Client.GetProfile(); err != nil {
+		return err
 	}
 
-	fnTalks := func() router.StaticRouteResource {
-		return handler.MakeTalksHandler(web.Fixture.GetTalksFile())
+	if talks, err = g.Client.GetTalks(); err != nil {
+		return err
 	}
 
-	fnProjects := func() router.StaticRouteResource {
-		return handler.MakeProjectsHandler(web.Fixture.GetProjectsFile())
-	}
-
-	if err = Fetch[payload.ProfileResponse](&profile, fnProfile); err != nil {
-		return fmt.Errorf("home: error fetching profile: %w", err)
-	}
-
-	if err = Fetch[payload.TalksResponse](&talks, fnTalks); err != nil {
-		return fmt.Errorf("home: error fetching talks: %w", err)
-	}
-
-	if err = Fetch[payload.ProjectsResponse](&projects, fnProjects); err != nil {
-		return fmt.Errorf("home: error fetching projects: %w", err)
+	if projects, err = g.Client.GetProjects(); err != nil {
+		return err
 	}
 
 	var bodyData []template.HTML
@@ -125,26 +116,35 @@ func (g *Generator) GenerateHome() error {
 	// ----- Template Parsing
 
 	var tData TemplateData
-	var buffer bytes.Buffer
-
 	if tData, err = g.Build(bodyData); err != nil {
 		return fmt.Errorf("home: generating template data: %w", err)
 	}
 
-	if err = g.Page.Template.Execute(&buffer, tData); err != nil {
-		return fmt.Errorf("home: rendering template: %w", err)
+	if err = g.Export("home", tData); err != nil {
+		return fmt.Errorf("home: exporting template data: %w", err)
+	}
+
+	cli.Successln("Home SEO template generated")
+
+	return nil
+}
+
+func (g *Generator) Export(origin string, data TemplateData) error {
+	var err error
+	var buffer bytes.Buffer
+
+	if err = g.Page.Template.Execute(&buffer, data); err != nil {
+		return fmt.Errorf("%s: rendering template: %w", origin, err)
 	}
 
 	if err = os.MkdirAll(g.Page.OutputDir, 0o755); err != nil {
-		return fmt.Errorf("home: creating directory for %s: %w", g.Page.OutputDir, err)
+		return fmt.Errorf("%s: creating directory for %s: %w", origin, g.Page.OutputDir, err)
 	}
 
 	out := filepath.Join(g.Page.OutputDir, "index.html")
 	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
-		return fmt.Errorf("writing %s: %w", out, err)
+		return fmt.Errorf("%s: writing %s: %w", origin, out, err)
 	}
-
-	fmt.Println("Home: Done.")
 
 	return nil
 }
