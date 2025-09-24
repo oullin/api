@@ -66,6 +66,16 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	}, nil
 }
 
+func (g *Generator) Generate() error {
+	var err error
+
+	if err = g.GenerateHome(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (g *Generator) GenerateHome() error {
 	var err error
 	var talks *payload.TalksResponse

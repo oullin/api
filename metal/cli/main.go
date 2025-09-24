@@ -155,7 +155,7 @@ func generateSEO() error {
 		return err
 	}
 
-	if err = gen.GenerateHome(); err != nil {
+	if err = gen.Generate(); err != nil {
 		return err
 	}
 
