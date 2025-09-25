@@ -48,35 +48,46 @@ func main() {
 }
 
 func serverHandler() baseHttp.Handler {
-	if app.IsProduction() { // Caddy handles CORS.
-		return app.GetMux()
+	mux := app.GetMux()
+	if mux == nil {
+		return nil
 	}
 
-	localhost := app.GetEnv().Network.GetHostURL()
+	var handler baseHttp.Handler = mux
 
-	headers := []string{
-		"Accept",
-		"Authorization",
-		"Content-Type",
-		"X-CSRF-Token",
-		"User-Agent",
-		"X-API-Key",
-		"X-API-Username",
-		"X-API-Signature",
-		"X-API-Timestamp",
-		"X-API-Nonce",
-		"X-Request-ID",
-		"If-None-Match",
-		"X-API-Intended-Origin", //new
+	if !app.IsProduction() { // Caddy handles CORS.
+		localhost := app.GetEnv().Network.GetHostURL()
+
+		headers := []string{
+			"Accept",
+			"Authorization",
+			"Content-Type",
+			"X-CSRF-Token",
+			"User-Agent",
+			"X-API-Key",
+			"X-API-Username",
+			"X-API-Signature",
+			"X-API-Timestamp",
+			"X-API-Nonce",
+			"X-Request-ID",
+			"If-None-Match",
+			"X-API-Intended-Origin", //new
+		}
+
+		c := cors.New(cors.Options{
+			AllowedOrigins:   []string{localhost, "http://localhost:5173"},
+			AllowedMethods:   []string{baseHttp.MethodGet, baseHttp.MethodPost, baseHttp.MethodPut, baseHttp.MethodDelete, baseHttp.MethodOptions},
+			AllowedHeaders:   headers,
+			AllowCredentials: true,
+			Debug:            true,
+		})
+
+		handler = c.Handler(handler)
 	}
 
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{localhost, "http://localhost:5173"},
-		AllowedMethods:   []string{baseHttp.MethodGet, baseHttp.MethodPost, baseHttp.MethodPut, baseHttp.MethodDelete, baseHttp.MethodOptions},
-		AllowedHeaders:   headers,
-		AllowCredentials: true,
-		Debug:            true,
-	})
+	if sentry := app.GetSentry(); sentry != nil && sentry.Handler != nil {
+		handler = sentry.Handler.Handle(handler)
+	}
 
-	return c.Handler(app.GetMux())
+	return handler
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
+	"github.com/oullin/pkg/portal"
 )
 
 func (a *App) SetRouter(router router.Router) {
@@ -42,6 +43,10 @@ func (a *App) GetEnv() *env.Environment {
 
 func (a *App) GetDB() *database.Connection {
 	return a.db
+}
+
+func (a *App) GetSentry() *portal.Sentry {
+	return a.sentry
 }
 
 func (a *App) GetMux() *baseHttp.ServeMux {

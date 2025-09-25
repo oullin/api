@@ -73,6 +73,7 @@ func TestIgnite(t *testing.T) {
 	content := "ENV_APP_NAME=guss\n" +
 		"ENV_APP_ENV_TYPE=local\n" +
 		"ENV_APP_MASTER_KEY=12345678901234567890123456789012\n" +
+		"ENV_APP_URL=http://localhost:8080\n" +
 		"ENV_DB_USER_NAME=usernamefoo\n" +
 		"ENV_DB_USER_PASSWORD=passwordfoo\n" +
 		"ENV_DB_DATABASE_NAME=dbnamefoo\n" +
@@ -85,8 +86,10 @@ func TestIgnite(t *testing.T) {
 		"ENV_APP_LOGS_DATE_FORMAT=2006_01_02\n" +
 		"ENV_HTTP_HOST=localhost\n" +
 		"ENV_HTTP_PORT=8080\n" +
+		"ENV_PUBLIC_ALLOWED_IP=127.0.0.1\n" +
 		"ENV_SENTRY_DSN=dsn\n" +
 		"ENV_SENTRY_CSP=csp\n" +
+		"ENV_SPA_DIR=/tmp\n" +
 		"ENV_PING_USERNAME=1234567890abcdef\n" +
 		"ENV_PING_PASSWORD=abcdef1234567890\n"
 
@@ -168,7 +171,8 @@ func TestAppBootRoutes(t *testing.T) {
 			TokenHandler:     handler,
 			PublicMiddleware: middleware.MakePublicMiddleware("", false),
 		},
-		Db: &database.Connection{},
+		WebsiteRoutes: router.NewWebsiteRoutes(env),
+		Db:            &database.Connection{},
 	}
 
 	app := &App{}
