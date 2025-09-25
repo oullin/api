@@ -86,9 +86,11 @@ services:
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
+            - "${ENV_SPA_DIR}:${ENV_SPA_DIR}"
           working_dir: /app
           environment:
               ENV_DB_HOST: api-db
+              ENV_SPA_DIR: ${ENV_SPA_DIR}
               ENV_DB_PORT: ${ENV_DB_PORT:-5432}
               ENV_PING_USERNAME: ${ENV_PING_USERNAME}
               ENV_PING_PASSWORD: ${ENV_PING_PASSWORD}
