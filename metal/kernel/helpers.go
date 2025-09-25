@@ -3,9 +3,11 @@ package kernel
 import (
 	baseHttp "net/http"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
+	"github.com/oullin/pkg/portal"
 )
 
 func (a *App) SetRouter(router router.Router) {
@@ -28,6 +30,24 @@ func (a *App) CloseDB() {
 	a.db.Close()
 }
 
+func (a *App) Recover() {
+	if a == nil {
+		return
+	}
+
+	RecoverWithSentry(a.sentry)
+}
+
+func RecoverWithSentry(hub *portal.Sentry) {
+	if err := recover(); err != nil {
+		if hub != nil {
+			sentry.CurrentHub().Recover(err)
+		}
+
+		panic(err)
+	}
+}
+
 func (a *App) IsLocal() bool {
 	return a.env.App.IsLocal()
 }
@@ -42,6 +62,10 @@ func (a *App) GetEnv() *env.Environment {
 
 func (a *App) GetDB() *database.Connection {
 	return a.db
+}
+
+func (a *App) GetSentry() *portal.Sentry {
+	return a.sentry
 }
 
 func (a *App) GetMux() *baseHttp.ServeMux {

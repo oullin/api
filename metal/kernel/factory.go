@@ -3,6 +3,7 @@ package kernel
 import (
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -14,21 +15,31 @@ import (
 
 func MakeSentry(env *env.Environment) *portal.Sentry {
 	cOptions := sentry.ClientOptions{
-		Dsn:   env.Sentry.DSN,
-		Debug: true,
+		AttachStacktrace: true,
+		EnableTracing:    true,
+		TracesSampleRate: 1.0,
+		Environment:      env.App.Type,
+		Release:          env.App.Name,
+		Dsn:              env.Sentry.DSN,
+		Debug:            env.App.IsLocal() || env.App.IsStaging(),
 	}
 
 	if err := sentry.Init(cOptions); err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
 
-	options := sentryhttp.Options{}
+	options := sentryhttp.Options{
+		Repanic:         true,
+		Timeout:         2 * time.Second,
+		WaitForDelivery: env.App.IsProduction() || env.App.IsStaging(),
+	}
+
 	handler := sentryhttp.New(options)
 
 	return &portal.Sentry{
+		Env:     env,
 		Handler: handler,
 		Options: &options,
-		Env:     env,
 	}
 }
 

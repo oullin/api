@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/oullin/database"
 	"github.com/oullin/metal/cli/accounts"
 	"github.com/oullin/metal/cli/panel"
@@ -17,16 +18,21 @@ import (
 
 var environment *env.Environment
 var dbConn *database.Connection
+var sentryHub *portal.Sentry
 
 func init() {
 	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
 
 	environment = secrets
 	dbConn = kernel.MakeDbConnection(environment)
+	sentryHub = kernel.MakeSentry(environment)
 }
 
 func main() {
 	cli.ClearScreen()
+
+	defer sentry.Flush(2 * time.Second)
+	defer kernel.RecoverWithSentry(sentryHub)
 
 	menu := panel.MakeMenu()
 
