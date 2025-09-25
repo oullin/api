@@ -52,7 +52,7 @@ func main() {
 func serverHandler() baseHttp.Handler {
 	mux := app.GetMux()
 	if mux == nil {
-		return nil
+		return baseHttp.NotFoundHandler()
 	}
 
 	var handler baseHttp.Handler = mux
