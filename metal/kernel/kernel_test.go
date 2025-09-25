@@ -121,7 +121,11 @@ func TestIgnitePanicsOnMissingFile(t *testing.T) {
 		if r := recover(); r == nil {
 			t.Fatalf("expected panic when env file is missing")
 		} else {
-			msg, _ := r.(string)
+			msg, ok := r.(string)
+			if !ok {
+				t.Fatalf("unexpected panic type: %T", r)
+			}
+
 			if !strings.Contains(msg, "failed to read the .env file/values") {
 				t.Fatalf("unexpected panic message: %v", r)
 			}
@@ -179,26 +183,33 @@ func TestAppAccessorsReturnValues(t *testing.T) {
 		sentry: sentryHub,
 	}
 
-	if !app.IsLocal() {
-		t.Fatalf("expected IsLocal to be true")
-	}
+	t.Run("Environment type checks", func(t *testing.T) {
+		if !app.IsLocal() {
+			t.Fatal("expected IsLocal to be true")
+		}
 
-	e.App.Type = "production"
-	if !app.IsProduction() {
-		t.Fatalf("expected IsProduction to be true")
-	}
+		originalType := e.App.Type
+		e.App.Type = "production"
+		defer func() { e.App.Type = originalType }()
 
-	if app.GetEnv() != e {
-		t.Fatalf("GetEnv did not return the environment")
-	}
+		if !app.IsProduction() {
+			t.Fatal("expected IsProduction to be true")
+		}
+	})
 
-	if app.GetDB() != dbConn {
-		t.Fatalf("GetDB did not return the database connection")
-	}
+	t.Run("Accessors return correct values", func(t *testing.T) {
+		if app.GetEnv() != e {
+			t.Fatalf("GetEnv did not return the environment")
+		}
 
-	if app.GetSentry() != sentryHub {
-		t.Fatalf("GetSentry did not return the sentry hub")
-	}
+		if app.GetDB() != dbConn {
+			t.Fatalf("GetDB did not return the database connection")
+		}
+
+		if app.GetSentry() != sentryHub {
+			t.Fatalf("GetSentry did not return the sentry hub")
+		}
+	})
 }
 
 func TestAppRecoverRepanics(t *testing.T) {
@@ -318,45 +329,57 @@ func TestAppNewRouterSuccess(t *testing.T) {
 		t.Fatalf("expected router, got error: %v", err)
 	}
 
-	if modem.Env != e {
-		t.Fatalf("router env mismatch")
-	}
+	t.Run("RouterFields", func(t *testing.T) {
+		if modem == nil {
+			t.Fatal("NewRouter returned a nil router on success")
+		}
 
-	if modem.Db != dbConn {
-		t.Fatalf("router db mismatch")
-	}
+		if modem.Env != e {
+			t.Error("router env mismatch")
+		}
 
-	if modem.Validator != validator {
-		t.Fatalf("router validator mismatch")
-	}
+		if modem.Db != dbConn {
+			t.Error("router db mismatch")
+		}
 
-	if modem.Mux == nil {
-		t.Fatalf("expected mux to be initialized")
-	}
+		if modem.Validator != validator {
+			t.Error("router validator mismatch")
+		}
 
-	if modem.Pipeline.Env != e {
-		t.Fatalf("pipeline env mismatch")
-	}
-
-	if modem.Pipeline.ApiKeys == nil || modem.Pipeline.ApiKeys.DB != dbConn {
-		t.Fatalf("pipeline api keys not configured")
-	}
-
-	if modem.Pipeline.TokenHandler == nil {
-		t.Fatalf("expected token handler to be configured")
-	}
-
-	handler := modem.Pipeline.PublicMiddleware.Handle(func(http.ResponseWriter, *http.Request) *metalhttp.ApiError {
-		return nil
+		if modem.Mux == nil {
+			t.Error("expected mux to be initialized")
+		}
 	})
 
-	if handler == nil {
-		t.Fatalf("expected public middleware handler to wrap the next handler")
-	}
+	t.Run("PipelineFields", func(t *testing.T) {
+		if modem.Pipeline.Env != e {
+			t.Error("pipeline env mismatch")
+		}
 
-	if modem.WebsiteRoutes == nil || modem.WebsiteRoutes.SiteURL != e.App.URL {
-		t.Fatalf("website routes not configured")
-	}
+		if modem.Pipeline.ApiKeys == nil || modem.Pipeline.ApiKeys.DB != dbConn {
+			t.Error("pipeline api keys not configured")
+		}
+
+		if modem.Pipeline.TokenHandler == nil {
+			t.Error("expected token handler to be configured")
+		}
+	})
+
+	t.Run("PublicMiddleware", func(t *testing.T) {
+		handler := modem.Pipeline.PublicMiddleware.Handle(func(http.ResponseWriter, *http.Request) *metalhttp.ApiError {
+			return nil
+		})
+
+		if handler == nil {
+			t.Error("expected public middleware handler to wrap the next handler")
+		}
+	})
+
+	t.Run("WebsiteRoutes", func(t *testing.T) {
+		if modem.WebsiteRoutes == nil || modem.WebsiteRoutes.SiteURL != e.App.URL {
+			t.Error("website routes not configured")
+		}
+	})
 }
 
 func TestMakeLogs(t *testing.T) {
@@ -442,26 +465,30 @@ func TestMakeSentry(t *testing.T) {
 		t.Fatalf("sentry setup failed")
 	}
 
-	if s.Options.Timeout != 2*time.Second {
-		t.Fatalf("unexpected timeout value: %v", s.Options.Timeout)
-	}
+	t.Run("Sentry options", func(t *testing.T) {
+		if s.Options.Timeout != 2*time.Second {
+			t.Fatalf("unexpected timeout value: %v", s.Options.Timeout)
+		}
 
-	if !s.Options.Repanic {
-		t.Fatalf("expected repanic to be true")
-	}
+		if !s.Options.Repanic {
+			t.Fatalf("expected repanic to be true")
+		}
 
-	if s.Options.WaitForDelivery {
-		t.Fatalf("expected WaitForDelivery to be disabled in local environment")
-	}
+		if s.Options.WaitForDelivery {
+			t.Fatalf("expected WaitForDelivery to be disabled in local environment")
+		}
+	})
 
-	t.Setenv("ENV_APP_ENV_TYPE", "production")
+	t.Run("production environment", func(t *testing.T) {
+		t.Setenv("ENV_APP_ENV_TYPE", "production")
 
-	prodEnv := MakeEnv(portal.GetDefaultValidator())
-	prodSentry := MakeSentry(prodEnv)
+		prodEnv := MakeEnv(portal.GetDefaultValidator())
+		prodSentry := MakeSentry(prodEnv)
 
-	if !prodSentry.Options.WaitForDelivery {
-		t.Fatalf("expected WaitForDelivery to be enabled in production")
-	}
+		if !prodSentry.Options.WaitForDelivery {
+			t.Fatalf("expected WaitForDelivery to be enabled in production")
+		}
+	})
 }
 
 func TestRecoverWithSentryCapturesEvent(t *testing.T) {
@@ -486,8 +513,13 @@ func TestRecoverWithSentryCapturesEvent(t *testing.T) {
 			t.Fatalf("expected sentry event to be captured")
 		}
 
-		if rec.events[0].Message != "boom" {
-			t.Fatalf("unexpected event message: %s", rec.events[0].Message)
+		event := rec.events[0]
+		if len(event.Exception) > 0 {
+			if event.Exception[0].Value != "boom" {
+				t.Fatalf("unexpected exception in sentry event: %+v", event)
+			}
+		} else if event.Message != "boom" {
+			t.Fatalf("unexpected event message: %s", event.Message)
 		}
 	}()
 
