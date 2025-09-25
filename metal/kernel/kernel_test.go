@@ -37,6 +37,8 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "1.2.3.4")
 	t.Setenv("ENV_PING_USERNAME", "1234567890abcdef")
 	t.Setenv("ENV_PING_PASSWORD", "abcdef1234567890")
+	t.Setenv("ENV_APP_URL", "http://localhost:8080")
+	t.Setenv("ENV_SPA_DIR", "/Users/gus/Sites/oullin/web/public/seo")
 }
 
 func TestMakeEnv(t *testing.T) {
