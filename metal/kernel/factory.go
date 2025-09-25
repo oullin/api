@@ -24,10 +24,6 @@ func MakeSentry(env *env.Environment) *portal.Sentry {
 		TracesSampleRate: 1.0,
 	}
 
-	if env.App.IsProduction() {
-		cOptions.Debug = false
-	}
-
 	if err := sentry.Init(cOptions); err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}

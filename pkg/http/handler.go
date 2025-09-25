@@ -51,11 +51,11 @@ func captureApiError(r *baseHttp.Request, apiErr *ApiError) {
 			scope.SetRequest(r)
 			scope.SetExtra("api_error_status_text", baseHttp.StatusText(apiErr.Status))
 
-			if len(apiErr.Data) > 0 {
+			if apiErr.Data != nil {
 				scope.SetExtra("api_error_data", apiErr.Data)
 			}
 
-			hub.CaptureMessage(apiErr.Message)
+			hub.CaptureException(apiErr)
 		})
 	}
 
