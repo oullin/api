@@ -32,7 +32,7 @@ func main() {
 	defer sentry.Flush(2 * time.Second)
 	defer logs.Close()
 	defer (*dbConnection).Close()
-	defer recoverWithSentry()
+	defer kernel.RecoverWithSentry(sentryHub)
 
 	// [1] --- Create the Seeder Runner.
 	seeder := seeds.MakeSeeder(dbConnection, environment)
@@ -122,14 +122,4 @@ func main() {
 	wg.Wait()
 
 	cli.Magentaln("db seeded as expected ....")
-}
-
-func recoverWithSentry() {
-	if err := recover(); err != nil {
-		if sentryHub != nil {
-			sentry.CurrentHub().Recover(err)
-		}
-
-		panic(err)
-	}
 }

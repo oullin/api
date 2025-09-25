@@ -35,8 +35,16 @@ func (a *App) Recover() {
 		return
 	}
 
+	recoverWithSentry(a.sentry)
+}
+
+func RecoverWithSentry(hub *portal.Sentry) {
+	recoverWithSentry(hub)
+}
+
+func recoverWithSentry(hub *portal.Sentry) {
 	if err := recover(); err != nil {
-		if a.sentry != nil {
+		if hub != nil {
 			sentry.CurrentHub().Recover(err)
 		}
 

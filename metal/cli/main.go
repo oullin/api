@@ -32,7 +32,7 @@ func main() {
 	cli.ClearScreen()
 
 	defer sentry.Flush(2 * time.Second)
-	defer recoverWithSentry()
+	defer kernel.RecoverWithSentry(sentryHub)
 
 	menu := panel.MakeMenu()
 
@@ -90,16 +90,6 @@ func main() {
 		cli.Blueln("Press Enter to continue...")
 
 		menu.PrintLine()
-	}
-}
-
-func recoverWithSentry() {
-	if err := recover(); err != nil {
-		if sentryHub != nil {
-			sentry.CurrentHub().Recover(err)
-		}
-
-		panic(err)
 	}
 }
 
