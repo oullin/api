@@ -7,12 +7,8 @@ import (
 	"github.com/oullin/database/repository"
 )
 
-func TestCategoriesFindBySQLite(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
-
-	if err := db.AutoMigrate(&database.Category{}); err != nil {
-		t.Fatalf("migrate categories: %v", err)
-	}
+func TestCategoriesFindByPostgres(t *testing.T) {
+	conn := newPostgresConnection(t, &database.Category{})
 
 	category := seedCategory(t, conn, "news", "News")
 

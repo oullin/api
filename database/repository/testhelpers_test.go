@@ -1,39 +1,88 @@
 package repository_test
 
 import (
+	"context"
+	"os/exec"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/metal/env"
 )
 
-func newSQLiteConnection(t *testing.T) (*database.Connection, *gorm.DB) {
+func newPostgresConnection(t *testing.T, models ...interface{}) *database.Connection {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{SkipDefaultTransaction: true})
-	if err != nil {
-		t.Fatalf("open sqlite: %v", err)
+	if _, err := exec.LookPath("docker"); err != nil {
+		t.Skip("docker not installed")
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		t.Fatalf("unwrap sql db: %v", err)
+	if err := exec.Command("docker", "ps").Run(); err != nil {
+		t.Skip("docker not running")
 	}
 
-	if _, err := sqlDB.Exec("PRAGMA foreign_keys = ON"); err != nil {
-		t.Fatalf("enable foreign keys: %v", err)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	pg, err := postgres.RunContainer(ctx,
+		testcontainers.WithImage("postgres:16-alpine"),
+		postgres.WithDatabase("testdb"),
+		postgres.WithUsername("test"),
+		postgres.WithPassword("secret"),
+		postgres.BasicWaitStrategies(),
+	)
+	if err != nil {
+		t.Fatalf("container run err: %v", err)
+	}
+
+	host, err := pg.Host(ctx)
+	if err != nil {
+		t.Fatalf("host err: %v", err)
+	}
+
+	port, err := pg.MappedPort(ctx, "5432/tcp")
+	if err != nil {
+		t.Fatalf("port err: %v", err)
+	}
+
+	e := &env.Environment{
+		DB: env.DBEnvironment{
+			UserName:     "test",
+			UserPassword: "secret",
+			DatabaseName: "testdb",
+			Port:         port.Int(),
+			Host:         host,
+			DriverName:   database.DriverName,
+			SSLMode:      "disable",
+			TimeZone:     "UTC",
+		},
+	}
+
+	conn, err := database.MakeConnection(e)
+	if err != nil {
+		t.Fatalf("make connection: %v", err)
+	}
+
+	if len(models) > 0 {
+		if err := conn.Sql().AutoMigrate(models...); err != nil {
+			t.Fatalf("migrate schema: %v", err)
+		}
 	}
 
 	t.Cleanup(func() {
-		_ = sqlDB.Close()
+		if err := conn.Ping(); err == nil {
+			conn.Close()
+		}
+
+		_ = pg.Terminate(context.Background())
 	})
 
-	return database.NewConnectionFromGorm(db), db
+	return conn
 }
 
 func seedUser(t *testing.T, conn *database.Connection, first, last, username string) database.User {

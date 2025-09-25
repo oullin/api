@@ -7,12 +7,8 @@ import (
 	"github.com/oullin/database/repository"
 )
 
-func TestTagsFindOrCreateSQLite(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
-
-	if err := db.AutoMigrate(&database.Tag{}); err != nil {
-		t.Fatalf("migrate tags: %v", err)
-	}
+func TestTagsFindOrCreatePostgres(t *testing.T) {
+	conn := newPostgresConnection(t, &database.Tag{})
 
 	repo := repository.Tags{DB: conn}
 

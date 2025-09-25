@@ -7,12 +7,8 @@ import (
 	"github.com/oullin/database/repository"
 )
 
-func TestUsersFindBySQLite(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
-
-	if err := db.AutoMigrate(&database.User{}); err != nil {
-		t.Fatalf("migrate users: %v", err)
-	}
+func TestUsersFindByPostgres(t *testing.T) {
+	conn := newPostgresConnection(t, &database.User{})
 
 	user := seedUser(t, conn, "Jane", "Doe", "janedoe")
 

@@ -1,28 +1,24 @@
 package repository_test
 
 import (
-        "testing"
-        "time"
+	"testing"
+	"time"
 
-        "github.com/oullin/database"
-        "github.com/oullin/database/repository"
-        "github.com/oullin/database/repository/pagination"
-        "github.com/oullin/database/repository/queries"
+	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
+	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/database/repository/queries"
 )
 
-func TestPostsCreateLinksAssociationsSQLite(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
-
-	if err := db.AutoMigrate(
+func TestPostsCreateLinksAssociationsPostgres(t *testing.T) {
+	conn := newPostgresConnection(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
 		&database.PostCategory{},
 		&database.Tag{},
 		&database.PostTag{},
-	); err != nil {
-		t.Fatalf("migrate schema: %v", err)
-	}
+	)
 
 	user := seedUser(t, conn, "Alice", "Smith", "alice")
 	category := seedCategory(t, conn, "tech", "Tech")
@@ -82,19 +78,15 @@ func TestPostsCreateLinksAssociationsSQLite(t *testing.T) {
 	}
 }
 
-func TestPostsFindByLoadsAssociationsSQLite(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
-
-	if err := db.AutoMigrate(
+func TestPostsFindByLoadsAssociationsPostgres(t *testing.T) {
+	conn := newPostgresConnection(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
 		&database.PostCategory{},
 		&database.Tag{},
 		&database.PostTag{},
-	); err != nil {
-		t.Fatalf("migrate schema: %v", err)
-	}
+	)
 
 	user := seedUser(t, conn, "Bob", "Jones", "bobj")
 	category := seedCategory(t, conn, "career", "Career")
@@ -133,19 +125,15 @@ func TestPostsFindByLoadsAssociationsSQLite(t *testing.T) {
 	}
 }
 
-func TestPostsGetAllFiltersPublishedRecordsSQLite(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
-
-	if err := db.AutoMigrate(
+func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
+	conn := newPostgresConnection(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
 		&database.PostCategory{},
 		&database.Tag{},
 		&database.PostTag{},
-	); err != nil {
-		t.Fatalf("migrate schema: %v", err)
-	}
+	)
 
 	authorOne := seedUser(t, conn, "Carol", "One", "carol")
 	authorTwo := seedUser(t, conn, "Dave", "Two", "dave")
@@ -196,12 +184,8 @@ func TestPostsGetAllFiltersPublishedRecordsSQLite(t *testing.T) {
 	}
 }
 
-func TestPostsFindCategoryByDelegatesSQLite(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
-
-	if err := db.AutoMigrate(&database.Category{}); err != nil {
-		t.Fatalf("migrate categories: %v", err)
-	}
+func TestPostsFindCategoryByDelegatesPostgres(t *testing.T) {
+	conn := newPostgresConnection(t, &database.Category{})
 
 	category := seedCategory(t, conn, "lifestyle", "Lifestyle")
 
@@ -215,14 +199,10 @@ func TestPostsFindCategoryByDelegatesSQLite(t *testing.T) {
 	}
 }
 
-func TestPostsFindTagByHandlesRepositoryErrors(t *testing.T) {
-	conn, db := newSQLiteConnection(t)
+func TestPostsFindTagByHandlesRepositoryErrorsPostgres(t *testing.T) {
+	conn := newPostgresConnection(t, &database.Tag{})
 
-	if err := db.AutoMigrate(&database.Tag{}); err != nil {
-		t.Fatalf("migrate tags: %v", err)
-	}
-
-	sqlDB, err := db.DB()
+	sqlDB, err := conn.Sql().DB()
 	if err != nil {
 		t.Fatalf("unwrap sql db: %v", err)
 	}
@@ -233,7 +213,7 @@ func TestPostsFindTagByHandlesRepositoryErrors(t *testing.T) {
 
 	postsRepo := repository.Posts{
 		DB:   conn,
-		Tags: &repository.Tags{DB: database.NewConnectionFromGorm(db)},
+		Tags: &repository.Tags{DB: conn},
 	}
 
 	if tag := postsRepo.FindTagBy("anything"); tag != nil {
