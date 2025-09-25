@@ -132,18 +132,24 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 	var buffer bytes.Buffer
 	fileName := fmt.Sprintf("%s.seo.html", origin)
 
+	cli.Warningln("Executing file: " + fileName)
 	if err = g.Page.Template.Execute(&buffer, data); err != nil {
 		return fmt.Errorf("%s: rendering template: %w", fileName, err)
 	}
 
+	cli.Cyanln(fmt.Sprintf("Working on directory: %s", g.Page.OutputDir))
 	if err = os.MkdirAll(g.Page.OutputDir, 0o755); err != nil {
 		return fmt.Errorf("%s: creating directory for %s: %w", fileName, g.Page.OutputDir, err)
 	}
 
 	out := filepath.Join(g.Page.OutputDir, fileName)
+	cli.Blueln(fmt.Sprintf("Writing file on: %s", out))
 	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("%s: writing %s: %w", fileName, out, err)
 	}
+
+	cli.Grayln(fmt.Sprintf("File %s generated at: %s", fileName, out))
+	cli.Grayln("------------------")
 
 	return nil
 }
