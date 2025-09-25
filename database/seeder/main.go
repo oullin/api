@@ -13,8 +13,8 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-var environment *env.Environment
 var sentryHub *portal.Sentry
+var environment *env.Environment
 
 func init() {
 	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
