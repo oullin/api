@@ -157,7 +157,7 @@ func TestAppBootRoutes(t *testing.T) {
 		t.Fatalf("handler err: %v", err)
 	}
 
-	router := router.Router{
+	modem := router.Router{
 		Env: env,
 		Mux: http.NewServeMux(),
 		Pipeline: middleware.Pipeline{
@@ -171,7 +171,7 @@ func TestAppBootRoutes(t *testing.T) {
 
 	app := &App{}
 
-	app.SetRouter(router)
+	app.SetRouter(modem)
 
 	app.Boot()
 

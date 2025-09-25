@@ -33,7 +33,6 @@ func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerF
 
 func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
-		r.Env,
 		r.Pipeline.TokenHandler,
 		r.Pipeline.ApiKeys,
 	)

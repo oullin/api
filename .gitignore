@@ -6,9 +6,8 @@ tmp
 database/infra/data
 
 # -- [SEO]: static files
-storage/seo/pages/*.*
+storage/seo/*.*
 !storage/seo/.gitkeep
-!storage/seo/pages/.gitkeep
 
 # --- [Caddy]: mtls
 caddy/mtls/*.*

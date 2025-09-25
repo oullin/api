@@ -68,10 +68,11 @@ func (f *Fixture) GetRecommendations() *Fixture {
 }
 
 func (f *Fixture) resolveFor(slug string) *Fixture {
-	f.fullPath = f.getFileFor(slug)
-	f.file = slug
+	clone := f
+	clone.fullPath = clone.getFileFor(slug)
+	clone.file = slug
 
-	return f
+	return clone
 }
 
 func (f *Fixture) getFileFor(slug string) string {
