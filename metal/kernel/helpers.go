@@ -5,9 +5,10 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
+	"github.com/oullin/metal/router"
 )
 
-func (a *App) SetRouter(router Router) {
+func (a *App) SetRouter(router router.Router) {
 	a.router = &router
 }
 

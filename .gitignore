@@ -5,6 +5,10 @@ tmp
 
 database/infra/data
 
+# -- [SEO]: static files
+storage/seo/*.*
+!storage/seo/.gitkeep
+
 # --- [Caddy]: mtls
 caddy/mtls/*.*
 !caddy/mtls/.gitkeep

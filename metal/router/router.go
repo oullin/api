@@ -1,7 +1,8 @@
-package kernel
+package router
 
 import (
 	baseHttp "net/http"
+	"strings"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
@@ -12,22 +13,13 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-type StaticRouteResource interface {
-	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *http.ApiError
-}
-
-func addStaticRoute[H StaticRouteResource](r *Router, path, file string, maker func(string) H) {
-	abstract := maker(file)
-	resolver := r.PipelineFor(abstract.Handle)
-	r.Mux.HandleFunc("GET "+path, resolver)
-}
-
 type Router struct {
-	Env       *env.Environment
-	Mux       *baseHttp.ServeMux
-	Pipeline  middleware.Pipeline
-	Db        *database.Connection
-	validator *portal.Validator
+	WebsiteRoutes *WebsiteRoutes
+	Env           *env.Environment
+	Validator     *portal.Validator
+	Mux           *baseHttp.ServeMux
+	Pipeline      middleware.Pipeline
+	Db            *database.Connection
 }
 
 func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
@@ -74,7 +66,7 @@ func (r *Router) Categories() {
 }
 
 func (r *Router) Signature() {
-	abstract := handler.MakeSignaturesHandler(r.validator, r.Pipeline.ApiKeys)
+	abstract := handler.MakeSignaturesHandler(r.Validator, r.Pipeline.ApiKeys)
 	generate := r.PublicPipelineFor(abstract.Generate)
 
 	r.Mux.HandleFunc("POST /generate-signature", generate)
@@ -101,29 +93,93 @@ func (r *Router) KeepAliveDB() {
 }
 
 func (r *Router) Profile() {
-	addStaticRoute(r, "/profile", "./storage/fixture/profile.json", handler.MakeProfileHandler)
+	maker := handler.MakeProfileHandler
+
+	r.composeFixtures(
+		r.WebsiteRoutes.Fixture.GetProfile(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Experience() {
-	addStaticRoute(r, "/experience", "./storage/fixture/experience.json", handler.MakeExperienceHandler)
+	maker := handler.MakeExperienceHandler
+
+	r.composeFixtures(
+		r.WebsiteRoutes.Fixture.GetExperience(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Projects() {
-	addStaticRoute(r, "/projects", "./storage/fixture/projects.json", handler.MakeProjectsHandler)
+	maker := handler.MakeProjectsHandler
+
+	r.composeFixtures(
+		r.WebsiteRoutes.Fixture.GetProjects(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Social() {
-	addStaticRoute(r, "/social", "./storage/fixture/social.json", handler.MakeSocialHandler)
+	maker := handler.MakeSocialHandler
+
+	r.composeFixtures(
+		r.WebsiteRoutes.Fixture.GetSocial(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Talks() {
-	addStaticRoute(r, "/talks", "./storage/fixture/talks.json", handler.MakeTalksHandler)
+	maker := handler.MakeTalksHandler
+
+	r.composeFixtures(
+		r.WebsiteRoutes.Fixture.GetTalks(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Education() {
-	addStaticRoute(r, "/education", "./storage/fixture/education.json", handler.MakeEducationHandler)
+	maker := handler.MakeEducationHandler
+
+	r.composeFixtures(
+		r.WebsiteRoutes.Fixture.GetEducation(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
 }
 
 func (r *Router) Recommendations() {
-	addStaticRoute(r, "/recommendations", "./storage/fixture/recommendations.json", handler.MakeRecommendationsHandler)
+	maker := handler.MakeRecommendationsHandler
+
+	r.composeFixtures(
+		r.WebsiteRoutes.Fixture.GetRecommendations(),
+		func(file string) StaticRouteResource {
+			return maker(file)
+		},
+	)
+}
+
+func (r *Router) composeFixtures(fxt *Fixture, maker func(file string) StaticRouteResource) {
+	file := fxt.file
+	fullPath := fxt.fullPath
+
+	addStaticRoute(r, file, fullPath, maker)
+}
+
+func addStaticRoute[H StaticRouteResource](r *Router, route, fixture string, maker func(string) H) {
+	abstract := maker(fixture)
+	resolver := r.PipelineFor(abstract.Handle)
+
+	route = strings.TrimLeft(route, "/")
+	r.Mux.HandleFunc("GET /"+route, resolver)
 }

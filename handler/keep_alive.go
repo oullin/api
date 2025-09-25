@@ -12,10 +12,10 @@ import (
 )
 
 type KeepAliveHandler struct {
-	env *env.Ping
+	env *env.PingEnvironment
 }
 
-func MakeKeepAliveHandler(e *env.Ping) KeepAliveHandler {
+func MakeKeepAliveHandler(e *env.PingEnvironment) KeepAliveHandler {
 	return KeepAliveHandler{env: e}
 }
 

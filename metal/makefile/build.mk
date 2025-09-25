@@ -1,9 +1,16 @@
-.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force
+.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh
 
 BUILD_VERSION ?= latest
 BUILD_PACKAGE_OWNER := oullin
 DB_INFRA_ROOT_PATH ?= $(ROOT_PATH)/database/infra
 DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
+
+
+build-fresh:
+	make fresh && \
+	make db:fresh && \
+	make db:migrate && \
+	make db:seed
 
 build-local:
 	docker compose --profile local up --build -d

@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/oullin/database"
 	"github.com/oullin/metal/cli/accounts"
 	"github.com/oullin/metal/cli/panel"
 	"github.com/oullin/metal/cli/posts"
+	"github.com/oullin/metal/cli/seo"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg/cli"
@@ -57,7 +61,14 @@ func main() {
 
 			return
 		case 4:
-			if err = generateApiAccountsHTTPSignature(menu); err != nil {
+			if err = generateSEO(); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+		case 5:
+			if err = printTimestamp(); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
@@ -126,29 +137,58 @@ func showApiAccount(menu panel.Menu) error {
 		return err
 	}
 
-	if err = handler.ReadAccount(account); err != nil {
+	if err = handler.ShowAccount(account); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func generateApiAccountsHTTPSignature(menu panel.Menu) error {
-	var err error
-	var account string
-	var handler *accounts.Handler
+func generateSEO() error {
+	gen, err := seo.NewGenerator(
+		dbConn,
+		environment,
+		portal.GetDefaultValidator(),
+	)
 
-	if account, err = menu.CaptureAccountName(); err != nil {
+	if err != nil {
 		return err
 	}
 
-	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+	if err = gen.Generate(); err != nil {
 		return err
 	}
 
-	if err = handler.CreateSignature(account); err != nil {
-		return err
-	}
+	return nil
+}
+
+func printTimestamp() error {
+	now := time.Now()
+
+	fmt.Println("--- Timestamps ---")
+
+	// 1. Unix Timestamp (seconds since epoch)
+	unixTimestampSeconds := now.Unix()
+	fmt.Printf("Unix (seconds): %d\n", unixTimestampSeconds)
+
+	// 2. Unix Timestamp (milliseconds since epoch)
+	unixTimestampMillis := now.UnixMilli()
+	fmt.Printf("Unix (milliseconds): %d\n", unixTimestampMillis)
+
+	// 3. Unix Timestamp (nanoseconds since epoch)
+	unixTimestampNanos := now.UnixNano()
+	fmt.Printf("Unix (nanoseconds): %d\n", unixTimestampNanos)
+
+	fmt.Println("\n--- Formatted Strings ---")
+
+	// 4. Standard RFC3339 format (e.g., "2025-09-22T14:10:16+08:00")
+	rfc3339Timestamp := now.Format(time.RFC3339)
+	fmt.Printf("RFC3339: %s\n", rfc3339Timestamp)
+
+	// 5. Custom format (e.g., "YYYY-MM-DD HH:MM:SS")
+	// time for layouts: Mon Jan 2 15:04:05 MST 2006
+	customTimestamp := now.Format("2006-01-02 15:04:05")
+	fmt.Printf("Custom (YYYY-MM-DD HH:MM:SS): %s\n", customTimestamp)
 
 	return nil
 }

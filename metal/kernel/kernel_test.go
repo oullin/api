@@ -9,6 +9,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"github.com/oullin/pkg/middleware"
@@ -36,6 +37,8 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "1.2.3.4")
 	t.Setenv("ENV_PING_USERNAME", "1234567890abcdef")
 	t.Setenv("ENV_PING_PASSWORD", "abcdef1234567890")
+	t.Setenv("ENV_APP_URL", "http://localhost:8080")
+	t.Setenv("ENV_SPA_DIR", "/Users/gus/Sites/oullin/web/public/seo")
 }
 
 func TestMakeEnv(t *testing.T) {
@@ -119,7 +122,7 @@ func TestAppHelpers(t *testing.T) {
 	app := &App{}
 
 	mux := http.NewServeMux()
-	r := Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)}}
+	r := router.Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)}}
 
 	app.SetRouter(r)
 
@@ -156,7 +159,7 @@ func TestAppBootRoutes(t *testing.T) {
 		t.Fatalf("handler err: %v", err)
 	}
 
-	router := Router{
+	modem := router.Router{
 		Env: env,
 		Mux: http.NewServeMux(),
 		Pipeline: middleware.Pipeline{
@@ -170,7 +173,7 @@ func TestAppBootRoutes(t *testing.T) {
 
 	app := &App{}
 
-	app.SetRouter(router)
+	app.SetRouter(modem)
 
 	app.Boot()
 

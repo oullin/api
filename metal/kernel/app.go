@@ -7,6 +7,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/metal/env"
+	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/llogs"
 	"github.com/oullin/pkg/middleware"
@@ -14,7 +15,7 @@ import (
 )
 
 type App struct {
-	router    *Router
+	router    *router.Router
 	sentry    *portal.Sentry
 	logs      llogs.Driver
 	validator *portal.Validator
@@ -23,62 +24,77 @@ type App struct {
 }
 
 func MakeApp(e *env.Environment, validator *portal.Validator) (*App, error) {
-	tokenHandler, err := auth.MakeTokensHandler(
-		[]byte(e.App.MasterKey),
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("bootstrapping error > could not create a token handler: %w", err)
-	}
-
-	db := MakeDbConnection(e)
-
 	app := App{
 		env:       e,
 		validator: validator,
 		logs:      MakeLogs(e),
 		sentry:    MakeSentry(e),
-		db:        db,
+		db:        MakeDbConnection(e),
 	}
 
-	router := Router{
-		Env:       e,
-		Db:        db,
-		Mux:       baseHttp.NewServeMux(),
-		validator: validator,
-		Pipeline: middleware.Pipeline{
-			Env:          e,
-			ApiKeys:      &repository.ApiKeys{DB: db},
-			TokenHandler: tokenHandler,
-			PublicMiddleware: middleware.MakePublicMiddleware(
-				e.Network.PublicAllowedIP,
-				e.Network.IsProduction,
-			),
-		},
+	if modem, err := app.NewRouter(); err != nil {
+		return nil, err
+	} else {
+		app.SetRouter(*modem)
 	}
-
-	app.SetRouter(router)
 
 	return &app, nil
 }
 
-func (a *App) Boot() {
-	if a == nil || a.router == nil {
-		panic("bootstrapping error > Invalid setup")
+func (a *App) NewRouter() (*router.Router, error) {
+	if a == nil {
+		return nil, fmt.Errorf("kernel error > router: app is nil")
 	}
 
-	router := *a.router
+	envi := a.env
 
-	router.KeepAlive()
-	router.KeepAliveDB()
-	router.Profile()
-	router.Experience()
-	router.Projects()
-	router.Social()
-	router.Talks()
-	router.Education()
-	router.Recommendations()
-	router.Posts()
-	router.Categories()
-	router.Signature()
+	tokenHandler, err := auth.MakeTokensHandler(
+		[]byte(envi.App.MasterKey),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("kernel error > router: could not create a token handler: %w", err)
+	}
+
+	pipe := middleware.Pipeline{
+		Env:          envi,
+		TokenHandler: tokenHandler,
+		ApiKeys:      &repository.ApiKeys{DB: a.db},
+		PublicMiddleware: middleware.MakePublicMiddleware(
+			envi.Network.PublicAllowedIP,
+			envi.Network.IsProduction,
+		),
+	}
+
+	modem := router.Router{
+		Env:           envi,
+		Db:            a.db,
+		Pipeline:      pipe,
+		Validator:     a.validator,
+		Mux:           baseHttp.NewServeMux(),
+		WebsiteRoutes: router.NewWebsiteRoutes(envi),
+	}
+
+	return &modem, nil
+}
+
+func (a *App) Boot() {
+	if a == nil || a.router == nil {
+		panic("kernel error > boot: Invalid setup")
+	}
+
+	modem := *a.router
+
+	modem.KeepAlive()
+	modem.KeepAliveDB()
+	modem.Profile()
+	modem.Experience()
+	modem.Projects()
+	modem.Social()
+	modem.Talks()
+	modem.Education()
+	modem.Recommendations()
+	modem.Posts()
+	modem.Categories()
+	modem.Signature()
 }

@@ -1,4 +1,4 @@
-package kernel
+package router
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func TestSignatureRoute_PublicMiddleware(t *testing.T) {
 		Pipeline: middleware.Pipeline{
 			PublicMiddleware: middleware.MakePublicMiddleware("", false),
 		},
-		validator: portal.GetDefaultValidator(),
+		Validator: portal.GetDefaultValidator(),
 	}
 	r.Signature()
 
