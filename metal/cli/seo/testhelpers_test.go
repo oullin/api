@@ -62,7 +62,7 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 
 	e := &env.Environment{
 		App: env.AppEnvironment{
-			Name:      "SEO Test",
+			Name:      "SEO Test App",
 			URL:       "https://seo.example.test",
 			Type:      "local",
 			MasterKey: strings.Repeat("m", 32),

@@ -8,9 +8,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/portal"
 )
+
+func newTestValidator(t *testing.T) *portal.Validator {
+	t.Helper()
+
+	return portal.MakeValidatorFrom(validator.New(validator.WithRequiredStructEnabled()))
+}
 
 func TestGeneratorBuildAndExport(t *testing.T) {
 	page := Page{
@@ -34,7 +42,7 @@ func TestGeneratorBuildAndExport(t *testing.T) {
 
 	gen := &Generator{
 		Page:      page,
-		Validator: portal.GetDefaultValidator(),
+		Validator: newTestValidator(t),
 	}
 
 	body := []template.HTML{"<h1>Profile</h1><p>hello</p>"}
@@ -90,7 +98,7 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 			LogoURL:       "https://seo.example.test/logo.png",
 			Categories:    []string{"golang"},
 		},
-		Validator: portal.GetDefaultValidator(),
+		Validator: newTestValidator(t),
 	}
 
 	if _, err := gen.Build([]template.HTML{"<p>hello</p>"}); err == nil || !strings.Contains(err.Error(), "invalid template data") {
@@ -106,7 +114,7 @@ func TestNewGeneratorGenerateHome(t *testing.T) {
 	seedCategory(t, conn, "golang", "GoLang")
 	seedCategory(t, conn, "cli", "CLI Tools")
 
-	gen, err := NewGenerator(conn, env, portal.GetDefaultValidator())
+	gen, err := NewGenerator(conn, env, newTestValidator(t))
 	if err != nil {
 		t.Fatalf("new generator err: %v", err)
 	}
