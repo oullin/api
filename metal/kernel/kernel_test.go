@@ -145,6 +145,21 @@ func TestAppHelpers(t *testing.T) {
 	}
 }
 
+func TestAppRecoverRepanics(t *testing.T) {
+	app := &App{}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic to propagate")
+		}
+	}()
+
+	func() {
+		defer app.Recover()
+		panic("boom")
+	}()
+}
+
 func TestAppBootRoutes(t *testing.T) {
 	validEnvVars(t)
 

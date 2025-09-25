@@ -3,6 +3,7 @@ package kernel
 import (
 	baseHttp "net/http"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
@@ -27,6 +28,20 @@ func (a *App) CloseDB() {
 	}
 
 	a.db.Close()
+}
+
+func (a *App) Recover() {
+	if a == nil {
+		return
+	}
+
+	if err := recover(); err != nil {
+		if a.sentry != nil {
+			sentry.CurrentHub().Recover(err)
+		}
+
+		panic(err)
+	}
 }
 
 func (a *App) IsLocal() bool {

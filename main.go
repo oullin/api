@@ -28,6 +28,7 @@ func init() {
 }
 
 func main() {
+	defer app.Recover()
 	defer app.CloseDB()
 	defer app.CloseLogs()
 	defer sentry.Flush(2 * time.Second)
