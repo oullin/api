@@ -7,6 +7,7 @@ type Page struct {
 	Template      *template.Template `validate:"required"`
 	SiteName      string             `validate:"required"`
 	SameAsURL     []string           `validate:"required"`
+	Categories    []string           `validate:"required"`
 	SiteURL       string             `validate:"required,uri"`
 	LogoURL       string             `validate:"required,uri"`
 	WebRepoURL    string             `validate:"required,uri"`

@@ -2,15 +2,31 @@ package repository
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/pkg/gorm"
-	"strings"
 )
 
 type Categories struct {
 	DB *database.Connection
+}
+
+func (c Categories) Get() ([]database.Category, error) {
+	var categories []database.Category
+
+	err := c.DB.Sql().
+		Model(&database.Category{}).
+		Where("categories.deleted_at is null").
+		Find(&categories).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
 }
 
 func (c Categories) GetAll(paginate pagination.Paginate) (*pagination.Pagination[database.Category], error) {

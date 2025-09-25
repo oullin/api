@@ -13,6 +13,20 @@ func NewSections() Sections {
 	return Sections{}
 }
 
+func (s *Sections) Categories(categories []string) template.HTML {
+	var items []string
+
+	for _, item := range categories {
+		items = append(items, "<li>"+template.HTMLEscapeString(item)+"</li>")
+	}
+
+	return template.HTML("<h1>Categories</h1>" +
+		"<p><ul>" +
+		strings.Join(items, "") +
+		"</ul></p>",
+	)
+}
+
 func (s *Sections) Profile(profile *payload.ProfileResponse) template.HTML {
 	return "<h1>Profile</h1>" +
 		template.HTML("<p>"+

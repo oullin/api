@@ -29,11 +29,20 @@ type Generator struct {
 }
 
 func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Validator) (*Generator, error) {
+	var err error
+	var categories []string
+	var html *template.Template
+
+	if categories, err = NewCategories(db).Generate(); err != nil {
+		return nil, err
+	}
+
 	page := Page{
 		LogoURL:       LogoUrl,
 		StubPath:      StubPath,
 		WebRepoURL:    RepoWebUrl,
 		APIRepoURL:    RepoApiUrl,
+		Categories:    categories,
 		SiteURL:       env.App.URL,
 		SiteName:      env.App.Name,
 		AboutPhotoUrl: AboutPhotoUrl,
@@ -43,11 +52,11 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		SameAsURL:     []string{RepoApiUrl, RepoWebUrl, GocantoUrl},
 	}
 
-	if _, err := val.Rejects(page); err != nil {
+	if _, err = val.Rejects(page); err != nil {
 		return nil, fmt.Errorf("invalid template state: %s", val.GetErrorsAsJson())
 	}
 
-	if html, err := page.Load(); err != nil {
+	if html, err = page.Load(); err != nil {
 		return nil, fmt.Errorf("could not load initial stub: %w", err)
 	} else {
 		page.Template = html
@@ -97,6 +106,7 @@ func (g *Generator) GenerateHome() error {
 	sections := NewSections()
 
 	html = append(html, sections.Profile(profile))
+	html = append(html, sections.Categories(g.Page.Categories))
 	html = append(html, sections.Talks(talks))
 	html = append(html, sections.Skills(profile))
 	html = append(html, sections.Projects(projects))
@@ -160,14 +170,14 @@ func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 		Robots:         Robots,
 		Twitter:        twitter,
 		ThemeColor:     ThemeColor,
+		BgColor:        ThemeColor,
 		Lang:           g.Page.Lang,
 		Description:    Description,
 		Canonical:      g.Page.SiteURL,
 		AppleTouchIcon: g.Page.LogoURL,
 		Title:          g.Page.SiteName,
+		Categories:     g.Page.Categories,
 		JsonLD:         NewJsonID(g.Page).Render(),
-		BgColor:        ThemeColor,
-		Categories:     []string{"one", "two"}, //@todo Fetch this!
 		HrefLang: []HrefLangData{
 			{Lang: g.Page.Lang, Href: g.Page.SiteURL},
 		},
