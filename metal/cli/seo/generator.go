@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
@@ -94,47 +93,18 @@ func (g *Generator) GenerateHome() error {
 		return err
 	}
 
-	var bodyData []template.HTML
+	var html []template.HTML
+	sections := NewSections()
 
-	bodyData = append(bodyData, "<h1>Profile</h1>"+
-		template.HTML("<p>"+
-			template.HTMLEscapeString(profile.Data.Name)+","+
-			template.HTMLEscapeString(profile.Data.Profession)+
-			"</p>",
-		),
-	)
-
-	//bodyData = append(bodyData, "<h1>Profile</h1>")
-	//bodyData = append(bodyData, template.HTML("<p>"+profile.Data.Name+","+profile.Data.Profession+"</p>"))
-	bodyData = append(bodyData, "<h1>Skills</h1>")
-
-	var itemsA []string
-	for _, item := range profile.Data.Skills {
-		itemsA = append(itemsA, "<li>"+template.HTMLEscapeString(item.Item)+"</li>")
-	}
-
-	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsA, "")+"</ul></p>"))
-
-	bodyData = append(bodyData, "<h1>Talks</h1>")
-	var itemsB []string
-	for _, item := range talks.Data {
-		itemsB = append(itemsB, "<li>"+template.HTMLEscapeString(item.Title)+": "+template.HTMLEscapeString(item.Subject)+"</li>")
-	}
-
-	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsB, "")+"</ul></p>"))
-
-	bodyData = append(bodyData, "<h1>Projects</h1>")
-	var itemsC []string
-	for _, item := range projects.Data {
-		itemsC = append(itemsC, "<li>"+template.HTMLEscapeString(item.Title)+": "+template.HTMLEscapeString(item.Excerpt)+"</li>")
-	}
-
-	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsC, "")+"</ul></p>"))
+	html = append(html, sections.Profile(profile))
+	html = append(html, sections.Talks(talks))
+	html = append(html, sections.Skills(profile))
+	html = append(html, sections.Projects(projects))
 
 	// ----- Template Parsing
 
 	var tData TemplateData
-	if tData, err = g.Build(bodyData); err != nil {
+	if tData, err = g.Build(html); err != nil {
 		return fmt.Errorf("home: generating template data: %w", err)
 	}
 
@@ -150,18 +120,19 @@ func (g *Generator) GenerateHome() error {
 func (g *Generator) Export(origin string, data TemplateData) error {
 	var err error
 	var buffer bytes.Buffer
+	fileName := fmt.Sprintf("%s.seo.html", origin)
 
 	if err = g.Page.Template.Execute(&buffer, data); err != nil {
-		return fmt.Errorf("%s: rendering template: %w", origin, err)
+		return fmt.Errorf("%s: rendering template: %w", fileName, err)
 	}
 
 	if err = os.MkdirAll(g.Page.OutputDir, 0o755); err != nil {
-		return fmt.Errorf("%s: creating directory for %s: %w", origin, g.Page.OutputDir, err)
+		return fmt.Errorf("%s: creating directory for %s: %w", fileName, g.Page.OutputDir, err)
 	}
 
-	out := filepath.Join(g.Page.OutputDir, "index.html")
+	out := filepath.Join(g.Page.OutputDir, fileName)
 	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
-		return fmt.Errorf("%s: writing %s: %w", origin, out, err)
+		return fmt.Errorf("%s: writing %s: %w", fileName, out, err)
 	}
 
 	return nil
