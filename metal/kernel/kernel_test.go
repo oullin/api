@@ -1,16 +1,22 @@
 package kernel
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/auth"
+	metalhttp "github.com/oullin/pkg/http"
 	"github.com/oullin/pkg/llogs"
 	"github.com/oullin/pkg/middleware"
 	"github.com/oullin/pkg/portal"
@@ -110,6 +116,21 @@ func TestIgnite(t *testing.T) {
 	}
 }
 
+func TestIgnitePanicsOnMissingFile(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic when env file is missing")
+		} else {
+			msg, _ := r.(string)
+			if !strings.Contains(msg, "failed to read the .env file/values") {
+				t.Fatalf("unexpected panic message: %v", r)
+			}
+		}
+	}()
+
+	Ignite("/nonexistent/.env", portal.GetDefaultValidator())
+}
+
 func TestAppBootNil(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -142,6 +163,41 @@ func TestAppHelpers(t *testing.T) {
 
 	if app.GetDB() != nil {
 		t.Fatalf("expected nil db")
+	}
+}
+
+func TestAppAccessorsReturnValues(t *testing.T) {
+	validEnvVars(t)
+
+	e := MakeEnv(portal.GetDefaultValidator())
+	dbConn := &database.Connection{}
+	sentryHub := &portal.Sentry{}
+
+	app := &App{
+		env:    e,
+		db:     dbConn,
+		sentry: sentryHub,
+	}
+
+	if !app.IsLocal() {
+		t.Fatalf("expected IsLocal to be true")
+	}
+
+	e.App.Type = "production"
+	if !app.IsProduction() {
+		t.Fatalf("expected IsProduction to be true")
+	}
+
+	if app.GetEnv() != e {
+		t.Fatalf("GetEnv did not return the environment")
+	}
+
+	if app.GetDB() != dbConn {
+		t.Fatalf("GetDB did not return the database connection")
+	}
+
+	if app.GetSentry() != sentryHub {
+		t.Fatalf("GetSentry did not return the sentry hub")
 	}
 }
 
@@ -219,6 +275,87 @@ func TestAppBootRoutes(t *testing.T) {
 		if pattern == "" || h == nil {
 			t.Fatalf("route missing %s %s", rt.method, rt.path)
 		}
+	}
+}
+
+func TestAppNewRouterNilReceiver(t *testing.T) {
+	var app *App
+
+	if _, err := app.NewRouter(); err == nil || !strings.Contains(err.Error(), "app is nil") {
+		t.Fatalf("expected error about nil app")
+	}
+}
+
+func TestAppNewRouterTokenHandlerError(t *testing.T) {
+	app := &App{
+		env: &env.Environment{
+			App:     env.AppEnvironment{MasterKey: "short"},
+			Network: env.NetEnvironment{},
+		},
+		db: &database.Connection{},
+	}
+
+	if _, err := app.NewRouter(); err == nil || !strings.Contains(err.Error(), "could not create a token handler") {
+		t.Fatalf("expected token handler error, got %v", err)
+	}
+}
+
+func TestAppNewRouterSuccess(t *testing.T) {
+	validEnvVars(t)
+
+	e := MakeEnv(portal.GetDefaultValidator())
+	dbConn := &database.Connection{}
+	validator := portal.GetDefaultValidator()
+
+	app := &App{
+		env:       e,
+		db:        dbConn,
+		validator: validator,
+	}
+
+	modem, err := app.NewRouter()
+	if err != nil {
+		t.Fatalf("expected router, got error: %v", err)
+	}
+
+	if modem.Env != e {
+		t.Fatalf("router env mismatch")
+	}
+
+	if modem.Db != dbConn {
+		t.Fatalf("router db mismatch")
+	}
+
+	if modem.Validator != validator {
+		t.Fatalf("router validator mismatch")
+	}
+
+	if modem.Mux == nil {
+		t.Fatalf("expected mux to be initialized")
+	}
+
+	if modem.Pipeline.Env != e {
+		t.Fatalf("pipeline env mismatch")
+	}
+
+	if modem.Pipeline.ApiKeys == nil || modem.Pipeline.ApiKeys.DB != dbConn {
+		t.Fatalf("pipeline api keys not configured")
+	}
+
+	if modem.Pipeline.TokenHandler == nil {
+		t.Fatalf("expected token handler to be configured")
+	}
+
+	handler := modem.Pipeline.PublicMiddleware.Handle(func(http.ResponseWriter, *http.Request) *metalhttp.ApiError {
+		return nil
+	})
+
+	if handler == nil {
+		t.Fatalf("expected public middleware handler to wrap the next handler")
+	}
+
+	if modem.WebsiteRoutes == nil || modem.WebsiteRoutes.SiteURL != e.App.URL {
+		t.Fatalf("website routes not configured")
 	}
 }
 
@@ -304,7 +441,112 @@ func TestMakeSentry(t *testing.T) {
 	if s == nil || s.Handler == nil || s.Options == nil {
 		t.Fatalf("sentry setup failed")
 	}
+
+	if s.Options.Timeout != 2*time.Second {
+		t.Fatalf("unexpected timeout value: %v", s.Options.Timeout)
+	}
+
+	if !s.Options.Repanic {
+		t.Fatalf("expected repanic to be true")
+	}
+
+	if s.Options.WaitForDelivery {
+		t.Fatalf("expected WaitForDelivery to be disabled in local environment")
+	}
+
+	t.Setenv("ENV_APP_ENV_TYPE", "production")
+
+	prodEnv := MakeEnv(portal.GetDefaultValidator())
+	prodSentry := MakeSentry(prodEnv)
+
+	if !prodSentry.Options.WaitForDelivery {
+		t.Fatalf("expected WaitForDelivery to be enabled in production")
+	}
 }
+
+func TestRecoverWithSentryCapturesEvent(t *testing.T) {
+	rec := &recordingTransport{}
+
+	client, err := sentry.NewClient(sentry.ClientOptions{Transport: rec})
+	if err != nil {
+		t.Fatalf("failed to create sentry client: %v", err)
+	}
+
+	originalClient := sentry.CurrentHub().Client()
+	sentry.CurrentHub().BindClient(client)
+	defer sentry.CurrentHub().BindClient(originalClient)
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatalf("expected panic to propagate")
+		}
+
+		if len(rec.events) != 1 {
+			t.Fatalf("expected sentry event to be captured")
+		}
+
+		if rec.events[0].Message != "boom" {
+			t.Fatalf("unexpected event message: %s", rec.events[0].Message)
+		}
+	}()
+
+	func() {
+		defer RecoverWithSentry(&portal.Sentry{})
+		panic("boom")
+	}()
+}
+
+func TestRecoverWithSentryNilHubRepaincs(t *testing.T) {
+	rec := &recordingTransport{}
+
+	client, err := sentry.NewClient(sentry.ClientOptions{Transport: rec})
+	if err != nil {
+		t.Fatalf("failed to create sentry client: %v", err)
+	}
+
+	originalClient := sentry.CurrentHub().Client()
+	sentry.CurrentHub().BindClient(client)
+	defer sentry.CurrentHub().BindClient(originalClient)
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic to propagate")
+		}
+
+		if len(rec.events) != 0 {
+			t.Fatalf("expected no sentry events when hub is nil")
+		}
+	}()
+
+	func() {
+		defer RecoverWithSentry(nil)
+		panic("boom")
+	}()
+}
+
+type recordingTransport struct {
+	mu     sync.Mutex
+	events []*sentry.Event
+}
+
+func (r *recordingTransport) Configure(options sentry.ClientOptions) {}
+
+func (r *recordingTransport) SendEvent(event *sentry.Event) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.events = append(r.events, event)
+}
+
+func (r *recordingTransport) Flush(timeout time.Duration) bool {
+	return true
+}
+
+func (r *recordingTransport) FlushWithContext(ctx context.Context) bool {
+	return true
+}
+
+func (r *recordingTransport) Close() {}
 
 // getLowerTempDir returns a lowercase version of t.TempDir()
 func getLowerTempDir(t *testing.T) string {
