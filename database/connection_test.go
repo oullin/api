@@ -2,16 +2,19 @@ package database_test
 
 import (
 	"context"
+	"database/sql"
+	"database/sql/driver"
 	"errors"
+	"io"
 	"os/exec"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	gormpostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"gorm.io/gorm/schema"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
@@ -124,15 +127,9 @@ func TestConnectionCloseSuccess(t *testing.T) {
 }
 
 func TestConnectionCloseReturnsFalseOnError(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock: %v", err)
-	}
-	defer func() { _ = sqlDB.Close() }()
+	sqlDB := sql.OpenDB(newErrCloseConnector(errors.New("boom")))
 
-	mock.ExpectClose().WillReturnError(errors.New("boom"))
-
-	db, err := gorm.Open(gormpostgres.New(gormpostgres.Config{Conn: sqlDB, PreferSimpleProtocol: true}), &gorm.Config{})
+	db, err := gorm.Open(noopDialector{connPool: sqlDB}, &gorm.Config{})
 	if err != nil {
 		t.Fatalf("open gorm: %v", err)
 	}
@@ -142,11 +139,124 @@ func TestConnectionCloseReturnsFalseOnError(t *testing.T) {
 	if ok := conn.Close(); ok {
 		t.Fatalf("expected close to report failure")
 	}
+}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("close expectations: %v", err)
+type noopDialector struct {
+	connPool gorm.ConnPool
+}
+
+func (d noopDialector) Name() string {
+	return "noop"
+}
+
+func (d noopDialector) Initialize(db *gorm.DB) error {
+	db.Config.ConnPool = d.connPool
+	return nil
+}
+
+func (noopDialector) Migrator(*gorm.DB) gorm.Migrator {
+	return nil
+}
+
+func (noopDialector) DataTypeOf(*schema.Field) string {
+	return ""
+}
+
+func (noopDialector) DefaultValueOf(*schema.Field) clause.Expression {
+	return clause.Expr{}
+}
+
+func (noopDialector) BindVarTo(writer clause.Writer, _ *gorm.Statement, _ interface{}) {
+	writer.WriteByte('?')
+}
+
+func (noopDialector) QuoteTo(writer clause.Writer, s string) {
+	writer.WriteString(s)
+}
+
+func (noopDialector) Explain(sql string, _ ...interface{}) string {
+	return sql
+}
+
+type errCloseConnector struct {
+	driver.Connector
+	closeErr error
+}
+
+func newErrCloseConnector(closeErr error) *errCloseConnector {
+	return &errCloseConnector{
+		Connector: &noopConnector{},
+		closeErr:  closeErr,
 	}
 }
+
+func (c *errCloseConnector) Connect(ctx context.Context) (driver.Conn, error) {
+	return c.Connector.Connect(ctx)
+}
+
+func (c *errCloseConnector) Driver() driver.Driver {
+	return c.Connector.Driver()
+}
+
+func (c *errCloseConnector) Close() error {
+	return c.closeErr
+}
+
+type noopConnector struct{}
+
+func (*noopConnector) Connect(ctx context.Context) (driver.Conn, error) {
+	return &noopConn{}, nil
+}
+
+func (*noopConnector) Driver() driver.Driver {
+	return noopDriver{}
+}
+
+type noopDriver struct{}
+
+func (noopDriver) Open(string) (driver.Conn, error) {
+	return &noopConn{}, nil
+}
+
+type noopConn struct{}
+
+func (*noopConn) Prepare(string) (driver.Stmt, error) {
+	return noopStmt{}, nil
+}
+
+func (*noopConn) Close() error { return nil }
+
+func (*noopConn) Begin() (driver.Tx, error) { return noopTx{}, nil }
+
+type noopStmt struct{}
+
+func (noopStmt) Close() error { return nil }
+
+func (noopStmt) NumInput() int { return 0 }
+
+func (noopStmt) Exec([]driver.Value) (driver.Result, error) { return noopResult{}, nil }
+
+func (noopStmt) Query([]driver.Value) (driver.Rows, error) { return noopRows{}, nil }
+
+type noopTx struct{}
+
+func (noopTx) Commit() error { return nil }
+
+func (noopTx) Rollback() error { return nil }
+
+type noopResult struct{}
+
+func (noopResult) LastInsertId() (int64, error) { return 0, nil }
+
+func (noopResult) RowsAffected() (int64, error) { return 0, nil }
+
+type noopRows struct{}
+
+func (noopRows) Columns() []string { return nil }
+
+func (noopRows) Close() error { return nil }
+
+func (noopRows) Next(dest []driver.Value) error { return io.EOF }
 
 func TestConnectionSqlReturnsDriver(t *testing.T) {
 	conn, _ := setupPostgresConnection(t)
