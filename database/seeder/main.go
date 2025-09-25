@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/oullin/database"
 	"github.com/oullin/database/seeder/seeds"
 	"github.com/oullin/metal/env"
@@ -13,11 +14,13 @@ import (
 )
 
 var environment *env.Environment
+var sentryHub *portal.Sentry
 
 func init() {
 	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
 
 	environment = secrets
+	sentryHub = kernel.MakeSentry(environment)
 }
 
 func main() {
@@ -26,8 +29,10 @@ func main() {
 	dbConnection := kernel.MakeDbConnection(environment)
 	logs := kernel.MakeLogs(environment)
 
+	defer sentry.Flush(2 * time.Second)
 	defer logs.Close()
 	defer (*dbConnection).Close()
+	defer recoverWithSentry()
 
 	// [1] --- Create the Seeder Runner.
 	seeder := seeds.MakeSeeder(dbConnection, environment)
@@ -117,4 +122,14 @@ func main() {
 	wg.Wait()
 
 	cli.Magentaln("db seeded as expected ....")
+}
+
+func recoverWithSentry() {
+	if err := recover(); err != nil {
+		if sentryHub != nil {
+			sentry.CurrentHub().Recover(err)
+		}
+
+		panic(err)
+	}
 }

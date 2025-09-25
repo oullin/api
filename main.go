@@ -28,10 +28,10 @@ func init() {
 }
 
 func main() {
-	defer app.Recover()
+	defer sentry.Flush(2 * time.Second)
 	defer app.CloseDB()
 	defer app.CloseLogs()
-	defer sentry.Flush(2 * time.Second)
+	defer app.Recover()
 
 	app.Boot()
 
@@ -43,6 +43,7 @@ func main() {
 	// ---
 
 	if err := baseHttp.ListenAndServe(app.GetEnv().Network.GetHostURL(), serverHandler()); err != nil {
+		sentry.CurrentHub().CaptureException(err)
 		slog.Error("Error starting server", "error", err)
 		panic("Error starting server." + err.Error())
 	}
