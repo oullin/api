@@ -96,13 +96,21 @@ func (g *Generator) GenerateHome() error {
 
 	var bodyData []template.HTML
 
-	bodyData = append(bodyData, "<h1>Profile</h1>")
-	bodyData = append(bodyData, template.HTML("<p>"+profile.Data.Name+","+profile.Data.Profession+"</p>"))
+	bodyData = append(bodyData, "<h1>Profile</h1>"+
+		template.HTML("<p>"+
+			template.HTMLEscapeString(profile.Data.Name)+","+
+			template.HTMLEscapeString(profile.Data.Profession)+
+			"</p>",
+		),
+	)
+
+	//bodyData = append(bodyData, "<h1>Profile</h1>")
+	//bodyData = append(bodyData, template.HTML("<p>"+profile.Data.Name+","+profile.Data.Profession+"</p>"))
 	bodyData = append(bodyData, "<h1>Skills</h1>")
 
 	var itemsA []string
 	for _, item := range profile.Data.Skills {
-		itemsA = append(itemsA, "<li>"+item.Item+"</li>")
+		itemsA = append(itemsA, "<li>"+template.HTMLEscapeString(item.Item)+"</li>")
 	}
 
 	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsA, "")+"</ul></p>"))
@@ -110,7 +118,7 @@ func (g *Generator) GenerateHome() error {
 	bodyData = append(bodyData, "<h1>Talks</h1>")
 	var itemsB []string
 	for _, item := range talks.Data {
-		itemsB = append(itemsB, "<li>"+item.Title+": "+item.Subject+"</li>")
+		itemsB = append(itemsB, "<li>"+template.HTMLEscapeString(item.Title)+": "+template.HTMLEscapeString(item.Subject)+"</li>")
 	}
 
 	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsB, "")+"</ul></p>"))
@@ -118,7 +126,7 @@ func (g *Generator) GenerateHome() error {
 	bodyData = append(bodyData, "<h1>Projects</h1>")
 	var itemsC []string
 	for _, item := range projects.Data {
-		itemsC = append(itemsC, "<li>"+item.Title+": "+item.Excerpt+"</li>")
+		itemsC = append(itemsC, "<li>"+template.HTMLEscapeString(item.Title)+": "+template.HTMLEscapeString(item.Excerpt)+"</li>")
 	}
 
 	bodyData = append(bodyData, template.HTML("<p><ul>"+strings.Join(itemsC, "")+"</ul></p>"))

@@ -52,7 +52,7 @@ type TwitterData struct {
 }
 
 type HrefLangData struct {
-	Lang string `validate:"required,oneof=en"`
+	Lang string `validate:"required,oneof=en_GB"`
 	Href string `validate:"required,url"`
 }
 
