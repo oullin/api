@@ -77,14 +77,14 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 func (g *Generator) Generate() error {
 	var err error
 
-	if err = g.GenerateHome(); err != nil {
+	if err = g.GenerateIndex(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (g *Generator) GenerateHome() error {
+func (g *Generator) GenerateIndex() error {
 	var err error
 	var talks *payload.TalksResponse
 	var profile *payload.ProfileResponse
@@ -118,7 +118,7 @@ func (g *Generator) GenerateHome() error {
 		return fmt.Errorf("home: generating template data: %w", err)
 	}
 
-	if err = g.Export("home", tData); err != nil {
+	if err = g.Export("index", tData); err != nil {
 		return fmt.Errorf("home: exporting template data: %w", err)
 	}
 
@@ -176,6 +176,7 @@ func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 		Robots:         Robots,
 		Twitter:        twitter,
 		ThemeColor:     ThemeColor,
+		ColorScheme:    ColorScheme,
 		BgColor:        ThemeColor,
 		Lang:           g.Page.Lang,
 		Description:    Description,

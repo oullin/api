@@ -24,6 +24,7 @@ type TemplateData struct {
 	Canonical      string          `validate:"required,url"`
 	Robots         string          `validate:"required"`
 	ThemeColor     string          `validate:"required"`
+	ColorScheme    string          `validate:"required"`
 	JsonLD         template.JS     `validate:"required"`
 	OGTagOg        TagOgData       `validate:"required"`
 	Twitter        TwitterData     `validate:"required"`

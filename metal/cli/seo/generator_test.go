@@ -68,11 +68,11 @@ func TestGeneratorBuildAndExport(t *testing.T) {
 		t.Fatalf("unexpected manifest short name: %v", manifest["short_name"])
 	}
 
-	if err := gen.Export("home", data); err != nil {
+	if err := gen.Export("index", data); err != nil {
 		t.Fatalf("export err: %v", err)
 	}
 
-	output := filepath.Join(page.OutputDir, "home.seo.html")
+	output := filepath.Join(page.OutputDir, "index.seo.html")
 	raw, err := os.ReadFile(output)
 	if err != nil {
 		t.Fatalf("read output: %v", err)
@@ -123,11 +123,11 @@ func TestNewGeneratorGenerateHome(t *testing.T) {
 		t.Fatalf("expected categories from database")
 	}
 
-	if err := gen.GenerateHome(); err != nil {
+	if err := gen.GenerateIndex(); err != nil {
 		t.Fatalf("generate home err: %v", err)
 	}
 
-	output := filepath.Join(env.Seo.SpaDir, "home.seo.html")
+	output := filepath.Join(env.Seo.SpaDir, "index.seo.html")
 	raw, err := os.ReadFile(output)
 	if err != nil {
 		t.Fatalf("read output: %v", err)
