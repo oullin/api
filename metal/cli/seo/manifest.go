@@ -15,6 +15,7 @@ type Manifest struct {
 	Scope       string
 	Lang        string
 	ThemeColor  string
+	ColorScheme string
 	BgColor     string
 	Categories  []string
 	Icons       []ManifestIcon
@@ -57,6 +58,7 @@ func NewManifest(tmpl Page, data TemplateData) *Manifest {
 		ShortName:   tmpl.SiteName,
 		Categories:  data.Categories,
 		ThemeColor:  data.ThemeColor,
+		ColorScheme: data.ColorScheme,
 		Description: data.Description,
 		Now:         func() time.Time { return time.Now().UTC() },
 		Shortcuts: []ManifestShortcut{

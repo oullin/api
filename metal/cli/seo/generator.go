@@ -176,6 +176,7 @@ func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 		Robots:         Robots,
 		Twitter:        twitter,
 		ThemeColor:     ThemeColor,
+		ColorScheme:    ColorScheme,
 		BgColor:        ThemeColor,
 		Lang:           g.Page.Lang,
 		Description:    Description,

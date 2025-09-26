@@ -28,4 +28,5 @@ const FoundedYear = 2020
 const StubPath = "stub.html"
 const ThemeColor = "#0E172B"
 const Robots = "index,follow"
+const ColorScheme = "light dark"
 const Description = "Gustavo is a full-stack Software Engineer leader with over two decades of experience in building complex web systems and products, specialising in areas like e-commerce, banking, cross-payment solutions, cyber security, and customer success."
