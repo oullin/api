@@ -156,8 +156,8 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 
 func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 	og := TagOgData{
-		ImageWidth:  "600",
-		ImageHeight: "400",
+		ImageWidth:  "1200",
+		ImageHeight: "6300",
 		Type:        "website",
 		Locale:      g.Page.Lang,
 		ImageAlt:    g.Page.SiteName,

@@ -6,7 +6,7 @@ const GocantoUrl = "https://gocanto.dev/"
 const RepoApiUrl = "https://github.com/oullin/api"
 const RepoWebUrl = "https://github.com/oullin/web"
 const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
-const AboutPhotoUrl = "https://oullin.io/assets/about-seo.png"
+const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
 
 // --- Web Pages
 
