@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
@@ -81,6 +82,18 @@ func (g *Generator) Generate() error {
 		return err
 	}
 
+	if err = g.GenerateAbout(); err != nil {
+		return err
+	}
+
+	if err = g.GenerateProjects(); err != nil {
+		return err
+	}
+
+	if err = g.GenerateResume(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -127,6 +140,111 @@ func (g *Generator) GenerateIndex() error {
 	return nil
 }
 
+func (g *Generator) GenerateAbout() error {
+	var (
+		err             error
+		profile         *payload.ProfileResponse
+		social          *payload.SocialResponse
+		recommendations *payload.RecommendationsResponse
+	)
+
+	if profile, err = g.Client.GetProfile(); err != nil {
+		return err
+	}
+
+	if social, err = g.Client.GetSocial(); err != nil {
+		return err
+	}
+
+	if recommendations, err = g.Client.GetRecommendations(); err != nil {
+		return err
+	}
+
+	sections := NewSections()
+	var html []template.HTML
+
+	html = append(html, sections.Profile(profile))
+	html = append(html, sections.Social(social))
+	html = append(html, sections.Recommendations(recommendations))
+
+	data, buildErr := g.buildForPage(WebAboutName, WebAboutUrl, html)
+	if buildErr != nil {
+		return fmt.Errorf("about: generating template data: %w", buildErr)
+	}
+
+	if err = g.Export("about", data); err != nil {
+		return fmt.Errorf("about: exporting template data: %w", err)
+	}
+
+	cli.Successln("About SEO template generated")
+
+	return nil
+}
+
+func (g *Generator) GenerateProjects() error {
+	projects, err := g.Client.GetProjects()
+	if err != nil {
+		return err
+	}
+
+	sections := NewSections()
+	body := []template.HTML{sections.Projects(projects)}
+
+	data, buildErr := g.buildForPage(WebProjectsName, WebProjectsUrl, body)
+	if buildErr != nil {
+		return fmt.Errorf("projects: generating template data: %w", buildErr)
+	}
+
+	if err = g.Export("projects", data); err != nil {
+		return fmt.Errorf("projects: exporting template data: %w", err)
+	}
+
+	cli.Successln("Projects SEO template generated")
+
+	return nil
+}
+
+func (g *Generator) GenerateResume() error {
+	var (
+		err             error
+		experience      *payload.ExperienceResponse
+		education       *payload.EducationResponse
+		recommendations *payload.RecommendationsResponse
+	)
+
+	if experience, err = g.Client.GetExperience(); err != nil {
+		return err
+	}
+
+	if education, err = g.Client.GetEducation(); err != nil {
+		return err
+	}
+
+	if recommendations, err = g.Client.GetRecommendations(); err != nil {
+		return err
+	}
+
+	sections := NewSections()
+	var html []template.HTML
+
+	html = append(html, sections.Experience(experience))
+	html = append(html, sections.Education(education))
+	html = append(html, sections.Recommendations(recommendations))
+
+	data, buildErr := g.buildForPage(WebResumeName, WebResumeUrl, html)
+	if buildErr != nil {
+		return fmt.Errorf("resume: generating template data: %w", buildErr)
+	}
+
+	if err = g.Export("resume", data); err != nil {
+		return fmt.Errorf("resume: exporting template data: %w", err)
+	}
+
+	cli.Successln("Resume SEO template generated")
+
+	return nil
+}
+
 func (g *Generator) Export(origin string, data TemplateData) error {
 	var err error
 	var buffer bytes.Buffer
@@ -155,6 +273,10 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 }
 
 func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
+	return g.buildForPage(WebHomeName, WebHomeUrl, body)
+}
+
+func (g *Generator) buildForPage(pageName, path string, body []template.HTML) (TemplateData, error) {
 	og := TagOgData{
 		ImageHeight: "630",
 		ImageWidth:  "1200",
@@ -181,13 +303,11 @@ func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 		BgColor:        ThemeColor,
 		Lang:           g.Page.Lang,
 		Description:    Description,
-		Canonical:      g.Page.SiteURL,
 		AppleTouchIcon: g.Page.LogoURL,
-		Title:          g.Page.SiteName,
 		Categories:     g.Page.Categories,
 		JsonLD:         NewJsonID(g.Page).Render(),
 		HrefLang: []HrefLangData{
-			{Lang: g.Page.Lang, Href: g.Page.SiteURL},
+			{Lang: g.Page.Lang, Href: g.canonicalFor(path)},
 		},
 		Favicons: []FaviconData{
 			{
@@ -200,6 +320,8 @@ func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
 	}
 
 	data.Body = body
+	data.Canonical = g.canonicalFor(path)
+	data.Title = g.titleFor(pageName)
 	data.Manifest = NewManifest(g.Page, data).Render()
 
 	if _, err := g.Validator.Rejects(og); err != nil {
@@ -235,4 +357,26 @@ func (t *Page) Load() (*template.Template, error) {
 	}
 
 	return tmpl, nil
+}
+
+func (g *Generator) canonicalFor(path string) string {
+	base := strings.TrimSuffix(g.Page.SiteURL, "/")
+
+	if path == "" || path == "/" {
+		return base
+	}
+
+	if strings.HasSuffix(base, path) {
+		return base
+	}
+
+	return base + path
+}
+
+func (g *Generator) titleFor(pageName string) string {
+	if pageName == WebHomeName {
+		return g.Page.SiteName
+	}
+
+	return fmt.Sprintf("%s · %s", pageName, g.Page.SiteName)
 }

@@ -39,6 +39,10 @@ func (f *Fixture) GetSocial() *Fixture {
 	return f.resolveFor(FixtureSocial)
 }
 
+func (f *Fixture) GetSocialFile() string {
+	return f.resolveFor(FixtureSocial).fullPath
+}
+
 func (f *Fixture) GetProfile() *Fixture {
 	return f.resolveFor(FixtureProfile)
 }
@@ -59,12 +63,24 @@ func (f *Fixture) GetEducation() *Fixture {
 	return f.resolveFor(FixtureEducation)
 }
 
+func (f *Fixture) GetEducationFile() string {
+	return f.resolveFor(FixtureEducation).fullPath
+}
+
 func (f *Fixture) GetExperience() *Fixture {
 	return f.resolveFor(FixtureExperience)
 }
 
+func (f *Fixture) GetExperienceFile() string {
+	return f.resolveFor(FixtureExperience).fullPath
+}
+
 func (f *Fixture) GetRecommendations() *Fixture {
 	return f.resolveFor(FixtureRecommendations)
+}
+
+func (f *Fixture) GetRecommendationsFile() string {
+	return f.resolveFor(FixtureRecommendations).fullPath
 }
 
 func (f *Fixture) resolveFor(slug string) *Fixture {

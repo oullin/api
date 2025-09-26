@@ -106,7 +106,7 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 	}
 }
 
-func TestNewGeneratorGenerateHome(t *testing.T) {
+func TestGeneratorGenerateAllPages(t *testing.T) {
 	withRepoRoot(t)
 
 	conn, env := newPostgresConnection(t, &database.Category{})
@@ -123,8 +123,8 @@ func TestNewGeneratorGenerateHome(t *testing.T) {
 		t.Fatalf("expected categories from database")
 	}
 
-	if err := gen.GenerateIndex(); err != nil {
-		t.Fatalf("generate home err: %v", err)
+	if err := gen.Generate(); err != nil {
+		t.Fatalf("generate err: %v", err)
 	}
 
 	output := filepath.Join(env.Seo.SpaDir, "index.seo.html")
@@ -140,5 +140,43 @@ func TestNewGeneratorGenerateHome(t *testing.T) {
 
 	if !strings.Contains(content, "cli tools") {
 		t.Fatalf("expected categories to be rendered: %q", content)
+	}
+
+	aboutRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "about.seo.html"))
+	if err != nil {
+		t.Fatalf("read about output: %v", err)
+	}
+
+	aboutContent := strings.ToLower(string(aboutRaw))
+	if !strings.Contains(aboutContent, "<h1>social</h1>") {
+		t.Fatalf("expected social section in about page: %q", aboutContent)
+	}
+
+	if !strings.Contains(aboutContent, "<h1>recommendations</h1>") {
+		t.Fatalf("expected recommendations section in about page: %q", aboutContent)
+	}
+
+	projectsRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "projects.seo.html"))
+	if err != nil {
+		t.Fatalf("read projects output: %v", err)
+	}
+
+	projectsContent := strings.ToLower(string(projectsRaw))
+	if !strings.Contains(projectsContent, "<h1>projects</h1>") {
+		t.Fatalf("expected projects section in projects page: %q", projectsContent)
+	}
+
+	resumeRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "resume.seo.html"))
+	if err != nil {
+		t.Fatalf("read resume output: %v", err)
+	}
+
+	resumeContent := strings.ToLower(string(resumeRaw))
+	if !strings.Contains(resumeContent, "<h1>experience</h1>") {
+		t.Fatalf("expected experience section in resume page: %q", resumeContent)
+	}
+
+	if !strings.Contains(resumeContent, "<h1>education</h1>") {
+		t.Fatalf("expected education section in resume page: %q", resumeContent)
 	}
 }

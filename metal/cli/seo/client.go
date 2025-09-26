@@ -64,6 +64,62 @@ func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
 	return &projects, nil
 }
 
+func (c *Client) GetSocial() (*payload.SocialResponse, error) {
+	var social payload.SocialResponse
+
+	fn := func() router.StaticRouteResource {
+		return handler.MakeSocialHandler(c.Fixture.GetSocialFile())
+	}
+
+	if err := fetch[payload.SocialResponse](&social, fn); err != nil {
+		return nil, fmt.Errorf("error fetching social: %w", err)
+	}
+
+	return &social, nil
+}
+
+func (c *Client) GetRecommendations() (*payload.RecommendationsResponse, error) {
+	var recs payload.RecommendationsResponse
+
+	fn := func() router.StaticRouteResource {
+		return handler.MakeRecommendationsHandler(c.Fixture.GetRecommendationsFile())
+	}
+
+	if err := fetch[payload.RecommendationsResponse](&recs, fn); err != nil {
+		return nil, fmt.Errorf("error fetching recommendations: %w", err)
+	}
+
+	return &recs, nil
+}
+
+func (c *Client) GetExperience() (*payload.ExperienceResponse, error) {
+	var exp payload.ExperienceResponse
+
+	fn := func() router.StaticRouteResource {
+		return handler.MakeExperienceHandler(c.Fixture.GetExperienceFile())
+	}
+
+	if err := fetch[payload.ExperienceResponse](&exp, fn); err != nil {
+		return nil, fmt.Errorf("error fetching experience: %w", err)
+	}
+
+	return &exp, nil
+}
+
+func (c *Client) GetEducation() (*payload.EducationResponse, error) {
+	var edu payload.EducationResponse
+
+	fn := func() router.StaticRouteResource {
+		return handler.MakeEducationHandler(c.Fixture.GetEducationFile())
+	}
+
+	if err := fetch[payload.EducationResponse](&edu, fn); err != nil {
+		return nil, fmt.Errorf("error fetching education: %w", err)
+	}
+
+	return &edu, nil
+}
+
 func fetch[T any](response *T, handler func() router.StaticRouteResource) error {
 	req := httptest.NewRequest("GET", "http://localhost:8080/proxy", nil)
 	rr := httptest.NewRecorder()
