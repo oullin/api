@@ -123,7 +123,7 @@ func TestNewGeneratorGenerateHome(t *testing.T) {
 		t.Fatalf("expected categories from database")
 	}
 
-	if err := gen.GenerateHome(); err != nil {
+	if err := gen.GenerateIndex(); err != nil {
 		t.Fatalf("generate home err: %v", err)
 	}
 
