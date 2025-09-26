@@ -43,6 +43,7 @@ type TagOgData struct {
 	ImageAlt    string `validate:"required,min=10"`
 	ImageWidth  string `validate:"required"`
 	ImageHeight string `validate:"required"`
+	ImageType   string `validate:"required"`
 	SiteName    string `validate:"required,min=5"`
 	Locale      string `validate:"required,min=5"`
 }
