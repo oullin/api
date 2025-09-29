@@ -1,10 +1,13 @@
-.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh
+.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net
 
 BUILD_VERSION ?= latest
+BUILD_CADDY_NET := caddy_net
 BUILD_PACKAGE_OWNER := oullin
 DB_INFRA_ROOT_PATH ?= $(ROOT_PATH)/database/infra
 DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
 
+ensure-caddy-net:
+	docker network inspect caddy_net >/dev/null 2>&1 || docker network create caddy_net
 
 build-fresh:
 	make fresh && \
@@ -13,6 +16,7 @@ build-fresh:
 	make db:seed
 
 build-local:
+	make ensure-caddy-net
 	docker compose --profile local up --build -d
 
 build-local-restart:
