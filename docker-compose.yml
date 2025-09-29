@@ -73,6 +73,7 @@ services:
             volumes:
                 - caddy_data:/data
                 - caddy_config:/config
+                - ./caddy/mtls:/etc/caddy/mtls:ro
                 - ./caddy/Caddyfile.local:/etc/caddy/Caddyfile
             networks:
                 - caddy_net
