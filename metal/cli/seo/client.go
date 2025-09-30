@@ -33,31 +33,15 @@ func get[T any](handler func() router.StaticRouteResource, entityName string) (*
 }
 
 func (c *Client) GetTalks() (*payload.TalksResponse, error) {
-	var talks payload.TalksResponse
-
-	fn := func() router.StaticRouteResource {
+	return get[payload.TalksResponse](func() router.StaticRouteResource {
 		return handler.MakeTalksHandler(c.Fixture.GetTalksFile())
-	}
-
-	if err := fetch[payload.TalksResponse](&talks, fn); err != nil {
-		return nil, fmt.Errorf("home: error fetching talks: %w", err)
-	}
-
-	return &talks, nil
+	}, "talks")
 }
 
 func (c *Client) GetProfile() (*payload.ProfileResponse, error) {
-	var profile payload.ProfileResponse
-
-	fn := func() router.StaticRouteResource {
+	return get[payload.ProfileResponse](func() router.StaticRouteResource {
 		return handler.MakeProfileHandler(c.Fixture.GetProfileFile())
-	}
-
-	if err := fetch[payload.ProfileResponse](&profile, fn); err != nil {
-		return nil, fmt.Errorf("error fetching profile: %w", err)
-	}
-
-	return &profile, nil
+	}, "profile")
 }
 
 func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
