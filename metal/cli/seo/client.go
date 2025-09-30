@@ -22,6 +22,16 @@ func NewClient(routes *router.WebsiteRoutes) *Client {
 	}
 }
 
+func get[T any](handler func() router.StaticRouteResource, entityName string) (*T, error) {
+	var response T
+
+	if err := fetch[T](&response, handler); err != nil {
+		return nil, fmt.Errorf("error fetching %s: %w", entityName, err)
+	}
+
+	return &response, nil
+}
+
 func (c *Client) GetTalks() (*payload.TalksResponse, error) {
 	var talks payload.TalksResponse
 
@@ -51,73 +61,33 @@ func (c *Client) GetProfile() (*payload.ProfileResponse, error) {
 }
 
 func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
-	var projects payload.ProjectsResponse
-
-	fn := func() router.StaticRouteResource {
+	return get[payload.ProjectsResponse](func() router.StaticRouteResource {
 		return handler.MakeProjectsHandler(c.Fixture.GetProjectsFile())
-	}
-
-	if err := fetch[payload.ProjectsResponse](&projects, fn); err != nil {
-		return nil, fmt.Errorf("error fetching projects: %w", err)
-	}
-
-	return &projects, nil
+	}, "projects")
 }
 
 func (c *Client) GetSocial() (*payload.SocialResponse, error) {
-	var social payload.SocialResponse
-
-	fn := func() router.StaticRouteResource {
+	return get[payload.SocialResponse](func() router.StaticRouteResource {
 		return handler.MakeSocialHandler(c.Fixture.GetSocialFile())
-	}
-
-	if err := fetch[payload.SocialResponse](&social, fn); err != nil {
-		return nil, fmt.Errorf("error fetching social: %w", err)
-	}
-
-	return &social, nil
+	}, "social")
 }
 
 func (c *Client) GetRecommendations() (*payload.RecommendationsResponse, error) {
-	var recs payload.RecommendationsResponse
-
-	fn := func() router.StaticRouteResource {
+	return get[payload.RecommendationsResponse](func() router.StaticRouteResource {
 		return handler.MakeRecommendationsHandler(c.Fixture.GetRecommendationsFile())
-	}
-
-	if err := fetch[payload.RecommendationsResponse](&recs, fn); err != nil {
-		return nil, fmt.Errorf("error fetching recommendations: %w", err)
-	}
-
-	return &recs, nil
+	}, "recommendations")
 }
 
 func (c *Client) GetExperience() (*payload.ExperienceResponse, error) {
-	var exp payload.ExperienceResponse
-
-	fn := func() router.StaticRouteResource {
+	return get[payload.ExperienceResponse](func() router.StaticRouteResource {
 		return handler.MakeExperienceHandler(c.Fixture.GetExperienceFile())
-	}
-
-	if err := fetch[payload.ExperienceResponse](&exp, fn); err != nil {
-		return nil, fmt.Errorf("error fetching experience: %w", err)
-	}
-
-	return &exp, nil
+	}, "experience")
 }
 
 func (c *Client) GetEducation() (*payload.EducationResponse, error) {
-	var edu payload.EducationResponse
-
-	fn := func() router.StaticRouteResource {
+	return get[payload.EducationResponse](func() router.StaticRouteResource {
 		return handler.MakeEducationHandler(c.Fixture.GetEducationFile())
-	}
-
-	if err := fetch[payload.EducationResponse](&edu, fn); err != nil {
-		return nil, fmt.Errorf("error fetching education: %w", err)
-	}
-
-	return &edu, nil
+	}, "education")
 }
 
 func fetch[T any](response *T, handler func() router.StaticRouteResource) error {
