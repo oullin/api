@@ -73,7 +73,7 @@ func (s *Sections) Projects(projects *payload.ProjectsResponse) template.HTML {
 	var items []string
 
 	for _, item := range projects.Data {
-		href := template.HTMLEscapeString(item.URL)
+		href := sanitizeURL(item.URL)
 		title := template.HTMLEscapeString(item.Title)
 		excerpt := template.HTMLEscapeString(item.Excerpt)
 		lang := template.HTMLEscapeString(item.Language)
@@ -111,7 +111,7 @@ func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
 
 	if social != nil {
 		for _, item := range social.Data {
-			href := template.HTMLEscapeString(item.URL)
+			href := sanitizeURL(item.URL)
 			name := template.HTMLEscapeString(item.Name)
 			handle := template.HTMLEscapeString(item.Handle)
 			description := template.HTMLEscapeString(item.Description)
@@ -314,4 +314,17 @@ func filterNonEmpty(values []string) []string {
 	}
 
 	return out
+}
+
+// sanitizeURL only allows http(s) schemes and returns an escaped value or empty string.
+func sanitizeURL(u string) string {
+	u = strings.TrimSpace(u)
+	if u == "" {
+		return ""
+	}
+	lower := strings.ToLower(u)
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
+		return template.HTMLEscapeString(u)
+	}
+	return ""
 }
