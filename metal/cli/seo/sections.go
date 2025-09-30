@@ -203,16 +203,16 @@ func (s *Sections) Experience(exp *payload.ExperienceResponse) template.HTML {
 			summary := template.HTMLEscapeString(item.Summary)
 			skills := template.HTMLEscapeString(item.Skills)
 
-			timeline := strings.TrimSpace(strings.Join(filterNonEmpty([]string{start, end}), " - "))
-			location := strings.TrimSpace(strings.Join(filterNonEmpty([]string{city, country}), ", "))
-			heading := strings.TrimSpace(strings.Join(filterNonEmpty([]string{position, company}), " at "))
+			timeline := strings.Join(filterNonEmpty([]string{start, end}), " - ")
+			location := strings.Join(filterNonEmpty([]string{city, country}), ", ")
+			heading := strings.Join(filterNonEmpty([]string{position, company}), " at ")
 
 			details := []string{}
 			if timeline != "" {
 				details = append(details, "Timeline: "+timeline)
 			}
 			if employmentType != "" || locationType != "" {
-				details = append(details, strings.TrimSpace(strings.Join(filterNonEmpty([]string{employmentType, locationType}), " · ")))
+				details = append(details, strings.Join(filterNonEmpty([]string{employmentType, locationType}), " · "))
 			}
 			if location != "" {
 				details = append(details, "Location: "+location)
@@ -286,14 +286,7 @@ func (s *Sections) Education(edu *payload.EducationResponse) template.HTML {
 }
 
 func formatDetails(parts []string) string {
-	var filtered []string
-
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part != "" {
-			filtered = append(filtered, part)
-		}
-	}
+	filtered := filterNonEmpty(parts)
 
 	if len(filtered) == 0 {
 		return ""

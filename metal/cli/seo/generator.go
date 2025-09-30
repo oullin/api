@@ -141,22 +141,18 @@ func (g *Generator) GenerateIndex() error {
 }
 
 func (g *Generator) GenerateAbout() error {
-	var (
-		err             error
-		profile         *payload.ProfileResponse
-		social          *payload.SocialResponse
-		recommendations *payload.RecommendationsResponse
-	)
-
-	if profile, err = g.Client.GetProfile(); err != nil {
+	profile, err := g.Client.GetProfile()
+	if err != nil {
 		return err
 	}
 
-	if social, err = g.Client.GetSocial(); err != nil {
+	social, err := g.Client.GetSocial()
+	if err != nil {
 		return err
 	}
 
-	if recommendations, err = g.Client.GetRecommendations(); err != nil {
+	recommendations, err := g.Client.GetRecommendations()
+	if err != nil {
 		return err
 	}
 
@@ -205,22 +201,18 @@ func (g *Generator) GenerateProjects() error {
 }
 
 func (g *Generator) GenerateResume() error {
-	var (
-		err             error
-		experience      *payload.ExperienceResponse
-		education       *payload.EducationResponse
-		recommendations *payload.RecommendationsResponse
-	)
-
-	if experience, err = g.Client.GetExperience(); err != nil {
+	experience, err := g.Client.GetExperience()
+	if err != nil {
 		return err
 	}
 
-	if education, err = g.Client.GetEducation(); err != nil {
+	education, err := g.Client.GetEducation()
+	if err != nil {
 		return err
 	}
 
-	if recommendations, err = g.Client.GetRecommendations(); err != nil {
+	recommendations, err := g.Client.GetRecommendations()
+	if err != nil {
 		return err
 	}
 
