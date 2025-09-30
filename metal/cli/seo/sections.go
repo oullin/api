@@ -29,6 +29,10 @@ func (s *Sections) Categories(categories []string) template.HTML {
 }
 
 func (s *Sections) Profile(profile *payload.ProfileResponse) template.HTML {
+	if profile == nil {
+		return template.HTML("")
+	}
+
 	return "<h1>Profile</h1>" +
 		template.HTML("<p>"+
 			template.HTMLEscapeString(profile.Data.Name)+", "+
@@ -38,6 +42,10 @@ func (s *Sections) Profile(profile *payload.ProfileResponse) template.HTML {
 }
 
 func (s *Sections) Skills(profile *payload.ProfileResponse) template.HTML {
+	if profile == nil {
+		return template.HTML("")
+	}
+
 	var items []string
 
 	for _, item := range profile.Data.Skills {
@@ -52,6 +60,10 @@ func (s *Sections) Skills(profile *payload.ProfileResponse) template.HTML {
 }
 
 func (s *Sections) Talks(talks *payload.TalksResponse) template.HTML {
+	if talks == nil {
+		return template.HTML("")
+	}
+
 	var items []string
 
 	for _, item := range talks.Data {

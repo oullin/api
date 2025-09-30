@@ -140,3 +140,19 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 		}
 	}
 }
+
+func TestSectionsGuardNilInputs(t *testing.T) {
+	sections := NewSections()
+
+	if html := sections.Profile(nil); html != template.HTML("") {
+		t.Fatalf("expected empty html for nil profile, got %q", html)
+	}
+
+	if html := sections.Skills(nil); html != template.HTML("") {
+		t.Fatalf("expected empty html for nil skills profile, got %q", html)
+	}
+
+	if html := sections.Talks(nil); html != template.HTML("") {
+		t.Fatalf("expected empty html for nil talks, got %q", html)
+	}
+}
