@@ -126,9 +126,9 @@ func (g *Generator) GenerateIndex() error {
 
 	// ----- Template Parsing
 
-	var tData TemplateData
-	if tData, err = g.Build(html); err != nil {
-		return fmt.Errorf("home: generating template data: %w", err)
+	tData, buildErr := g.buildForPage(WebHomeName, WebHomeUrl, html)
+	if buildErr != nil {
+		return fmt.Errorf("home: generating template data: %w", buildErr)
 	}
 
 	if err = g.Export("index", tData); err != nil {
@@ -262,10 +262,6 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 	cli.Grayln("------------------")
 
 	return nil
-}
-
-func (g *Generator) Build(body []template.HTML) (TemplateData, error) {
-	return g.buildForPage(WebHomeName, WebHomeUrl, body)
 }
 
 func (g *Generator) buildForPage(pageName, path string, body []template.HTML) (TemplateData, error) {
