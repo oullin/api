@@ -26,6 +26,45 @@ func TestSortedQuery(t *testing.T) {
 	}
 }
 
+func TestSanitiseURL(t *testing.T) {
+	t.Run("keeps_https_urls", func(t *testing.T) {
+		raw := "https://example.com/path?ok=1#section"
+		got := SanitiseURL(raw)
+		if got != "https://example.com/path?ok=1" {
+			t.Fatalf("expected fragment trimmed https URL, got %q", got)
+		}
+	})
+
+	t.Run("converts_http_to_https", func(t *testing.T) {
+		got := SanitiseURL("http://example.com")
+		if got != "https://example.com" {
+			t.Fatalf("expected https scheme, got %q", got)
+		}
+	})
+
+	t.Run("adds_scheme_when_missing", func(t *testing.T) {
+		got := SanitiseURL("example.com/page")
+		if got != "https://example.com/page" {
+			t.Fatalf("expected https scheme added, got %q", got)
+		}
+	})
+
+	t.Run("allows_localhost", func(t *testing.T) {
+		got := SanitiseURL("http://localhost:8080")
+		if got != "https://localhost:8080" {
+			t.Fatalf("expected localhost to be preserved, got %q", got)
+		}
+	})
+
+	t.Run("returns_empty_for_invalid_input", func(t *testing.T) {
+		for _, input := range []string{"", "   ", "invalid-url", "ftp://example.com"} {
+			if got := SanitiseURL(input); got != "" {
+				t.Fatalf("expected empty string for %q, got %q", input, got)
+			}
+		}
+	})
+}
+
 func TestBuildCanonical(t *testing.T) {
 	u, _ := url.Parse("https://x.test/api/v1/resource?z=9&a=1&a=0")
 	bodyHash := "abc123"
