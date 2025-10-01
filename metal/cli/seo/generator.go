@@ -41,18 +41,22 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	}
 
 	page := Page{
-		LogoURL:       LogoUrl,
 		StubPath:      StubPath,
-		WebRepoURL:    RepoWebUrl,
-		APIRepoURL:    RepoApiUrl,
 		Categories:    categories,
-		SiteURL:       env.App.URL,
 		SiteName:      env.App.Name,
-		AboutPhotoUrl: AboutPhotoUrl,
 		Lang:          env.App.Lang(),
 		OutputDir:     env.Seo.SpaDir,
 		Template:      &template.Template{},
-		SameAsURL:     []string{RepoApiUrl, RepoWebUrl, GocantoUrl},
+		LogoURL:       portal.SanitiseURL(LogoUrl),
+		WebRepoURL:    portal.SanitiseURL(RepoWebUrl),
+		APIRepoURL:    portal.SanitiseURL(RepoApiUrl),
+		SiteURL:       portal.SanitiseURL(env.App.URL),
+		AboutPhotoUrl: portal.SanitiseURL(AboutPhotoUrl),
+		SameAsURL: []string{
+			portal.SanitiseURL(RepoApiUrl),
+			portal.SanitiseURL(RepoWebUrl),
+			portal.SanitiseURL(GocantoUrl),
+		},
 	}
 
 	if _, err = val.Rejects(page); err != nil {
@@ -326,13 +330,13 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 		Locale:      g.Page.Lang,
 		ImageAlt:    g.Page.SiteName,
 		SiteName:    g.Page.SiteName,
-		Image:       g.Page.AboutPhotoUrl,
+		Image:       portal.SanitiseURL(g.Page.AboutPhotoUrl),
 	}
 
 	twitter := TwitterData{
-		Card:     "summary_large_image",
-		Image:    g.Page.AboutPhotoUrl,
 		ImageAlt: g.Page.SiteName,
+		Card:     "summary_large_image",
+		Image:    portal.SanitiseURL(g.Page.AboutPhotoUrl),
 	}
 
 	data := TemplateData{
@@ -344,26 +348,29 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 		BgColor:        ThemeColor,
 		Lang:           g.Page.Lang,
 		Description:    Description,
-		AppleTouchIcon: g.Page.LogoURL,
 		Categories:     g.Page.Categories,
 		JsonLD:         NewJsonID(g.Page).Render(),
+		AppleTouchIcon: portal.SanitiseURL(g.Page.LogoURL),
 		HrefLang: []HrefLangData{
-			{Lang: g.Page.Lang, Href: g.CanonicalFor(path)},
+			{
+				Lang: g.Page.Lang,
+				Href: portal.SanitiseURL(g.CanonicalFor(path)),
+			},
 		},
 		Favicons: []FaviconData{
 			{
 				Rel:   "icon",
 				Sizes: "48x48",
 				Type:  "image/ico",
-				Href:  g.Page.SiteURL + "/favicon.ico",
+				Href:  portal.SanitiseURL(g.Page.SiteURL + "/favicon.ico"),
 			},
 		},
 	}
 
 	data.Body = body
 	data.Title = g.TitleFor(pageName)
-	data.Canonical = g.CanonicalFor(path)
 	data.Manifest = NewManifest(g.Page, data).Render()
+	data.Canonical = portal.SanitiseURL(g.CanonicalFor(path))
 
 	for _, opt := range opts {
 		opt(&data)

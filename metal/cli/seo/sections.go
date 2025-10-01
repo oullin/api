@@ -89,7 +89,7 @@ func (s *Sections) Projects(projects *payload.ProjectsResponse) template.HTML {
 		title := template.HTMLEscapeString(item.Title)
 		lang := template.HTMLEscapeString(item.Language)
 		excerpt := template.HTMLEscapeString(item.Excerpt)
-		href := portal.SanitizeURL(strings.TrimSpace(item.URL))
+		href := portal.SanitiseURL(strings.TrimSpace(item.URL))
 
 		project := fmt.Sprintf("<strong>%s</strong>", title)
 
@@ -211,7 +211,7 @@ func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
 	for _, item := range social.Data {
 		name := template.HTMLEscapeString(item.Name)
 		handle := template.HTMLEscapeString(item.Handle)
-		href := portal.SanitizeURL(strings.TrimSpace(item.URL))
+		href := portal.SanitiseURL(strings.TrimSpace(item.URL))
 		description := template.HTMLEscapeString(item.Description)
 
 		linkText := name

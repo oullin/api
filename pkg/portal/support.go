@@ -36,7 +36,7 @@ func FilterNonEmpty(values []string) []string {
 	return out
 }
 
-func SanitizeURL(u string) string {
+func SanitiseURL(u string) string {
 	u = strings.TrimSpace(u)
 	lowerU := strings.ToLower(u)
 
@@ -44,11 +44,7 @@ func SanitizeURL(u string) string {
 		return template.HTMLEscapeString(u)
 	}
 
-	if strings.HasPrefix(lowerU, "http://") {
-		return template.HTMLEscapeString("https://" + u[7:])
-	}
-
-	return template.HTMLEscapeString(u)
+	return template.HTMLEscapeString("https://" + u[7:])
 }
 
 func CloseWithLog(c io.Closer) {
