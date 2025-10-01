@@ -62,7 +62,7 @@ func SanitiseURL(u string) string {
 	}
 
 	parsed, err := url.Parse(candidate)
-	if err != nil || parsed.Host == "" {
+	if err != nil {
 		return ""
 	}
 
