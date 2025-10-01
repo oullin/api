@@ -44,10 +44,15 @@ func SanitiseURL(u string) string {
 
 	lower := strings.ToLower(trimmed)
 
-	if strings.Contains(lower, "://") &&
-		!strings.HasPrefix(lower, "http://") &&
-		!strings.HasPrefix(lower, "https://") {
-		return ""
+	if orig, err := url.Parse(trimmed); err == nil {
+		switch scheme := strings.ToLower(orig.Scheme); scheme {
+		case "":
+		// add https later
+		case "http", "https":
+		// keep going
+		default:
+			return ""
+		}
 	}
 
 	candidate := trimmed

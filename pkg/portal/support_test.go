@@ -34,6 +34,7 @@ func TestSanitiseURL(t *testing.T) {
 	}{
 		{name: "keeps https urls", input: "https://example.com/path?ok=1#section", want: "https://example.com/path?ok=1"},
 		{name: "converts http to https", input: "http://example.com", want: "https://example.com"},
+		{name: "allows http substring in query", input: "example.com/path?next=http://ok.test", want: "https://example.com/path?next=http://ok.test"},
 		{name: "adds scheme when missing", input: "example.com/page", want: "https://example.com/page"},
 		{name: "allows localhost", input: "http://localhost:8080", want: "https://localhost:8080"},
 		{name: "empty input", input: "", want: ""},
