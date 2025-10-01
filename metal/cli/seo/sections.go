@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/pkg/portal"
 )
 
 type Sections struct{}
@@ -85,10 +86,10 @@ func (s *Sections) Projects(projects *payload.ProjectsResponse) template.HTML {
 	var items []string
 
 	for _, item := range projects.Data {
-		href := sanitizeURL(item.URL)
+		href := portal.SanitizeURL(item.URL)
 		title := template.HTMLEscapeString(item.Title)
-		excerpt := template.HTMLEscapeString(item.Excerpt)
 		lang := template.HTMLEscapeString(item.Language)
+		excerpt := template.HTMLEscapeString(item.Excerpt)
 
 		project := fmt.Sprintf("<strong>%s</strong>", title)
 
@@ -100,13 +101,14 @@ func (s *Sections) Projects(projects *payload.ProjectsResponse) template.HTML {
 		if excerpt != "" {
 			details = append(details, excerpt)
 		}
+
 		if lang != "" {
 			details = append(details, "Language: "+lang)
 		}
 
 		items = append(items, "<li>"+
 			project+
-			formatDetails(details)+
+			s.FormatDetails(details)+
 			"</li>",
 		)
 	}
@@ -127,7 +129,10 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 
 	authorName := strings.TrimSpace(post.Author.DisplayName)
 	if authorName == "" {
-		fullName := strings.TrimSpace(strings.Join(filterNonEmpty([]string{post.Author.FirstName, post.Author.LastName}), " "))
+		fullName := strings.TrimSpace(strings.Join(portal.FilterNonEmpty(
+			[]string{post.Author.FirstName, post.Author.LastName}), " "),
+		)
+
 		if fullName != "" {
 			authorName = fullName
 		} else {
@@ -149,12 +154,14 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 
 	if len(post.Categories) > 0 {
 		var names []string
+
 		for _, category := range post.Categories {
 			name := strings.TrimSpace(category.Name)
 			if name != "" {
 				names = append(names, template.HTMLEscapeString(name))
 			}
 		}
+
 		if len(names) > 0 {
 			metaParts = append(metaParts, "Categories: "+strings.Join(names, ", "))
 		}
@@ -162,12 +169,14 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 
 	if len(post.Tags) > 0 {
 		var names []string
+
 		for _, tag := range post.Tags {
 			name := strings.TrimSpace(tag.Name)
 			if name != "" {
 				names = append(names, template.HTMLEscapeString(name))
 			}
 		}
+
 		if len(names) > 0 {
 			metaParts = append(metaParts, "Tags: "+strings.Join(names, ", "))
 		}
@@ -180,13 +189,14 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 
 	excerpt := strings.TrimSpace(post.Excerpt)
 	excerptHTML := ""
+
 	if excerpt != "" {
 		escaped := template.HTMLEscapeString(strings.ReplaceAll(excerpt, "\r\n", "\n"))
 		escaped = strings.ReplaceAll(escaped, "\n", "<br/>")
-		excerptHTML = "<p>" + allowLineBreaks(escaped) + "</p>"
+		excerptHTML = "<p>" + portal.AllowLineBreaks(escaped) + "</p>"
 	}
 
-	contentHTML := formatPostContent(post.Content)
+	contentHTML := s.FormatPostContent(post.Content)
 
 	return template.HTML("<h1>" + title + "</h1>" + metaHTML + excerptHTML + contentHTML)
 }
@@ -199,7 +209,7 @@ func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
 	var items []string
 
 	for _, item := range social.Data {
-		href := sanitizeURL(item.URL)
+		href := portal.SanitizeURL(item.URL)
 		name := template.HTMLEscapeString(item.Name)
 		handle := template.HTMLEscapeString(item.Handle)
 		description := template.HTMLEscapeString(item.Description)
@@ -215,7 +225,7 @@ func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
 
 		items = append(items, "<li>"+
 			linkText+
-			formatDetails([]string{description})+
+			s.FormatDetails([]string{description})+
 			"</li>",
 		)
 	}
@@ -235,16 +245,17 @@ func (s *Sections) Recommendations(recs *payload.RecommendationsResponse) templa
 	var items []string
 
 	for _, item := range recs.Data {
+		relation := template.HTMLEscapeString(item.Relation)
+		company := template.HTMLEscapeString(item.Person.Company)
 		fullName := template.HTMLEscapeString(item.Person.FullName)
 		designation := template.HTMLEscapeString(item.Person.Designation)
-		company := template.HTMLEscapeString(item.Person.Company)
-		relation := template.HTMLEscapeString(item.Relation)
-		text := allowLineBreaks(template.HTMLEscapeString(item.Text))
+		text := portal.AllowLineBreaks(template.HTMLEscapeString(item.Text))
 
 		meta := []string{}
 		if designation != "" {
 			meta = append(meta, designation)
 		}
+
 		if company != "" {
 			meta = append(meta, company)
 		}
@@ -258,13 +269,14 @@ func (s *Sections) Recommendations(recs *payload.RecommendationsResponse) templa
 		if relation != "" {
 			details = append(details, relation)
 		}
+
 		if text != "" {
 			details = append(details, text)
 		}
 
 		items = append(items, "<li>"+
 			"<strong>"+heading+"</strong>"+
-			formatDetails(details)+
+			s.FormatDetails(details)+
 			"</li>",
 		)
 	}
@@ -284,41 +296,45 @@ func (s *Sections) Experience(exp *payload.ExperienceResponse) template.HTML {
 	var items []string
 
 	for _, item := range exp.Data {
-		company := template.HTMLEscapeString(item.Company)
-		position := template.HTMLEscapeString(item.Position)
-		employmentType := template.HTMLEscapeString(item.EmploymentType)
-		locationType := template.HTMLEscapeString(item.LocationType)
 		city := template.HTMLEscapeString(item.City)
+		end := template.HTMLEscapeString(item.EndDate)
+		skills := template.HTMLEscapeString(item.Skills)
+		company := template.HTMLEscapeString(item.Company)
 		country := template.HTMLEscapeString(item.Country)
 		start := template.HTMLEscapeString(item.StartDate)
-		end := template.HTMLEscapeString(item.EndDate)
 		summary := template.HTMLEscapeString(item.Summary)
-		skills := template.HTMLEscapeString(item.Skills)
+		position := template.HTMLEscapeString(item.Position)
+		locationType := template.HTMLEscapeString(item.LocationType)
+		employmentType := template.HTMLEscapeString(item.EmploymentType)
 
-		timeline := strings.Join(filterNonEmpty([]string{start, end}), " - ")
-		location := strings.Join(filterNonEmpty([]string{city, country}), ", ")
-		heading := strings.Join(filterNonEmpty([]string{position, company}), " at ")
+		timeline := strings.Join(portal.FilterNonEmpty([]string{start, end}), " - ")
+		location := strings.Join(portal.FilterNonEmpty([]string{city, country}), ", ")
+		heading := strings.Join(portal.FilterNonEmpty([]string{position, company}), " at ")
 
 		details := []string{}
 		if timeline != "" {
 			details = append(details, "Timeline: "+timeline)
 		}
+
 		if employmentType != "" || locationType != "" {
-			details = append(details, strings.Join(filterNonEmpty([]string{employmentType, locationType}), " · "))
+			details = append(details, strings.Join(portal.FilterNonEmpty([]string{employmentType, locationType}), " · "))
 		}
+
 		if location != "" {
 			details = append(details, "Location: "+location)
 		}
+
 		if summary != "" {
 			details = append(details, summary)
 		}
+
 		if skills != "" {
 			details = append(details, "Skills: "+skills)
 		}
 
 		items = append(items, "<li>"+
 			"<strong>"+heading+"</strong>"+
-			formatDetails(details)+
+			s.FormatDetails(details)+
 			"</li>",
 		)
 	}
@@ -338,15 +354,16 @@ func (s *Sections) Education(edu *payload.EducationResponse) template.HTML {
 	var items []string
 
 	for _, item := range edu.Data {
+		field := template.HTMLEscapeString(item.Field)
 		school := template.HTMLEscapeString(item.School)
 		degree := template.HTMLEscapeString(item.Degree)
-		field := template.HTMLEscapeString(item.Field)
-		description := template.HTMLEscapeString(item.Description)
 		graduated := template.HTMLEscapeString(item.GraduatedAt)
+		description := template.HTMLEscapeString(item.Description)
 		country := template.HTMLEscapeString(item.IssuingCountry)
 
-		headingParts := filterNonEmpty([]string{degree, field})
+		headingParts := portal.FilterNonEmpty([]string{degree, field})
 		heading := strings.Join(headingParts, " in ")
+
 		if heading == "" {
 			heading = school
 		} else if school != "" {
@@ -357,16 +374,18 @@ func (s *Sections) Education(edu *payload.EducationResponse) template.HTML {
 		if graduated != "" {
 			details = append(details, "Graduated: "+graduated)
 		}
+
 		if country != "" {
 			details = append(details, "Country: "+country)
 		}
+
 		if description != "" {
-			details = append(details, allowLineBreaks(description))
+			details = append(details, portal.AllowLineBreaks(description))
 		}
 
 		items = append(items, "<li>"+
 			"<strong>"+heading+"</strong>"+
-			formatDetails(details)+
+			s.FormatDetails(details)+
 			"</li>",
 		)
 	}
@@ -378,7 +397,7 @@ func (s *Sections) Education(edu *payload.EducationResponse) template.HTML {
 	)
 }
 
-func formatPostContent(content string) string {
+func (s *Sections) FormatPostContent(content string) string {
 	trimmed := strings.TrimSpace(strings.ReplaceAll(content, "\r\n", "\n"))
 	if trimmed == "" {
 		return ""
@@ -395,7 +414,7 @@ func formatPostContent(content string) string {
 
 		escaped := template.HTMLEscapeString(paragraph)
 		escaped = strings.ReplaceAll(escaped, "\n", "<br/>")
-		escaped = allowLineBreaks(escaped)
+		escaped = portal.AllowLineBreaks(escaped)
 		rendered = append(rendered, "<p>"+escaped+"</p>")
 	}
 
@@ -406,46 +425,12 @@ func formatPostContent(content string) string {
 	return strings.Join(rendered, "")
 }
 
-func formatDetails(parts []string) string {
-	filtered := filterNonEmpty(parts)
+func (s *Sections) FormatDetails(parts []string) string {
+	filtered := portal.FilterNonEmpty(parts)
 
 	if len(filtered) == 0 {
 		return ""
 	}
 
 	return ": " + strings.Join(filtered, " | ")
-}
-
-func allowLineBreaks(text string) string {
-	replacer := strings.NewReplacer(
-		"&lt;br/&gt;", "<br/>",
-		"&lt;br /&gt;", "<br/>",
-		"&lt;br&gt;", "<br/>",
-	)
-
-	return replacer.Replace(text)
-}
-
-func filterNonEmpty(values []string) []string {
-	var out []string
-	for _, v := range values {
-		if strings.TrimSpace(v) != "" {
-			out = append(out, strings.TrimSpace(v))
-		}
-	}
-
-	return out
-}
-
-// sanitizeURL only allows http(s) schemes and returns an escaped value or empty string.
-func sanitizeURL(u string) string {
-	u = strings.TrimSpace(u)
-	if u == "" {
-		return ""
-	}
-	lower := strings.ToLower(u)
-	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
-		return template.HTMLEscapeString(u)
-	}
-	return ""
 }

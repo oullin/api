@@ -185,6 +185,7 @@ func (g *Generator) GenerateAbout() error {
 
 func (g *Generator) GenerateProjects() error {
 	projects, err := g.Client.GetProjects()
+
 	if err != nil {
 		return err
 	}
@@ -208,6 +209,7 @@ func (g *Generator) GenerateProjects() error {
 
 func (g *Generator) GenerateResume() error {
 	experience, err := g.Client.GetExperience()
+
 	if err != nil {
 		return err
 	}
@@ -225,8 +227,8 @@ func (g *Generator) GenerateResume() error {
 	sections := NewSections()
 	var html []template.HTML
 
-	html = append(html, sections.Experience(experience))
 	html = append(html, sections.Education(education))
+	html = append(html, sections.Experience(experience))
 	html = append(html, sections.Recommendations(recommendations))
 
 	data, buildErr := g.buildForPage(WebResumeName, WebResumeUrl, html)
@@ -255,6 +257,7 @@ func (g *Generator) GeneratePosts() error {
 		Where("posts.deleted_at IS NULL").
 		Order("posts.published_at DESC").
 		Find(&posts).Error
+
 	if err != nil {
 		return fmt.Errorf("posts: fetching published posts: %w", err)
 	}
@@ -270,7 +273,7 @@ func (g *Generator) GeneratePosts() error {
 		response := payload.GetPostsResponse(post)
 		body := []template.HTML{sections.Post(&response)}
 
-		data, buildErr := g.buildForPost(response, body)
+		data, buildErr := g.BuildForPost(response, body)
 		if buildErr != nil {
 			return fmt.Errorf("posts: building seo for %s: %w", response.Slug, buildErr)
 		}
@@ -297,10 +300,12 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 	}
 
 	out := filepath.Join(g.Page.OutputDir, fileName)
+
 	cli.Cyanln(fmt.Sprintf("Working on directory: %s", filepath.Dir(out)))
 	if err = os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
 		return fmt.Errorf("%s: creating directory for %s: %w", fileName, filepath.Dir(out), err)
 	}
+
 	cli.Blueln(fmt.Sprintf("Writing file on: %s", out))
 	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("%s: writing %s: %w", fileName, out, err)
@@ -343,7 +348,7 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 		Categories:     g.Page.Categories,
 		JsonLD:         NewJsonID(g.Page).Render(),
 		HrefLang: []HrefLangData{
-			{Lang: g.Page.Lang, Href: g.canonicalFor(path)},
+			{Lang: g.Page.Lang, Href: g.CanonicalFor(path)},
 		},
 		Favicons: []FaviconData{
 			{
@@ -356,8 +361,8 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 	}
 
 	data.Body = body
-	data.Canonical = g.canonicalFor(path)
-	data.Title = g.titleFor(pageName)
+	data.Title = g.TitleFor(pageName)
+	data.Canonical = g.CanonicalFor(path)
 	data.Manifest = NewManifest(g.Page, data).Render()
 
 	for _, opt := range opts {
@@ -381,6 +386,7 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 
 func (t *Page) Load() (*template.Template, error) {
 	raw, err := templatesFS.ReadFile(t.StubPath)
+
 	if err != nil {
 		return nil, fmt.Errorf("reading template: %w", err)
 	}
@@ -399,7 +405,7 @@ func (t *Page) Load() (*template.Template, error) {
 	return tmpl, nil
 }
 
-func (g *Generator) canonicalFor(path string) string {
+func (g *Generator) CanonicalFor(path string) string {
 	base := strings.TrimSuffix(g.Page.SiteURL, "/")
 
 	if path == "" || path == "/" {
@@ -413,7 +419,7 @@ func (g *Generator) canonicalFor(path string) string {
 	return base + path
 }
 
-func (g *Generator) titleFor(pageName string) string {
+func (g *Generator) TitleFor(pageName string) string {
 	if pageName == WebHomeName {
 		return g.Page.SiteName
 	}
@@ -421,22 +427,22 @@ func (g *Generator) titleFor(pageName string) string {
 	return fmt.Sprintf("%s · %s", pageName, g.Page.SiteName)
 }
 
-func (g *Generator) buildForPost(post payload.PostResponse, body []template.HTML) (TemplateData, error) {
-	path := canonicalPostPath(post.Slug)
-	description := sanitizeMetaDescription(post.Excerpt, Description)
-	image := preferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
-	imageAlt := sanitizeAltText(post.Title, g.Page.SiteName)
+func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML) (TemplateData, error) {
+	path := g.CanonicalPostPath(post.Slug)
+	imageAlt := g.SanitizeAltText(post.Title, g.Page.SiteName)
+	description := g.SanitizeMetaDescription(post.Excerpt, Description)
+	image := g.PreferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
 
 	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
-		data.Description = description
 		data.OGTagOg.Image = image
-		data.OGTagOg.ImageAlt = imageAlt
 		data.Twitter.Image = image
+		data.Description = description
+		data.OGTagOg.ImageAlt = imageAlt
 		data.Twitter.ImageAlt = imageAlt
 	})
 }
 
-func canonicalPostPath(slug string) string {
+func (g *Generator) CanonicalPostPath(slug string) string {
 	cleaned := strings.TrimSpace(slug)
 	cleaned = strings.Trim(cleaned, "/")
 
@@ -447,7 +453,7 @@ func canonicalPostPath(slug string) string {
 	return WebPostsUrl + "/" + cleaned
 }
 
-func sanitizeMetaDescription(raw, fallback string) string {
+func (g *Generator) SanitizeMetaDescription(raw, fallback string) string {
 	trimmed := strings.TrimSpace(strings.ReplaceAll(raw, "\n", " "))
 	if trimmed == "" {
 		return fallback
@@ -463,7 +469,7 @@ func sanitizeMetaDescription(raw, fallback string) string {
 	return escaped
 }
 
-func preferredImageURL(candidate, fallback string) string {
+func (g *Generator) PreferredImageURL(candidate, fallback string) string {
 	candidate = strings.TrimSpace(candidate)
 	if candidate == "" {
 		return fallback
@@ -481,8 +487,9 @@ func preferredImageURL(candidate, fallback string) string {
 	return candidate
 }
 
-func sanitizeAltText(title, site string) string {
+func (g *Generator) SanitizeAltText(title, site string) string {
 	base := strings.TrimSpace(title)
+
 	if base == "" {
 		base = site
 	}
