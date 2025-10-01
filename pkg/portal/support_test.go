@@ -26,6 +26,35 @@ func TestSortedQuery(t *testing.T) {
 	}
 }
 
+func TestSanitiseURL(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "keeps https urls", input: "https://example.com/path?ok=1#section", want: "https://example.com/path?ok=1"},
+		{name: "converts http to https", input: "http://example.com", want: "https://example.com"},
+		{name: "allows http substring in query", input: "example.com/path?next=http://ok.test", want: "https://example.com/path?next=http://ok.test"},
+		{name: "adds scheme when missing", input: "example.com/page", want: "https://example.com/page"},
+		{name: "allows localhost", input: "http://localhost:8080", want: "https://localhost:8080"},
+		{name: "empty input", input: "", want: ""},
+		{name: "whitespace input", input: "   ", want: ""},
+		{name: "invalid tld", input: "invalid-url", want: ""},
+		{name: "unsupported scheme", input: "ftp://example.com", want: ""},
+		{name: "malformed host with space", input: "http://a b.com", want: ""},
+		{name: "malformed ipv6 host", input: "http://[::1", want: ""},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			if got := SanitiseURL(tc.input); got != tc.want {
+				t.Errorf("SanitiseURL(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestBuildCanonical(t *testing.T) {
 	u, _ := url.Parse("https://x.test/api/v1/resource?z=9&a=1&a=0")
 	bodyHash := "abc123"

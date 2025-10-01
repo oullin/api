@@ -37,14 +37,56 @@ func FilterNonEmpty(values []string) []string {
 }
 
 func SanitiseURL(u string) string {
-	u = strings.TrimSpace(u)
-	lowerU := strings.ToLower(u)
-
-	if strings.HasPrefix(lowerU, "https://") {
-		return template.HTMLEscapeString(u)
+	trimmed := strings.TrimSpace(u)
+	if trimmed == "" {
+		return ""
 	}
 
-	return template.HTMLEscapeString("https://" + u[7:])
+	lower := strings.ToLower(trimmed)
+
+	if orig, err := url.Parse(trimmed); err == nil {
+		switch scheme := strings.ToLower(orig.Scheme); scheme {
+		case "":
+		// add https later
+		case "http", "https":
+		// keep going
+		default:
+			return ""
+		}
+	}
+
+	candidate := trimmed
+
+	switch {
+	case strings.HasPrefix(lower, "https://"):
+		// already https
+	case strings.HasPrefix(lower, "http://"):
+		candidate = "https://" + trimmed[len("http://"):]
+	default:
+		candidate = "https://" + trimmed
+	}
+
+	parsed, err := url.Parse(candidate)
+	if err != nil {
+		return ""
+	}
+
+	hostname := parsed.Hostname()
+	if hostname == "" {
+		return ""
+	}
+
+	if hostname != "localhost" && !strings.Contains(hostname, ".") && net.ParseIP(hostname) == nil {
+		return ""
+	}
+
+	parsed.User = nil
+	parsed.Scheme = "https"
+
+	// Remove fragments to keep canonical representation consistent.
+	parsed.Fragment = ""
+
+	return template.HTMLEscapeString(parsed.String())
 }
 
 func CloseWithLog(c io.Closer) {

@@ -201,11 +201,13 @@ func seedPost(t *testing.T, conn *database.Connection, author database.User, cat
 	publishedAt := time.Now().UTC()
 
 	post, err := postsRepo.Create(database.PostsAttrs{
-		AuthorID:    author.ID,
-		Slug:        slug,
-		Title:       title,
-		Excerpt:     title + " excerpt",
-		Content:     title + " content\n\nDetailed body",
+		AuthorID: author.ID,
+		Slug:     slug,
+		Title:    title,
+		// Seed values include characters that should be HTML-escaped so
+		// integration tests can assert the generated SEO pages are safe.
+		Excerpt:     "Learn <fast>\nwith examples",
+		Content:     "Intro paragraph with <tags>\nmore info.\n\nSecond paragraph & details.",
 		ImageURL:    fmt.Sprintf("https://seo.example.test/%s.png", slug),
 		PublishedAt: &publishedAt,
 		Categories: []database.CategoriesAttrs{{

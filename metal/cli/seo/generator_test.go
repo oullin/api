@@ -122,7 +122,7 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 	_ = seedCategory(t, conn, "cli", "CLI Tools")
 	author := seedUser(t, conn, "Gustavo", "Canto", "gocanto")
 	tag := seedTag(t, conn, "golang", "GoLang")
-	post := seedPost(t, conn, author, goCategory, tag, "building-apis", "Building APIs")
+	post := seedPost(t, conn, author, goCategory, tag, "building-apis", "Building <APIs>")
 
 	gen, err := NewGenerator(conn, env, newTestValidator(t))
 	if err != nil {
