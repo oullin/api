@@ -93,4 +93,40 @@ func TestClientLoadsFixtures(t *testing.T) {
 	if len(projects.Data) == 0 {
 		t.Fatalf("expected projects data")
 	}
+
+	social, err := client.GetSocial()
+	if err != nil {
+		t.Fatalf("social err: %v", err)
+	}
+
+	if len(social.Data) == 0 {
+		t.Fatalf("expected social data")
+	}
+
+	recs, err := client.GetRecommendations()
+	if err != nil {
+		t.Fatalf("recommendations err: %v", err)
+	}
+
+	if len(recs.Data) == 0 {
+		t.Fatalf("expected recommendations data")
+	}
+
+	experience, err := client.GetExperience()
+	if err != nil {
+		t.Fatalf("experience err: %v", err)
+	}
+
+	if len(experience.Data) == 0 {
+		t.Fatalf("expected experience data")
+	}
+
+	education, err := client.GetEducation()
+	if err != nil {
+		t.Fatalf("education err: %v", err)
+	}
+
+	if len(education.Data) == 0 {
+		t.Fatalf("expected education data")
+	}
 }

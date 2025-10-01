@@ -2,6 +2,7 @@ package seo
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
 	"github.com/oullin/metal/env"
 )
 
@@ -121,7 +123,7 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 	return conn, e
 }
 
-func seedCategory(t *testing.T, conn *database.Connection, slug, name string) {
+func seedCategory(t *testing.T, conn *database.Connection, slug, name string) database.Category {
 	t.Helper()
 
 	category := database.Category{
@@ -133,6 +135,95 @@ func seedCategory(t *testing.T, conn *database.Connection, slug, name string) {
 	if err := conn.Sql().Create(&category).Error; err != nil {
 		t.Fatalf("create category: %v", err)
 	}
+
+	return category
+}
+
+func seedTag(t *testing.T, conn *database.Connection, slug, name string) database.Tag {
+	t.Helper()
+
+	tag := database.Tag{
+		UUID: uuid.NewString(),
+		Slug: slug,
+		Name: name,
+	}
+
+	if err := conn.Sql().Create(&tag).Error; err != nil {
+		t.Fatalf("create tag: %v", err)
+	}
+
+	return tag
+}
+
+func seedUser(t *testing.T, conn *database.Connection, first, last, username string) database.User {
+	t.Helper()
+
+	var parts []string
+	if trimmed := strings.TrimSpace(first); trimmed != "" {
+		parts = append(parts, trimmed)
+	}
+	if trimmed := strings.TrimSpace(last); trimmed != "" {
+		parts = append(parts, trimmed)
+	}
+	display := strings.Join(parts, " ")
+	if display == "" {
+		display = username
+	}
+
+	user := database.User{
+		UUID:         uuid.NewString(),
+		FirstName:    first,
+		LastName:     last,
+		Username:     username,
+		DisplayName:  display,
+		Email:        fmt.Sprintf("%s@example.test", strings.TrimSpace(username)),
+		PasswordHash: strings.Repeat("p", 60),
+		PublicToken:  uuid.NewString(),
+		VerifiedAt:   time.Now().UTC(),
+	}
+
+	if err := conn.Sql().Create(&user).Error; err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	return user
+}
+
+func seedPost(t *testing.T, conn *database.Connection, author database.User, category database.Category, tag database.Tag, slug, title string) database.Post {
+	t.Helper()
+
+	postsRepo := repository.Posts{
+		DB:         conn,
+		Categories: &repository.Categories{DB: conn},
+		Tags:       &repository.Tags{DB: conn},
+	}
+
+	publishedAt := time.Now().UTC()
+
+	post, err := postsRepo.Create(database.PostsAttrs{
+		AuthorID:    author.ID,
+		Slug:        slug,
+		Title:       title,
+		Excerpt:     title + " excerpt",
+		Content:     title + " content\n\nDetailed body",
+		ImageURL:    fmt.Sprintf("https://seo.example.test/%s.png", slug),
+		PublishedAt: &publishedAt,
+		Categories: []database.CategoriesAttrs{{
+			Id:   category.ID,
+			Slug: category.Slug,
+			Name: category.Name,
+		}},
+		Tags: []database.TagAttrs{{
+			Id:   tag.ID,
+			Slug: tag.Slug,
+			Name: tag.Name,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("create post: %v", err)
+	}
+
+	return *post
 }
 
 func withRepoRoot(t *testing.T) {

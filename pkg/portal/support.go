@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"io"
 	"log/slog"
 	"net"
@@ -12,6 +13,39 @@ import (
 	"sort"
 	"strings"
 )
+
+func AllowLineBreaks(text string) string {
+	replacer := strings.NewReplacer(
+		"&lt;br/&gt;", "<br/>",
+		"&lt;br /&gt;", "<br/>",
+		"&lt;br&gt;", "<br/>",
+	)
+
+	return replacer.Replace(text)
+}
+
+func FilterNonEmpty(values []string) []string {
+	var out []string
+
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			out = append(out, strings.TrimSpace(v))
+		}
+	}
+
+	return out
+}
+
+func SanitiseURL(u string) string {
+	u = strings.TrimSpace(u)
+	lowerU := strings.ToLower(u)
+
+	if strings.HasPrefix(lowerU, "https://") {
+		return template.HTMLEscapeString(u)
+	}
+
+	return template.HTMLEscapeString("https://" + u[7:])
+}
 
 func CloseWithLog(c io.Closer) {
 	if c == nil {

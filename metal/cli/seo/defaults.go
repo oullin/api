@@ -16,6 +16,9 @@ const WebHomeName = "Home"
 const WebAboutName = "About"
 const WebAboutUrl = "/about"
 
+const WebPostsName = "Posts"
+const WebPostsUrl = "/posts"
+
 const WebResumeName = "Resume"
 const WebResumeUrl = "/resume"
 
