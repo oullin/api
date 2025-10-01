@@ -27,42 +27,31 @@ func TestSortedQuery(t *testing.T) {
 }
 
 func TestSanitiseURL(t *testing.T) {
-	t.Run("keeps_https_urls", func(t *testing.T) {
-		raw := "https://example.com/path?ok=1#section"
-		got := SanitiseURL(raw)
-		if got != "https://example.com/path?ok=1" {
-			t.Fatalf("expected fragment trimmed https URL, got %q", got)
-		}
-	})
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "keeps https urls", input: "https://example.com/path?ok=1#section", want: "https://example.com/path?ok=1"},
+		{name: "converts http to https", input: "http://example.com", want: "https://example.com"},
+		{name: "adds scheme when missing", input: "example.com/page", want: "https://example.com/page"},
+		{name: "allows localhost", input: "http://localhost:8080", want: "https://localhost:8080"},
+		{name: "empty input", input: "", want: ""},
+		{name: "whitespace input", input: "   ", want: ""},
+		{name: "invalid tld", input: "invalid-url", want: ""},
+		{name: "unsupported scheme", input: "ftp://example.com", want: ""},
+		{name: "malformed host with space", input: "http://a b.com", want: ""},
+		{name: "malformed ipv6 host", input: "http://[::1", want: ""},
+	}
 
-	t.Run("converts_http_to_https", func(t *testing.T) {
-		got := SanitiseURL("http://example.com")
-		if got != "https://example.com" {
-			t.Fatalf("expected https scheme, got %q", got)
-		}
-	})
-
-	t.Run("adds_scheme_when_missing", func(t *testing.T) {
-		got := SanitiseURL("example.com/page")
-		if got != "https://example.com/page" {
-			t.Fatalf("expected https scheme added, got %q", got)
-		}
-	})
-
-	t.Run("allows_localhost", func(t *testing.T) {
-		got := SanitiseURL("http://localhost:8080")
-		if got != "https://localhost:8080" {
-			t.Fatalf("expected localhost to be preserved, got %q", got)
-		}
-	})
-
-	t.Run("returns_empty_for_invalid_input", func(t *testing.T) {
-		for _, input := range []string{"", "   ", "invalid-url", "ftp://example.com", "http://[::1", "http://a b.com"} {
-			if got := SanitiseURL(input); got != "" {
-				t.Fatalf("expected empty string for %q, got %q", input, got)
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			if got := SanitiseURL(tc.input); got != tc.want {
+				t.Errorf("SanitiseURL(%q) = %q, want %q", tc.input, got, tc.want)
 			}
-		}
-	})
+		})
+	}
 }
 
 func TestBuildCanonical(t *testing.T) {
