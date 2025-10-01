@@ -5,9 +5,11 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
@@ -91,6 +93,10 @@ func (g *Generator) Generate() error {
 	}
 
 	if err = g.GenerateResume(); err != nil {
+		return err
+	}
+
+	if err = g.GeneratePosts(); err != nil {
 		return err
 	}
 
@@ -237,6 +243,49 @@ func (g *Generator) GenerateResume() error {
 	return nil
 }
 
+func (g *Generator) GeneratePosts() error {
+	var posts []database.Post
+
+	err := g.DB.Sql().
+		Model(&database.Post{}).
+		Preload("Author").
+		Preload("Categories").
+		Preload("Tags").
+		Where("posts.published_at IS NOT NULL").
+		Where("posts.deleted_at IS NULL").
+		Order("posts.published_at DESC").
+		Find(&posts).Error
+	if err != nil {
+		return fmt.Errorf("posts: fetching published posts: %w", err)
+	}
+
+	if len(posts) == 0 {
+		cli.Grayln("No published posts available for SEO generation")
+		return nil
+	}
+
+	sections := NewSections()
+
+	for _, post := range posts {
+		response := payload.GetPostsResponse(post)
+		body := []template.HTML{sections.Post(&response)}
+
+		data, buildErr := g.buildForPost(response, body)
+		if buildErr != nil {
+			return fmt.Errorf("posts: building seo for %s: %w", response.Slug, buildErr)
+		}
+
+		origin := filepath.Join("posts", response.Slug)
+		if err = g.Export(origin, data); err != nil {
+			return fmt.Errorf("posts: exporting %s: %w", response.Slug, err)
+		}
+
+		cli.Successln(fmt.Sprintf("Post SEO template generated for %s", response.Slug))
+	}
+
+	return nil
+}
+
 func (g *Generator) Export(origin string, data TemplateData) error {
 	var err error
 	var buffer bytes.Buffer
@@ -247,12 +296,11 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 		return fmt.Errorf("%s: rendering template: %w", fileName, err)
 	}
 
-	cli.Cyanln(fmt.Sprintf("Working on directory: %s", g.Page.OutputDir))
-	if err = os.MkdirAll(g.Page.OutputDir, 0o755); err != nil {
-		return fmt.Errorf("%s: creating directory for %s: %w", fileName, g.Page.OutputDir, err)
-	}
-
 	out := filepath.Join(g.Page.OutputDir, fileName)
+	cli.Cyanln(fmt.Sprintf("Working on directory: %s", filepath.Dir(out)))
+	if err = os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+		return fmt.Errorf("%s: creating directory for %s: %w", fileName, filepath.Dir(out), err)
+	}
 	cli.Blueln(fmt.Sprintf("Writing file on: %s", out))
 	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("%s: writing %s: %w", fileName, out, err)
@@ -264,7 +312,7 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 	return nil
 }
 
-func (g *Generator) buildForPage(pageName, path string, body []template.HTML) (TemplateData, error) {
+func (g *Generator) buildForPage(pageName, path string, body []template.HTML, opts ...func(*TemplateData)) (TemplateData, error) {
 	og := TagOgData{
 		ImageHeight: "630",
 		ImageWidth:  "1200",
@@ -311,6 +359,10 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML) (T
 	data.Canonical = g.canonicalFor(path)
 	data.Title = g.titleFor(pageName)
 	data.Manifest = NewManifest(g.Page, data).Render()
+
+	for _, opt := range opts {
+		opt(&data)
+	}
 
 	if _, err := g.Validator.Rejects(og); err != nil {
 		return TemplateData{}, fmt.Errorf("invalid og data: %s", g.Validator.GetErrorsAsJson())
@@ -367,4 +419,85 @@ func (g *Generator) titleFor(pageName string) string {
 	}
 
 	return fmt.Sprintf("%s · %s", pageName, g.Page.SiteName)
+}
+
+func (g *Generator) buildForPost(post payload.PostResponse, body []template.HTML) (TemplateData, error) {
+	path := canonicalPostPath(post.Slug)
+	description := sanitizeMetaDescription(post.Excerpt, Description)
+	image := preferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
+	imageAlt := sanitizeAltText(post.Title, g.Page.SiteName)
+
+	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
+		data.Description = description
+		data.OGTagOg.Image = image
+		data.OGTagOg.ImageAlt = imageAlt
+		data.Twitter.Image = image
+		data.Twitter.ImageAlt = imageAlt
+	})
+}
+
+func canonicalPostPath(slug string) string {
+	cleaned := strings.TrimSpace(slug)
+	cleaned = strings.Trim(cleaned, "/")
+
+	if cleaned == "" {
+		return WebPostsUrl
+	}
+
+	return WebPostsUrl + "/" + cleaned
+}
+
+func sanitizeMetaDescription(raw, fallback string) string {
+	trimmed := strings.TrimSpace(strings.ReplaceAll(raw, "\n", " "))
+	if trimmed == "" {
+		return fallback
+	}
+
+	condensed := strings.Join(strings.Fields(trimmed), " ")
+	escaped := template.HTMLEscapeString(condensed)
+
+	if utf8.RuneCountInString(escaped) < 10 {
+		return fallback
+	}
+
+	return escaped
+}
+
+func preferredImageURL(candidate, fallback string) string {
+	candidate = strings.TrimSpace(candidate)
+	if candidate == "" {
+		return fallback
+	}
+
+	parsed, err := url.ParseRequestURI(candidate)
+	if err != nil {
+		return fallback
+	}
+
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fallback
+	}
+
+	return candidate
+}
+
+func sanitizeAltText(title, site string) string {
+	base := strings.TrimSpace(title)
+	if base == "" {
+		base = site
+	}
+
+	alt := strings.Join(strings.Fields(base+" cover image"), " ")
+	escaped := template.HTMLEscapeString(alt)
+
+	if utf8.RuneCountInString(escaped) < 10 {
+		fallback := template.HTMLEscapeString(site + " cover image")
+		if utf8.RuneCountInString(fallback) < 10 {
+			return "SEO cover image"
+		}
+
+		return fallback
+	}
+
+	return escaped
 }

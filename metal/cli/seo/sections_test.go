@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/oullin/handler/payload"
 )
@@ -79,6 +80,22 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 
 	categories := []string{"Go<Lang>", "CLI"}
 
+	publishedAt := time.Date(2024, time.January, 15, 0, 0, 0, 0, time.UTC)
+	post := &payload.PostResponse{
+		Title:   "Building <APIs>",
+		Excerpt: "Learn <fast>\nwith examples",
+		Content: "Intro paragraph with <tags>\nmore info.\n\nSecond paragraph & details.",
+		Author: payload.UserResponse{
+			DisplayName: "Gus <C>",
+			Username:    "gocanto<script>",
+			FirstName:   "Gus<",
+			LastName:    "C>",
+		},
+		Categories:  []payload.CategoryResponse{{Name: "Go<Lang>"}},
+		Tags:        []payload.TagResponse{{Name: "SEO<Tag>"}},
+		PublishedAt: &publishedAt,
+	}
+
 	renderedProfile := string(sections.Profile(profile))
 	if strings.Contains(renderedProfile, "<Gus>") {
 		t.Fatalf("profile output was not escaped: %q", renderedProfile)
@@ -124,6 +141,20 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 		t.Fatalf("education should escape HTML: %q", renderedEducation)
 	}
 
+	renderedPost := string(sections.Post(post))
+	if strings.Contains(renderedPost, "<APIs>") {
+		t.Fatalf("post title should be escaped: %q", renderedPost)
+	}
+	if strings.Contains(renderedPost, "gocanto<script>") {
+		t.Fatalf("post meta should escape username: %q", renderedPost)
+	}
+	if !strings.Contains(renderedPost, "Learn &lt;fast&gt;<br/>") {
+		t.Fatalf("post excerpt should escape html and keep breaks: %q", renderedPost)
+	}
+	if !strings.Contains(renderedPost, "Second paragraph &amp; details.") {
+		t.Fatalf("post content should escape html entities: %q", renderedPost)
+	}
+
 	for _, html := range []template.HTML{
 		sections.Profile(profile),
 		sections.Categories(categories),
@@ -134,6 +165,7 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 		sections.Recommendations(recommendations),
 		sections.Experience(experience),
 		sections.Education(education),
+		sections.Post(post),
 	} {
 		if !strings.HasPrefix(string(html), "<h1>") {
 			t.Fatalf("section should start with heading: %q", html)
@@ -154,5 +186,9 @@ func TestSectionsGuardNilInputs(t *testing.T) {
 
 	if html := sections.Talks(nil); html != template.HTML("") {
 		t.Fatalf("expected empty html for nil talks, got %q", html)
+	}
+
+	if html := sections.Post(nil); html != template.HTML("") {
+		t.Fatalf("expected empty html for nil post, got %q", html)
 	}
 }

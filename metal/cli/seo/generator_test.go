@@ -109,10 +109,20 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 func TestGeneratorGenerateAllPages(t *testing.T) {
 	withRepoRoot(t)
 
-	conn, env := newPostgresConnection(t, &database.Category{})
+	conn, env := newPostgresConnection(t,
+		&database.User{},
+		&database.Post{},
+		&database.Category{},
+		&database.PostCategory{},
+		&database.Tag{},
+		&database.PostTag{},
+	)
 
-	seedCategory(t, conn, "golang", "GoLang")
-	seedCategory(t, conn, "cli", "CLI Tools")
+	goCategory := seedCategory(t, conn, "golang", "GoLang")
+	_ = seedCategory(t, conn, "cli", "CLI Tools")
+	author := seedUser(t, conn, "Gustavo", "Canto", "gocanto")
+	tag := seedTag(t, conn, "golang", "GoLang")
+	post := seedPost(t, conn, author, goCategory, tag, "building-apis", "Building APIs")
 
 	gen, err := NewGenerator(conn, env, newTestValidator(t))
 	if err != nil {
@@ -178,5 +188,19 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 
 	if !strings.Contains(resumeContent, "<h1>education</h1>") {
 		t.Fatalf("expected education section in resume page: %q", resumeContent)
+	}
+
+	postPath := filepath.Join(env.Seo.SpaDir, "posts", post.Slug+".seo.html")
+	postRaw, err := os.ReadFile(postPath)
+	if err != nil {
+		t.Fatalf("read post output: %v", err)
+	}
+
+	postContent := string(postRaw)
+	if !strings.Contains(postContent, "<h1>Building &lt;APIs&gt;</h1>") {
+		t.Fatalf("expected escaped post title in seo output: %q", postContent)
+	}
+	if !strings.Contains(postContent, "Second paragraph &amp; details.") {
+		t.Fatalf("expected post body content in seo output: %q", postContent)
 	}
 }

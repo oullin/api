@@ -118,6 +118,79 @@ func (s *Sections) Projects(projects *payload.ProjectsResponse) template.HTML {
 	)
 }
 
+func (s *Sections) Post(post *payload.PostResponse) template.HTML {
+	if post == nil {
+		return template.HTML("")
+	}
+
+	title := template.HTMLEscapeString(post.Title)
+
+	authorName := strings.TrimSpace(post.Author.DisplayName)
+	if authorName == "" {
+		fullName := strings.TrimSpace(strings.Join(filterNonEmpty([]string{post.Author.FirstName, post.Author.LastName}), " "))
+		if fullName != "" {
+			authorName = fullName
+		} else {
+			authorName = strings.TrimSpace(post.Author.Username)
+		}
+	}
+
+	authorName = template.HTMLEscapeString(authorName)
+
+	var metaParts []string
+	if authorName != "" {
+		metaParts = append(metaParts, "By "+authorName)
+	}
+
+	if post.PublishedAt != nil {
+		published := post.PublishedAt.UTC().Format("02 Jan 2006")
+		metaParts = append(metaParts, "Published "+template.HTMLEscapeString(published))
+	}
+
+	if len(post.Categories) > 0 {
+		var names []string
+		for _, category := range post.Categories {
+			name := strings.TrimSpace(category.Name)
+			if name != "" {
+				names = append(names, template.HTMLEscapeString(name))
+			}
+		}
+		if len(names) > 0 {
+			metaParts = append(metaParts, "Categories: "+strings.Join(names, ", "))
+		}
+	}
+
+	if len(post.Tags) > 0 {
+		var names []string
+		for _, tag := range post.Tags {
+			name := strings.TrimSpace(tag.Name)
+			if name != "" {
+				names = append(names, template.HTMLEscapeString(name))
+			}
+		}
+		if len(names) > 0 {
+			metaParts = append(metaParts, "Tags: "+strings.Join(names, ", "))
+		}
+	}
+
+	metaHTML := ""
+	if len(metaParts) > 0 {
+		metaHTML = "<p><small>" + strings.Join(metaParts, " | ") + "</small></p>"
+	}
+
+	excerpt := strings.TrimSpace(post.Excerpt)
+	excerptHTML := ""
+	if excerpt != "" {
+		escaped := template.HTMLEscapeString(strings.ReplaceAll(excerpt, "\r\n", "\n"))
+		escaped = strings.ReplaceAll(escaped, "\n", "<br/>")
+		excerptHTML = "<p>" + allowLineBreaks(escaped) + "</p>"
+	}
+
+	contentHTML := formatPostContent(post.Content)
+
+	return template.HTML("<h1>" + title + "</h1>" + metaHTML + excerptHTML + contentHTML)
+}
+
 func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
 	if social == nil {
 		return template.HTML("<h1>Social</h1><p><ul></ul></p>")
@@ -303,6 +376,34 @@ func (s *Sections) Education(edu *payload.EducationResponse) template.HTML {
 		strings.Join(items, "") +
 		"</ul></p>",
 	)
+}
+
+func formatPostContent(content string) string {
+	trimmed := strings.TrimSpace(strings.ReplaceAll(content, "\r\n", "\n"))
+	if trimmed == "" {
+		return ""
+	}
+
+	rawParagraphs := strings.Split(trimmed, "\n\n")
+	var rendered []string
+
+	for _, paragraph := range rawParagraphs {
+		paragraph = strings.TrimSpace(paragraph)
+		if paragraph == "" {
+			continue
+		}
+
+		escaped := template.HTMLEscapeString(paragraph)
+		escaped = strings.ReplaceAll(escaped, "\n", "<br/>")
+		escaped = allowLineBreaks(escaped)
+		rendered = append(rendered, "<p>"+escaped+"</p>")
+	}
+
+	if len(rendered) == 0 {
+		return ""
+	}
+
+	return strings.Join(rendered, "")
 }
 
 func formatDetails(parts []string) string {
