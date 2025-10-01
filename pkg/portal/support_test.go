@@ -57,7 +57,7 @@ func TestSanitiseURL(t *testing.T) {
 	})
 
 	t.Run("returns_empty_for_invalid_input", func(t *testing.T) {
-		for _, input := range []string{"", "   ", "invalid-url", "ftp://example.com"} {
+		for _, input := range []string{"", "   ", "invalid-url", "ftp://example.com", "http://[::1", "http://a b.com"} {
 			if got := SanitiseURL(input); got != "" {
 				t.Fatalf("expected empty string for %q, got %q", input, got)
 			}
