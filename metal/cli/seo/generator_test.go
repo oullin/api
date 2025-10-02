@@ -20,6 +20,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -243,12 +244,15 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 
 	fileURL := url.URL{Scheme: "file", Path: srcPath}
 
+	imagesDir := filepath.Join(outputDir, "posts", "images")
+
 	gen := &Generator{
 		Page: Page{
 			SiteName:  "SEO Test Suite",
 			SiteURL:   "https://seo.example.test",
 			OutputDir: outputDir,
 		},
+		Env: &env.Environment{Seo: env.SeoEnvironment{SpaDir: outputDir, SpaImagesDir: imagesDir}},
 	}
 
 	post := payload.PostResponse{Slug: "awesome-post", CoverImageURL: fileURL.String()}
@@ -267,7 +271,7 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 		t.Fatalf("unexpected image url: %s", prepared.URL)
 	}
 
-	destPath := filepath.Join(outputDir, "posts", "images", "awesome-post.png")
+	destPath := filepath.Join(imagesDir, "awesome-post.png")
 	info, err := os.Stat(destPath)
 	if err != nil {
 		t.Fatalf("stat destination image: %v", err)
@@ -297,18 +301,6 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 		t.Fatalf("unexpected mime type: %s", prepared.Mime)
 	}
 
-	entries, err := os.ReadDir(seoStorageDir)
-	if err != nil {
-		t.Fatalf("read storage dir: %v", err)
-	}
-
-	for _, entry := range entries {
-		if entry.Name() == ".gitkeep" {
-			continue
-		}
-
-		t.Fatalf("unexpected leftover file in storage: %s", entry.Name())
-	}
 }
 
 func TestGeneratorPreparePostImageRemote(t *testing.T) {
@@ -333,12 +325,15 @@ func TestGeneratorPreparePostImageRemote(t *testing.T) {
 	}))
 	defer server.Close()
 
+	imagesDir := filepath.Join(outputDir, "posts", "images")
+
 	gen := &Generator{
 		Page: Page{
 			SiteName:  "SEO Test Suite",
 			SiteURL:   "https://seo.example.test",
 			OutputDir: outputDir,
 		},
+		Env: &env.Environment{Seo: env.SeoEnvironment{SpaDir: outputDir, SpaImagesDir: imagesDir}},
 	}
 
 	post := payload.PostResponse{Slug: "remote-post", CoverImageURL: server.URL + "/cover.png"}
@@ -357,7 +352,7 @@ func TestGeneratorPreparePostImageRemote(t *testing.T) {
 		t.Fatalf("unexpected image url: %s", prepared.URL)
 	}
 
-	destPath := filepath.Join(outputDir, "posts", "images", "remote-post.png")
+	destPath := filepath.Join(imagesDir, "remote-post.png")
 	info, err := os.Stat(destPath)
 	if err != nil {
 		t.Fatalf("stat destination image: %v", err)
@@ -391,16 +386,4 @@ func TestGeneratorPreparePostImageRemote(t *testing.T) {
 		t.Fatalf("expected remote image to be requested at least once")
 	}
 
-	entries, err := os.ReadDir(seoStorageDir)
-	if err != nil {
-		t.Fatalf("read storage dir: %v", err)
-	}
-
-	for _, entry := range entries {
-		if entry.Name() == ".gitkeep" {
-			continue
-		}
-
-		t.Fatalf("unexpected leftover file in storage: %s", entry.Name())
-	}
 }

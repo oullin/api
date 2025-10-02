@@ -113,7 +113,8 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 	}
 
 	seoEnv := env.SeoEnvironment{
-		SpaDir: env.GetEnvVar("ENV_SPA_DIR"),
+		SpaDir:       env.GetEnvVar("ENV_SPA_DIR"),
+		SpaImagesDir: env.GetEnvVar("ENV_SPA_IMAGES_DIR"),
 	}
 
 	if _, err := validate.Rejects(app); err != nil {

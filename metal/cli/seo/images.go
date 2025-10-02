@@ -19,17 +19,19 @@ type preparedImage struct {
 }
 
 const (
-	seoStorageDir    = "storage/seo"
-	postImagesDir    = "posts"
-	postImagesFolder = "images"
-	seoImageWidth    = 1200
-	seoImageHeight   = 630
+	seoImageWidth  = 1200
+	seoImageHeight = 630
 )
 
 func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, error) {
 	source := strings.TrimSpace(post.CoverImageURL)
 	if source == "" {
 		return preparedImage{}, errors.New("post has no cover image url")
+	}
+
+	spaImagesDir, err := g.spaImagesDir()
+	if err != nil {
+		return preparedImage{}, err
 	}
 
 	img, format, err := pkgimages.Fetch(source)
@@ -42,35 +44,42 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 	ext := pkgimages.DetermineExtension(source, format)
 	fileName := pkgimages.BuildFileName(post.Slug, ext, "post-image")
 
-	if err := os.MkdirAll(seoStorageDir, 0o755); err != nil {
-		return preparedImage{}, fmt.Errorf("create storage dir: %w", err)
-	}
-
-	tempPath := filepath.Join(seoStorageDir, fileName)
-	if err := pkgimages.Save(tempPath, resized, ext, pkgimages.DefaultJPEGQuality); err != nil {
-		return preparedImage{}, fmt.Errorf("write resized image: %w", err)
-	}
-
-	defer func() {
-		_ = os.Remove(tempPath)
-	}()
-
-	destDir := filepath.Join(g.Page.OutputDir, postImagesDir, postImagesFolder)
-	if err := os.MkdirAll(destDir, 0o755); err != nil {
+	if err := os.MkdirAll(spaImagesDir, 0o755); err != nil {
 		return preparedImage{}, fmt.Errorf("create destination dir: %w", err)
 	}
 
-	destPath := filepath.Join(destDir, fileName)
-	if err := pkgimages.Move(tempPath, destPath); err != nil {
-		return preparedImage{}, fmt.Errorf("move resized image: %w", err)
+	destPath := filepath.Join(spaImagesDir, fileName)
+	if err := pkgimages.Save(destPath, resized, ext, pkgimages.DefaultJPEGQuality); err != nil {
+		return preparedImage{}, fmt.Errorf("write resized image: %w", err)
 	}
 
-	relative := path.Join(postImagesDir, postImagesFolder, fileName)
+	relativeDir, err := filepath.Rel(g.Page.OutputDir, spaImagesDir)
+	if err != nil {
+		return preparedImage{}, fmt.Errorf("determine relative image path: %w", err)
+	}
+
+	relativeDir = filepath.ToSlash(relativeDir)
+	relativeDir = strings.Trim(relativeDir, "/")
+
+	relative := path.Join(relativeDir, fileName)
+	relative = strings.TrimPrefix(relative, "/")
 
 	return preparedImage{
 		URL:  g.siteURLFor(relative),
 		Mime: pkgimages.MIMEFromExtension(ext),
 	}, nil
+}
+
+func (g *Generator) spaImagesDir() (string, error) {
+	if g.Env == nil {
+		return "", errors.New("generator environment not configured")
+	}
+
+	if g.Env.Seo.SpaImagesDir == "" {
+		return "", errors.New("spa images directory is not configured")
+	}
+
+	return g.Env.Seo.SpaImagesDir, nil
 }
 
 func (g *Generator) siteURLFor(rel string) string {
