@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/oullin/handler/payload"
-	pkgimage "github.com/oullin/pkg/image"
+	pkgimages "github.com/oullin/pkg/images"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -32,22 +32,22 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 		return preparedImage{}, errors.New("post has no cover image url")
 	}
 
-	img, format, err := pkgimage.Fetch(source)
+	img, format, err := pkgimages.Fetch(source)
 	if err != nil {
 		return preparedImage{}, err
 	}
 
-	resized := pkgimage.Resize(img, seoImageWidth, seoImageHeight)
+	resized := pkgimages.Resize(img, seoImageWidth, seoImageHeight)
 
-	ext := pkgimage.DetermineExtension(source, format)
-	fileName := pkgimage.BuildFileName(post.Slug, ext, "post-image")
+	ext := pkgimages.DetermineExtension(source, format)
+	fileName := pkgimages.BuildFileName(post.Slug, ext, "post-image")
 
 	if err := os.MkdirAll(seoStorageDir, 0o755); err != nil {
 		return preparedImage{}, fmt.Errorf("create storage dir: %w", err)
 	}
 
 	tempPath := filepath.Join(seoStorageDir, fileName)
-	if err := pkgimage.Save(tempPath, resized, ext, pkgimage.DefaultJPEGQuality); err != nil {
+	if err := pkgimages.Save(tempPath, resized, ext, pkgimages.DefaultJPEGQuality); err != nil {
 		return preparedImage{}, fmt.Errorf("write resized image: %w", err)
 	}
 
@@ -61,7 +61,7 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 	}
 
 	destPath := filepath.Join(destDir, fileName)
-	if err := pkgimage.Move(tempPath, destPath); err != nil {
+	if err := pkgimages.Move(tempPath, destPath); err != nil {
 		return preparedImage{}, fmt.Errorf("move resized image: %w", err)
 	}
 
@@ -69,7 +69,7 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 
 	return preparedImage{
 		URL:  g.siteURLFor(relative),
-		Mime: pkgimage.MIMEFromExtension(ext),
+		Mime: pkgimages.MIMEFromExtension(ext),
 	}, nil
 }
 
