@@ -6,11 +6,14 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/go-playground/validator/v10"
@@ -292,5 +295,86 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 
 	if prepared.Mime != "image/png" {
 		t.Fatalf("unexpected mime type: %s", prepared.Mime)
+	}
+}
+
+func TestGeneratorPreparePostImageRemote(t *testing.T) {
+	withRepoRoot(t)
+
+	outputDir := t.TempDir()
+
+	var requests int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&requests, 1)
+
+		img := image.NewRGBA(image.Rect(0, 0, 400, 400))
+		for y := 0; y < 400; y++ {
+			for x := 0; x < 400; x++ {
+				img.Set(x, y, color.RGBA{R: 10, G: 20, B: 30, A: 255})
+			}
+		}
+
+		if err := png.Encode(w, img); err != nil {
+			t.Fatalf("encode remote image: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	gen := &Generator{
+		Page: Page{
+			SiteName:  "SEO Test Suite",
+			SiteURL:   "https://seo.example.test",
+			OutputDir: outputDir,
+		},
+	}
+
+	post := payload.PostResponse{Slug: "remote-post", CoverImageURL: server.URL + "/cover.png"}
+
+	prepared, err := gen.preparePostImage(post)
+	if err != nil {
+		t.Fatalf("prepare post image: %v", err)
+	}
+
+	if prepared.URL == "" {
+		t.Fatalf("expected prepared image url")
+	}
+
+	expectedSuffix := path.Join("posts", "images", "remote-post.png")
+	if !strings.HasSuffix(prepared.URL, expectedSuffix) {
+		t.Fatalf("unexpected image url: %s", prepared.URL)
+	}
+
+	destPath := filepath.Join(outputDir, "posts", "images", "remote-post.png")
+	info, err := os.Stat(destPath)
+	if err != nil {
+		t.Fatalf("stat destination image: %v", err)
+	}
+
+	if info.Size() == 0 {
+		t.Fatalf("expected destination image to have content")
+	}
+
+	fh, err := os.Open(destPath)
+	if err != nil {
+		t.Fatalf("open destination image: %v", err)
+	}
+	defer fh.Close()
+
+	resized, _, err := image.Decode(fh)
+	if err != nil {
+		t.Fatalf("decode destination image: %v", err)
+	}
+
+	bounds := resized.Bounds()
+	if bounds.Dx() != seoImageWidth || bounds.Dy() != seoImageHeight {
+		t.Fatalf("unexpected resized dimensions: got %dx%d", bounds.Dx(), bounds.Dy())
+	}
+
+	if prepared.Mime != "image/png" {
+		t.Fatalf("unexpected mime type: %s", prepared.Mime)
+	}
+
+	if got := atomic.LoadInt32(&requests); got == 0 {
+		t.Fatalf("expected remote image to be requested at least once")
 	}
 }
