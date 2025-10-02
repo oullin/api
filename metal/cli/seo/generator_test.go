@@ -3,7 +3,12 @@ package seo
 import (
 	"encoding/json"
 	"html/template"
+	"image"
+	"image/color"
+	"image/png"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -11,6 +16,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/oullin/database"
+	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -202,5 +208,89 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 	}
 	if !strings.Contains(postContent, "Second paragraph &amp; details.") {
 		t.Fatalf("expected post body content in seo output: %q", postContent)
+	}
+}
+
+func TestGeneratorPreparePostImage(t *testing.T) {
+	withRepoRoot(t)
+
+	outputDir := t.TempDir()
+	srcDir := t.TempDir()
+	srcPath := filepath.Join(srcDir, "source.png")
+
+	img := image.NewRGBA(image.Rect(0, 0, 300, 300))
+	for y := 0; y < 300; y++ {
+		for x := 0; x < 300; x++ {
+			img.Set(x, y, color.RGBA{R: 200, G: 100, B: 50, A: 255})
+		}
+	}
+
+	fh, err := os.Create(srcPath)
+	if err != nil {
+		t.Fatalf("create source image: %v", err)
+	}
+
+	if err := png.Encode(fh, img); err != nil {
+		t.Fatalf("encode image: %v", err)
+	}
+
+	if err := fh.Close(); err != nil {
+		t.Fatalf("close image: %v", err)
+	}
+
+	fileURL := url.URL{Scheme: "file", Path: srcPath}
+
+	gen := &Generator{
+		Page: Page{
+			SiteName:  "SEO Test Suite",
+			SiteURL:   "https://seo.example.test",
+			OutputDir: outputDir,
+		},
+	}
+
+	post := payload.PostResponse{Slug: "awesome-post", CoverImageURL: fileURL.String()}
+
+	prepared, err := gen.preparePostImage(post)
+	if err != nil {
+		t.Fatalf("prepare post image: %v", err)
+	}
+
+	if prepared.URL == "" {
+		t.Fatalf("expected prepared image url")
+	}
+
+	expectedSuffix := path.Join("posts", "images", "awesome-post.png")
+	if !strings.HasSuffix(prepared.URL, expectedSuffix) {
+		t.Fatalf("unexpected image url: %s", prepared.URL)
+	}
+
+	destPath := filepath.Join(outputDir, "posts", "images", "awesome-post.png")
+	info, err := os.Stat(destPath)
+	if err != nil {
+		t.Fatalf("stat destination image: %v", err)
+	}
+
+	if info.Size() == 0 {
+		t.Fatalf("expected destination image to have content")
+	}
+
+	fh, err = os.Open(destPath)
+	if err != nil {
+		t.Fatalf("open destination image: %v", err)
+	}
+	defer fh.Close()
+
+	resized, _, err := image.Decode(fh)
+	if err != nil {
+		t.Fatalf("decode destination image: %v", err)
+	}
+
+	bounds := resized.Bounds()
+	if bounds.Dx() != seoImageWidth || bounds.Dy() != seoImageHeight {
+		t.Fatalf("unexpected resized dimensions: got %dx%d", bounds.Dx(), bounds.Dy())
+	}
+
+	if prepared.Mime != "image/png" {
+		t.Fatalf("unexpected mime type: %s", prepared.Mime)
 	}
 }

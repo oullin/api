@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -439,9 +440,19 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 	imageAlt := g.SanitizeAltText(post.Title, g.Page.SiteName)
 	description := g.SanitizeMetaDescription(post.Excerpt, Description)
 	image := g.PreferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
+	imageType := "image/png"
+
+	if prepared, err := g.preparePostImage(post); err == nil && prepared.URL != "" {
+		image = prepared.URL
+		imageType = prepared.Mime
+	} else if err != nil {
+		slog.Warn("failed to prepare post image", "slug", post.Slug, "err", err)
+	}
 
 	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
 		data.OGTagOg.Image = image
+		data.OGTagOg.Type = "article"
+		data.OGTagOg.ImageType = imageType
 		data.Twitter.Image = image
 		data.Description = description
 		data.OGTagOg.ImageAlt = imageAlt
@@ -454,10 +465,10 @@ func (g *Generator) CanonicalPostPath(slug string) string {
 	cleaned = strings.Trim(cleaned, "/")
 
 	if cleaned == "" {
-		return WebPostsUrl
+		return WebPostDetailUrl
 	}
 
-	return WebPostsUrl + "/" + cleaned
+	return WebPostDetailUrl + "/" + cleaned
 }
 
 func (g *Generator) SanitizeMetaDescription(raw, fallback string) string {
