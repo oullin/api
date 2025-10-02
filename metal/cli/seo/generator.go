@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log/slog"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -446,7 +445,7 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 		image = prepared.URL
 		imageType = prepared.Mime
 	} else if err != nil {
-		slog.Warn("failed to prepare post image", "slug", post.Slug, "err", err)
+		cli.Errorln(fmt.Sprintf("failed to prepare post image for %s: %v", post.Slug, err))
 	}
 
 	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
