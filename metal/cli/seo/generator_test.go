@@ -296,6 +296,19 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 	if prepared.Mime != "image/png" {
 		t.Fatalf("unexpected mime type: %s", prepared.Mime)
 	}
+
+	entries, err := os.ReadDir(seoStorageDir)
+	if err != nil {
+		t.Fatalf("read storage dir: %v", err)
+	}
+
+	for _, entry := range entries {
+		if entry.Name() == ".gitkeep" {
+			continue
+		}
+
+		t.Fatalf("unexpected leftover file in storage: %s", entry.Name())
+	}
 }
 
 func TestGeneratorPreparePostImageRemote(t *testing.T) {
@@ -376,5 +389,18 @@ func TestGeneratorPreparePostImageRemote(t *testing.T) {
 
 	if got := atomic.LoadInt32(&requests); got == 0 {
 		t.Fatalf("expected remote image to be requested at least once")
+	}
+
+	entries, err := os.ReadDir(seoStorageDir)
+	if err != nil {
+		t.Fatalf("read storage dir: %v", err)
+	}
+
+	for _, entry := range entries {
+		if entry.Name() == ".gitkeep" {
+			continue
+		}
+
+		t.Fatalf("unexpected leftover file in storage: %s", entry.Name())
 	}
 }
