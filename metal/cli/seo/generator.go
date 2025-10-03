@@ -3,6 +3,7 @@ package seo
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -308,6 +309,10 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 	cli.Cyanln(fmt.Sprintf("Working on directory: %s", filepath.Dir(out)))
 	if err = os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
 		return fmt.Errorf("%s: creating directory for %s: %w", fileName, filepath.Dir(out), err)
+	}
+
+	if err = os.Remove(out); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("%s: removing stale export %s: %w", fileName, out, err)
 	}
 
 	cli.Blueln(fmt.Sprintf("Writing file on: %s", out))

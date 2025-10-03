@@ -78,11 +78,16 @@ func TestGeneratorBuildAndExport(t *testing.T) {
 		t.Fatalf("unexpected manifest short name: %v", manifest["short_name"])
 	}
 
+	output := filepath.Join(page.OutputDir, "index.seo.html")
+
+	if err := os.WriteFile(output, []byte("stale"), 0o444); err != nil {
+		t.Fatalf("seed stale export: %v", err)
+	}
+
 	if err := gen.Export("index", data); err != nil {
 		t.Fatalf("export err: %v", err)
 	}
 
-	output := filepath.Join(page.OutputDir, "index.seo.html")
 	raw, err := os.ReadFile(output)
 	if err != nil {
 		t.Fatalf("read output: %v", err)
