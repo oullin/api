@@ -2,6 +2,7 @@ package seo
 
 import (
 	"net/http"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -54,6 +55,9 @@ func TestFetchReturnsJSONDecodeError(t *testing.T) {
 func TestClientLoadsFixtures(t *testing.T) {
 	withRepoRoot(t)
 
+	spaDir := t.TempDir()
+	imagesDir := filepath.Join(spaDir, "posts", "images")
+
 	e := &env.Environment{
 		App: env.AppEnvironment{
 			Name:      "SEO Test Fixtures",
@@ -61,7 +65,7 @@ func TestClientLoadsFixtures(t *testing.T) {
 			Type:      "local",
 			MasterKey: strings.Repeat("k", 32),
 		},
-		Seo: env.SeoEnvironment{SpaDir: t.TempDir()},
+		Seo: env.SeoEnvironment{SpaDir: spaDir, SpaImagesDir: imagesDir},
 	}
 
 	routes := router.NewWebsiteRoutes(e)
