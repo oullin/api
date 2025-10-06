@@ -185,6 +185,65 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE widgets (id SERIAL PRIMARY KEY, name TEXT NOT NULL);",
+		"INSERT INTO widgets (name) VALUES ('alpha'), ('beta');",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("first seed: %v", err)
+	}
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("second seed: %v", err)
+	}
+
+	var count int64
+	if err := conn.Sql().Table("widgets").Count(&count).Error; err != nil {
+		t.Fatalf("count widgets: %v", err)
+	}
+
+	if count != 4 {
+		t.Fatalf("expected 4 widgets after reseeding, got %d", count)
+	}
+}
+
+func TestSeedFromFileSkipsMissingOwnerRole(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE owner_change (id SERIAL PRIMARY KEY, note TEXT NOT NULL);",
+		"ALTER TABLE owner_change OWNER TO missing_role;",
+		"INSERT INTO owner_change (note) VALUES ('ok');",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	type ownerRow struct {
+		Note string
+	}
+
+	var rows []ownerRow
+	if err := conn.Sql().Table("owner_change").Find(&rows).Error; err != nil {
+		t.Fatalf("query owner_change: %v", err)
+	}
+
+	if len(rows) != 1 || rows[0].Note != "ok" {
+		t.Fatalf("unexpected owner_change rows: %+v", rows)
+	}
+}
+
 func TestSeedFromFileRunsMigrations(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)

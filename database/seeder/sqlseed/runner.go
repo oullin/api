@@ -489,6 +489,10 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 			}
 
 			if _, err := tx.Exec(ctx, stmt.sql); err != nil {
+				if skip, reason := shouldSkipExecError(stmt, err); skip {
+					fmt.Fprintf(os.Stderr, "sqlseed: skipped statement %d near %q: %s\n", statementNumber, preview, reason)
+					continue
+				}
 				execErr = fmt.Errorf("sqlseed: executing SQL statement %d near %q failed: %w", statementNumber, preview, err)
 				return execErr
 			}
@@ -524,6 +528,28 @@ func executeCopy(ctx context.Context, pgConn *pgconn.PgConn, stmt statement) err
 		return fmt.Errorf("sqlseed: executing COPY failed: %w", err)
 	}
 	return nil
+}
+
+func shouldSkipExecError(stmt statement, err error) (bool, string) {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false, ""
+	}
+
+	upper := strings.ToUpper(strings.TrimSpace(stmt.sql))
+
+	switch pgErr.Code {
+	case "42P07", "42P06", "42710":
+		if strings.HasPrefix(upper, "CREATE ") {
+			return true, fmt.Sprintf("object already exists (%s)", pgErr.Message)
+		}
+	case "42704":
+		if strings.Contains(upper, " OWNER TO ") {
+			return true, fmt.Sprintf("owner skipped (%s)", pgErr.Message)
+		}
+	}
+
+	return false, ""
 }
 
 func formatSnippet(data []byte) string {
