@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
 	"time"
@@ -30,9 +31,15 @@ func main() {
 	flag.StringVar(&filePath, "file", "", "path to the SQL file to execute")
 	flag.Parse()
 
-	if filePath == "" {
-		cli.Errorln("missing required --file flag pointing to a SQL file")
+	if err := run(filePath); err != nil {
+		cli.Errorln(err.Error())
 		os.Exit(1)
+	}
+}
+
+func run(filePath string) error {
+	if filePath == "" {
+		return errors.New("missing required --file flag pointing to a SQL file")
 	}
 
 	cli.ClearScreen()
@@ -42,13 +49,13 @@ func main() {
 
 	defer sentry.Flush(2 * time.Second)
 	defer logs.Close()
-	defer (*dbConnection).Close()
+	defer dbConnection.Close()
 	defer kernel.RecoverWithSentry(sentryHub)
 
 	if err := sqlseed.SeedFromFile(dbConnection, filePath); err != nil {
-		cli.Errorln(err.Error())
-		os.Exit(1)
+		return err
 	}
 
 	cli.Successln("db seeded successfully from SQL file ...")
+	return nil
 }
