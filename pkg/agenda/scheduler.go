@@ -1,4 +1,4 @@
-package backup
+package agenda
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/oullin/metal/env"
-	metalscheduler "github.com/oullin/pkg/scheduler"
 )
 
 // CommandRunner defines an abstraction over exec.CommandContext so that
@@ -52,7 +51,7 @@ type Scheduler struct {
 	now        func() time.Time
 	jobTimeout time.Duration
 	cron       *cron.Cron
-	scheduler  *metalscheduler.Scheduler
+	engine     *Engine
 }
 
 // Option configures the scheduler.
@@ -133,21 +132,21 @@ func NewScheduler(environment *env.Environment, opts ...Option) (*Scheduler, err
 		return scheduler.runBackup(ctx)
 	}
 
-	schedulerOpts := []metalscheduler.Option{
-		metalscheduler.WithLogger(scheduler.logger),
-		metalscheduler.WithJobTimeout(scheduler.jobTimeout),
+	engineOpts := []EngineOption{
+		WithEngineLogger(scheduler.logger),
+		WithEngineJobTimeout(scheduler.jobTimeout),
 	}
 
 	if scheduler.cron != nil {
-		schedulerOpts = append(schedulerOpts, metalscheduler.WithCron(scheduler.cron))
+		engineOpts = append(engineOpts, WithEngineCron(scheduler.cron))
 	}
 
-	internalScheduler, err := metalscheduler.New(environment.Backup.Cron, job, schedulerOpts...)
+	engine, err := New(environment.Backup.Cron, job, engineOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	scheduler.scheduler = internalScheduler
+	scheduler.engine = engine
 
 	return scheduler, nil
 }
@@ -159,11 +158,11 @@ func (s *Scheduler) Start(ctx context.Context) error {
 		return errors.New("scheduler is nil")
 	}
 
-	if s.scheduler == nil {
+	if s.engine == nil {
 		return errors.New("internal scheduler is nil")
 	}
 
-	return s.scheduler.Start(ctx)
+	return s.engine.Start(ctx)
 }
 
 // Stop halts the scheduler and waits for any running job to finish.
@@ -172,11 +171,11 @@ func (s *Scheduler) Stop() {
 		return
 	}
 
-	if s.scheduler == nil {
+	if s.engine == nil {
 		return
 	}
 
-	s.scheduler.Stop()
+	s.engine.Stop()
 }
 
 // Run executes a database backup immediately using the scheduler configuration.
@@ -185,11 +184,11 @@ func (s *Scheduler) Run(ctx context.Context) error {
 		return errors.New("scheduler is nil")
 	}
 
-	if s.scheduler == nil {
+	if s.engine == nil {
 		return errors.New("internal scheduler is nil")
 	}
 
-	return s.scheduler.Run(ctx)
+	return s.engine.Run(ctx)
 }
 
 func (s *Scheduler) runBackup(ctx context.Context) error {

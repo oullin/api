@@ -1,4 +1,4 @@
-package scheduler
+package agenda
 
 import (
 	"context"
@@ -95,8 +95,8 @@ func TestStartSchedulesJob(t *testing.T) {
 	scheduler, err := New(
 		"@every 1s",
 		recorder.run,
-		WithCron(cron.New(cron.WithParser(DefaultParser))),
-		WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
+		WithEngineCron(cron.New(cron.WithParser(DefaultParser))),
+		WithEngineLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -131,8 +131,8 @@ func TestStartWithNilContext(t *testing.T) {
 	scheduler, err := New(
 		"@every 1s",
 		recorder.run,
-		WithCron(cron.New(cron.WithParser(DefaultParser))),
-		WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
+		WithEngineCron(cron.New(cron.WithParser(DefaultParser))),
+		WithEngineLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -169,7 +169,7 @@ func TestStartReturnsErrorWhenAlreadyStarted(t *testing.T) {
 }
 
 func TestWithJobTimeout(t *testing.T) {
-	scheduler, err := New("@daily", func(context.Context) error { return nil }, WithJobTimeout(time.Second))
+	scheduler, err := New("@daily", func(context.Context) error { return nil }, WithEngineJobTimeout(time.Second))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

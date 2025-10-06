@@ -10,8 +10,8 @@ import (
 	"github.com/getsentry/sentry-go"
 	_ "github.com/lib/pq"
 	"github.com/oullin/metal/kernel"
+	"github.com/oullin/pkg/agenda"
 	"github.com/oullin/pkg/portal"
-	"github.com/oullin/pkg/scheduler/backup"
 	"github.com/rs/cors"
 )
 
@@ -40,7 +40,7 @@ func main() {
 	backupCtx, cancelBackups := context.WithCancel(context.Background())
 	defer cancelBackups()
 
-	if scheduler, err := backup.NewScheduler(app.GetEnv()); err != nil {
+	if scheduler, err := agenda.NewScheduler(app.GetEnv()); err != nil {
 		slog.Error("failed to create backup scheduler", "error", err)
 		panic("backup scheduler initialization failed")
 	} else if err := scheduler.Start(backupCtx); err != nil {

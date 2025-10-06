@@ -1,4 +1,4 @@
-package backup
+package agenda
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/oullin/metal/env"
-	metalscheduler "github.com/oullin/pkg/scheduler"
 )
 
 type fakeRunner struct {
@@ -188,7 +187,7 @@ func TestSchedulerStartSchedulesJob(t *testing.T) {
 		Backup: env.BackupEnvironment{Cron: "@every 1s", Dir: tmpDir},
 	}
 
-	customCron := cron.New(cron.WithParser(metalscheduler.DefaultParser))
+	customCron := cron.New(cron.WithParser(DefaultParser))
 	scheduler, err := NewScheduler(
 		environment,
 		WithCommandRunner(runner),
@@ -236,7 +235,7 @@ func TestSchedulerStartWithNilContext(t *testing.T) {
 		environment,
 		WithCommandRunner(runner),
 		WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
-		WithCron(cron.New(cron.WithParser(metalscheduler.DefaultParser))),
+		WithCron(cron.New(cron.WithParser(DefaultParser))),
 	)
 	if err != nil {
 		t.Fatalf("new scheduler: %v", err)
