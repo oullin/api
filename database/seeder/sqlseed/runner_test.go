@@ -267,6 +267,19 @@ func TestSeedFromFileRunsMigrations(t *testing.T) {
 	if count != 1 {
 		t.Fatalf("expected 1 api key, got %d", count)
 	}
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("second seed from file: %v", err)
+	}
+
+	count = 0
+	if err := conn.Sql().Table("api_keys").Count(&count).Error; err != nil {
+		t.Fatalf("count api_keys after reseed: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("expected 1 api key after reseed, got %d", count)
+	}
 }
 
 func TestSeedFromFileAllowsTrailingComment(t *testing.T) {

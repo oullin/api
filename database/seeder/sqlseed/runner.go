@@ -488,12 +488,33 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 				continue
 			}
 
-			if _, err := tx.Exec(ctx, stmt.sql); err != nil {
+			nestedTx, err := tx.Begin(ctx)
+			if err != nil {
+				execErr = fmt.Errorf("sqlseed: begin savepoint for statement %d near %q: %w", statementNumber, preview, err)
+				return execErr
+			}
+
+			if _, err := nestedTx.Exec(ctx, stmt.sql); err != nil {
 				if skip, reason := shouldSkipExecError(stmt, err); skip {
+					if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+						execErr = fmt.Errorf("sqlseed: rollback savepoint for skipped statement %d near %q failed: %w", statementNumber, preview, rbErr)
+						return execErr
+					}
 					fmt.Fprintf(os.Stderr, "sqlseed: skipped statement %d near %q: %s\n", statementNumber, preview, reason)
 					continue
 				}
+
+				if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+					execErr = errors.Join(fmt.Errorf("sqlseed: executing SQL statement %d near %q failed: %w", statementNumber, preview, err), fmt.Errorf("sqlseed: rollback savepoint failed: %w", rbErr))
+					return execErr
+				}
+
 				execErr = fmt.Errorf("sqlseed: executing SQL statement %d near %q failed: %w", statementNumber, preview, err)
+				return execErr
+			}
+
+			if err := nestedTx.Commit(ctx); err != nil {
+				execErr = fmt.Errorf("sqlseed: release savepoint for statement %d near %q failed: %w", statementNumber, preview, err)
 				return execErr
 			}
 		}
