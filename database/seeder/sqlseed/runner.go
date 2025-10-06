@@ -1,14 +1,21 @@
 package sqlseed
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/oullin/database"
-	"gorm.io/gorm"
 )
 
 func SeedFromFile(conn *database.Connection, filePath string) error {
@@ -17,7 +24,7 @@ func SeedFromFile(conn *database.Connection, filePath string) error {
 		return err
 	}
 
-	statements, err := readSQLFile(cleanedPath)
+	fileContents, err := readSQLFile(cleanedPath)
 	if err != nil {
 		return err
 	}
@@ -26,13 +33,16 @@ func SeedFromFile(conn *database.Connection, filePath string) error {
 		return errors.New("sqlseed: database connection is required")
 	}
 
-	return conn.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(statements).Error; err != nil {
-			return fmt.Errorf("sqlseed: executing SQL statements failed: %w", err)
-		}
+	statements, err := parseStatements(fileContents)
+	if err != nil {
+		return err
+	}
 
-		return nil
-	})
+	if len(statements) == 0 {
+		return errors.New("sqlseed: SQL file did not contain any executable statements")
+	}
+
+	return executeStatements(context.Background(), conn, statements)
 }
 
 const storageSQLDir = "storage/sql"
@@ -69,16 +79,333 @@ func validateFilePath(path string) (string, error) {
 	return resolved, nil
 }
 
-func readSQLFile(path string) (string, error) {
-	bytes, err := os.ReadFile(path)
+func readSQLFile(path string) ([]byte, error) {
+	contents, err := os.ReadFile(path)
 	if err != nil {
-		return "", fmt.Errorf("sqlseed: read file: %w", err)
+		return nil, fmt.Errorf("sqlseed: read file: %w", err)
 	}
 
-	statements := strings.TrimSpace(string(bytes))
-	if statements == "" {
-		return "", fmt.Errorf("sqlseed: file %s is empty", path)
+	if len(bytes.TrimSpace(contents)) == 0 {
+		return nil, fmt.Errorf("sqlseed: file %s is empty", path)
 	}
 
-	return statements, nil
+	return contents, nil
+}
+
+type statement struct {
+	sql      string
+	copyData []byte
+	isCopy   bool
+}
+
+func parseStatements(contents []byte) ([]statement, error) {
+	var stmts []statement
+
+	data := bytes.TrimSpace(contents)
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	var (
+		idx            int
+		start          int
+		inSingleQuote  bool
+		inDoubleQuote  bool
+		inLineComment  bool
+		inBlockComment bool
+		dollarTag      string
+	)
+
+	for idx < len(data) {
+		b := data[idx]
+
+		switch {
+		case inLineComment:
+			if b == '\n' {
+				inLineComment = false
+			}
+			idx++
+			continue
+		case inBlockComment:
+			if b == '*' && idx+1 < len(data) && data[idx+1] == '/' {
+				inBlockComment = false
+				idx += 2
+				continue
+			}
+			idx++
+			continue
+		case dollarTag != "":
+			if b == '$' && hasDollarTag(data[idx:], dollarTag) {
+				idx += len(dollarTag) + 2
+				dollarTag = ""
+				continue
+			}
+			idx++
+			continue
+		case inSingleQuote:
+			if b == '\\' && idx+1 < len(data) {
+				idx += 2
+				continue
+			}
+			if b == '\'' {
+				inSingleQuote = false
+			}
+			idx++
+			continue
+		case inDoubleQuote:
+			if b == '"' {
+				inDoubleQuote = false
+			}
+			idx++
+			continue
+		}
+
+		if b == '-' && idx+1 < len(data) && data[idx+1] == '-' {
+			inLineComment = true
+			idx += 2
+			continue
+		}
+
+		if b == '/' && idx+1 < len(data) && data[idx+1] == '*' {
+			inBlockComment = true
+			idx += 2
+			continue
+		}
+
+		if b == '$' {
+			tag, ok := readDollarTag(data[idx:])
+			if ok {
+				dollarTag = tag
+				idx += len(tag) + 2
+				continue
+			}
+		}
+
+		if b == '\'' {
+			inSingleQuote = true
+			idx++
+			continue
+		}
+
+		if b == '"' {
+			inDoubleQuote = true
+			idx++
+			continue
+		}
+
+		if b != ';' {
+			idx++
+			continue
+		}
+
+		rawStmt := bytes.TrimSpace(data[start : idx+1])
+		idx++
+		if len(rawStmt) == 0 {
+			start = skipWhitespace(data, idx)
+			idx = start
+			continue
+		}
+
+		trimmed := strings.TrimSpace(string(rawStmt))
+		if isCopyFromStdin(trimmed) {
+			copyStart := skipWhitespace(data, idx)
+			copyLen, advance, err := extractCopyData(data[copyStart:])
+			if err != nil {
+				return nil, err
+			}
+
+			stmt := statement{
+				sql:      strings.TrimSpace(strings.TrimSuffix(trimmed, ";")),
+				copyData: append([]byte(nil), data[copyStart:copyStart+copyLen]...),
+				isCopy:   true,
+			}
+			stmts = append(stmts, stmt)
+
+			idx = copyStart + advance
+			start = skipWhitespace(data, idx)
+			idx = start
+			continue
+		}
+
+		stmt := statement{sql: strings.TrimSpace(strings.TrimSuffix(trimmed, ";"))}
+		stmts = append(stmts, stmt)
+
+		start = skipWhitespace(data, idx)
+		idx = start
+	}
+
+	if start < len(data) {
+		if len(bytes.TrimSpace(data[start:])) != 0 {
+			return nil, errors.New("sqlseed: SQL file ended with an unterminated statement")
+		}
+	}
+
+	return stmts, nil
+}
+
+func skipWhitespace(data []byte, idx int) int {
+	for idx < len(data) {
+		r, size := utf8DecodeRune(data[idx:])
+		if size == 0 {
+			return idx
+		}
+		if r != ' ' && r != '\n' && r != '\r' && r != '\t' {
+			return idx
+		}
+		idx += size
+	}
+
+	return idx
+}
+
+func utf8DecodeRune(data []byte) (rune, int) {
+	if len(data) == 0 {
+		return 0, 0
+	}
+	r, size := utf8.DecodeRune(data)
+	if r == utf8.RuneError && size == 1 {
+		return rune(data[0]), 1
+	}
+	return r, size
+}
+
+func readDollarTag(data []byte) (string, bool) {
+	if len(data) < 2 || data[0] != '$' {
+		return "", false
+	}
+
+	end := 1
+	for end < len(data) {
+		c := data[end]
+		if c == '$' {
+			return string(data[1:end]), true
+		}
+		if !isDollarTagChar(c) {
+			return "", false
+		}
+		end++
+	}
+
+	return "", false
+}
+
+func isDollarTagChar(b byte) bool {
+	return b == '_' || b == '$' || unicode.IsLetter(rune(b)) || unicode.IsDigit(rune(b))
+}
+
+func hasDollarTag(data []byte, tag string) bool {
+	marker := "$" + tag + "$"
+	return len(data) >= len(marker) && string(data[:len(marker)]) == marker
+}
+
+func isCopyFromStdin(stmt string) bool {
+	upper := strings.ToUpper(stmt)
+	return strings.HasPrefix(upper, "COPY ") && strings.Contains(upper, "FROM STDIN")
+}
+
+func extractCopyData(data []byte) (int, int, error) {
+	patterns := []struct {
+		marker  []byte
+		include int
+	}{
+		{[]byte("\r\n\\.\r\n"), 2},
+		{[]byte("\n\\.\n"), 1},
+		{[]byte("\n\\.\r\n"), 1},
+		{[]byte("\r\n\\.\n"), 2},
+		{[]byte("\\.\r\n"), 0},
+		{[]byte("\\.\n"), 0},
+		{[]byte("\\."), 0},
+	}
+
+	for _, pattern := range patterns {
+		if idx := bytes.Index(data, pattern.marker); idx != -1 {
+			copyEnd := idx + pattern.include
+			advance := idx + len(pattern.marker)
+			return copyEnd, advance, nil
+		}
+	}
+
+	return 0, 0, errors.New("sqlseed: COPY statement missing terminator")
+}
+
+func executeStatements(ctx context.Context, conn *database.Connection, statements []statement) error {
+	sqlDB, err := conn.Sql().DB()
+	if err != nil {
+		return fmt.Errorf("sqlseed: retrieve sql db: %w", err)
+	}
+
+	sqlConn, err := sqlDB.Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("sqlseed: acquire connection: %w", err)
+	}
+	defer sqlConn.Close()
+
+	var execErr error
+	err = sqlConn.Raw(func(driverConn interface{}) error {
+		stdlibConn, ok := driverConn.(*stdlib.Conn)
+		if !ok {
+			return errors.New("sqlseed: unexpected driver connection type")
+		}
+
+		pgxConn := stdlibConn.Conn()
+		tx, err := pgxConn.BeginTx(ctx, pgx.TxOptions{})
+		if err != nil {
+			return fmt.Errorf("sqlseed: begin transaction: %w", err)
+		}
+
+		committed := false
+		defer func() {
+			if committed {
+				return
+			}
+			if rbErr := tx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+				execErr = errors.Join(execErr, fmt.Errorf("sqlseed: rollback failed: %w", rbErr))
+			}
+		}()
+
+		for _, stmt := range statements {
+			if stmt.isCopy {
+				if err := executeCopy(ctx, tx.Conn().PgConn(), stmt); err != nil {
+					execErr = err
+					return err
+				}
+				continue
+			}
+
+			if _, err := tx.Exec(ctx, stmt.sql); err != nil {
+				execErr = fmt.Errorf("sqlseed: executing SQL statement failed: %w", err)
+				return execErr
+			}
+		}
+
+		if err := tx.Commit(ctx); err != nil {
+			execErr = fmt.Errorf("sqlseed: commit failed: %w", err)
+			return execErr
+		}
+
+		committed = true
+		return nil
+	})
+	if err != nil {
+		if execErr != nil {
+			return execErr
+		}
+		return err
+	}
+
+	if execErr != nil {
+		return execErr
+	}
+
+	return nil
+}
+
+func executeCopy(ctx context.Context, pgConn *pgconn.PgConn, stmt statement) error {
+	reader := bytes.NewReader(stmt.copyData)
+	sql := strings.TrimSpace(stmt.sql)
+	sql = strings.TrimSuffix(sql, ";")
+	if _, err := pgConn.CopyFrom(ctx, reader, sql); err != nil {
+		return fmt.Errorf("sqlseed: executing COPY failed: %w", err)
+	}
+	return nil
 }

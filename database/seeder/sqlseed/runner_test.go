@@ -113,6 +113,48 @@ func TestSeedFromFileRollsBackOnFailure(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
+	conn, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE supplies (id INTEGER PRIMARY KEY, name TEXT NOT NULL);",
+		"COPY supplies (id, name) FROM stdin;",
+		"1\tbolts",
+		"2\twashers",
+		"\\.",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	type supply struct {
+		ID   int
+		Name string
+	}
+
+	var rows []supply
+	if err := conn.Sql().Table("supplies").Order("id").Find(&rows).Error; err != nil {
+		t.Fatalf("query supplies: %v", err)
+	}
+
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 supplies, got %d", len(rows))
+	}
+
+	if rows[0].ID != 1 || rows[0].Name != "bolts" {
+		t.Fatalf("unexpected first row: %+v", rows[0])
+	}
+
+	if rows[1].ID != 2 || rows[1].Name != "washers" {
+		t.Fatalf("unexpected second row: %+v", rows[1])
+	}
+}
+
 func writeStorageFile(t *testing.T, name, contents string) string {
 	t.Helper()
 
