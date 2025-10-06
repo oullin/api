@@ -28,7 +28,7 @@ func init() {
 
 func main() {
 	var filePath string
-	flag.StringVar(&filePath, "file", "", "path to the SQL file to execute")
+	flag.StringVar(&filePath, "file", "", "name or path to the SQL file located in ./storage/sql to execute")
 	flag.Parse()
 
 	if err := run(filePath); err != nil {

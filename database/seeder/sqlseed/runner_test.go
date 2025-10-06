@@ -2,6 +2,7 @@ package sqlseed_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,15 +22,9 @@ func TestSeedFromFileExecutesStatements(t *testing.T) {
 	conn, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
-	dir := t.TempDir()
-	path := filepath.Join(dir, "seed.sql")
-	sql := "CREATE TABLE widgets (id SERIAL PRIMARY KEY, name TEXT NOT NULL);\nINSERT INTO widgets (name) VALUES ('alpha'), ('beta');"
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "CREATE TABLE widgets (id SERIAL PRIMARY KEY, name TEXT NOT NULL);\nINSERT INTO widgets (name) VALUES ('alpha'), ('beta');")
 
-	if err := os.WriteFile(path, []byte(sql), 0o600); err != nil {
-		t.Fatalf("write seed: %v", err)
-	}
-
-	if err := sqlseed.SeedFromFile(conn, path); err != nil {
+	if err := sqlseed.SeedFromFile(conn, fileName); err != nil {
 		t.Fatalf("seed from file: %v", err)
 	}
 
@@ -44,49 +39,59 @@ func TestSeedFromFileExecutesStatements(t *testing.T) {
 }
 
 func TestSeedFromFileRejectsNonSQLFile(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "seed.txt")
+	fileName := writeStorageFile(t, withSuffix(t, ".txt"), "SELECT 1;")
 
-	if err := os.WriteFile(path, []byte("SELECT 1;"), 0o600); err != nil {
-		t.Fatalf("write seed: %v", err)
-	}
-
-	err := sqlseed.SeedFromFile(nil, path)
+	err := sqlseed.SeedFromFile(nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "unsupported file extension") {
 		t.Fatalf("expected extension error, got %v", err)
 	}
 }
 
+func TestSeedFromFileRejectsAbsolutePath(t *testing.T) {
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "SELECT 1;")
+
+	absPath, err := filepath.Abs(filepath.Join("storage", "sql", fileName))
+	if err != nil {
+		t.Fatalf("abs path: %v", err)
+	}
+
+	err = sqlseed.SeedFromFile(nil, absPath)
+	if err == nil || !strings.Contains(err.Error(), "absolute file paths") {
+		t.Fatalf("expected absolute path error, got %v", err)
+	}
+}
+
+func TestSeedFromFileRejectsTraversal(t *testing.T) {
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "SELECT 1;")
+
+	err := sqlseed.SeedFromFile(nil, filepath.Join("..", fileName))
+	if err == nil || !strings.Contains(err.Error(), "within") {
+		t.Fatalf("expected traversal error, got %v", err)
+	}
+}
+
 func TestSeedFromFileFailsWhenFileMissing(t *testing.T) {
-	err := sqlseed.SeedFromFile(nil, filepath.Join(t.TempDir(), "missing.sql"))
+	fileName := withSuffix(t, "_missing.sql")
+
+	err := sqlseed.SeedFromFile(nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "read file") {
 		t.Fatalf("expected read error, got %v", err)
 	}
 }
 
 func TestSeedFromFileFailsWhenFileEmpty(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "empty.sql")
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "   \n\t")
 
-	if err := os.WriteFile(path, []byte("   \n\t"), 0o600); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
-
-	err := sqlseed.SeedFromFile(nil, path)
+	err := sqlseed.SeedFromFile(nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "empty") {
 		t.Fatalf("expected empty file error, got %v", err)
 	}
 }
 
 func TestSeedFromFileRequiresConnection(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "seed.sql")
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "SELECT 1;")
 
-	if err := os.WriteFile(path, []byte("SELECT 1;"), 0o600); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
-
-	err := sqlseed.SeedFromFile(nil, path)
+	err := sqlseed.SeedFromFile(nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "connection") {
 		t.Fatalf("expected connection error, got %v", err)
 	}
@@ -96,22 +101,48 @@ func TestSeedFromFileRollsBackOnFailure(t *testing.T) {
 	conn, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
-	dir := t.TempDir()
-	path := filepath.Join(dir, "seed.sql")
-	sql := "CREATE TABLE gadgets (id SERIAL PRIMARY KEY);\nINSERT INTO gadgets (name) VALUES ('alpha');"
-
-	if err := os.WriteFile(path, []byte(sql), 0o600); err != nil {
-		t.Fatalf("write seed: %v", err)
-	}
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "CREATE TABLE gadgets (id SERIAL PRIMARY KEY);\nINSERT INTO gadgets (name) VALUES ('alpha');")
 
 	// The INSERT statement above is invalid because the table does not have a name column.
-	if err := sqlseed.SeedFromFile(conn, path); err == nil {
+	if err := sqlseed.SeedFromFile(conn, fileName); err == nil {
 		t.Fatalf("expected error when executing invalid sql")
 	}
 
 	if conn.Sql().Migrator().HasTable("gadgets") {
 		t.Fatalf("expected transaction rollback to drop gadgets table")
 	}
+}
+
+func writeStorageFile(t *testing.T, name, contents string) string {
+	t.Helper()
+
+	dir := filepath.Join("storage", "sql")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatalf("create storage dir: %v", err)
+	}
+
+	path := filepath.Join(dir, name)
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatalf("write storage file: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			t.Fatalf("remove storage file: %v", err)
+		}
+	})
+
+	return name
+}
+
+func withSuffix(t *testing.T, suffix string) string {
+	t.Helper()
+
+	base := strings.ReplaceAll(strings.ToLower(t.Name()), "/", "_")
+	base = strings.ReplaceAll(base, " ", "_")
+	base = strings.ReplaceAll(base, ":", "_")
+
+	return fmt.Sprintf("%s_%d%s", base, time.Now().UnixNano(), suffix)
 }
 
 func setupPostgresConnection(t *testing.T) (*database.Connection, func()) {

@@ -35,17 +35,38 @@ func SeedFromFile(conn *database.Connection, filePath string) error {
 	})
 }
 
+const storageSQLDir = "storage/sql"
+
 func validateFilePath(path string) (string, error) {
 	if strings.TrimSpace(path) == "" {
 		return "", errors.New("sqlseed: file path is required")
 	}
 
-	cleaned := filepath.Clean(path)
-	if ext := strings.ToLower(filepath.Ext(cleaned)); ext != ".sql" {
-		return "", fmt.Errorf("sqlseed: unsupported file extension %q", filepath.Ext(cleaned))
+	if filepath.IsAbs(path) {
+		return "", errors.New("sqlseed: absolute file paths are not supported")
 	}
 
-	return cleaned, nil
+	cleanedInput := filepath.Clean(path)
+	if ext := strings.ToLower(filepath.Ext(cleanedInput)); ext != ".sql" {
+		return "", fmt.Errorf("sqlseed: unsupported file extension %q", filepath.Ext(cleanedInput))
+	}
+
+	base := filepath.Clean(storageSQLDir)
+	baseWithSep := base + string(os.PathSeparator)
+
+	var resolved string
+	if strings.HasPrefix(cleanedInput, baseWithSep) {
+		resolved = cleanedInput
+	} else {
+		resolved = filepath.Join(base, cleanedInput)
+	}
+
+	resolved = filepath.Clean(resolved)
+	if !strings.HasPrefix(resolved, baseWithSep) {
+		return "", fmt.Errorf("sqlseed: file path must be within %s", base)
+	}
+
+	return resolved, nil
 }
 
 func readSQLFile(path string) (string, error) {
