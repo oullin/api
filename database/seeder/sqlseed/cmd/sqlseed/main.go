@@ -52,7 +52,7 @@ func run(filePath string) error {
 	defer dbConnection.Close()
 	defer kernel.RecoverWithSentry(sentryHub)
 
-	if err := sqlseed.SeedFromFile(dbConnection, filePath); err != nil {
+	if err := sqlseed.SeedFromFile(dbConnection, environment, filePath); err != nil {
 		return err
 	}
 

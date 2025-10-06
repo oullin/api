@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -16,9 +17,10 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/oullin/database"
+	"github.com/oullin/metal/env"
 )
 
-func SeedFromFile(conn *database.Connection, filePath string) error {
+func SeedFromFile(conn *database.Connection, environment *env.Environment, filePath string) error {
 	cleanedPath, err := validateFilePath(filePath)
 	if err != nil {
 		return err
@@ -33,6 +35,10 @@ func SeedFromFile(conn *database.Connection, filePath string) error {
 		return errors.New("sqlseed: database connection is required")
 	}
 
+	if environment == nil {
+		return errors.New("sqlseed: environment is required")
+	}
+
 	statements, err := parseStatements(fileContents)
 	if err != nil {
 		return err
@@ -42,10 +48,76 @@ func SeedFromFile(conn *database.Connection, filePath string) error {
 		return errors.New("sqlseed: SQL file did not contain any executable statements")
 	}
 
-	return executeStatements(context.Background(), conn, statements)
+	ctx := context.Background()
+
+	if err := prepareDatabase(ctx, conn, environment); err != nil {
+		return err
+	}
+
+	return executeStatements(ctx, conn, statements)
 }
 
 const storageSQLDir = "storage/sql"
+const migrationsDir = "database/infra/migrations"
+
+func prepareDatabase(ctx context.Context, conn *database.Connection, environment *env.Environment) error {
+	truncate := database.MakeTruncate(conn, environment)
+
+	if err := truncate.Execute(); err != nil {
+		return fmt.Errorf("sqlseed: truncate database: %w", err)
+	}
+
+	if err := runMigrations(ctx, conn); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func runMigrations(ctx context.Context, conn *database.Connection) error {
+	entries, err := os.ReadDir(migrationsDir)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("sqlseed: migrations directory %s not found", migrationsDir)
+		}
+		return fmt.Errorf("sqlseed: read migrations directory: %w", err)
+	}
+
+	var files []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if strings.HasSuffix(strings.ToLower(name), ".up.sql") {
+			files = append(files, filepath.Join(migrationsDir, name))
+		}
+	}
+
+	sort.Strings(files)
+
+	for _, path := range files {
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("sqlseed: read migration %s: %w", filepath.Base(path), err)
+		}
+
+		statements, err := parseStatements(contents)
+		if err != nil {
+			return fmt.Errorf("sqlseed: parse migration %s: %w", filepath.Base(path), err)
+		}
+
+		if len(statements) == 0 {
+			continue
+		}
+
+		if err := executeStatements(ctx, conn, statements); err != nil {
+			return fmt.Errorf("sqlseed: execute migration %s: %w", filepath.Base(path), err)
+		}
+	}
+
+	return nil
+}
 
 func validateFilePath(path string) (string, error) {
 	if strings.TrimSpace(path) == "" {

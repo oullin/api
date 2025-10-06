@@ -19,12 +19,12 @@ import (
 )
 
 func TestSeedFromFileExecutesStatements(t *testing.T) {
-	conn, cleanup := setupPostgresConnection(t)
+	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "CREATE TABLE widgets (id SERIAL PRIMARY KEY, name TEXT NOT NULL);\nINSERT INTO widgets (name) VALUES ('alpha'), ('beta');")
 
-	if err := sqlseed.SeedFromFile(conn, fileName); err != nil {
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
 		t.Fatalf("seed from file: %v", err)
 	}
 
@@ -41,9 +41,21 @@ func TestSeedFromFileExecutesStatements(t *testing.T) {
 func TestSeedFromFileRejectsNonSQLFile(t *testing.T) {
 	fileName := writeStorageFile(t, withSuffix(t, ".txt"), "SELECT 1;")
 
-	err := sqlseed.SeedFromFile(nil, fileName)
+	err := sqlseed.SeedFromFile(nil, nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "unsupported file extension") {
 		t.Fatalf("expected extension error, got %v", err)
+	}
+}
+
+func TestSeedFromFileRequiresEnvironment(t *testing.T) {
+	conn, _, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "SELECT 1;")
+
+	err := sqlseed.SeedFromFile(conn, nil, fileName)
+	if err == nil || !strings.Contains(err.Error(), "environment is required") {
+		t.Fatalf("expected environment error, got %v", err)
 	}
 }
 
@@ -55,7 +67,7 @@ func TestSeedFromFileRejectsAbsolutePath(t *testing.T) {
 		t.Fatalf("abs path: %v", err)
 	}
 
-	err = sqlseed.SeedFromFile(nil, absPath)
+	err = sqlseed.SeedFromFile(nil, nil, absPath)
 	if err == nil || !strings.Contains(err.Error(), "absolute file paths") {
 		t.Fatalf("expected absolute path error, got %v", err)
 	}
@@ -64,7 +76,7 @@ func TestSeedFromFileRejectsAbsolutePath(t *testing.T) {
 func TestSeedFromFileRejectsTraversal(t *testing.T) {
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "SELECT 1;")
 
-	err := sqlseed.SeedFromFile(nil, filepath.Join("..", fileName))
+	err := sqlseed.SeedFromFile(nil, nil, filepath.Join("..", fileName))
 	if err == nil || !strings.Contains(err.Error(), "within") {
 		t.Fatalf("expected traversal error, got %v", err)
 	}
@@ -73,7 +85,7 @@ func TestSeedFromFileRejectsTraversal(t *testing.T) {
 func TestSeedFromFileFailsWhenFileMissing(t *testing.T) {
 	fileName := withSuffix(t, "_missing.sql")
 
-	err := sqlseed.SeedFromFile(nil, fileName)
+	err := sqlseed.SeedFromFile(nil, nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "read file") {
 		t.Fatalf("expected read error, got %v", err)
 	}
@@ -82,7 +94,7 @@ func TestSeedFromFileFailsWhenFileMissing(t *testing.T) {
 func TestSeedFromFileFailsWhenFileEmpty(t *testing.T) {
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "   \n\t")
 
-	err := sqlseed.SeedFromFile(nil, fileName)
+	err := sqlseed.SeedFromFile(nil, nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "empty") {
 		t.Fatalf("expected empty file error, got %v", err)
 	}
@@ -91,7 +103,7 @@ func TestSeedFromFileFailsWhenFileEmpty(t *testing.T) {
 func TestSeedFromFileRejectsNonUTF8Contents(t *testing.T) {
 	fileName := writeStorageBytes(t, withSuffix(t, ".sql"), []byte{0xff, 0xfe, 0xfd})
 
-	err := sqlseed.SeedFromFile(nil, fileName)
+	err := sqlseed.SeedFromFile(nil, nil, fileName)
 	if err == nil || !strings.Contains(err.Error(), "non-UTF-8") {
 		t.Fatalf("expected non-UTF-8 error, got %v", err)
 	}
@@ -100,20 +112,20 @@ func TestSeedFromFileRejectsNonUTF8Contents(t *testing.T) {
 func TestSeedFromFileRequiresConnection(t *testing.T) {
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "SELECT 1;")
 
-	err := sqlseed.SeedFromFile(nil, fileName)
+	err := sqlseed.SeedFromFile(nil, testEnvironment(), fileName)
 	if err == nil || !strings.Contains(err.Error(), "connection") {
 		t.Fatalf("expected connection error, got %v", err)
 	}
 }
 
 func TestSeedFromFileRollsBackOnFailure(t *testing.T) {
-	conn, cleanup := setupPostgresConnection(t)
+	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "CREATE TABLE gadgets (id SERIAL PRIMARY KEY);\nINSERT INTO gadgets (name) VALUES ('alpha');")
 
 	// The INSERT statement above is invalid because the table does not have a name column.
-	err := sqlseed.SeedFromFile(conn, fileName)
+	err := sqlseed.SeedFromFile(conn, environment, fileName)
 	if err == nil {
 		t.Fatalf("expected error when executing invalid sql")
 	}
@@ -132,7 +144,7 @@ func TestSeedFromFileRollsBackOnFailure(t *testing.T) {
 }
 
 func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
-	conn, cleanup := setupPostgresConnection(t)
+	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
 	contents := strings.Join([]string{
@@ -146,7 +158,7 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
 
-	if err := sqlseed.SeedFromFile(conn, fileName); err != nil {
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
 		t.Fatalf("seed from file: %v", err)
 	}
 
@@ -173,8 +185,33 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileRunsMigrations(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"INSERT INTO api_keys (uuid, account_name, public_key, secret_key)",
+		"VALUES ('00000000-0000-0000-0000-000000000001', 'example', decode('68656c6c6f', 'hex'), decode('736563726574', 'hex'));",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	var count int64
+	if err := conn.Sql().Table("api_keys").Count(&count).Error; err != nil {
+		t.Fatalf("count api_keys: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("expected 1 api key, got %d", count)
+	}
+}
+
 func TestSeedFromFileAllowsTrailingComment(t *testing.T) {
-	conn, cleanup := setupPostgresConnection(t)
+	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
 	contents := strings.Join([]string{
@@ -185,7 +222,7 @@ func TestSeedFromFileAllowsTrailingComment(t *testing.T) {
 
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
 
-	if err := sqlseed.SeedFromFile(conn, fileName); err != nil {
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
 		t.Fatalf("seed from file: %v", err)
 	}
 
@@ -200,7 +237,7 @@ func TestSeedFromFileAllowsTrailingComment(t *testing.T) {
 }
 
 func TestSeedFromFileReportsUnterminatedStatementDetails(t *testing.T) {
-	conn, cleanup := setupPostgresConnection(t)
+	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
 	contents := strings.Join([]string{
@@ -210,7 +247,7 @@ func TestSeedFromFileReportsUnterminatedStatementDetails(t *testing.T) {
 
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
 
-	err := sqlseed.SeedFromFile(conn, fileName)
+	err := sqlseed.SeedFromFile(conn, environment, fileName)
 	if err == nil {
 		t.Fatalf("expected parse error for unterminated statement")
 	}
@@ -226,6 +263,10 @@ func TestSeedFromFileReportsUnterminatedStatementDetails(t *testing.T) {
 	if !strings.Contains(err.Error(), "debug_statements") {
 		t.Fatalf("expected error to include statement preview, got %v", err)
 	}
+}
+
+func testEnvironment() *env.Environment {
+	return &env.Environment{App: env.AppEnvironment{Type: "local"}}
 }
 
 func writeStorageFile(t *testing.T, name, contents string) string {
@@ -266,7 +307,7 @@ func withSuffix(t *testing.T, suffix string) string {
 	return fmt.Sprintf("%s_%d%s", base, time.Now().UnixNano(), suffix)
 }
 
-func setupPostgresConnection(t *testing.T) (*database.Connection, func()) {
+func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environment, func()) {
 	t.Helper()
 
 	if _, err := exec.LookPath("docker"); err != nil {
@@ -302,6 +343,7 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, func()) {
 	}
 
 	e := &env.Environment{
+		App: env.AppEnvironment{Type: "local"},
 		DB: env.DBEnvironment{
 			UserName:     "test",
 			UserPassword: "secret",
@@ -329,5 +371,5 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, func()) {
 		}
 	}
 
-	return conn, cleanup
+	return conn, e, cleanup
 }
