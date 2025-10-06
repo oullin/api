@@ -106,6 +106,10 @@ func parseStatements(contents []byte) ([]statement, error) {
 		return nil, nil
 	}
 
+	leadingWhitespace := len(contents) - len(bytes.TrimLeftFunc(contents, func(r rune) bool {
+		return unicode.IsSpace(r)
+	}))
+
 	var (
 		idx            int
 		start          int
@@ -240,7 +244,10 @@ func parseStatements(contents []byte) ([]statement, error) {
 	start = skipIgnorableSections(data, start)
 	if start < len(data) {
 		if len(bytes.TrimSpace(data[start:])) != 0 {
-			return nil, errors.New("sqlseed: SQL file ended with an unterminated statement")
+			originalIdx := start + leadingWhitespace
+			line, column := lineAndColumn(contents, originalIdx)
+			preview := formatSnippet(data[start:])
+			return nil, fmt.Errorf("sqlseed: SQL file ended with an unterminated statement at line %d, column %d near %q", line, column, preview)
 		}
 	}
 
@@ -394,17 +401,19 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 			}
 		}()
 
-		for _, stmt := range statements {
+		for idx, stmt := range statements {
+			statementNumber := idx + 1
+			preview := formatSnippet([]byte(stmt.sql))
 			if stmt.isCopy {
 				if err := executeCopy(ctx, tx.Conn().PgConn(), stmt); err != nil {
-					execErr = err
-					return err
+					execErr = fmt.Errorf("sqlseed: executing COPY statement %d near %q failed: %w", statementNumber, preview, err)
+					return execErr
 				}
 				continue
 			}
 
 			if _, err := tx.Exec(ctx, stmt.sql); err != nil {
-				execErr = fmt.Errorf("sqlseed: executing SQL statement failed: %w", err)
+				execErr = fmt.Errorf("sqlseed: executing SQL statement %d near %q failed: %w", statementNumber, preview, err)
 				return execErr
 			}
 		}
@@ -439,4 +448,62 @@ func executeCopy(ctx context.Context, pgConn *pgconn.PgConn, stmt statement) err
 		return fmt.Errorf("sqlseed: executing COPY failed: %w", err)
 	}
 	return nil
+}
+
+func formatSnippet(data []byte) string {
+	const maxRunes = 120
+
+	snippet := strings.TrimSpace(string(data))
+	if snippet == "" {
+		return "<empty>"
+	}
+
+	replacer := strings.NewReplacer("\r", " ", "\n", " ", "\t", " ")
+	snippet = replacer.Replace(snippet)
+	snippet = strings.Join(strings.Fields(snippet), " ")
+
+	runes := []rune(snippet)
+	if len(runes) > maxRunes {
+		snippet = string(runes[:maxRunes-1]) + "…"
+	}
+
+	return snippet
+}
+
+func lineAndColumn(src []byte, index int) (int, int) {
+	line := 1
+	column := 1
+
+	if index < 0 {
+		index = 0
+	}
+	if index > len(src) {
+		index = len(src)
+	}
+
+	i := 0
+	for i < index {
+		b := src[i]
+		if b == '\r' {
+			line++
+			column = 1
+			if i+1 < len(src) && src[i+1] == '\n' {
+				i += 2
+				continue
+			}
+			i++
+			continue
+		}
+		if b == '\n' {
+			line++
+			column = 1
+			i++
+			continue
+		}
+
+		column++
+		i++
+	}
+
+	return line, column
 }

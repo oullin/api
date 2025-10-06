@@ -104,8 +104,17 @@ func TestSeedFromFileRollsBackOnFailure(t *testing.T) {
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "CREATE TABLE gadgets (id SERIAL PRIMARY KEY);\nINSERT INTO gadgets (name) VALUES ('alpha');")
 
 	// The INSERT statement above is invalid because the table does not have a name column.
-	if err := sqlseed.SeedFromFile(conn, fileName); err == nil {
+	err := sqlseed.SeedFromFile(conn, fileName)
+	if err == nil {
 		t.Fatalf("expected error when executing invalid sql")
+	}
+
+	if !strings.Contains(err.Error(), "statement 2") {
+		t.Fatalf("expected error to identify failing statement, got %v", err)
+	}
+
+	if !strings.Contains(err.Error(), "INSERT INTO gadgets") {
+		t.Fatalf("expected error to include statement preview, got %v", err)
 	}
 
 	if conn.Sql().Migrator().HasTable("gadgets") {
@@ -178,6 +187,35 @@ func TestSeedFromFileAllowsTrailingComment(t *testing.T) {
 
 	if count != 1 {
 		t.Fatalf("expected 1 row, got %d", count)
+	}
+}
+
+func TestSeedFromFileReportsUnterminatedStatementDetails(t *testing.T) {
+	conn, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE debug_statements (id SERIAL PRIMARY KEY)",
+		"-- missing semicolon should trigger parser diagnostics",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	err := sqlseed.SeedFromFile(conn, fileName)
+	if err == nil {
+		t.Fatalf("expected parse error for unterminated statement")
+	}
+
+	if !strings.Contains(err.Error(), "unterminated statement") {
+		t.Fatalf("expected unterminated statement error, got %v", err)
+	}
+
+	if !strings.Contains(err.Error(), "line 1") {
+		t.Fatalf("expected error to report line number, got %v", err)
+	}
+
+	if !strings.Contains(err.Error(), "debug_statements") {
+		t.Fatalf("expected error to include statement preview, got %v", err)
 	}
 }
 
