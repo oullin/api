@@ -114,7 +114,7 @@ func NewScheduler(environment *env.Environment, opts ...Option) (*Scheduler, err
 		runner:     ExecRunner{},
 		logger:     slog.Default(),
 		now:        time.Now,
-		jobTimeout: 5 * time.Minute,
+		jobTimeout: 0,
 	}
 
 	for _, opt := range opts {

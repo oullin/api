@@ -42,8 +42,10 @@ func main() {
 
 	if scheduler, err := backup.NewScheduler(app.GetEnv()); err != nil {
 		slog.Error("failed to create backup scheduler", "error", err)
+		panic("backup scheduler initialization failed")
 	} else if err := scheduler.Start(backupCtx); err != nil {
 		slog.Error("failed to start backup scheduler", "error", err)
+		panic("backup scheduler start failed")
 	} else {
 		slog.Info("database backup scheduler started", "cron", app.GetEnv().Backup.Cron)
 		defer scheduler.Stop()
