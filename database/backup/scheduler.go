@@ -9,12 +9,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/robfig/cron/v3"
 
 	"github.com/oullin/metal/env"
+	metalscheduler "github.com/oullin/pkg/scheduler"
 )
 
 // CommandRunner defines an abstraction over exec.CommandContext so that
@@ -44,29 +44,15 @@ func (ExecRunner) Run(ctx context.Context, name string, args []string, envVars m
 	return nil
 }
 
-var (
-	scheduleParser = cron.NewParser(
-		cron.SecondOptional |
-			cron.Minute |
-			cron.Hour |
-			cron.Dom |
-			cron.Month |
-			cron.Dow |
-			cron.Descriptor,
-	)
-)
-
-// Scheduler manages the lifecycle of the database backup cron routine.
+// Scheduler manages the lifecycle of the database backup routine.
 type Scheduler struct {
-	cron        *cron.Cron
-	env         *env.Environment
-	runner      CommandRunner
-	logger      *slog.Logger
-	now         func() time.Time
-	jobTimeout  time.Duration
-	started     bool
-	startStopMu sync.Mutex
-	entryID     cron.EntryID
+	env        *env.Environment
+	runner     CommandRunner
+	logger     *slog.Logger
+	now        func() time.Time
+	jobTimeout time.Duration
+	cron       *cron.Cron
+	scheduler  *metalscheduler.Scheduler
 }
 
 // Option configures the scheduler.
@@ -123,12 +109,7 @@ func NewScheduler(environment *env.Environment, opts ...Option) (*Scheduler, err
 		return nil, errors.New("environment cannot be nil")
 	}
 
-	if _, err := scheduleParser.Parse(environment.Backup.Cron); err != nil {
-		return nil, fmt.Errorf("invalid cron expression: %w", err)
-	}
-
 	scheduler := &Scheduler{
-		cron:       cron.New(cron.WithParser(scheduleParser)),
 		env:        environment,
 		runner:     ExecRunner{},
 		logger:     slog.Default(),
@@ -140,10 +121,6 @@ func NewScheduler(environment *env.Environment, opts ...Option) (*Scheduler, err
 		opt(scheduler)
 	}
 
-	if scheduler.cron == nil {
-		scheduler.cron = cron.New(cron.WithParser(scheduleParser))
-	}
-
 	if scheduler.runner == nil {
 		return nil, errors.New("command runner cannot be nil")
 	}
@@ -151,6 +128,26 @@ func NewScheduler(environment *env.Environment, opts ...Option) (*Scheduler, err
 	if scheduler.now == nil {
 		scheduler.now = time.Now
 	}
+
+	job := func(ctx context.Context) error {
+		return scheduler.runBackup(ctx)
+	}
+
+	schedulerOpts := []metalscheduler.Option{
+		metalscheduler.WithLogger(scheduler.logger),
+		metalscheduler.WithJobTimeout(scheduler.jobTimeout),
+	}
+
+	if scheduler.cron != nil {
+		schedulerOpts = append(schedulerOpts, metalscheduler.WithCron(scheduler.cron))
+	}
+
+	internalScheduler, err := metalscheduler.New(environment.Backup.Cron, job, schedulerOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	scheduler.scheduler = internalScheduler
 
 	return scheduler, nil
 }
@@ -162,47 +159,11 @@ func (s *Scheduler) Start(ctx context.Context) error {
 		return errors.New("scheduler is nil")
 	}
 
-	s.startStopMu.Lock()
-	defer s.startStopMu.Unlock()
-
-	if s.started {
-		return errors.New("scheduler already started")
+	if s.scheduler == nil {
+		return errors.New("internal scheduler is nil")
 	}
 
-	job := func() {
-		jobCtx := ctx
-		if jobCtx == nil {
-			jobCtx = context.Background()
-		}
-
-		if s.jobTimeout > 0 {
-			var cancel context.CancelFunc
-			jobCtx, cancel = context.WithTimeout(jobCtx, s.jobTimeout)
-			defer cancel()
-		}
-
-		if err := s.Run(jobCtx); err != nil {
-			s.logger.Error("database backup failed", "error", err)
-		}
-	}
-
-	entryID, err := s.cron.AddFunc(s.env.Backup.Cron, job)
-	if err != nil {
-		return fmt.Errorf("schedule backup job: %w", err)
-	}
-
-	s.entryID = entryID
-	s.cron.Start()
-	s.started = true
-
-	if ctx != nil {
-		go func() {
-			<-ctx.Done()
-			s.Stop()
-		}()
-	}
-
-	return nil
+	return s.scheduler.Start(ctx)
 }
 
 // Stop halts the scheduler and waits for any running job to finish.
@@ -211,17 +172,11 @@ func (s *Scheduler) Stop() {
 		return
 	}
 
-	s.startStopMu.Lock()
-	if !s.started {
-		s.startStopMu.Unlock()
+	if s.scheduler == nil {
 		return
 	}
 
-	ctx := s.cron.Stop()
-	s.started = false
-	s.startStopMu.Unlock()
-
-	<-ctx.Done()
+	s.scheduler.Stop()
 }
 
 // Run executes a database backup immediately using the scheduler configuration.
@@ -230,10 +185,14 @@ func (s *Scheduler) Run(ctx context.Context) error {
 		return errors.New("scheduler is nil")
 	}
 
-	if ctx == nil {
-		ctx = context.Background()
+	if s.scheduler == nil {
+		return errors.New("internal scheduler is nil")
 	}
 
+	return s.scheduler.Run(ctx)
+}
+
+func (s *Scheduler) runBackup(ctx context.Context) error {
 	backupDir := s.env.Backup.Dir
 	if err := os.MkdirAll(backupDir, 0o755); err != nil {
 		return fmt.Errorf("create backup directory: %w", err)

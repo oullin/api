@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/oullin/metal/env"
+	metalscheduler "github.com/oullin/pkg/scheduler"
 )
 
 type fakeRunner struct {
@@ -186,7 +188,7 @@ func TestSchedulerStartSchedulesJob(t *testing.T) {
 		Backup: env.BackupEnvironment{Cron: "@every 1s", Dir: tmpDir},
 	}
 
-	customCron := cron.New(cron.WithParser(scheduleParser))
+	customCron := cron.New(cron.WithParser(metalscheduler.DefaultParser))
 	scheduler, err := NewScheduler(
 		environment,
 		WithCommandRunner(runner),
@@ -234,7 +236,7 @@ func TestSchedulerStartWithNilContext(t *testing.T) {
 		environment,
 		WithCommandRunner(runner),
 		WithLogger(slog.New(slog.NewTextHandler(io.Discard, nil))),
-		WithCron(cron.New(cron.WithParser(scheduleParser))),
+		WithCron(cron.New(cron.WithParser(metalscheduler.DefaultParser))),
 	)
 	if err != nil {
 		t.Fatalf("new scheduler: %v", err)
@@ -291,6 +293,61 @@ func TestWithJobTimeoutOption(t *testing.T) {
 	if scheduler.jobTimeout != time.Second {
 		t.Fatalf("expected job timeout to be set, got %v", scheduler.jobTimeout)
 	}
+}
+
+func TestSchedulerHandlesMissingInternalScheduler(t *testing.T) {
+	t.Run("start", func(t *testing.T) {
+		scheduler := &Scheduler{}
+
+		if err := scheduler.Start(context.Background()); err == nil {
+			t.Fatalf("expected error when internal scheduler missing")
+		}
+	})
+
+	t.Run("run", func(t *testing.T) {
+		scheduler := &Scheduler{}
+
+		if err := scheduler.Run(context.Background()); err == nil {
+			t.Fatalf("expected error when internal scheduler missing")
+		}
+	})
+
+	t.Run("stop", func(t *testing.T) {
+		scheduler := &Scheduler{}
+		scheduler.Stop()
+	})
+}
+
+func TestExecRunnerRun(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		name, args := platformCommand(true)
+		if err := (ExecRunner{}).Run(context.Background(), name, args, map[string]string{"FOO": "BAR"}); err != nil {
+			t.Fatalf("expected command to succeed: %v", err)
+		}
+	})
+
+	t.Run("failure", func(t *testing.T) {
+		name, args := platformCommand(false)
+		if err := (ExecRunner{}).Run(context.Background(), name, args, nil); err == nil {
+			t.Fatalf("expected command to fail")
+		}
+	})
+}
+
+func platformCommand(success bool) (string, []string) {
+	if runtime.GOOS == "windows" {
+		if success {
+			return "cmd", []string{"/C", "exit", "0"}
+		}
+
+		return "cmd", []string{"/C", "exit", "1"}
+	}
+
+	if success {
+		return "sh", []string{"-c", "exit 0"}
+	}
+
+	return "sh", []string{"-c", "exit 1"}
 }
 
 func TestFlattenEnv(t *testing.T) {
