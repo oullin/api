@@ -85,6 +85,10 @@ func readSQLFile(path string) ([]byte, error) {
 		return nil, fmt.Errorf("sqlseed: read file: %w", err)
 	}
 
+	if !utf8.Valid(contents) {
+		return nil, fmt.Errorf("sqlseed: file %s contains non-UTF-8 data; ensure dumps are exported as plain text", path)
+	}
+
 	if len(bytes.TrimSpace(contents)) == 0 {
 		return nil, fmt.Errorf("sqlseed: file %s is empty", path)
 	}

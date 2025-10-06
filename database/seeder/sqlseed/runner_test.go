@@ -88,6 +88,15 @@ func TestSeedFromFileFailsWhenFileEmpty(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileRejectsNonUTF8Contents(t *testing.T) {
+	fileName := writeStorageBytes(t, withSuffix(t, ".sql"), []byte{0xff, 0xfe, 0xfd})
+
+	err := sqlseed.SeedFromFile(nil, fileName)
+	if err == nil || !strings.Contains(err.Error(), "non-UTF-8") {
+		t.Fatalf("expected non-UTF-8 error, got %v", err)
+	}
+}
+
 func TestSeedFromFileRequiresConnection(t *testing.T) {
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "SELECT 1;")
 
@@ -222,13 +231,19 @@ func TestSeedFromFileReportsUnterminatedStatementDetails(t *testing.T) {
 func writeStorageFile(t *testing.T, name, contents string) string {
 	t.Helper()
 
+	return writeStorageBytes(t, name, []byte(contents))
+}
+
+func writeStorageBytes(t *testing.T, name string, contents []byte) string {
+	t.Helper()
+
 	dir := filepath.Join("storage", "sql")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("create storage dir: %v", err)
 	}
 
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+	if err := os.WriteFile(path, contents, 0o600); err != nil {
 		t.Fatalf("write storage file: %v", err)
 	}
 
