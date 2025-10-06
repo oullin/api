@@ -172,7 +172,9 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, func()) {
 			conn.Close()
 		}
 
-		_ = pg.Terminate(context.Background())
+		if err := pg.Terminate(context.Background()); err != nil {
+			t.Logf("failed to terminate container: %v", err)
+		}
 	}
 
 	return conn, cleanup
