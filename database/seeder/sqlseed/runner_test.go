@@ -155,6 +155,32 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileAllowsTrailingComment(t *testing.T) {
+	conn, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE comment_samples (id SERIAL PRIMARY KEY);",
+		"INSERT INTO comment_samples DEFAULT VALUES;",
+		"-- trailing comment without terminating semicolon",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	var count int64
+	if err := conn.Sql().Table("comment_samples").Count(&count).Error; err != nil {
+		t.Fatalf("count comment_samples: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("expected 1 row, got %d", count)
+	}
+}
+
 func writeStorageFile(t *testing.T, name, contents string) string {
 	t.Helper()
 

@@ -116,6 +116,9 @@ func parseStatements(contents []byte) ([]statement, error) {
 		dollarTag      string
 	)
 
+	start = skipIgnorableSections(data, start)
+	idx = start
+
 	for idx < len(data) {
 		b := data[idx]
 
@@ -201,14 +204,14 @@ func parseStatements(contents []byte) ([]statement, error) {
 		rawStmt := bytes.TrimSpace(data[start : idx+1])
 		idx++
 		if len(rawStmt) == 0 {
-			start = skipWhitespace(data, idx)
+			start = skipIgnorableSections(data, idx)
 			idx = start
 			continue
 		}
 
 		trimmed := strings.TrimSpace(string(rawStmt))
 		if isCopyFromStdin(trimmed) {
-			copyStart := skipWhitespace(data, idx)
+			copyStart := skipIgnorableSections(data, idx)
 			copyLen, advance, err := extractCopyData(data[copyStart:])
 			if err != nil {
 				return nil, err
@@ -222,7 +225,7 @@ func parseStatements(contents []byte) ([]statement, error) {
 			stmts = append(stmts, stmt)
 
 			idx = copyStart + advance
-			start = skipWhitespace(data, idx)
+			start = skipIgnorableSections(data, idx)
 			idx = start
 			continue
 		}
@@ -230,10 +233,11 @@ func parseStatements(contents []byte) ([]statement, error) {
 		stmt := statement{sql: strings.TrimSpace(strings.TrimSuffix(trimmed, ";"))}
 		stmts = append(stmts, stmt)
 
-		start = skipWhitespace(data, idx)
+		start = skipIgnorableSections(data, idx)
 		idx = start
 	}
 
+	start = skipIgnorableSections(data, start)
 	if start < len(data) {
 		if len(bytes.TrimSpace(data[start:])) != 0 {
 			return nil, errors.New("sqlseed: SQL file ended with an unterminated statement")
@@ -243,16 +247,43 @@ func parseStatements(contents []byte) ([]statement, error) {
 	return stmts, nil
 }
 
-func skipWhitespace(data []byte, idx int) int {
+func skipIgnorableSections(data []byte, idx int) int {
 	for idx < len(data) {
 		r, size := utf8DecodeRune(data[idx:])
 		if size == 0 {
 			return idx
 		}
-		if r != ' ' && r != '\n' && r != '\r' && r != '\t' {
-			return idx
+		switch r {
+		case ' ', '\n', '\r', '\t':
+			idx += size
+			continue
 		}
-		idx += size
+
+		if data[idx] == '-' && idx+1 < len(data) && data[idx+1] == '-' {
+			idx += 2
+			for idx < len(data) {
+				if data[idx] == '\n' || data[idx] == '\r' {
+					idx++
+					break
+				}
+				idx++
+			}
+			continue
+		}
+
+		if data[idx] == '/' && idx+1 < len(data) && data[idx+1] == '*' {
+			idx += 2
+			for idx < len(data) {
+				if data[idx] == '*' && idx+1 < len(data) && data[idx+1] == '/' {
+					idx += 2
+					break
+				}
+				idx++
+			}
+			continue
+		}
+
+		return idx
 	}
 
 	return idx
