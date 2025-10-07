@@ -354,6 +354,34 @@ func TestSeedFromFileAllowsTrailingComment(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsMetaCommands(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE meta_samples (id SERIAL PRIMARY KEY, name TEXT NOT NULL);",
+		"\\unrestrict RxSYF91vrSQYWEkG1ncg4fXRoYz64lllqFyU6He6bfAOnQdm2YZx8nLWBqOC8XK",
+		"INSERT INTO meta_samples (name) VALUES ('alpha');",
+		"\\connect - oullin",
+		"INSERT INTO meta_samples (name) VALUES ('beta');",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	var count int64
+	if err := conn.Sql().Table("meta_samples").Count(&count).Error; err != nil {
+		t.Fatalf("count meta_samples: %v", err)
+	}
+
+	if count != 2 {
+		t.Fatalf("expected 2 rows, got %d", count)
+	}
+}
+
 func TestSeedFromFileReportsUnterminatedStatementDetails(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)

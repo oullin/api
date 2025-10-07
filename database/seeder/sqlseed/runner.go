@@ -370,6 +370,26 @@ func skipIgnorableSections(data []byte, idx int) int {
 			continue
 		}
 
+		if data[idx] == '\\' {
+			idx++
+			for idx < len(data) && data[idx] != '\n' && data[idx] != '\r' {
+				idx++
+			}
+
+			if idx < len(data) {
+				if data[idx] == '\r' {
+					idx++
+					if idx < len(data) && data[idx] == '\n' {
+						idx++
+					}
+				} else if data[idx] == '\n' {
+					idx++
+				}
+			}
+
+			continue
+		}
+
 		return idx
 	}
 
