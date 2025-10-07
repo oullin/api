@@ -599,6 +599,10 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 		if strings.Contains(upper, " OWNER TO ") {
 			return true, fmt.Sprintf("owner skipped (%s)", pgErr.Message)
 		}
+	case "42P01":
+		if strings.HasPrefix(upper, "ALTER TABLE") || strings.HasPrefix(upper, "DROP ") {
+			return true, fmt.Sprintf("relation skipped (%s)", pgErr.Message)
+		}
 	}
 
 	return false, ""

@@ -290,6 +290,36 @@ func TestSeedFromFileSkipsMissingOwnerRole(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsMissingRelationAlter(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"ALTER TABLE missing_relation DROP CONSTRAINT missing_relation_pkey;",
+		"CREATE TABLE relation_keep (id SERIAL PRIMARY KEY, note TEXT NOT NULL);",
+		"INSERT INTO relation_keep (note) VALUES ('ok');",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	type relationRow struct {
+		Note string
+	}
+
+	var rows []relationRow
+	if err := conn.Sql().Table("relation_keep").Find(&rows).Error; err != nil {
+		t.Fatalf("query relation_keep: %v", err)
+	}
+
+	if len(rows) != 1 || rows[0].Note != "ok" {
+		t.Fatalf("unexpected relation_keep rows: %+v", rows)
+	}
+}
+
 func TestSeedFromFileRunsMigrations(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
