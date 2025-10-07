@@ -1,4 +1,16 @@
 # Caddy will automatically provision a Let's Encrypt certificate.
+gocanto.dev, www.gocanto.dev {
+	@www host www.gocanto.dev
+	handle @www {
+		redir https://gocanto.dev{uri} permanent
+	}
+
+	# Redirect everything to the canonical host
+	handle {
+		redir https://oullin.io{uri} permanent
+	}
+}
+
 
 oullin.io {
 	encode gzip zstd
