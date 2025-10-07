@@ -54,7 +54,7 @@ func SeedFromFile(conn *database.Connection, environment *env.Environment, fileP
 		return err
 	}
 
-	return executeStatements(ctx, conn, statements)
+	return executeStatements(ctx, conn, statements, executeOptions{disableConstraints: true})
 }
 
 const storageSQLDir = "storage/sql"
@@ -111,7 +111,7 @@ func runMigrations(ctx context.Context, conn *database.Connection) error {
 			continue
 		}
 
-		if err := executeStatements(ctx, conn, statements); err != nil {
+		if err := executeStatements(ctx, conn, statements, executeOptions{}); err != nil {
 			return fmt.Errorf("sqlseed: execute migration %s: %w", filepath.Base(path), err)
 		}
 	}
@@ -172,6 +172,10 @@ type statement struct {
 	sql      string
 	copyData []byte
 	isCopy   bool
+}
+
+type executeOptions struct {
+	disableConstraints bool
 }
 
 func parseStatements(contents []byte) ([]statement, error) {
@@ -442,7 +446,7 @@ func extractCopyData(data []byte) (int, int, error) {
 	return 0, 0, errors.New("sqlseed: COPY statement missing terminator")
 }
 
-func executeStatements(ctx context.Context, conn *database.Connection, statements []statement) error {
+func executeStatements(ctx context.Context, conn *database.Connection, statements []statement, opts executeOptions) error {
 	sqlDB, err := conn.Sql().DB()
 	if err != nil {
 		return fmt.Errorf("sqlseed: retrieve sql db: %w", err)
@@ -476,6 +480,13 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 				execErr = errors.Join(execErr, fmt.Errorf("sqlseed: rollback failed: %w", rbErr))
 			}
 		}()
+
+		if opts.disableConstraints {
+			if _, err := tx.Exec(ctx, "SET LOCAL session_replication_role = 'replica'"); err != nil {
+				execErr = fmt.Errorf("sqlseed: disable constraints failed: %w", err)
+				return execErr
+			}
+		}
 
 		for idx, stmt := range statements {
 			statementNumber := idx + 1

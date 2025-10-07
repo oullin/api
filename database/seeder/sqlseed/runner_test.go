@@ -185,6 +185,52 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileLoadsDataOutOfConstraintOrder(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE parents (id BIGINT PRIMARY KEY, name TEXT NOT NULL);",
+		"CREATE TABLE children (id BIGINT PRIMARY KEY, parent_id BIGINT NOT NULL REFERENCES parents(id), name TEXT NOT NULL);",
+		"INSERT INTO children (id, parent_id, name) VALUES (1, 42, 'child-before-parent');",
+		"INSERT INTO parents (id, name) VALUES (42, 'parent-later');",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	type child struct {
+		ID       int64
+		ParentID int64
+		Name     string
+	}
+
+	var rows []child
+	if err := conn.Sql().Table("children").Find(&rows).Error; err != nil {
+		t.Fatalf("query children: %v", err)
+	}
+
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 child, got %d", len(rows))
+	}
+
+	if rows[0].ParentID != 42 {
+		t.Fatalf("expected parent id 42, got %d", rows[0].ParentID)
+	}
+
+	var parentCount int64
+	if err := conn.Sql().Table("parents").Where("id = ?", 42).Count(&parentCount).Error; err != nil {
+		t.Fatalf("count parents: %v", err)
+	}
+
+	if parentCount != 1 {
+		t.Fatalf("expected parent to exist, got %d", parentCount)
+	}
+}
+
 func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
