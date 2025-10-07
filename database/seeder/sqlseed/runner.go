@@ -689,6 +689,10 @@ func statementTarget(sql string) (string, string) {
 		rest := trimmed[len("DROP INDEX "):]
 		token := firstIdentifier(rest, false)
 		return token, "DROP INDEX"
+	case strings.HasPrefix(upper, "DROP SEQUENCE "):
+		rest := trimmed[len("DROP SEQUENCE "):]
+		token := firstIdentifier(rest, false)
+		return token, "DROP SEQUENCE"
 	case strings.HasPrefix(upper, "CREATE TABLE "):
 		rest := trimmed[len("CREATE TABLE "):]
 		token := firstIdentifier(rest, true)

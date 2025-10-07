@@ -282,6 +282,37 @@ func TestSeedFromFileSkipsExcludedTables(t *testing.T) {
 	assertCount("api_key_signatures", 0)
 }
 
+func TestSeedFromFileSkipsDropSequenceForExcludedTables(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"INSERT INTO users (uuid, first_name, last_name, username, email, password_hash, public_token) VALUES ('00000000-0000-0000-0000-000000000111', 'Jane', 'Doe', 'janedoe', 'jane@example.com', 'hash', 'token');",
+		"DROP SEQUENCE public.api_keys_id_seq;",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	var nextVal int64
+	if err := conn.Sql().Raw("SELECT nextval('public.api_keys_id_seq')").Scan(&nextVal).Error; err != nil {
+		t.Fatalf("nextval sequence: %v", err)
+	}
+
+	var userCount int64
+	if err := conn.Sql().Table("users").Count(&userCount).Error; err != nil {
+		t.Fatalf("count users: %v", err)
+	}
+
+	if userCount != 1 {
+		t.Fatalf("expected 1 user after seeding, got %d", userCount)
+	}
+}
+
 func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
