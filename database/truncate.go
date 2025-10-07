@@ -3,6 +3,7 @@ package database
 import (
 	"errors"
 	"fmt"
+
 	"github.com/oullin/metal/env"
 )
 
@@ -26,14 +27,19 @@ func (t Truncate) Execute() error {
 	tables := GetSchemaTables()
 
 	for i := len(tables) - 1; i >= 0; i-- {
+		table := tables[i]
 
-		if !isValidTable(tables[i]) {
-			return errors.New(fmt.Sprintf("Table '%s' does not exist", tables[i]))
+		if !isValidTable(table) {
+			return errors.New(fmt.Sprintf("Table '%s' does not exist", table))
 		}
 
-		t.database.Sql().Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", tables[i]))
+		exec := t.database.Sql().Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", table))
+		if exec.Error != nil {
+			fmt.Printf("[db:truncate] failed to truncate table [%s]: %v\n", table, exec.Error)
+			continue
+		}
 
-		fmt.Println(fmt.Sprintf("Table [%s] sucessfully truncated.", tables[i]))
+		fmt.Printf("[db:truncate] truncated table [%s]\n", table)
 	}
 
 	return nil

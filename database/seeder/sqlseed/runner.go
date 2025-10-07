@@ -54,11 +54,19 @@ func SeedFromFile(conn *database.Connection, environment *env.Environment, fileP
 		return err
 	}
 
-	return executeStatements(ctx, conn, statements, executeOptions{disableConstraints: true})
+	return executeStatements(ctx, conn, statements, executeOptions{
+		disableConstraints: true,
+		skipTables:         excludedSeedTables,
+	})
 }
 
 const storageSQLDir = "storage/sql"
 const migrationsDir = "database/infra/migrations"
+
+var excludedSeedTables = map[string]struct{}{
+	"api_keys":           {},
+	"api_key_signatures": {},
+}
 
 func prepareDatabase(ctx context.Context, conn *database.Connection, environment *env.Environment) error {
 	truncate := database.MakeTruncate(conn, environment)
@@ -176,6 +184,7 @@ type statement struct {
 
 type executeOptions struct {
 	disableConstraints bool
+	skipTables         map[string]struct{}
 }
 
 func parseStatements(contents []byte) ([]statement, error) {
@@ -511,6 +520,11 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 		for idx, stmt := range statements {
 			statementNumber := idx + 1
 			preview := formatSnippet([]byte(stmt.sql))
+
+			if skip, reason := shouldSkipStatement(stmt, opts.skipTables); skip {
+				fmt.Fprintf(os.Stderr, "sqlseed: skipped statement %d near %q: %s\n", statementNumber, preview, reason)
+				continue
+			}
 			if stmt.isCopy {
 				if err := executeCopy(ctx, tx.Conn().PgConn(), stmt); err != nil {
 					execErr = fmt.Errorf("sqlseed: executing COPY statement %d near %q failed: %w", statementNumber, preview, err)
@@ -606,6 +620,222 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 	}
 
 	return false, ""
+}
+
+func shouldSkipStatement(stmt statement, skipTables map[string]struct{}) (bool, string) {
+	if len(skipTables) == 0 {
+		return false, ""
+	}
+
+	target, operation := statementTarget(stmt.sql)
+	if target == "" {
+		return false, ""
+	}
+
+	if !shouldExcludeIdentifier(target, skipTables) {
+		return false, ""
+	}
+
+	normalized := normalizeQualifiedIdentifier(target)
+	if normalized == "" {
+		normalized = target
+	}
+
+	if operation == "" {
+		operation = "statement"
+	}
+
+	return true, fmt.Sprintf("%s targets excluded identifier %s", operation, normalized)
+}
+
+func statementTarget(sql string) (string, string) {
+	trimmed := strings.TrimSpace(sql)
+	if trimmed == "" {
+		return "", ""
+	}
+
+	upper := strings.ToUpper(trimmed)
+
+	switch {
+	case strings.HasPrefix(upper, "COPY "):
+		rest := trimmed[5:]
+		token := firstIdentifier(rest, true)
+		return token, "COPY"
+	case strings.HasPrefix(upper, "INSERT INTO "):
+		rest := trimmed[len("INSERT INTO "):]
+		token := firstIdentifier(rest, true)
+		return token, "INSERT"
+	case strings.HasPrefix(upper, "UPDATE "):
+		rest := trimmed[len("UPDATE "):]
+		token := firstIdentifier(rest, false)
+		return token, "UPDATE"
+	case strings.HasPrefix(upper, "DELETE FROM "):
+		rest := trimmed[len("DELETE FROM "):]
+		token := firstIdentifier(rest, true)
+		return token, "DELETE"
+	case strings.HasPrefix(upper, "ALTER TABLE "):
+		rest := trimmed[len("ALTER TABLE "):]
+		token := firstIdentifier(rest, true)
+		return token, "ALTER TABLE"
+	case strings.HasPrefix(upper, "ALTER INDEX "):
+		rest := trimmed[len("ALTER INDEX "):]
+		token := firstIdentifier(rest, false)
+		return token, "ALTER INDEX"
+	case strings.HasPrefix(upper, "DROP TABLE "):
+		rest := trimmed[len("DROP TABLE "):]
+		token := firstIdentifier(rest, true)
+		return token, "DROP TABLE"
+	case strings.HasPrefix(upper, "DROP INDEX "):
+		rest := trimmed[len("DROP INDEX "):]
+		token := firstIdentifier(rest, false)
+		return token, "DROP INDEX"
+	case strings.HasPrefix(upper, "CREATE TABLE "):
+		rest := trimmed[len("CREATE TABLE "):]
+		token := firstIdentifier(rest, true)
+		return token, "CREATE TABLE"
+	case strings.HasPrefix(upper, "CREATE UNIQUE INDEX "):
+		onIdx := strings.Index(upper, " ON ")
+		if onIdx == -1 {
+			return "", ""
+		}
+		rest := trimmed[onIdx+4:]
+		token := firstIdentifier(rest, true)
+		return token, "CREATE INDEX"
+	case strings.HasPrefix(upper, "CREATE INDEX "):
+		onIdx := strings.Index(upper, " ON ")
+		if onIdx == -1 {
+			return "", ""
+		}
+		rest := trimmed[onIdx+4:]
+		token := firstIdentifier(rest, true)
+		return token, "CREATE INDEX"
+	case strings.HasPrefix(upper, "ALTER SEQUENCE "):
+		rest := trimmed[len("ALTER SEQUENCE "):]
+		token := firstIdentifier(rest, false)
+		return token, "ALTER SEQUENCE"
+	case strings.HasPrefix(upper, "SELECT ") && strings.Contains(upper, "SETVAL"):
+		name := extractSetvalIdentifier(trimmed)
+		if name != "" {
+			return name, "SELECT"
+		}
+	}
+
+	return "", ""
+}
+
+func firstIdentifier(input string, allowOnly bool) string {
+	s := strings.TrimLeftFunc(input, unicode.IsSpace)
+	if allowOnly {
+		if next, ok := trimLeadingKeyword(s, "ONLY"); ok {
+			s = next
+		}
+	}
+
+	prefixes := []string{"IF NOT EXISTS", "IF EXISTS"}
+	for _, prefix := range prefixes {
+		if next, ok := trimLeadingKeyword(s, prefix); ok {
+			s = next
+		}
+	}
+
+	s = strings.TrimLeftFunc(s, unicode.IsSpace)
+	if s == "" {
+		return ""
+	}
+
+	var end int
+	inQuotes := false
+	for end < len(s) {
+		c := s[end]
+		if c == '"' {
+			inQuotes = !inQuotes
+			end++
+			continue
+		}
+		if !inQuotes {
+			if unicode.IsSpace(rune(c)) || c == '(' || c == ';' {
+				break
+			}
+		}
+		end++
+	}
+
+	return strings.TrimSpace(s[:end])
+}
+
+func trimLeadingKeyword(s, keyword string) (string, bool) {
+	s = strings.TrimLeftFunc(s, unicode.IsSpace)
+	if len(s) < len(keyword) {
+		return s, false
+	}
+
+	candidate := s[:len(keyword)]
+	if strings.EqualFold(candidate, keyword) {
+		if len(s) == len(keyword) {
+			return "", true
+		}
+		remainder := s[len(keyword):]
+		if len(remainder) == 0 || unicode.IsSpace(rune(remainder[0])) {
+			return remainder, true
+		}
+	}
+
+	return s, false
+}
+
+func extractSetvalIdentifier(sql string) string {
+	start := strings.Index(sql, "'")
+	if start == -1 {
+		return ""
+	}
+	end := strings.Index(sql[start+1:], "'")
+	if end == -1 {
+		return ""
+	}
+	return sql[start+1 : start+1+end]
+}
+
+func shouldExcludeIdentifier(identifier string, skip map[string]struct{}) bool {
+	normalized := normalizeQualifiedIdentifier(identifier)
+	if normalized == "" {
+		return false
+	}
+
+	if _, ok := skip[normalized]; ok {
+		return true
+	}
+
+	parts := strings.Split(normalized, ".")
+	last := parts[len(parts)-1]
+
+	if _, ok := skip[last]; ok {
+		return true
+	}
+
+	if strings.HasSuffix(last, "_id_seq") {
+		base := strings.TrimSuffix(last, "_id_seq")
+		if _, ok := skip[base]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func normalizeQualifiedIdentifier(identifier string) string {
+	identifier = strings.TrimSpace(identifier)
+	if identifier == "" {
+		return ""
+	}
+
+	parts := strings.Split(identifier, ".")
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		part = strings.Trim(part, "\"")
+		parts[i] = strings.ToLower(part)
+	}
+
+	return strings.Join(parts, ".")
 }
 
 func formatSnippet(data []byte) string {

@@ -231,6 +231,57 @@ func TestSeedFromFileLoadsDataOutOfConstraintOrder(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsExcludedTables(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	copyRow := strings.Join([]string{
+		"1",
+		"00000000-0000-0000-0000-000000000301",
+		"1",
+		"\\xdeadbeef",
+		"5",
+		"1",
+		"\\N",
+		"\\N",
+		"excluded",
+		"2024-01-02 03:04:05",
+		"2024-01-02 03:04:05",
+		"\\N",
+	}, "\t")
+
+	contents := strings.Join([]string{
+		"INSERT INTO users (uuid, first_name, last_name, username, email, password_hash, public_token) VALUES ('00000000-0000-0000-0000-000000000101', 'Alice', 'Smith', 'asmith', 'alice@example.com', 'hash', 'token');",
+		"INSERT INTO public.api_keys (id, uuid, account_name, public_key, secret_key, created_at, updated_at, deleted_at) VALUES (1, '00000000-0000-0000-0000-000000000201', 'demo-account', '\\x01', '\\x02', NOW(), NOW(), NULL);",
+		"SELECT pg_catalog.setval('public.api_keys_id_seq', 99, true);",
+		"COPY public.api_key_signatures (id, uuid, api_key_id, signature, max_tries, current_tries, expires_at, expired_at, origin, created_at, updated_at, deleted_at) FROM stdin;",
+		copyRow,
+		"\\.",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	assertCount := func(table string, expected int64) {
+		t.Helper()
+		var count int64
+		if err := conn.Sql().Table(table).Count(&count).Error; err != nil {
+			t.Fatalf("count %s: %v", table, err)
+		}
+		if count != expected {
+			t.Fatalf("expected %d rows in %s, got %d", expected, table, count)
+		}
+	}
+
+	assertCount("users", 1)
+	assertCount("api_keys", 0)
+	assertCount("api_key_signatures", 0)
+}
+
 func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
