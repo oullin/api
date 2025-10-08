@@ -1,12 +1,12 @@
 {
-    "version": "1.0.2",
+    "version": "1.0.3",
     "data": [
         {
             "uuid": "0fa21471-c13a-4c8a-83ba-9b5d8782ab72",
             "relation": "Amen managed Gus directly.",
             "text": "I've had the pleasure of interacting with Gus on several occasions and have consistently been impressed by his strong technical acumen, effective leadership, and collaborative spirit. Gus adeptly manages diverse engineering teams, including DevOps, Infrastructure, Data, Frontend, Backend, and Support. He excels at optimizing performance, streamlining operations, and fostering clear, productive communication across global teams.\nGus is a true asset, and I highly recommend him for any senior engineering leadership role.",
             "person": {
-                "avatar": "recommendation/amen-perx.png",
+                "avatar": "recommendation/amen-reghimi.png",
                 "full_name": "Amenallah Reghimi",
                 "company": "Perx Technologies",
                 "designation": "CTO / Board Director"
@@ -97,7 +97,7 @@
             "relation": "Yash worked with Gus in the same team.",
             "text": "I had the pleasure of closely collaborating with Gustavo during my tenure as a Product Manager in the Payments squad in Aspire where he was the Engineering Manager. Throughout our partnership on various high-priority and critical projects, Gustavo's leadership not only ensured that the development team was aligned with project goals but also served as a driving force for inspiring excellence.\n\nGustavo's dedication to the technical aspects of our work and his openness to feedback were truly commendable. He actively contributed to problem solving discussions, demonstrating a commitment to continuous improvement. These qualities had a profound impact on the success of the products and features that we built together.",
             "person": {
-                "avatar": "recommendation/yash-maheshwari.jpeg",
+                "avatar": "recommendation/yash-aspire.jpeg",
                 "full_name": "Yash Maheshwari",
                 "company": "Aspire",
                 "designation": "Senior Product Manager"
