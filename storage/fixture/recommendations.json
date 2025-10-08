@@ -1,10 +1,10 @@
 {
-    "version": "1.0.3",
+    "version": "1.0.4",
     "data": [
         {
             "uuid": "0fa21471-c13a-4c8a-83ba-9b5d8782ab72",
             "relation": "Amen managed Gus directly.",
-            "text": "I've had the pleasure of interacting with Gus on several occasions and have consistently been impressed by his strong technical acumen, effective leadership, and collaborative spirit. Gus adeptly manages diverse engineering teams, including DevOps, Infrastructure, Data, Frontend, Backend, and Support. He excels at optimizing performance, streamlining operations, and fostering clear, productive communication across global teams.\nGus is a true asset, and I highly recommend him for any senior engineering leadership role.",
+            "text": "I've had the pleasure of interacting with Gus on several occasions and have consistently been impressed by his strong technical acumen, effective leadership, and collaborative spirit. Gus adeptly manages diverse engineering teams, including DevOps, Infrastructure, Data, Frontend, Backend, and Support.<br/><br/>He excels at optimizing performance, streamlining operations, and fostering clear, productive communication across global teams. Gus is a true asset, and I highly recommend him for any senior engineering leadership role.",
             "person": {
                 "avatar": "recommendation/amen-reghimi.png",
                 "full_name": "Amenallah Reghimi",
@@ -17,7 +17,7 @@
         {
             "uuid": "4375e073-9098-4f5f-9f8b-44ca47667f0b",
             "relation": "Lakshey worked with Gus in the same team.",
-            "text": "Working with Gustavo at Perx Technologies fundamentally reshaped how I view great technical leadership. What set him apart wasn’t just technical depth, it was the way they made engineering a strategic advantage for the business. He is excellent in aligning product, engineering, and business stakeholders around a shared roadmap, which reduced cross-team friction and accelerated time-to-market.\n\nBeyond the tech, they built a culture of ownership and psychological safety within the engineering org. Teams trusted their judgment because it was always backed by clarity, consistency, and data, not noise.\n\nAny company looking to turn engineering into a true strategic function and not just a delivery engine, would be lucky to have him.",
+            "text": "Working with Gustavo at Perx Technologies fundamentally reshaped how I view great technical leadership. What set him apart wasn’t just technical depth, it was the way they made engineering a strategic advantage for the business. He is excellent in aligning product, engineering, and business stakeholders around a shared roadmap, which reduced cross-team friction and accelerated time-to-market.<br/><br/>Beyond the tech, they built a culture of ownership and psychological safety within the engineering org. Teams trusted their judgment because it was always backed by clarity, consistency, and data, not noise.<br/><br/>Any company looking to turn engineering into a true strategic function and not just a delivery engine, would be lucky to have him.",
             "person": {
                 "avatar": "recommendation/lakshey-perx.jpeg",
                 "full_name": "Lakshey Singhal",
@@ -82,7 +82,7 @@
         {
             "uuid": "fa5c4084-e1b4-45dd-a314-e8d9f589f67e",
             "relation": "Claudio managed Gus directly.",
-            "text": "Gustavo's blend of strong technical skills, problem-solving, and warm personality make him stand out. He's not only great at leading projects but also shines in teamwork, often stepping beyond his role to help others. As a mentor, he'd be invaluable, and his ability to communicate and innovate positions him perfectly for roles that bridge technical teams and clients.",
+            "text": "Gustavo's blend of strong technical skills, problem-solving, and warm personality make him stand out. He's not only great at leading projects but also shines in teamwork, often stepping beyond his role to help others.<br/><br/>As a mentor, he'd be invaluable, and his ability to communicate and innovate positions him perfectly for roles that bridge technical teams and clients.",
             "person": {
                 "avatar": "recommendation/claudio-reggiani.jpeg",
                 "full_name": "Claudio Reggiani",
@@ -95,7 +95,7 @@
         {
             "uuid": "8bc18bf9-0983-4c7e-8095-b3d1e642fee4",
             "relation": "Yash worked with Gus in the same team.",
-            "text": "I had the pleasure of closely collaborating with Gustavo during my tenure as a Product Manager in the Payments squad in Aspire where he was the Engineering Manager. Throughout our partnership on various high-priority and critical projects, Gustavo's leadership not only ensured that the development team was aligned with project goals but also served as a driving force for inspiring excellence.\n\nGustavo's dedication to the technical aspects of our work and his openness to feedback were truly commendable. He actively contributed to problem solving discussions, demonstrating a commitment to continuous improvement. These qualities had a profound impact on the success of the products and features that we built together.",
+            "text": "I had the pleasure of closely collaborating with Gustavo during my tenure as a Product Manager in the Payments squad in Aspire where he was the Engineering Manager. Throughout our partnership on various high-priority and critical projects, Gustavo's leadership not only ensured that the development team was aligned with project goals but also served as a driving force for inspiring excellence.<br/><br/>Gustavo's dedication to the technical aspects of our work and his openness to feedback were truly commendable. He actively contributed to problem solving discussions, demonstrating a commitment to continuous improvement. These qualities had a profound impact on the success of the products and features that we built together.",
             "person": {
                 "avatar": "recommendation/yash-aspire.jpeg",
                 "full_name": "Yash Maheshwari",
@@ -108,7 +108,7 @@
         {
             "uuid": "b282a643-b283-41be-82ee-5a3eda853e69",
             "relation": "Mohin worked with Gus in the same team.",
-            "text": "Gustavo is a highly skilled web developer with special expertise in PHP, GoLang, and a bunch of other languages along with extensive experience in managing large-scale distributed systems.\n\nDuring our collaboration, Gustavo showcased exceptional problem-solving abilities, ensuring the highest standards of code quality and performance. He is not only technically proficient but also a great team player, always ready to share knowledge and support colleagues and a great asset to the team.",
+            "text": "Gustavo is a highly skilled web developer with special expertise in PHP, GoLang, and a bunch of other languages along with extensive experience in managing large-scale distributed systems.<br/><br/>During our collaboration, Gustavo showcased exceptional problem-solving abilities, ensuring the highest standards of code quality and performance. He is not only technically proficient but also a great team player, always ready to share knowledge and support colleagues and a great asset to the team.",
             "person": {
                 "avatar": "recommendation/mohin-lakdawala.jpeg",
                 "full_name": "Mohin Lakdawala",
@@ -160,7 +160,7 @@
         {
             "uuid": "e4a9fd59-5ecf-467f-934a-798100478700",
             "relation": "Ric worked with Gus in different teams.",
-            "text": "I had the pleasure of working with Gus for 1 year at BeMyGuest in Singapore. At the time our SAAS system was undergoing a number of new developments and Gus was extremely responsive and adaptable to deliver the continually changing needs of the end user. Gus was a huge support during this period as he would not just deliver the tech but also ensure it was useable by our consumers. Extremely pleased to see him to continue develop and enhance his skills to be an excellent asset in any business.",
+            "text": "I had the pleasure of working with Gus for 1 year at BeMyGuest in Singapore. At the time our SAAS system was undergoing a number of new developments and Gus was extremely responsive and adaptable to deliver the continually changing needs of the end user.<br/><br/>Gus was a huge support during this period as he would not just deliver the tech but also ensure it was usable by our consumers. Extremely pleased to see him to continue develop and enhance his skills to be an excellent asset in any business.",
             "person": {
                 "avatar": "recommendation/ric-corbett.jpeg",
                 "full_name": "Ric Corbett",
@@ -173,7 +173,7 @@
         {
             "uuid": "6fa9fce8-f3a4-40ce-b87a-60134da50007",
             "relation": "Daniel worked with Gus in different teams.",
-            "text": "I am extremely pleased to write this letter of recommendation for Gustavo Ocanto and I have work together in the same company for the past 2 years and I found him a conscientious and a very hardworking individual. \n\nEven though we are from different department, GUS have supported my side(BD) heaps on tech issue and troubleshoot instantly. In his role as an Engineering Lead he has gone beyond his Job Scope and will normally reach out to other in his own department to assist. Having GUS around in the company was fun and with his \"slang\" it makes us laugh hard at times.\n\nDuring the years that I have cross path with GUS. I had the opportunity to observe his interpersonal style-he is pleasant and a positive motivator to his fellow team mates and colleagues.",
+            "text": "I am extremely pleased to write this letter of recommendation for Gustavo Ocanto and I have work together in the same company for the past 2 years and I found him a conscientious and a very hardworking individual.<br/><br/>Even though we are from different department, GUS have supported my side(BD) heaps on tech issue and troubleshoot instantly. In his role as an Engineering Lead he has gone beyond his Job Scope and will normally reach out to other in his own department to assist. Having GUS around in the company was fun and with his \"slang\" it makes us laugh hard at times.<br/><br/>During the years that I have cross path with GUS. I had the opportunity to observe his interpersonal style-he is pleasant and a positive motivator to his fellow team mates and colleagues.",
             "person": {
                 "avatar": "recommendation/daniel-khor.jpeg",
                 "full_name": "Daniel Khor Chin Huat",
@@ -238,7 +238,7 @@
         {
             "uuid": "045ff8fc-12af-47c7-a761-6c2a0995d352",
             "relation": "Jarek managed Gus indirectly",
-            "text": "Gus has been always committed and eager to learn on professional level plus an exceptional personality when it comes to socializing, which made him a great and valuable team member during our time together at BeMyGuest in Singapore.\nCan't recommend enough!",
+            "text": "Gus has been always committed and eager to learn on professional level plus an exceptional personality when it comes to socializing, which made him a great and valuable team member during our time together at BeMyGuest in Singapore.<br/><br/>Can't recommend enough!",
             "person": {
                 "avatar": "recommendation/jarek-tkaczyk.jpeg",
                 "full_name": "Jarek Tkaczyk",
@@ -264,7 +264,7 @@
         {
             "uuid": "1991f645-d50a-4975-8ba6-90cf18ae3a90",
             "relation": "Rudolf worked with Gus in the same team.",
-            "text": "It is been a real pleasure working together with Gustavo. He's motivated, filled with knowledge, great at public speaking, especially about PHP, Unit Testing or Laravel itself. He worked on biggest projects, properly taking care of the job. Hard working, responsible and ambitious. Definitely worth recommending.",
+            "text": "It is been a real pleasure working together with Gustavo. He's motivated, filled with knowledge, great at public speaking, especially about PHP, Unit Testing or Laravel itself. He worked on biggest projects, properly taking care of the job.<br/><br/>Hard working, responsible and ambitious. Definitely worth recommending.",
             "person": {
                 "avatar": "recommendation/rudolf-ratusiski.jpeg",
                 "full_name": "Rudolf Ratusiński",
@@ -290,7 +290,7 @@
         {
             "uuid": "9410aaec-c4fe-4078-ae84-ab2d2dee19d9",
             "relation": "Sophie reported directly to Gus.",
-            "text": "Gus is the one who's really enthusiastic about tech regardless of back-end or front-end. With the pursuit of code quality, he keeps polishing tech skills as well as being very active for code review. Meanwhile, he enjoys sharing his findings in public and we all benefited a lot from it.",
+            "text": "Gus is the one who's really enthusiastic about tech regardless of back-end or front-end. With the pursuit of code quality, he keeps polishing tech skills as well as being very active for code review.<br/><br/>Meanwhile, he enjoys sharing his findings in public and we all benefited a lot from it.",
             "person": {
                 "avatar": "recommendation/sophie-ha.jpeg",
                 "full_name": "Sophie Ha",
@@ -303,7 +303,7 @@
         {
             "uuid": "d7839355-c7af-4962-bcbd-e7f41a75199c",
             "relation": "Sohail worked with Gus in the same team.",
-            "text": "I'm enjoying a pleasure of working alongside Gustavo for a year now. He has high work ethics and great experience in web technologies to the level that BeMyGuest entrusted him in handling challenging problems (i.e. payment gateways in fragmented South East Asia, API integration, Test Driven Development, Continuous Integration, and Continuous Delivery).\nBut that is not all, Gustavo regardless of deadline pressure always delivers with a smile. His sense of humor always softens the toughest stressful situations for the rest of the team. \nLong story short he is a true asset to our team.",
+            "text": "I'm enjoying a pleasure of working alongside Gustavo for a year now. He has high work ethics and great experience in web technologies to the level that BeMyGuest entrusted him in handling challenging problems (i.e. payment gateways in fragmented South East Asia, API integration, Test Driven Development, Continuous Integration, and Continuous Delivery).<br/><br/>But that is not all, Gustavo regardless of deadline pressure always delivers with a smile. His sense of humor always softens the toughest stressful situations for the rest of the team. \nLong story short he is a true asset to our team.",
             "person": {
                 "avatar": "recommendation/sohail-salehi.jpeg",
                 "full_name": "Sohail Salehi",
@@ -316,7 +316,7 @@
         {
             "uuid": "0f6dae3e-ec78-43a9-b9ff-322642f88594",
             "relation": "Michal worked with Gus in the same team.",
-            "text": "I had a chance to collaborate with Gustavo for one year, working at one team. He impressed me with his openness and willingness to learn. He dig deeper and deeper in subjects he already knew. He was also great in sharing that knowledge. Best social skills across all developers I’ve ever meet. Perfect fit to 10xTeam.",
+            "text": "I had a chance to collaborate with Gustavo for one year, working at one team. He impressed me with his openness and willingness to learn. He dig deeper and deeper in subjects he already knew.<br/><br/>He was also great in sharing that knowledge. Best social skills across all developers I’ve ever meet. Perfect fit to 10xTeam.",
             "person": {
                 "avatar": "recommendation/michal-szymaniak.jpeg",
                 "full_name": "Michal Szymaniak",
@@ -329,7 +329,7 @@
         {
             "uuid": "387a95d6-d29b-4faf-aa60-3b071c59cd22",
             "relation": "Fernando worked with Gus but they were at different companies.",
-            "text": "I have had the opportunity to work with Gustavo closely and he has demonstrated to be a skilled person. Focus on detail and solid principles. He is a learner by definition and strives for improvement on every step.\nOur two projects turned out to be more productive than we forecasted at the beginning of them and I personally can recommend Gustavo as a reliable professional to work with.",
+            "text": "I have had the opportunity to work with Gustavo closely and he has demonstrated to be a skilled person. Focus on detail and solid principles. He is a learner by definition and strives for improvement on every step.<br/><br/>Our two projects turned out to be more productive than we forecasted at the beginning of them and I personally can recommend Gustavo as a reliable professional to work with.",
             "person": {
                 "avatar": "recommendation/fernando-rivas.jpeg",
                 "full_name": "Fernando Rivas",
