@@ -119,6 +119,19 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "4784b603-583d-4159-ab6b-7e7bddb4b3e5",
+            "relation": "Clement managed Gus indirectly",
+            "text": "Very driven and out of the box thinker, coming up with innovative solutions to complex tech problems! Totally enjoyed having him on the team!",
+            "person": {
+                "avatar": "recommendation/clement-wong.jpeg",
+                "full_name": "Clement Wong",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "CEO"
+            },
+            "created_at": "2019-06-15",
+            "updated_at": "2019-06-15"
+        },
+        {
             "uuid": "1991f645-d50a-4975-8ba6-90cf18ae3a90",
             "relation": "Rudolf worked with Gus in the same team.",
             "text": "It is been a real pleasure working together with Gustavo. He's motivated, filled with knowledge, great at public speaking, especially about PHP, Unit Testing or Laravel itself. He worked on biggest projects, properly taking care of the job. Hard working, responsible and ambitious. Definitely worth recommending.",
