@@ -106,6 +106,19 @@
             "updated_at": "2021-10-20"
         },
         {
+            "uuid": "baf49d10-1700-4881-9268-5076e80f42f5",
+            "relation": "Daryle worked with Gus in the same team.",
+            "text": "I've had the opportunity of knowing Gus for the past. He is always capable of adapting to new working environments. Very positive attitude towards work I definitely would recommend him as full stack web developer.",
+            "person": {
+                "avatar": "recommendation/daryle-dale-silva.jpeg",
+                "full_name": "Daryle Dale De Silva",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Full Stack Developer"
+            },
+            "created_at": "2020-01-19",
+            "updated_at": "2020-01-19"
+        },
+        {
             "uuid": "1ca2026d-9d52-4da9-bbe2-5adba175d4c4",
             "relation": "Dawid managed Gus directly.",
             "text": "It was a pleasure to have an opportunity to work with Gustavo. He's a brilliant developer and analyst, with a head full of new ideas. He's not afraid of approaching the most complex problems and testing new waters to find the best solutions.<br/><br/>He's got a great personality and always fun to have around in your team. Always keen to share his knowledge thru training or giving public presentations. He's got that deep internal drive to learn every day and test new ideas in real life, which I always find very valuable.",
