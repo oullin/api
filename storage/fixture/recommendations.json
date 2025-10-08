@@ -106,6 +106,19 @@
             "updated_at": "2021-10-20"
         },
         {
+            "uuid": "99d55cbb-11a4-4fd2-9d5a-1530ef9cb0bb",
+            "relation": "Wai Min worked with Gus in different teams.",
+            "text": "I've had the opportunity of knowing Gus for the past. He is always capable of adapting to new working environments. Very positive attitude towards work I definitely would recommend him as full stack web developer.",
+            "person": {
+                "avatar": "recommendation/wai-min.jpeg",
+                "full_name": "Wai Min Ho",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Distribution Partnerships Manager"
+            },
+            "created_at": "2020-10-16",
+            "updated_at": "2020-10-16"
+        },
+        {
             "uuid": "baf49d10-1700-4881-9268-5076e80f42f5",
             "relation": "Daryle worked with Gus in the same team.",
             "text": "I've had the opportunity of knowing Gus for the past. He is always capable of adapting to new working environments. Very positive attitude towards work I definitely would recommend him as full stack web developer.",
