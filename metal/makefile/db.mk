@@ -65,7 +65,7 @@ db\:import:
 	exit 1; \
 	fi
 	docker compose --env-file ./.env run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) \
-		go run ./database/seeder/importer/cmd/importer --file $(file)
+		go run ./database/seeder/importer/main --file $(file)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # --- Migrations
