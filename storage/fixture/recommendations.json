@@ -119,9 +119,22 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "0f6dae3e-ec78-43a9-b9ff-322642f88594",
+            "relation": "Michal worked with Gus in the same team.",
+            "text": "I had a chance to collaborate with Gustavo for one year, working at one team. He impressed me with his openness and willingness to learn. He dig deeper and deeper in subjects he already knew. He was also great in sharing that knowledge. Best social skills across all developers I’ve ever meet. Perfect fit to 10xTeam.",
+            "person": {
+                "avatar": "recommendation/michal-szymaniak.jpeg",
+                "full_name": "Michal Szymaniak",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-09-26",
+            "updated_at": "2018-09-26"
+        },
+        {
             "uuid": "387a95d6-d29b-4faf-aa60-3b071c59cd22",
             "relation": "Fernando worked with Gus but they were at different companies.",
-            "text": "I have had the opportunity to work with Gustavo closely and he has demonstrated to be a skilled person. Focus on detail and solid principles. He is a learner by definition and strives for improvement on every step.\nOur two projects turned out to be more productive than we forecasted at the beginning of them and I personally can recommend Gustavo as a reliable professional to work with",
+            "text": "I have had the opportunity to work with Gustavo closely and he has demonstrated to be a skilled person. Focus on detail and solid principles. He is a learner by definition and strives for improvement on every step.\nOur two projects turned out to be more productive than we forecasted at the beginning of them and I personally can recommend Gustavo as a reliable professional to work with.",
             "person": {
                 "avatar": "recommendation/fernando-rivas.jpeg",
                 "full_name": "Fernando Rivas",
