@@ -93,9 +93,35 @@
             "updated_at": "2021-11-27"
         },
         {
+            "uuid": "e4a9fd59-5ecf-467f-934a-798100478700",
+            "relation": "Ric worked with Gus in different teams.",
+            "text": "I had the pleasure of working with Gus for 1 year at BeMyGuest in Singapore. At the time our SAAS system was undergoing a number of new developments and Gus was extremely responsive and adaptable to deliver the continually changing needs of the end user. Gus was a huge support during this period as he would not just deliver the tech but also ensure it was useable by our consumers. Extremely pleased to see him to continue develop and enhance his skills to be an excellent asset in any business.",
+            "person": {
+                "avatar": "recommendation/ric-corbett.jpeg",
+                "full_name": "Ric Corbett",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Director of Business Development"
+            },
+            "created_at": "2021-11-12",
+            "updated_at": "2021-11-12"
+        },
+        {
+            "uuid": "6fa9fce8-f3a4-40ce-b87a-60134da50007",
+            "relation": "Daniel worked with Gus in different teams.",
+            "text": "I am extremely pleased to write this letter of recommendation for Gustavo Ocanto and I have work together in the same company for the past 2 years and I found him a conscientious and a very hardworking individual. \n\nEven though we are from different department, GUS have supported my side(BD) heaps on tech issue and troubleshoot instantly. In his role as an Engineering Lead he has gone beyond his Job Scope and will normally reach out to other in his own department to assist. Having GUS around in the company was fun and with his \"slang\" it makes us laugh hard at times.\n\nDuring the years that I have cross path with GUS. I had the opportunity to observe his interpersonal style-he is pleasant and a positive motivator to his fellow team mates and colleagues.",
+            "person": {
+                "avatar": "recommendation/daniel-khor.jpeg",
+                "full_name": "Daniel Khor Chin Huat",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Director of Business Development"
+            },
+            "created_at": "2021-10-27",
+            "updated_at": "2021-10-27"
+        },
+        {
             "uuid": "1ca2026d-9d52-4da9-bbe2-5adba175d4c4",
-            "relation": "Kong was a fellow software engineer",
-            "text": "I have worked with Gus as a fellow Software Engineer since 2017. He is a highly adaptable, encouraging and supportive colleague and an effective team lead.<br/><br/>His software development skill, whether its backend, full stack, is of exceptional high quality. During our stint in the company, he took the time to spearhead some of the initiatives to improve and updating the software development process and applications.<br/><br/>He always has a positive attitude and a desire to produce quality work. Gus is as great a person as he was a colleague, a team lead and his next employer will be lucky to have him",
+            "relation": "Kong worked with Gus in the same team.",
+            "text": "I have worked with Gus as a fellow Software Engineer since 2017. He is a highly adaptable, encouraging and supportive colleague and an effective team lead.<br/><br/>His software development skill, whether its backend, full stack, is of exceptional high quality. During our stint in the company, he took the time to spearhead some of the initiatives to improve and updating the software development process and applications.<br/><br/>He always has a positive attitude and a desire to produce quality work. Gus is as great a person as he was a colleague, a team lead and his next employer will be lucky to have him.",
             "person": {
                 "avatar": "recommendation/kong-kw.jpg",
                 "full_name": "Kong KW",
