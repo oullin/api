@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "1.0.2",
     "data": [
         {
             "uuid": "0fa21471-c13a-4c8a-83ba-9b5d8782ab72",
@@ -19,7 +19,7 @@
             "relation": "Lakshey worked with Gus in the same team.",
             "text": "Working with Gustavo at Perx Technologies fundamentally reshaped how I view great technical leadership. What set him apart wasn’t just technical depth, it was the way they made engineering a strategic advantage for the business. He is excellent in aligning product, engineering, and business stakeholders around a shared roadmap, which reduced cross-team friction and accelerated time-to-market.\n\nBeyond the tech, they built a culture of ownership and psychological safety within the engineering org. Teams trusted their judgment because it was always backed by clarity, consistency, and data, not noise.\n\nAny company looking to turn engineering into a true strategic function and not just a delivery engine, would be lucky to have him.",
             "person": {
-                "avatar": "recommendation/lakshey-singhal.jpeg",
+                "avatar": "recommendation/lakshey-perx.jpeg",
                 "full_name": "Lakshey Singhal",
                 "company": "Perx Technologies",
                 "designation": "Senior Project Manager"
