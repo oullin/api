@@ -32,13 +32,13 @@ func main() {
 	flag.StringVar(&filePath, "file", "", "name or path to the SQL file located in ./storage/sql to execute")
 	flag.Parse()
 
-	if err := run(filePath); err != nil {
+	if err := run(filePath, environment, sentryHub); err != nil {
 		cli.Errorln(err.Error())
 		os.Exit(1)
 	}
 }
 
-func run(filePath string) error {
+func run(filePath string, environment *env.Environment, sentryHub *portal.Sentry) error {
 	if filePath == "" {
 		return errors.New("missing required --file flag pointing to a SQL file")
 	}
