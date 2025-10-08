@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -820,16 +821,14 @@ func trimLeadingKeyword(s, keyword string) (string, bool) {
 	return s, false
 }
 
+var setvalRegex = regexp.MustCompile(`(?i)setval\s*\(\s*'([^']+)`)
+
 func extractSetvalIdentifier(sql string) string {
-	start := strings.Index(sql, "'")
-	if start == -1 {
-		return ""
+	matches := setvalRegex.FindStringSubmatch(sql)
+	if len(matches) > 1 {
+		return matches[1]
 	}
-	end := strings.Index(sql[start+1:], "'")
-	if end == -1 {
-		return ""
-	}
-	return sql[start+1 : start+1+end]
+	return ""
 }
 
 func shouldExcludeIdentifier(identifier string, skip map[string]struct{}) bool {
