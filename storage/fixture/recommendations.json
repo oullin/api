@@ -117,6 +117,19 @@
             },
             "created_at": "2019-07-16",
             "updated_at": "2019-07-16"
+        },
+        {
+            "uuid": "b5b4cff9-156e-4296-974e-0c4f0437e31d",
+            "relation": "Marco work with Gus in the same team.",
+            "text": "Professional worker, fast learner, enjoyable to work with. Highly analyzer of low level code, always approaching methodology with security first.",
+            "person": {
+                "avatar": "recommendation/marco.jpeg",
+                "full_name": "Marco Gava",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-27",
+            "updated_at": "2018-08-27"
         }
     ]
 }
