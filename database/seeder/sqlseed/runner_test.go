@@ -407,8 +407,8 @@ func TestSeedFromFileRunsMigrations(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	contents := strings.Join([]string{
-		"INSERT INTO api_keys (uuid, account_name, public_key, secret_key)",
-		"VALUES ('00000000-0000-0000-0000-000000000001', 'example', decode('68656c6c6f', 'hex'), decode('736563726574', 'hex'));",
+		"INSERT INTO categories (uuid, name, slug)",
+		"VALUES ('00000000-0000-0000-0000-00000000c001', 'Tech', 'tech');",
 	}, "\n")
 
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
@@ -418,12 +418,12 @@ func TestSeedFromFileRunsMigrations(t *testing.T) {
 	}
 
 	var count int64
-	if err := conn.Sql().Table("api_keys").Count(&count).Error; err != nil {
-		t.Fatalf("count api_keys: %v", err)
+	if err := conn.Sql().Table("categories").Count(&count).Error; err != nil {
+		t.Fatalf("count categories: %v", err)
 	}
 
 	if count != 1 {
-		t.Fatalf("expected 1 api key, got %d", count)
+		t.Fatalf("expected 1 category, got %d", count)
 	}
 
 	if err := sqlseed.SeedFromFile(conn, environment, fileName); err != nil {
@@ -431,12 +431,12 @@ func TestSeedFromFileRunsMigrations(t *testing.T) {
 	}
 
 	count = 0
-	if err := conn.Sql().Table("api_keys").Count(&count).Error; err != nil {
-		t.Fatalf("count api_keys after reseed: %v", err)
+	if err := conn.Sql().Table("categories").Count(&count).Error; err != nil {
+		t.Fatalf("count categories after reseed: %v", err)
 	}
 
 	if count != 1 {
-		t.Fatalf("expected 1 api key after reseed, got %d", count)
+		t.Fatalf("expected 1 category after reseed, got %d", count)
 	}
 }
 
