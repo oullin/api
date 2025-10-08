@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 	"time"
 
@@ -40,6 +41,10 @@ func main() {
 func run(filePath string) error {
 	if filePath == "" {
 		return errors.New("missing required --file flag pointing to a SQL file")
+	}
+
+	if !environment.App.IsLocal() {
+		return fmt.Errorf("sql imports can only run in the local environment (current: %s)", environment.App.Type)
 	}
 
 	cli.ClearScreen()
