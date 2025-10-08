@@ -119,6 +119,19 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "045ff8fc-12af-47c7-a761-6c2a0995d352",
+            "relation": "Jarek managed Gus indirectly",
+            "text": "Gus has been always committed and eager to learn on professional level plus an exceptional personality when it comes to socializing, which made him a great and valuable team member during our time together at BeMyGuest in Singapore.\nCan't recommend enough!",
+            "person": {
+                "avatar": "recommendation/jarek-tkaczyk.jpeg",
+                "full_name": "Jarek Tkaczyk",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Tech Lead"
+            },
+            "created_at": "2019-07-11",
+            "updated_at": "2019-07-11"
+        },
+        {
             "uuid": "4784b603-583d-4159-ab6b-7e7bddb4b3e5",
             "relation": "Clement managed Gus indirectly",
             "text": "Very driven and out of the box thinker, coming up with innovative solutions to complex tech problems! Totally enjoyed having him on the team!",
