@@ -67,6 +67,19 @@
             "updated_at": "2024-04-10"
         },
         {
+            "uuid": "8bc18bf9-0983-4c7e-8095-b3d1e642fee4",
+            "relation": "Yash worked with Gus in the same team.",
+            "text": "I had the pleasure of closely collaborating with Gustavo during my tenure as a Product Manager in the Payments squad in Aspire where he was the Engineering Manager. Throughout our partnership on various high-priority and critical projects, Gustavo's leadership not only ensured that the development team was aligned with project goals but also served as a driving force for inspiring excellence.\n\nGustavo's dedication to the technical aspects of our work and his openness to feedback were truly commendable. He actively contributed to problem solving discussions, demonstrating a commitment to continuous improvement. These qualities had a profound impact on the success of the products and features that we built together.",
+            "person": {
+                "avatar": "recommendation/yash-maheshwari.jpeg",
+                "full_name": "Yash Maheshwari",
+                "company": "Aspire",
+                "designation": "Senior Product Manager"
+            },
+            "created_at": "2023-11-28",
+            "updated_at": "2023-11-28"
+        },
+        {
             "uuid": "b282a643-b283-41be-82ee-5a3eda853e69",
             "relation": "Mohin worked with Gus in the same team.",
             "text": "Gustavo is a highly skilled web developer with special expertise in PHP, GoLang, and a bunch of other languages along with extensive experience in managing large-scale distributed systems.\n\nDuring our collaboration, Gustavo showcased exceptional problem-solving abilities, ensuring the highest standards of code quality and performance. He is not only technically proficient but also a great team player, always ready to share knowledge and support colleagues and a great asset to the team.",
