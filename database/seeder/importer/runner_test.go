@@ -95,7 +95,7 @@ func TestSeedFromFileFailsWhenFileEmpty(t *testing.T) {
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), "   \n\t")
 
 	err := importer.SeedFromFile(nil, nil, fileName)
-	if err == nil || !strings.Contains(err.Error(), "empty") {
+	if err == nil || !strings.Contains(err.Error(), "did not contain any executable statements") {
 		t.Fatalf("expected empty file error, got %v", err)
 	}
 }
