@@ -80,6 +80,19 @@
             "updated_at": "2023-02-27"
         },
         {
+            "uuid": "4b4d927a-ad7b-4f00-9140-d5b27f99fdc9",
+            "relation": "Rajan reported to Gus directly.",
+            "text": "I worked with Gustavo in the same team for Aspire. He had excellent time management skills and had a knack for keeping everyone calm and productive during intense crunch periods. His work ethics is immaculate and so easy to work together with. Also he goes out of his way when you ask for some help and guidance. Any company would be lucky to have Gustavo.",
+            "person": {
+                "avatar": "recommendation/rajan-chaudhary.jpeg",
+                "full_name": "Rajan Chaudhary",
+                "company": "Aspire",
+                "designation": "Senior QA Engineer"
+            },
+            "created_at": "2023-02-27",
+            "updated_at": "2023-02-27"
+        },
+        {
             "uuid": "a5029b3e-3ad2-45a4-8e98-2599cdf21697",
             "relation": "Ross managed Gus directly.",
             "text": "I had the pleasure of working alongside Gustavo for more than three years during his time at BeMyGuest.<br/><br/>Working within a tech team at a startup can be a very challenging experience, there are competing pressures to deliver new features as quickly as possible, whilst at the same time we have to work hard to maintain stability and quality within the code we produce.<br/><br/>Gustavo was an excellent and enthusiastic ambassador for this approach and led many initiatives to improve our systems, testing and architecture, leading to his work having a very positive impact on the overall quality of BeMyGuest's products.<br/><br/>I would highly recommend Gustavo, his combination of attention to detail, with an irrepressible drive to continue learning makes him a valuable asset within any software engineering team.",
