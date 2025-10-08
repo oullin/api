@@ -119,7 +119,20 @@
             "updated_at": "2019-07-16"
         },
         {
-            "uuid": "d7839355-c7af-4962-bcbd-e7f41a75199c",
+            "uuid": "186c98c0-9df5-42c2-bccd-3724e4f50917",
+            "relation": "Nabil worked with Gus in different teams.",
+            "text": "Gustavo is a team player, tech enthusiast with very positive energy.gustavo is one of those colleagues that makes you enjoy working more at the office, he is creative, fast learner and hard worker.",
+            "person": {
+                "avatar": "recommendation/nabil-elshafaey.jpeg",
+                "full_name": "Nabil Elshafaey",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Head of Distribution"
+            },
+            "created_at": "2019-06-13",
+            "updated_at": "2019-06-13"
+        },
+        {
+            "uuid": "9410aaec-c4fe-4078-ae84-ab2d2dee19d9",
             "relation": "Sophie reported directly to Gus.",
             "text": "Gus is the one who's really enthusiastic about tech regardless of back-end or front-end. With the pursuit of code quality, he keeps polishing tech skills as well as being very active for code review. Meanwhile, he enjoys sharing his findings in public and we all benefited a lot from it.",
             "person": {
