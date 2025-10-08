@@ -119,6 +119,19 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "8e05af84-3054-404f-89f2-428ae69943ef",
+            "relation": "Jonathan worked with Gus but they were at different companies.",
+            "text": "Excellent programmer and good project manager with good creative ideas. A good experience to have worked with him.",
+            "person": {
+                "avatar": "recommendation/jonathan-trejo.jpeg",
+                "full_name": "Jonathan Ivan Trejo Zerpa",
+                "company": "Websarrollo - Digital Agency",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-28",
+            "updated_at": "2018-08-28"
+        },
+        {
             "uuid": "4faf4435-93d4-48ef-b980-4b94d353f2f7",
             "relation": "Carlos Matute worked with Gus but they were at different companies.",
             "text": "I can say that Gustavo had a professional level raising even since we studied at the University. Dedicated, spontaneous, with a very wide resolution of problems and with determination in the solutions due to his high knowledge in the workplace.",
