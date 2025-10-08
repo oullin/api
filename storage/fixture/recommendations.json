@@ -1,9 +1,35 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "data": [
         {
+            "uuid": "0fa21471-c13a-4c8a-83ba-9b5d8782ab72",
+            "relation": "Amen managed Gus directly.",
+            "text": "I've had the pleasure of interacting with Gus on several occasions and have consistently been impressed by his strong technical acumen, effective leadership, and collaborative spirit. Gus adeptly manages diverse engineering teams, including DevOps, Infrastructure, Data, Frontend, Backend, and Support. He excels at optimizing performance, streamlining operations, and fostering clear, productive communication across global teams.\nGus is a true asset, and I highly recommend him for any senior engineering leadership role.",
+            "person": {
+                "avatar": "recommendation/amen-perx.png",
+                "full_name": "Amenallah Reghimi",
+                "company": "Perx Technologies",
+                "designation": "CTO / Board Director"
+            },
+            "created_at": "2025-05-25",
+            "updated_at": "2025-05-25"
+        },
+        {
+            "uuid": "4375e073-9098-4f5f-9f8b-44ca47667f0b",
+            "relation": "Lakshey worked with Gus in the same team.",
+            "text": "Working with Gustavo at Perx Technologies fundamentally reshaped how I view great technical leadership. What set him apart wasn’t just technical depth, it was the way they made engineering a strategic advantage for the business. He is excellent in aligning product, engineering, and business stakeholders around a shared roadmap, which reduced cross-team friction and accelerated time-to-market.\n\nBeyond the tech, they built a culture of ownership and psychological safety within the engineering org. Teams trusted their judgment because it was always backed by clarity, consistency, and data, not noise.\n\nAny company looking to turn engineering into a true strategic function and not just a delivery engine, would be lucky to have him.",
+            "person": {
+                "avatar": "recommendation/lakshey-singhal.jpeg",
+                "full_name": "Lakshey Singhal",
+                "company": "Perx Technologies",
+                "designation": "Senior Project Manager"
+            },
+            "created_at": "2025-04-30",
+            "updated_at": "2025-04-30"
+        },
+        {
             "uuid": "7dc74d20-42e1-4f09-9c8d-20ecfc6caad7",
-            "relation": "Amrith was a fellow colleague reporting to the C-Level.",
+            "relation": "Amrith worked with Gus in the same team.",
             "text": "Gus and I were peers at Perx during his tenure as Head of Engineering. He led several key initiatives, including scaling the engineering team and aligning cross-functional efforts across DevOps, backend, frontend, and data. Additionally, he drove projects focused on infrastructure modernisation, performance optimisation, and cloud cost efficiency.<br/><br/>He's a hands-on and technically strong leader who enjoys solving complex engineering problems. Outside of work, Gustavo is highly disciplined when it comes to health and fitness, always consistent and focused, which says a lot about his overall approach to life and work.",
             "person": {
                 "avatar": "recommendation/amrith-g.jpeg",
@@ -67,8 +93,34 @@
             "updated_at": "2024-04-10"
         },
         {
+            "uuid": "8bc18bf9-0983-4c7e-8095-b3d1e642fee4",
+            "relation": "Yash worked with Gus in the same team.",
+            "text": "I had the pleasure of closely collaborating with Gustavo during my tenure as a Product Manager in the Payments squad in Aspire where he was the Engineering Manager. Throughout our partnership on various high-priority and critical projects, Gustavo's leadership not only ensured that the development team was aligned with project goals but also served as a driving force for inspiring excellence.\n\nGustavo's dedication to the technical aspects of our work and his openness to feedback were truly commendable. He actively contributed to problem solving discussions, demonstrating a commitment to continuous improvement. These qualities had a profound impact on the success of the products and features that we built together.",
+            "person": {
+                "avatar": "recommendation/yash-maheshwari.jpeg",
+                "full_name": "Yash Maheshwari",
+                "company": "Aspire",
+                "designation": "Senior Product Manager"
+            },
+            "created_at": "2023-11-28",
+            "updated_at": "2023-11-28"
+        },
+        {
+            "uuid": "b282a643-b283-41be-82ee-5a3eda853e69",
+            "relation": "Mohin worked with Gus in the same team.",
+            "text": "Gustavo is a highly skilled web developer with special expertise in PHP, GoLang, and a bunch of other languages along with extensive experience in managing large-scale distributed systems.\n\nDuring our collaboration, Gustavo showcased exceptional problem-solving abilities, ensuring the highest standards of code quality and performance. He is not only technically proficient but also a great team player, always ready to share knowledge and support colleagues and a great asset to the team.",
+            "person": {
+                "avatar": "recommendation/mohin-lakdawala.jpeg",
+                "full_name": "Mohin Lakdawala",
+                "company": "Aspire",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2023-10-19",
+            "updated_at": "2023-10-19"
+        },
+        {
             "uuid": "0e587fa2-b678-4ca5-9eed-0f115c4a092d",
-            "relation": "Jarek was a senior to Gus, but did not manage him directly.",
+            "relation": "Jarek managed Gus indirectly.",
             "text": "I have worked with Gustavo as a Sr Engineer in my department at Aspire. It was the second time we worked together and it has been a great pleasure to see how far Gustavo progressed in the last few years.<br/><br/>Gustavo has an exceptional depth of knowledge in software development and consistently expands his high-quality knowledge with new technologies to better fit scaling team and systems.<br/><br/>He constantly demonstrated ambition and drive to learn and improve each stage of the engineering process. With his level of knowledge and skills I can wholeheartedly recommend Gustavo for senior technical roles, as well as leadership positions where he can leverage this experience even more.",
             "person": {
                 "avatar": "recommendation/jarek-tkaczyk.jpeg",
@@ -78,6 +130,19 @@
             },
             "created_at": "2023-02-27",
             "updated_at": "2023-02-27"
+        },
+        {
+            "uuid": "4b4d927a-ad7b-4f00-9140-d5b27f99fdc9",
+            "relation": "Rajan reported to Gus directly.",
+            "text": "I worked with Gustavo in the same team for Aspire. He had excellent time management skills and had a knack for keeping everyone calm and productive during intense crunch periods. His work ethics is immaculate and so easy to work together with. Also he goes out of his way when you ask for some help and guidance. Any company would be lucky to have Gustavo.",
+            "person": {
+                "avatar": "recommendation/rajan-chaudhary.jpeg",
+                "full_name": "Rajan Chaudhary",
+                "company": "Aspire",
+                "designation": "Senior QA Engineer"
+            },
+            "created_at": "2022-11-16",
+            "updated_at": "2022-11-16"
         },
         {
             "uuid": "a5029b3e-3ad2-45a4-8e98-2599cdf21697",
@@ -93,9 +158,35 @@
             "updated_at": "2021-11-27"
         },
         {
+            "uuid": "e4a9fd59-5ecf-467f-934a-798100478700",
+            "relation": "Ric worked with Gus in different teams.",
+            "text": "I had the pleasure of working with Gus for 1 year at BeMyGuest in Singapore. At the time our SAAS system was undergoing a number of new developments and Gus was extremely responsive and adaptable to deliver the continually changing needs of the end user. Gus was a huge support during this period as he would not just deliver the tech but also ensure it was useable by our consumers. Extremely pleased to see him to continue develop and enhance his skills to be an excellent asset in any business.",
+            "person": {
+                "avatar": "recommendation/ric-corbett.jpeg",
+                "full_name": "Ric Corbett",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Director of Business Development"
+            },
+            "created_at": "2021-11-12",
+            "updated_at": "2021-11-12"
+        },
+        {
+            "uuid": "6fa9fce8-f3a4-40ce-b87a-60134da50007",
+            "relation": "Daniel worked with Gus in different teams.",
+            "text": "I am extremely pleased to write this letter of recommendation for Gustavo Ocanto and I have work together in the same company for the past 2 years and I found him a conscientious and a very hardworking individual. \n\nEven though we are from different department, GUS have supported my side(BD) heaps on tech issue and troubleshoot instantly. In his role as an Engineering Lead he has gone beyond his Job Scope and will normally reach out to other in his own department to assist. Having GUS around in the company was fun and with his \"slang\" it makes us laugh hard at times.\n\nDuring the years that I have cross path with GUS. I had the opportunity to observe his interpersonal style-he is pleasant and a positive motivator to his fellow team mates and colleagues.",
+            "person": {
+                "avatar": "recommendation/daniel-khor.jpeg",
+                "full_name": "Daniel Khor Chin Huat",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Director of Business Development"
+            },
+            "created_at": "2021-10-27",
+            "updated_at": "2021-10-27"
+        },
+        {
             "uuid": "1ca2026d-9d52-4da9-bbe2-5adba175d4c4",
-            "relation": "Kong was a fellow software engineer",
-            "text": "I have worked with Gus as a fellow Software Engineer since 2017. He is a highly adaptable, encouraging and supportive colleague and an effective team lead.<br/><br/>His software development skill, whether its backend, full stack, is of exceptional high quality. During our stint in the company, he took the time to spearhead some of the initiatives to improve and updating the software development process and applications.<br/><br/>He always has a positive attitude and a desire to produce quality work. Gus is as great a person as he was a colleague, a team lead and his next employer will be lucky to have him",
+            "relation": "Kong worked with Gus in the same team.",
+            "text": "I have worked with Gus as a fellow Software Engineer since 2017. He is a highly adaptable, encouraging and supportive colleague and an effective team lead.<br/><br/>His software development skill, whether its backend, full stack, is of exceptional high quality. During our stint in the company, he took the time to spearhead some of the initiatives to improve and updating the software development process and applications.<br/><br/>He always has a positive attitude and a desire to produce quality work. Gus is as great a person as he was a colleague, a team lead and his next employer will be lucky to have him.",
             "person": {
                 "avatar": "recommendation/kong-kw.jpg",
                 "full_name": "Kong KW",
@@ -104,6 +195,32 @@
             },
             "created_at": "2021-10-20",
             "updated_at": "2021-10-20"
+        },
+        {
+            "uuid": "99d55cbb-11a4-4fd2-9d5a-1530ef9cb0bb",
+            "relation": "Wai Min worked with Gus in different teams.",
+            "text": "I've had the opportunity of knowing Gus for the past. He is always capable of adapting to new working environments. Very positive attitude towards work I definitely would recommend him as full stack web developer.",
+            "person": {
+                "avatar": "recommendation/wai-min.jpeg",
+                "full_name": "Wai Min Ho",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Distribution Partnerships Manager"
+            },
+            "created_at": "2020-10-16",
+            "updated_at": "2020-10-16"
+        },
+        {
+            "uuid": "baf49d10-1700-4881-9268-5076e80f42f5",
+            "relation": "Daryle worked with Gus in the same team.",
+            "text": "I've had the opportunity of knowing Gus for the past. He is always capable of adapting to new working environments. Very positive attitude towards work I definitely would recommend him as full stack web developer.",
+            "person": {
+                "avatar": "recommendation/daryle-dale-silva.jpeg",
+                "full_name": "Daryle Dale De Silva",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Full Stack Developer"
+            },
+            "created_at": "2020-01-19",
+            "updated_at": "2020-01-19"
         },
         {
             "uuid": "1ca2026d-9d52-4da9-bbe2-5adba175d4c4",
@@ -117,6 +234,162 @@
             },
             "created_at": "2019-07-16",
             "updated_at": "2019-07-16"
+        },
+        {
+            "uuid": "045ff8fc-12af-47c7-a761-6c2a0995d352",
+            "relation": "Jarek managed Gus indirectly",
+            "text": "Gus has been always committed and eager to learn on professional level plus an exceptional personality when it comes to socializing, which made him a great and valuable team member during our time together at BeMyGuest in Singapore.\nCan't recommend enough!",
+            "person": {
+                "avatar": "recommendation/jarek-tkaczyk.jpeg",
+                "full_name": "Jarek Tkaczyk",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Tech Lead"
+            },
+            "created_at": "2019-07-11",
+            "updated_at": "2019-07-11"
+        },
+        {
+            "uuid": "4784b603-583d-4159-ab6b-7e7bddb4b3e5",
+            "relation": "Clement managed Gus indirectly",
+            "text": "Very driven and out of the box thinker, coming up with innovative solutions to complex tech problems! Totally enjoyed having him on the team!",
+            "person": {
+                "avatar": "recommendation/clement-wong.jpeg",
+                "full_name": "Clement Wong",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "CEO"
+            },
+            "created_at": "2019-06-15",
+            "updated_at": "2019-06-15"
+        },
+        {
+            "uuid": "1991f645-d50a-4975-8ba6-90cf18ae3a90",
+            "relation": "Rudolf worked with Gus in the same team.",
+            "text": "It is been a real pleasure working together with Gustavo. He's motivated, filled with knowledge, great at public speaking, especially about PHP, Unit Testing or Laravel itself. He worked on biggest projects, properly taking care of the job. Hard working, responsible and ambitious. Definitely worth recommending.",
+            "person": {
+                "avatar": "recommendation/rudolf-ratusiski.jpeg",
+                "full_name": "Rudolf Ratusiński",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior DevOps Engineer"
+            },
+            "created_at": "2019-06-14",
+            "updated_at": "2019-06-14"
+        },
+        {
+            "uuid": "186c98c0-9df5-42c2-bccd-3724e4f50917",
+            "relation": "Nabil worked with Gus in different teams.",
+            "text": "Gustavo is a team player, tech enthusiast with very positive energy.gustavo is one of those colleagues that makes you enjoy working more at the office, he is creative, fast learner and hard worker.",
+            "person": {
+                "avatar": "recommendation/nabil-elshafaey.jpeg",
+                "full_name": "Nabil Elshafaey",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Head of Distribution"
+            },
+            "created_at": "2019-06-13",
+            "updated_at": "2019-06-13"
+        },
+        {
+            "uuid": "9410aaec-c4fe-4078-ae84-ab2d2dee19d9",
+            "relation": "Sophie reported directly to Gus.",
+            "text": "Gus is the one who's really enthusiastic about tech regardless of back-end or front-end. With the pursuit of code quality, he keeps polishing tech skills as well as being very active for code review. Meanwhile, he enjoys sharing his findings in public and we all benefited a lot from it.",
+            "person": {
+                "avatar": "recommendation/sophie-ha.jpeg",
+                "full_name": "Sophie Ha",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Software Engineer"
+            },
+            "created_at": "2019-05-31",
+            "updated_at": "2019-05-31"
+        },
+        {
+            "uuid": "d7839355-c7af-4962-bcbd-e7f41a75199c",
+            "relation": "Sohail worked with Gus in the same team.",
+            "text": "I'm enjoying a pleasure of working alongside Gustavo for a year now. He has high work ethics and great experience in web technologies to the level that BeMyGuest entrusted him in handling challenging problems (i.e. payment gateways in fragmented South East Asia, API integration, Test Driven Development, Continuous Integration, and Continuous Delivery).\nBut that is not all, Gustavo regardless of deadline pressure always delivers with a smile. His sense of humor always softens the toughest stressful situations for the rest of the team. \nLong story short he is a true asset to our team.",
+            "person": {
+                "avatar": "recommendation/sohail-salehi.jpeg",
+                "full_name": "Sohail Salehi",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-09-26",
+            "updated_at": "2018-09-26"
+        },
+        {
+            "uuid": "0f6dae3e-ec78-43a9-b9ff-322642f88594",
+            "relation": "Michal worked with Gus in the same team.",
+            "text": "I had a chance to collaborate with Gustavo for one year, working at one team. He impressed me with his openness and willingness to learn. He dig deeper and deeper in subjects he already knew. He was also great in sharing that knowledge. Best social skills across all developers I’ve ever meet. Perfect fit to 10xTeam.",
+            "person": {
+                "avatar": "recommendation/michal-szymaniak.jpeg",
+                "full_name": "Michal Szymaniak",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-09-26",
+            "updated_at": "2018-09-26"
+        },
+        {
+            "uuid": "387a95d6-d29b-4faf-aa60-3b071c59cd22",
+            "relation": "Fernando worked with Gus but they were at different companies.",
+            "text": "I have had the opportunity to work with Gustavo closely and he has demonstrated to be a skilled person. Focus on detail and solid principles. He is a learner by definition and strives for improvement on every step.\nOur two projects turned out to be more productive than we forecasted at the beginning of them and I personally can recommend Gustavo as a reliable professional to work with.",
+            "person": {
+                "avatar": "recommendation/fernando-rivas.jpeg",
+                "full_name": "Fernando Rivas",
+                "company": "Websarrollo - Digital Agency",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-30",
+            "updated_at": "2018-08-30"
+        },
+        {
+            "uuid": "8e05af84-3054-404f-89f2-428ae69943ef",
+            "relation": "Jonathan worked with Gus but they were at different companies.",
+            "text": "Excellent programmer and good project manager with good creative ideas. A good experience to have worked with him.",
+            "person": {
+                "avatar": "recommendation/jonathan-trejo.jpeg",
+                "full_name": "Jonathan Ivan Trejo Zerpa",
+                "company": "Websarrollo - Digital Agency",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-28",
+            "updated_at": "2018-08-28"
+        },
+        {
+            "uuid": "4faf4435-93d4-48ef-b980-4b94d353f2f7",
+            "relation": "Carlos Matute worked with Gus but they were at different companies.",
+            "text": "I can say that Gustavo had a professional level raising even since we studied at the University. Dedicated, spontaneous, with a very wide resolution of problems and with determination in the solutions due to his high knowledge in the workplace.",
+            "person": {
+                "avatar": "recommendation/carlos-matute.jpeg",
+                "full_name": "Carlos Matute",
+                "company": "Websarrollo - Digital Agency",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-27",
+            "updated_at": "2018-08-27"
+        },
+        {
+            "uuid": "50fcd53c-2135-4c94-8fb2-30f111b3218e",
+            "relation": "Julio Cesar reported directly to Gus.",
+            "text": "I recommend Gustavo for large projects. He is a professional in the development area very proactive and efficient. It makes use of all the tools available for project management. It is organized and possesses determination and mastery over the development team.",
+            "person": {
+                "avatar": "recommendation/julio-cesar.png",
+                "full_name": "Julio Cesar Hernandez",
+                "company": "Websarrollo - Digital Agency",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-27",
+            "updated_at": "2018-08-27"
+        },
+        {
+            "uuid": "b5b4cff9-156e-4296-974e-0c4f0437e31d",
+            "relation": "Marco work with Gus in the same team.",
+            "text": "Professional worker, fast learner, enjoyable to work with. Highly analyzer of low level code, always approaching methodology with security first.",
+            "person": {
+                "avatar": "recommendation/marco.jpeg",
+                "full_name": "Marco Gava",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-27",
+            "updated_at": "2018-08-27"
         }
     ]
 }
