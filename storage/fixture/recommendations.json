@@ -120,6 +120,19 @@
         },
         {
             "uuid": "d7839355-c7af-4962-bcbd-e7f41a75199c",
+            "relation": "Sophie reported directly to Gus.",
+            "text": "Gus is the one who's really enthusiastic about tech regardless of back-end or front-end. With the pursuit of code quality, he keeps polishing tech skills as well as being very active for code review. Meanwhile, he enjoys sharing his findings in public and we all benefited a lot from it.",
+            "person": {
+                "avatar": "recommendation/sophie-ha.jpeg",
+                "full_name": "Sophie Ha",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Software Engineer"
+            },
+            "created_at": "2019-05-31",
+            "updated_at": "2019-05-31"
+        },
+        {
+            "uuid": "d7839355-c7af-4962-bcbd-e7f41a75199c",
             "relation": "Sohail worked with Gus in the same team.",
             "text": "I'm enjoying a pleasure of working alongside Gustavo for a year now. He has high work ethics and great experience in web technologies to the level that BeMyGuest entrusted him in handling challenging problems (i.e. payment gateways in fragmented South East Asia, API integration, Test Driven Development, Continuous Integration, and Continuous Delivery).\nBut that is not all, Gustavo regardless of deadline pressure always delivers with a smile. His sense of humor always softens the toughest stressful situations for the rest of the team. \nLong story short he is a true asset to our team.",
             "person": {
