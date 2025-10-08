@@ -119,6 +119,19 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "4faf4435-93d4-48ef-b980-4b94d353f2f7",
+            "relation": "Carlos Matute worked with Gus but they were at different companies.",
+            "text": "I can say that Gustavo had a professional level raising even since we studied at the University. Dedicated, spontaneous, with a very wide resolution of problems and with determination in the solutions due to his high knowledge in the workplace.",
+            "person": {
+                "avatar": "recommendation/carlos-matute.jpeg",
+                "full_name": "Carlos Matute",
+                "company": "Websarrollo - Digital Agency",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-27",
+            "updated_at": "2018-08-27"
+        },
+        {
             "uuid": "50fcd53c-2135-4c94-8fb2-30f111b3218e",
             "relation": "Julio Cesar reported directly to Gus.",
             "text": "I recommend Gustavo for large projects. He is a professional in the development area very proactive and efficient. It makes use of all the tools available for project management. It is organized and possesses determination and mastery over the development team.",
