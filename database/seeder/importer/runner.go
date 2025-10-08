@@ -680,7 +680,9 @@ func shouldSkipStatement(stmt statement, skipTables map[string]struct{}) (bool, 
 }
 
 func statementTarget(sql string) (string, string) {
-	trimmed := strings.TrimSpace(sql)
+	data := []byte(sql)
+	idx := skipIgnorableSections(data, 0)
+	trimmed := strings.TrimSpace(string(data[idx:]))
 	if trimmed == "" {
 		return "", ""
 	}
