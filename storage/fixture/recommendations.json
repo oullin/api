@@ -119,6 +119,19 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "d7839355-c7af-4962-bcbd-e7f41a75199c",
+            "relation": "Sohail worked with Gus in the same team.",
+            "text": "I'm enjoying a pleasure of working alongside Gustavo for a year now. He has high work ethics and great experience in web technologies to the level that BeMyGuest entrusted him in handling challenging problems (i.e. payment gateways in fragmented South East Asia, API integration, Test Driven Development, Continuous Integration, and Continuous Delivery).\nBut that is not all, Gustavo regardless of deadline pressure always delivers with a smile. His sense of humor always softens the toughest stressful situations for the rest of the team. \nLong story short he is a true asset to our team.",
+            "person": {
+                "avatar": "recommendation/sohail-salehi.jpeg",
+                "full_name": "Sohail Salehi",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-09-26",
+            "updated_at": "2018-09-26"
+        },
+        {
             "uuid": "0f6dae3e-ec78-43a9-b9ff-322642f88594",
             "relation": "Michal worked with Gus in the same team.",
             "text": "I had a chance to collaborate with Gustavo for one year, working at one team. He impressed me with his openness and willingness to learn. He dig deeper and deeper in subjects he already knew. He was also great in sharing that knowledge. Best social skills across all developers I’ve ever meet. Perfect fit to 10xTeam.",
