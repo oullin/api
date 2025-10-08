@@ -119,6 +119,19 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "1991f645-d50a-4975-8ba6-90cf18ae3a90",
+            "relation": "Rudolf worked with Gus in the same team.",
+            "text": "It is been a real pleasure working together with Gustavo. He's motivated, filled with knowledge, great at public speaking, especially about PHP, Unit Testing or Laravel itself. He worked on biggest projects, properly taking care of the job. Hard working, responsible and ambitious. Definitely worth recommending.",
+            "person": {
+                "avatar": "recommendation/rudolf-ratusiski.jpeg",
+                "full_name": "Rudolf Ratusiński",
+                "company": "BeMyGuest - Tours & Activities",
+                "designation": "Senior DevOps Engineer"
+            },
+            "created_at": "2019-06-14",
+            "updated_at": "2019-06-14"
+        },
+        {
             "uuid": "186c98c0-9df5-42c2-bccd-3724e4f50917",
             "relation": "Nabil worked with Gus in different teams.",
             "text": "Gustavo is a team player, tech enthusiast with very positive energy.gustavo is one of those colleagues that makes you enjoy working more at the office, he is creative, fast learner and hard worker.",
