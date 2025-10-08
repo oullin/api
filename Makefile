@@ -77,6 +77,7 @@ help:
 	@printf "  $(BOLD)$(GREEN)db:secure:show$(NC)   : Display database security configurations.\n"
 	@printf "  $(BOLD)$(GREEN)db:chmod$(NC)         : Adjust database file or directory permissions.\n"
 	@printf "  $(BOLD)$(GREEN)db:seed$(NC)          : Run database seeders to populate data.\n"
+	@printf "  $(BOLD)$(GREEN)db:import$(NC)        : Execute SQL statements from a file.\n"
 	@printf "  $(BOLD)$(GREEN)db:migrate$(NC)       : Run database migrations.\n"
 	@printf "  $(BOLD)$(GREEN)db:rollback$(NC)      : Rollback database migrations (usually the last batch).\n"
 	@printf "  $(BOLD)$(GREEN)db:migrate:create$(NC): Create a new database migration file.\n"

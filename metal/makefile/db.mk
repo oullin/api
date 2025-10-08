@@ -1,5 +1,5 @@
 .PHONY: db\:sh db\:up db\:down db\:logs db\:bash db\:fresh
-.PHONY: db\:secure db\:seed db\:migrate db\:migrate\:create db\:migrate\:force db\:rollback db\:chmod
+.PHONY: db\:secure db\:seed db\:import db\:migrate db\:migrate\:create db\:migrate\:force db\:rollback db\:chmod
 
 # --- Docker Services
 DB_API_RUNNER_SERVICE := api-runner
@@ -57,7 +57,15 @@ db\:secure:
 
 db\:seed:
 	docker compose --env-file ./.env run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) \
- 		 go run ./database/seeder/main.go
+		go run ./database/seeder/main.go
+
+db\:import:
+	@if [ -z "$(file)" ]; then \
+	echo "usage: make db:import file=path/to/seed.sql"; \
+	exit 1; \
+	fi
+	docker compose --env-file ./.env run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) \
+		go run ./database/seeder/importer/cmd/importer --file $(file)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # --- Migrations
