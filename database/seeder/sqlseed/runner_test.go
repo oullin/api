@@ -568,6 +568,10 @@ func withSuffix(t *testing.T, suffix string) string {
 func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environment, func()) {
 	t.Helper()
 
+	if os.Getenv("SQLSEED_SKIP_INTEGRATION") == "1" {
+		t.Skip("sqlseed integration tests disabled via SQLSEED_SKIP_INTEGRATION")
+	}
+
 	if _, err := exec.LookPath("docker"); err != nil {
 		t.Skip("docker not installed")
 	}

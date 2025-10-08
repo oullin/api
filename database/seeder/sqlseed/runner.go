@@ -61,7 +61,7 @@ func SeedFromFile(conn *database.Connection, environment *env.Environment, fileP
 }
 
 const storageSQLDir = "storage/sql"
-const migrationsDir = "database/infra/migrations"
+const migrationsRelativeDir = "database/infra/migrations"
 
 var excludedSeedTables = map[string]struct{}{
 	"api_keys":           {},
@@ -83,11 +83,13 @@ func prepareDatabase(ctx context.Context, conn *database.Connection, environment
 }
 
 func runMigrations(ctx context.Context, conn *database.Connection) error {
-	entries, err := os.ReadDir(migrationsDir)
+	dir, err := locateMigrationsDir()
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("sqlseed: migrations directory %s not found", migrationsDir)
-		}
+		return err
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
 		return fmt.Errorf("sqlseed: read migrations directory: %w", err)
 	}
 
@@ -98,7 +100,7 @@ func runMigrations(ctx context.Context, conn *database.Connection) error {
 		}
 		name := entry.Name()
 		if strings.HasSuffix(strings.ToLower(name), ".up.sql") {
-			files = append(files, filepath.Join(migrationsDir, name))
+			files = append(files, filepath.Join(dir, name))
 		}
 	}
 
@@ -125,6 +127,35 @@ func runMigrations(ctx context.Context, conn *database.Connection) error {
 	}
 
 	return nil
+}
+
+func locateMigrationsDir() (string, error) {
+	cleaned := filepath.Clean(migrationsRelativeDir)
+
+	if info, err := os.Stat(cleaned); err == nil && info.IsDir() {
+		return cleaned, nil
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("sqlseed: determine working directory: %w", err)
+	}
+
+	dir := wd
+	for {
+		candidate := filepath.Join(dir, cleaned)
+		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
+			return candidate, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+
+	return "", fmt.Errorf("sqlseed: migrations directory %s not found", cleaned)
 }
 
 func validateFilePath(path string) (string, error) {
