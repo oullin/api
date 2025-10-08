@@ -448,6 +448,17 @@ func utf8DecodeRune(data []byte) (rune, int) {
 	return r, size
 }
 
+func utf8DecodeLastRune(data []byte) (rune, int) {
+	if len(data) == 0 {
+		return 0, 0
+	}
+	r, size := utf8.DecodeLastRune(data)
+	if r == utf8.RuneError && size == 1 {
+		return rune(data[len(data)-1]), 1
+	}
+	return r, size
+}
+
 func readDollarTag(data []byte) (string, bool) {
 	if len(data) < 2 || data[0] != '$' {
 		return "", false
@@ -683,7 +694,10 @@ func shouldSkipStatement(stmt statement, skipTables map[string]struct{}) (bool, 
 func statementTarget(sql string) (string, string) {
 	data := []byte(sql)
 	idx := skipIgnorableSections(data, 0)
+	idx = skipLeadingCTESections(data, idx)
+	idx = skipIgnorableSections(data, idx)
 	trimmed := strings.TrimSpace(string(data[idx:]))
+	trimmed = strings.TrimSpace(locateStatementStart(trimmed))
 	if trimmed == "" {
 		return "", ""
 	}
@@ -759,6 +773,399 @@ func statementTarget(sql string) (string, string) {
 	}
 
 	return "", ""
+}
+
+func locateStatementStart(input string) string {
+	if input == "" {
+		return input
+	}
+
+	data := []byte(input)
+	keywords := []string{"COPY", "INSERT", "UPDATE", "DELETE", "ALTER", "DROP", "CREATE", "SELECT"}
+
+	var (
+		inSingleQuote  bool
+		inDoubleQuote  bool
+		inLineComment  bool
+		inBlockComment bool
+		dollarTag      string
+	)
+
+	for i := 0; i < len(data); {
+		b := data[i]
+
+		switch {
+		case inLineComment:
+			if b == '\n' {
+				inLineComment = false
+			}
+			i++
+			continue
+		case inBlockComment:
+			if b == '*' && i+1 < len(data) && data[i+1] == '/' {
+				inBlockComment = false
+				i += 2
+				continue
+			}
+			i++
+			continue
+		case dollarTag != "":
+			if b == '$' && hasDollarTag(data[i:], dollarTag) {
+				i += len(dollarTag) + 2
+				dollarTag = ""
+				continue
+			}
+			i++
+			continue
+		case inSingleQuote:
+			if b == '\\' && i+1 < len(data) {
+				i += 2
+				continue
+			}
+			if b == '\'' {
+				inSingleQuote = false
+			}
+			i++
+			continue
+		case inDoubleQuote:
+			if b == '"' {
+				if i+1 < len(data) && data[i+1] == '"' {
+					i += 2
+					continue
+				}
+				inDoubleQuote = false
+			}
+			i++
+			continue
+		}
+
+		if b == '-' && i+1 < len(data) && data[i+1] == '-' {
+			inLineComment = true
+			i += 2
+			continue
+		}
+
+		if b == '/' && i+1 < len(data) && data[i+1] == '*' {
+			inBlockComment = true
+			i += 2
+			continue
+		}
+
+		if b == '$' {
+			if tag, ok := readDollarTag(data[i:]); ok {
+				dollarTag = tag
+				i += len(tag) + 2
+				continue
+			}
+		}
+
+		if b == '\'' {
+			inSingleQuote = true
+			i++
+			continue
+		}
+
+		if b == '"' {
+			inDoubleQuote = true
+			i++
+			continue
+		}
+
+		for _, kw := range keywords {
+			if len(data)-i < len(kw) {
+				continue
+			}
+			if !strings.EqualFold(string(data[i:i+len(kw)]), kw) {
+				continue
+			}
+
+			if i > 0 {
+				prev, _ := utf8DecodeLastRune(data[:i])
+				if unicode.IsLetter(prev) || unicode.IsDigit(prev) || prev == '_' {
+					goto noKeyword
+				}
+			}
+
+			if i+len(kw) < len(data) {
+				next, _ := utf8DecodeRune(data[i+len(kw):])
+				if unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_' {
+					goto noKeyword
+				}
+			}
+
+			return strings.TrimLeftFunc(string(data[i:]), unicode.IsSpace)
+		}
+
+	noKeyword:
+		i++
+	}
+
+	return input
+}
+
+func skipLeadingCTESections(data []byte, idx int) int {
+	original := idx
+	idx = skipIgnorableSections(data, idx)
+	if !hasPrefixFold(data[idx:], "WITH") {
+		return original
+	}
+
+	cursor := idx + len("WITH")
+	cursor = skipIgnorableSections(data, cursor)
+
+	if next, ok := consumeKeyword(data, cursor, "RECURSIVE"); ok {
+		cursor = next
+		cursor = skipIgnorableSections(data, cursor)
+	}
+
+	for {
+		cursor = skipIgnorableSections(data, cursor)
+		next, ok := consumeIdentifier(data, cursor)
+		if !ok {
+			return original
+		}
+		cursor = next
+		cursor = skipIgnorableSections(data, cursor)
+
+		if cursor < len(data) && data[cursor] == '(' {
+			end, ok := skipParentheticalSection(data, cursor)
+			if !ok {
+				return original
+			}
+			cursor = end + 1
+			cursor = skipIgnorableSections(data, cursor)
+		}
+
+		if next, ok := consumeKeyword(data, cursor, "AS"); ok {
+			cursor = next
+		} else {
+			return original
+		}
+
+		cursor = skipIgnorableSections(data, cursor)
+		if next, ok := consumeKeyword(data, cursor, "NOT"); ok {
+			cursor = next
+			cursor = skipIgnorableSections(data, cursor)
+			if next, ok := consumeKeyword(data, cursor, "MATERIALIZED"); ok {
+				cursor = next
+			} else {
+				return original
+			}
+			cursor = skipIgnorableSections(data, cursor)
+		} else if next, ok := consumeKeyword(data, cursor, "MATERIALIZED"); ok {
+			cursor = next
+			cursor = skipIgnorableSections(data, cursor)
+		}
+
+		if cursor >= len(data) || data[cursor] != '(' {
+			return original
+		}
+
+		end, ok := skipParentheticalSection(data, cursor)
+		if !ok {
+			return original
+		}
+		cursor = end + 1
+		cursor = skipIgnorableSections(data, cursor)
+
+		if cursor < len(data) && data[cursor] == ',' {
+			cursor++
+			cursor = skipIgnorableSections(data, cursor)
+			continue
+		}
+
+		break
+	}
+
+	cursor = skipIgnorableSections(data, cursor)
+	return cursor
+}
+
+func hasPrefixFold(data []byte, prefix string) bool {
+	if len(data) < len(prefix) {
+		return false
+	}
+	return strings.EqualFold(string(data[:len(prefix)]), prefix)
+}
+
+func consumeKeyword(data []byte, idx int, keyword string) (int, bool) {
+	idx = skipIgnorableSections(data, idx)
+	if len(data[idx:]) < len(keyword) {
+		return idx, false
+	}
+
+	if !strings.EqualFold(string(data[idx:idx+len(keyword)]), keyword) {
+		return idx, false
+	}
+
+	next := idx + len(keyword)
+	if next < len(data) {
+		r, _ := utf8DecodeRune(data[next:])
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
+			return idx, false
+		}
+	}
+
+	return next, true
+}
+
+func consumeIdentifier(data []byte, idx int) (int, bool) {
+	idx = skipIgnorableSections(data, idx)
+	if idx >= len(data) {
+		return idx, false
+	}
+
+	if data[idx] == '"' {
+		idx++
+		for idx < len(data) {
+			if data[idx] == '"' {
+				idx++
+				if idx < len(data) && data[idx] == '"' {
+					idx++
+					continue
+				}
+				return idx, true
+			}
+			idx++
+		}
+		return idx, false
+	}
+
+	start := idx
+	for idx < len(data) {
+		r, size := utf8DecodeRune(data[idx:])
+		if size == 0 {
+			break
+		}
+		if r == '_' || r == '.' || unicode.IsLetter(r) || unicode.IsDigit(r) {
+			idx += size
+			continue
+		}
+		break
+	}
+
+	if idx == start {
+		return idx, false
+	}
+
+	return idx, true
+}
+
+func skipParentheticalSection(data []byte, idx int) (int, bool) {
+	if idx >= len(data) || data[idx] != '(' {
+		return idx, false
+	}
+
+	depth := 0
+	i := idx
+	inSingleQuote := false
+	inDoubleQuote := false
+	inLineComment := false
+	inBlockComment := false
+	dollarTag := ""
+
+	for i < len(data) {
+		b := data[i]
+
+		switch {
+		case inLineComment:
+			if b == '\n' {
+				inLineComment = false
+			}
+			i++
+			continue
+		case inBlockComment:
+			if b == '*' && i+1 < len(data) && data[i+1] == '/' {
+				inBlockComment = false
+				i += 2
+				continue
+			}
+			i++
+			continue
+		case dollarTag != "":
+			if b == '$' && hasDollarTag(data[i:], dollarTag) {
+				i += len(dollarTag) + 2
+				dollarTag = ""
+				continue
+			}
+			i++
+			continue
+		case inSingleQuote:
+			if b == '\\' && i+1 < len(data) {
+				i += 2
+				continue
+			}
+			if b == '\'' {
+				inSingleQuote = false
+			}
+			i++
+			continue
+		case inDoubleQuote:
+			if b == '"' {
+				if i+1 < len(data) && data[i+1] == '"' {
+					i += 2
+					continue
+				}
+				inDoubleQuote = false
+			}
+			i++
+			continue
+		}
+
+		if b == '-' && i+1 < len(data) && data[i+1] == '-' {
+			inLineComment = true
+			i += 2
+			continue
+		}
+
+		if b == '/' && i+1 < len(data) && data[i+1] == '*' {
+			inBlockComment = true
+			i += 2
+			continue
+		}
+
+		if b == '$' {
+			if tag, ok := readDollarTag(data[i:]); ok {
+				dollarTag = tag
+				i += len(tag) + 2
+				continue
+			}
+		}
+
+		if b == '\'' {
+			inSingleQuote = true
+			i++
+			continue
+		}
+
+		if b == '"' {
+			inDoubleQuote = true
+			i++
+			continue
+		}
+
+		if b == '(' {
+			depth++
+			i++
+			continue
+		}
+
+		if b == ')' {
+			if depth == 0 {
+				return idx, false
+			}
+			depth--
+			if depth == 0 {
+				return i, true
+			}
+			i++
+			continue
+		}
+
+		i++
+	}
+
+	return idx, false
 }
 
 func firstIdentifier(input string, allowOnly bool) string {

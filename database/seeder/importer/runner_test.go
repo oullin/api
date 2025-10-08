@@ -254,6 +254,7 @@ func TestSeedFromFileSkipsExcludedTables(t *testing.T) {
 		"INSERT INTO users (uuid, first_name, last_name, username, email, password_hash, public_token) VALUES ('00000000-0000-0000-0000-000000000101', 'Alice', 'Smith', 'asmith', 'alice@example.com', 'hash', 'token');",
 		"INSERT INTO public.api_keys (id, uuid, account_name, public_key, secret_key, created_at, updated_at, deleted_at) VALUES (1, '00000000-0000-0000-0000-000000000201', 'demo-account', '\\x01', '\\x02', NOW(), NOW(), NULL);",
 		"SELECT pg_catalog.setval('public.api_keys_id_seq', 99, true);",
+		"WITH metadata AS (SELECT NOW() AS generated_at) INSERT INTO public.api_keys (id, uuid, account_name, public_key, secret_key, created_at, updated_at, deleted_at) SELECT 2, '00000000-0000-0000-0000-000000000202', 'with-account', '\\x03', '\\x04', generated_at, generated_at, NULL FROM metadata;",
 		"COPY public.api_key_signatures (id, uuid, api_key_id, signature, max_tries, current_tries, expires_at, expired_at, origin, created_at, updated_at, deleted_at) FROM stdin;",
 		copyRow,
 		"\\.",
