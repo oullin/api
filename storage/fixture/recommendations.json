@@ -119,6 +119,19 @@
             "updated_at": "2019-07-16"
         },
         {
+            "uuid": "387a95d6-d29b-4faf-aa60-3b071c59cd22",
+            "relation": "Fernando worked with Gus but they were at different companies.",
+            "text": "I have had the opportunity to work with Gustavo closely and he has demonstrated to be a skilled person. Focus on detail and solid principles. He is a learner by definition and strives for improvement on every step.\nOur two projects turned out to be more productive than we forecasted at the beginning of them and I personally can recommend Gustavo as a reliable professional to work with",
+            "person": {
+                "avatar": "recommendation/fernando-rivas.jpeg",
+                "full_name": "Fernando Rivas",
+                "company": "Websarrollo - Digital Agency",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2018-08-30",
+            "updated_at": "2018-08-30"
+        },
+        {
             "uuid": "8e05af84-3054-404f-89f2-428ae69943ef",
             "relation": "Jonathan worked with Gus but they were at different companies.",
             "text": "Excellent programmer and good project manager with good creative ideas. A good experience to have worked with him.",
