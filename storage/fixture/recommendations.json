@@ -67,8 +67,21 @@
             "updated_at": "2024-04-10"
         },
         {
+            "uuid": "b282a643-b283-41be-82ee-5a3eda853e69",
+            "relation": "Mohin worked with Gus in the same team.",
+            "text": "Gustavo is a highly skilled web developer with special expertise in PHP, GoLang, and a bunch of other languages along with extensive experience in managing large-scale distributed systems.\n\nDuring our collaboration, Gustavo showcased exceptional problem-solving abilities, ensuring the highest standards of code quality and performance. He is not only technically proficient but also a great team player, always ready to share knowledge and support colleagues and a great asset to the team.",
+            "person": {
+                "avatar": "recommendation/mohin-lakdawala.jpeg",
+                "full_name": "Mohin Lakdawala",
+                "company": "Aspire",
+                "designation": "Senior Software Engineer"
+            },
+            "created_at": "2023-10-19",
+            "updated_at": "2023-10-19"
+        },
+        {
             "uuid": "0e587fa2-b678-4ca5-9eed-0f115c4a092d",
-            "relation": "Jarek was a senior to Gus, but did not manage him directly.",
+            "relation": "Jarek managed Gus indirectly.",
             "text": "I have worked with Gustavo as a Sr Engineer in my department at Aspire. It was the second time we worked together and it has been a great pleasure to see how far Gustavo progressed in the last few years.<br/><br/>Gustavo has an exceptional depth of knowledge in software development and consistently expands his high-quality knowledge with new technologies to better fit scaling team and systems.<br/><br/>He constantly demonstrated ambition and drive to learn and improve each stage of the engineering process. With his level of knowledge and skills I can wholeheartedly recommend Gustavo for senior technical roles, as well as leadership positions where he can leverage this experience even more.",
             "person": {
                 "avatar": "recommendation/jarek-tkaczyk.jpeg",
@@ -89,8 +102,8 @@
                 "company": "Aspire",
                 "designation": "Senior QA Engineer"
             },
-            "created_at": "2023-02-27",
-            "updated_at": "2023-02-27"
+            "created_at": "2022-11-16",
+            "updated_at": "2022-11-16"
         },
         {
             "uuid": "a5029b3e-3ad2-45a4-8e98-2599cdf21697",
