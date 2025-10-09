@@ -29,6 +29,10 @@ storage/media/users/*.*
 !storage/media/posts/.gitkeep
 !storage/media/users/.gitkeep
 
+# -- [SQL]: static files
+storage/sql/*.*
+!storage/sql/.gitkeep
+
 # --- [IDEs]: Files
 .DS_Store
 .idea
