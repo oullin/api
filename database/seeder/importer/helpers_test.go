@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -555,6 +556,398 @@ func TestLocateMigrationsDir(t *testing.T) {
 
 	if !strings.HasSuffix(filepath.Clean(dir), filepath.Clean(migrationsRelativeDir)) {
 		t.Fatalf("expected migrations directory suffix %q, got %q", migrationsRelativeDir, dir)
+	}
+}
+
+func TestDecodeCopyRowsParsesData(t *testing.T) {
+	t.Parallel()
+
+	rows, err := decodeCopyRows([]byte("1\talpha\n2\t\\N"), 2)
+	if err != nil {
+		t.Fatalf("decodeCopyRows unexpected error: %v", err)
+	}
+
+	if len(rows) != 2 {
+		t.Fatalf("expected two rows, got %d", len(rows))
+	}
+
+	if rows[0][0] != "1" || rows[0][1] != "alpha" {
+		t.Fatalf("unexpected first row: %+v", rows[0])
+	}
+
+	if rows[1][0] != "2" || rows[1][1] != nil {
+		t.Fatalf("expected second row to contain NULL value, got %+v", rows[1])
+	}
+}
+
+func TestDecodeCopyRowsDetectsMismatch(t *testing.T) {
+	t.Parallel()
+
+	_, err := decodeCopyRows([]byte("1\talpha\n2"), 2)
+	if err == nil || !strings.Contains(err.Error(), "row 2") {
+		t.Fatalf("expected mismatch error for row 2, got %v", err)
+	}
+}
+
+func TestDecodeCopyFieldHandlesEscapes(t *testing.T) {
+	t.Parallel()
+
+	field := "line\\nwith\\ttext\\\\and\\101"
+	value, err := decodeCopyField(field)
+	if err != nil {
+		t.Fatalf("decodeCopyField unexpected error: %v", err)
+	}
+
+	if value != "line\nwith\ttext\\andA" {
+		t.Fatalf("unexpected decoded field %q", value)
+	}
+}
+
+func TestDecodeCopyFieldErrorsOnTrailingEscape(t *testing.T) {
+	t.Parallel()
+
+	if _, err := decodeCopyField("abc\\"); err == nil || !strings.Contains(err.Error(), "escape prefix") {
+		t.Fatalf("expected trailing escape error, got %v", err)
+	}
+}
+
+func TestParseCopyStatementParsesTableAndColumns(t *testing.T) {
+	t.Parallel()
+
+	table, columns, err := parseCopyStatement("COPY widgets (id, name) FROM STDIN")
+	if err != nil {
+		t.Fatalf("parseCopyStatement unexpected error: %v", err)
+	}
+
+	if table != "widgets" {
+		t.Fatalf("unexpected table %q", table)
+	}
+
+	want := []string{"id", "name"}
+	if !reflect.DeepEqual(columns, want) {
+		t.Fatalf("unexpected columns %#v", columns)
+	}
+}
+
+func TestParseCopyStatementValidatesInput(t *testing.T) {
+	t.Parallel()
+
+	cases := []string{
+		"",
+		"INSERT INTO widgets",
+		"COPY FROM STDIN",
+		"COPY widgets (id FROM STDIN",
+		"COPY widgets FROM file",
+	}
+
+	for _, input := range cases {
+		if _, _, err := parseCopyStatement(input); err == nil {
+			t.Fatalf("expected error for input %q", input)
+		}
+	}
+}
+
+func TestParseIdentifierListParsesQuotedValues(t *testing.T) {
+	t.Parallel()
+
+	list, err := parseIdentifierList(`id, "Name", slug`)
+	if err != nil {
+		t.Fatalf("parseIdentifierList unexpected error: %v", err)
+	}
+
+	want := []string{"id", `"Name"`, "slug"}
+	if !reflect.DeepEqual(list, want) {
+		t.Fatalf("unexpected identifier list %#v", list)
+	}
+
+	if _, err := parseIdentifierList(`"unterminated`); err == nil {
+		t.Fatal("expected error for unterminated quotes")
+	}
+}
+
+func TestSplitTableName(t *testing.T) {
+	t.Parallel()
+
+	schema, name := splitTableName(`"Public"."Widgets"`)
+	if schema != "Public" || name != "Widgets" {
+		t.Fatalf("unexpected split result schema=%q name=%q", schema, name)
+	}
+
+	schema, name = splitTableName("widgets")
+	if schema != "" || name != "widgets" {
+		t.Fatalf("expected empty schema for bare identifier, got schema=%q name=%q", schema, name)
+	}
+}
+
+func TestSplitQualifiedIdentifierParts(t *testing.T) {
+	t.Parallel()
+
+	parts := splitQualifiedIdentifierParts(`"Public"."Widgets".child`)
+	want := []string{`"Public"`, `"Widgets"`, "child"}
+	if !reflect.DeepEqual(parts, want) {
+		t.Fatalf("unexpected parts %#v", parts)
+	}
+
+	if len(splitQualifiedIdentifierParts("")) != 0 {
+		t.Fatal("expected empty slice for empty identifier")
+	}
+}
+
+func TestQuoteIdentifier(t *testing.T) {
+	t.Parallel()
+
+	if quoteIdentifier("widgets") != "widgets" {
+		t.Fatal("expected simple identifier to remain unquoted")
+	}
+
+	if quoteIdentifier("Widgets") != `"Widgets"` {
+		t.Fatal("expected mixed case identifier to be quoted")
+	}
+
+	if quoteIdentifier("needs space") != `"needs space"` {
+		t.Fatal("expected identifier with space to be quoted")
+	}
+}
+
+func TestSQLStateFromErrorPrefersInterface(t *testing.T) {
+	t.Parallel()
+
+	code, message := sqlStateFromError(&fakeSQLStateError{code: "23505", msg: "duplicate"})
+	if code != "23505" || message != "duplicate" {
+		t.Fatalf("unexpected code/message %q %q", code, message)
+	}
+}
+
+func TestSQLStateFromErrorParsesMessage(t *testing.T) {
+	t.Parallel()
+
+	code, _ := sqlStateFromError(errors.New("ERROR: boom (SQLSTATE 42P01)"))
+	if code != "42P01" {
+		t.Fatalf("expected SQLSTATE 42P01, got %q", code)
+	}
+
+	code, _ = sqlStateFromError(errors.New("other error"))
+	if code != "" {
+		t.Fatalf("expected empty SQLSTATE, got %q", code)
+	}
+}
+
+func TestIsSafeToIgnoreRollbackError(t *testing.T) {
+	t.Parallel()
+
+	if !isSafeToIgnoreRollbackError(errors.New("transaction has already been committed")) {
+		t.Fatal("expected committed message to be ignorable")
+	}
+
+	if isSafeToIgnoreRollbackError(errors.New("different error")) {
+		t.Fatal("did not expect unrelated error to be ignorable")
+	}
+}
+
+func TestUtf8DecodeLastRune(t *testing.T) {
+	t.Parallel()
+
+	if r, size := utf8DecodeLastRune([]byte("é")); r != 'é' || size != 2 {
+		t.Fatalf("expected last rune é size 2, got %q size %d", r, size)
+	}
+
+	if r, size := utf8DecodeLastRune([]byte{0xff}); r != rune(0xff) || size != 1 {
+		t.Fatalf("expected fallback rune 0xff size 1, got %q size %d", r, size)
+	}
+}
+
+func TestLocateStatementStartSkipsComments(t *testing.T) {
+	t.Parallel()
+
+	sql := "-- comment\n/* block */\nSELECT 1"
+	if out := locateStatementStart(sql); !strings.HasPrefix(out, "SELECT 1") {
+		t.Fatalf("expected SELECT statement, got %q", out)
+	}
+
+	sql = "$$do$$ SELECT 1$$do$$; INSERT INTO foo VALUES (1);"
+	if out := locateStatementStart(sql); !strings.HasPrefix(out, "SELECT 1$$do$$") {
+		t.Fatalf("expected dollar-quoted block, got %q", out)
+	}
+}
+
+func TestSkipParentheticalSectionDetectsUnbalanced(t *testing.T) {
+	t.Parallel()
+
+	if _, ok := skipParentheticalSection([]byte("(SELECT 1"), 0); ok {
+		t.Fatal("expected unbalanced parentheses to return false")
+	}
+}
+
+func TestSkipParentheticalSectionHandlesQuotes(t *testing.T) {
+	t.Parallel()
+
+	data := []byte("(SELECT '(())'::text, 1)")
+	end, ok := skipParentheticalSection(data, 0)
+	if !ok || end != len(data)-1 {
+		t.Fatalf("expected section to end at %d, got end=%d ok=%v", len(data)-1, end, ok)
+	}
+}
+
+func TestParseStatementsHandlesWindowsNewlines(t *testing.T) {
+	t.Parallel()
+
+	sql := "INSERT INTO foo VALUES (1);\r\n-- comment\r\nINSERT INTO foo VALUES (2);\r\n"
+	stmts, err := parseStatements([]byte(sql))
+	if err != nil {
+		t.Fatalf("parseStatements unexpected error: %v", err)
+	}
+
+	if len(stmts) != 2 {
+		t.Fatalf("expected two statements, got %d", len(stmts))
+	}
+
+	if stmts[1].sql != "INSERT INTO foo VALUES (2)" {
+		t.Fatalf("unexpected second statement %q", stmts[1].sql)
+	}
+}
+
+func TestSkipLeadingCTESectionsWithMultipleCTEs(t *testing.T) {
+	t.Parallel()
+
+	sql := "WITH a AS (SELECT 1), b AS (SELECT 2) INSERT INTO foo VALUES (1);"
+	idx := skipLeadingCTESections([]byte(sql), 0)
+	if !strings.HasPrefix(sql[idx:], "INSERT") {
+		t.Fatalf("expected cursor at INSERT, got %q", sql[idx:])
+	}
+}
+
+func TestSkipLeadingCTESectionsWithRecursiveCTE(t *testing.T) {
+	t.Parallel()
+
+	sql := "WITH RECURSIVE t AS (SELECT 1) SELECT * FROM t;"
+	idx := skipLeadingCTESections([]byte(sql), 0)
+	if !strings.HasPrefix(sql[idx:], "SELECT") {
+		t.Fatalf("expected SELECT start, got %q", sql[idx:])
+	}
+}
+
+func TestSkipLeadingCTESectionsIgnoresKeywordInString(t *testing.T) {
+	t.Parallel()
+
+	sql := "SELECT 'WITH clause' AS note;"
+	if idx := skipLeadingCTESections([]byte(sql), 0); idx != 0 {
+		t.Fatalf("expected index 0 for non-CTE, got %d", idx)
+	}
+}
+
+func TestSkipParentheticalSectionRequiresOpeningParen(t *testing.T) {
+	t.Parallel()
+
+	if _, ok := skipParentheticalSection([]byte("SELECT (1)"), 0); ok {
+		t.Fatal("expected false when starting index is not a parenthesis")
+	}
+}
+
+func TestUtf8DecodeRuneFallback(t *testing.T) {
+	t.Parallel()
+
+	if r, size := utf8DecodeRune([]byte{0xff}); r != rune(0xff) || size != 1 {
+		t.Fatalf("expected fallback rune 0xff size 1, got %q size %d", r, size)
+	}
+}
+
+func TestParseStatementsErrorsWhenCopyTerminatorMissing(t *testing.T) {
+	t.Parallel()
+
+	sql := "COPY foo (id) FROM stdin;\n1\n"
+	if _, err := parseStatements([]byte(sql)); err == nil || !strings.Contains(err.Error(), "missing terminator") {
+		t.Fatalf("expected terminator error, got %v", err)
+	}
+}
+
+func TestParseStatementsHandlesDollarQuotedStrings(t *testing.T) {
+	t.Parallel()
+
+	sql := "CREATE FUNCTION test() RETURNS void AS $$BEGIN PERFORM 1; END$$ LANGUAGE plpgsql;"
+	stmts, err := parseStatements([]byte(sql))
+	if err != nil {
+		t.Fatalf("parseStatements unexpected error: %v", err)
+	}
+
+	if len(stmts) == 0 {
+		t.Fatal("expected at least one statement")
+	}
+
+	if !strings.HasPrefix(stmts[0].sql, "CREATE FUNCTION test() RETURNS void AS $$BEGIN") {
+		t.Fatalf("unexpected function statement %q", stmts[0].sql)
+	}
+}
+
+func TestStatementTargetHandlesCreateUniqueIndex(t *testing.T) {
+	t.Parallel()
+
+	table, op := statementTarget("CREATE UNIQUE INDEX idx ON public.widgets (id);")
+	if table != "public.widgets" || op != "CREATE INDEX" {
+		t.Fatalf("unexpected target %q operation %q", table, op)
+	}
+}
+
+func TestStatementTargetHandlesAlterSequence(t *testing.T) {
+	t.Parallel()
+
+	table, op := statementTarget("ALTER SEQUENCE public.widgets_id_seq OWNED BY public.widgets.id;")
+	if table != "public.widgets_id_seq" || op != "ALTER SEQUENCE" {
+		t.Fatalf("unexpected target %q operation %q", table, op)
+	}
+}
+
+func TestStatementTargetHandlesDropIndex(t *testing.T) {
+	t.Parallel()
+
+	table, op := statementTarget("DROP INDEX IF EXISTS widgets_idx;")
+	if table != "widgets_idx" || op != "DROP INDEX" {
+		t.Fatalf("unexpected drop index target %q operation %q", table, op)
+	}
+}
+
+func TestSkipParentheticalSectionHandlesComments(t *testing.T) {
+	t.Parallel()
+
+	data := []byte("(SELECT 1 /* comment ) */ -- line\n)")
+	end, ok := skipParentheticalSection(data, 0)
+	if !ok || end != len(data)-1 {
+		t.Fatalf("expected section to end at %d, got end=%d ok=%v", len(data)-1, end, ok)
+	}
+}
+
+func TestParseStatementsSkipsConnectCommands(t *testing.T) {
+	t.Parallel()
+
+	sql := "\\connect database\nINSERT INTO foo VALUES (1);"
+	stmts, err := parseStatements([]byte(sql))
+	if err != nil {
+		t.Fatalf("parseStatements unexpected error: %v", err)
+	}
+
+	if len(stmts) != 1 || stmts[0].sql != "INSERT INTO foo VALUES (1)" {
+		t.Fatalf("expected single insert statement, got %#v", stmts)
+	}
+}
+
+func TestParseStatementsHandlesQuotedIdentifiers(t *testing.T) {
+	t.Parallel()
+
+	sql := `INSERT INTO "My"."Table" ("Col") VALUES ('value; still string');`
+	stmts, err := parseStatements([]byte(sql))
+	if err != nil {
+		t.Fatalf("parseStatements unexpected error: %v", err)
+	}
+
+	if len(stmts) != 1 || !strings.Contains(stmts[0].sql, `"My"."Table"`) {
+		t.Fatalf("unexpected parsed statement %#v", stmts)
+	}
+}
+
+func TestLocateStatementStartWithoutKeyword(t *testing.T) {
+	t.Parallel()
+
+	if out := locateStatementStart("   "); out != "   " {
+		t.Fatalf("expected original whitespace, got %q", out)
 	}
 }
 
