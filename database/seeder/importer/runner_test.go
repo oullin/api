@@ -152,6 +152,7 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 		"COPY supplies (id, name) FROM stdin;",
 		"1\tbolts",
 		"2\twashers",
+		"3\tcontains\\\\.",
 		"\\.",
 		"",
 	}, "\n")
@@ -172,8 +173,8 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 		t.Fatalf("query supplies: %v", err)
 	}
 
-	if len(rows) != 2 {
-		t.Fatalf("expected 2 supplies, got %d", len(rows))
+	if len(rows) != 3 {
+		t.Fatalf("expected 3 supplies, got %d", len(rows))
 	}
 
 	if rows[0].ID != 1 || rows[0].Name != "bolts" {
@@ -182,6 +183,10 @@ func TestSeedFromFileSupportsCopyFromStdin(t *testing.T) {
 
 	if rows[1].ID != 2 || rows[1].Name != "washers" {
 		t.Fatalf("unexpected second row: %+v", rows[1])
+	}
+
+	if rows[2].ID != 3 || rows[2].Name != "contains\\." {
+		t.Fatalf("unexpected third row: %+v", rows[2])
 	}
 }
 

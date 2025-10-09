@@ -475,25 +475,38 @@ func isCopyFromStdin(stmt string) bool {
 }
 
 func extractCopyData(data []byte) (int, int, error) {
-	patterns := []struct {
-		marker  []byte
-		include int
-	}{
-		{[]byte("\r\n\\.\r\n"), 2},
-		{[]byte("\n\\.\n"), 1},
-		{[]byte("\n\\.\r\n"), 1},
-		{[]byte("\r\n\\.\n"), 2},
-		{[]byte("\\.\r\n"), 0},
-		{[]byte("\\.\n"), 0},
-		{[]byte("\\."), 0},
+	if len(data) == 0 {
+		return 0, 0, errors.New("importer: COPY statement missing terminator")
 	}
 
-	for _, pattern := range patterns {
-		if idx := bytes.Index(data, pattern.marker); idx != -1 {
-			copyEnd := idx + pattern.include
-			advance := idx + len(pattern.marker)
+	offset := 0
+	for offset < len(data) {
+		lineEndRelative := bytes.IndexByte(data[offset:], '\n')
+		if lineEndRelative == -1 {
+			line := data[offset:]
+			trimmed := bytes.TrimSuffix(line, []byte{'\r'})
+			if bytes.Equal(trimmed, []byte("\\.")) {
+				copyEnd := offset
+				advance := len(data)
+				return copyEnd, advance, nil
+			}
+
+			break
+		}
+
+		lineEnd := offset + lineEndRelative
+		line := data[offset:lineEnd]
+		if len(line) > 0 && line[len(line)-1] == '\r' {
+			line = line[:len(line)-1]
+		}
+
+		if bytes.Equal(line, []byte("\\.")) {
+			copyEnd := offset
+			advance := lineEnd + 1
 			return copyEnd, advance, nil
 		}
+
+		offset = lineEnd + 1
 	}
 
 	return 0, 0, errors.New("importer: COPY statement missing terminator")
