@@ -27,8 +27,6 @@ func (p Posts) GetAll(filters queries.PostFilters, paginate pagination.Paginate)
 
 	queries.ApplyPostsFilters(&filters, query)
 
-	query = query.Select("posts.*")
-
 	if err := pagination.Count[*int64](&numItems, query, p.DB.GetSession(), "posts.id"); err != nil {
 		return nil, err
 	}
