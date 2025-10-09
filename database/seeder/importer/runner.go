@@ -61,14 +61,6 @@ func SeedFromFile(conn *database.Connection, environment *env.Environment, fileP
 	})
 }
 
-const storageSQLDir = "storage/sql"
-const migrationsRelativeDir = "database/infra/migrations"
-
-var excludedSeedTables = map[string]struct{}{
-	"api_keys":           {},
-	"api_key_signatures": {},
-}
-
 func prepareDatabase(ctx context.Context, conn *database.Connection, environment *env.Environment) error {
 	truncate := database.MakeTruncate(conn, environment)
 
@@ -206,17 +198,6 @@ func readSQLFile(path string) ([]byte, error) {
 	}
 
 	return contents, nil
-}
-
-type statement struct {
-	sql      string
-	copyData []byte
-	isCopy   bool
-}
-
-type executeOptions struct {
-	disableConstraints bool
-	skipTables         map[string]struct{}
 }
 
 func parseStatements(contents []byte) ([]statement, error) {
