@@ -5,10 +5,7 @@ const (
 	migrationsRelativeDir = "database/infra/migrations"
 )
 
-var excludedSeedTables = map[string]struct{}{
-	"api_keys":           {},
-	"api_key_signatures": {},
-}
+var excludedSeedTables = map[string]struct{}{}
 
 type statement struct {
 	sql      string
