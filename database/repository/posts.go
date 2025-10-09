@@ -27,6 +27,8 @@ func (p Posts) GetAll(filters queries.PostFilters, paginate pagination.Paginate)
 
 	queries.ApplyPostsFilters(&filters, query)
 
+	query = query.Select("posts.*")
+
 	if err := pagination.Count[*int64](&numItems, query, p.DB.GetSession(), "posts.id"); err != nil {
 		return nil, err
 	}
@@ -37,9 +39,10 @@ func (p Posts) GetAll(filters queries.PostFilters, paginate pagination.Paginate)
 		Preload("Categories").
 		Preload("Tags").
 		Order("posts.published_at DESC").
+		Select("posts.*").
 		Limit(paginate.Limit).
 		Offset(offset).
-		Distinct(). // remove duplications if any after applying JOINS
+		Distinct("posts.id"). // remove duplications if any after applying JOINS
 		Find(&posts).Error
 
 	if err != nil {

@@ -184,6 +184,59 @@ func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
 	}
 }
 
+func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
+	conn := newPostgresConnection(t,
+		&database.User{},
+		&database.Post{},
+		&database.Category{},
+		&database.PostCategory{},
+		&database.Tag{},
+		&database.PostTag{},
+	)
+
+	author := seedUser(t, conn, "Eve", "Duplicates", "eve")
+
+	primaryCategory := seedCategory(t, conn, "engineering", "Engineering")
+	secondaryCategory := seedCategory(t, conn, "engagement", "Engagement")
+
+	primaryTag := seedTag(t, conn, "eng-backend", "Eng Backend")
+	secondaryTag := seedTag(t, conn, "eng-frontend", "Eng Frontend")
+
+	post := seedPost(t, conn, author, primaryCategory, primaryTag, "dedupe-check", "Dedupe Check", true)
+
+	extraCategory := database.PostCategory{PostID: post.ID, CategoryID: secondaryCategory.ID}
+	if err := conn.Sql().Create(&extraCategory).Error; err != nil {
+		t.Fatalf("create secondary category relation: %v", err)
+	}
+
+	extraTag := database.PostTag{PostID: post.ID, TagID: secondaryTag.ID}
+	if err := conn.Sql().Create(&extraTag).Error; err != nil {
+		t.Fatalf("create secondary tag relation: %v", err)
+	}
+
+	postsRepo := repository.Posts{DB: conn}
+
+	filters := queries.PostFilters{Category: "eng", Tag: "eng"}
+	paginate := pagination.Paginate{Page: 1, Limit: 5}
+
+	result, err := postsRepo.GetAll(filters, paginate)
+	if err != nil {
+		t.Fatalf("get all: %v", err)
+	}
+
+	if result.Total != 1 {
+		t.Fatalf("expected total 1, got %d", result.Total)
+	}
+
+	if len(result.Data) != 1 {
+		t.Fatalf("expected single result, got %d", len(result.Data))
+	}
+
+	if result.Data[0].ID != post.ID {
+		t.Fatalf("expected post %d, got %d", post.ID, result.Data[0].ID)
+	}
+}
+
 func TestPostsFindCategoryByDelegatesPostgres(t *testing.T) {
 	conn := newPostgresConnection(t, &database.Category{})
 
