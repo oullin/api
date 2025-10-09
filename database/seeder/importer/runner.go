@@ -667,6 +667,15 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 				return true, fmt.Sprintf("primary key skipped (%s)", pgErr.Message)
 			}
 		}
+	case "23505":
+		if strings.HasPrefix(upper, "INSERT INTO ") {
+			target, _ := statementTarget(stmt.sql)
+			normalized := normalizeQualifiedIdentifier(target)
+			switch normalized {
+			case "schema_migrations", "public.schema_migrations":
+				return true, fmt.Sprintf("duplicate migration row skipped (%s)", pgErr.Message)
+			}
+		}
 	case "42704":
 		if strings.Contains(upper, " OWNER TO ") {
 			return true, fmt.Sprintf("owner skipped (%s)", pgErr.Message)

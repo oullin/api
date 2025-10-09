@@ -362,6 +362,43 @@ func TestSeedFromFileSkipsDuplicatePrimaryKeyAdds(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsDuplicateSchemaMigrationsInserts(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"INSERT INTO public.schema_migrations (version, dirty) VALUES (42, false);",
+		"INSERT INTO public.schema_migrations (version, dirty) VALUES (42, false);",
+		"CREATE TABLE schema_migration_checks (id SERIAL PRIMARY KEY, note TEXT NOT NULL);",
+		"INSERT INTO schema_migration_checks (note) VALUES ('ok');",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	var migrationCount int64
+	if err := conn.Sql().Table("schema_migrations").Where("version = ?", 42).Count(&migrationCount).Error; err != nil {
+		t.Fatalf("count schema_migrations: %v", err)
+	}
+
+	if migrationCount != 1 {
+		t.Fatalf("expected 1 schema_migrations row for version 42, got %d", migrationCount)
+	}
+
+	var noteCount int64
+	if err := conn.Sql().Table("schema_migration_checks").Count(&noteCount).Error; err != nil {
+		t.Fatalf("count schema_migration_checks: %v", err)
+	}
+
+	if noteCount != 1 {
+		t.Fatalf("expected schema_migration_checks data to persist, got %d rows", noteCount)
+	}
+}
+
 func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
