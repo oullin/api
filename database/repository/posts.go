@@ -36,8 +36,8 @@ func (p Posts) GetAll(filters queries.PostFilters, paginate pagination.Paginate)
 	err := query.Preload("Author").
 		Preload("Categories").
 		Preload("Tags").
-		Order("posts.published_at DESC, posts.id").
-		Select("DISTINCT ON (posts.id) posts.*"). // ensure joined relations do not duplicate posts
+		Order("posts.published_at DESC, posts.id DESC").
+		Select("DISTINCT ON (posts.published_at, posts.id) posts.*"). // ensure joined relations do not duplicate posts
 		Limit(paginate.Limit).
 		Offset(offset).
 		Find(&posts).Error
