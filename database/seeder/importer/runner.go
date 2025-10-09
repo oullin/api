@@ -13,7 +13,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/stdlib"
 
@@ -547,7 +546,7 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 		}
 
 		pgxConn := stdlibConn.Conn()
-		tx, err := pgxConn.BeginTx(ctx, pgx.TxOptions{})
+		tx, err := pgxConn.Begin(ctx)
 		if err != nil {
 			return fmt.Errorf("importer: begin transaction: %w", err)
 		}
@@ -557,7 +556,7 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 			if committed {
 				return
 			}
-			if rbErr := tx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+			if rbErr := tx.Rollback(ctx); rbErr != nil && !isTxClosedError(rbErr) {
 				execErr = errors.Join(execErr, fmt.Errorf("importer: rollback failed: %w", rbErr))
 			}
 		}()
@@ -593,7 +592,7 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 
 			if _, err := nestedTx.Exec(ctx, stmt.sql); err != nil {
 				if skip, reason := shouldSkipExecError(stmt, err); skip {
-					if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+					if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !isTxClosedError(rbErr) {
 						execErr = fmt.Errorf("importer: rollback savepoint for skipped statement %d near %q failed: %w", statementNumber, preview, rbErr)
 						return execErr
 					}
@@ -601,7 +600,7 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 					continue
 				}
 
-				if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
+				if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !isTxClosedError(rbErr) {
 					execErr = errors.Join(fmt.Errorf("importer: executing SQL statement %d near %q failed: %w", statementNumber, preview, err), fmt.Errorf("importer: rollback savepoint failed: %w", rbErr))
 					return execErr
 				}
@@ -646,6 +645,14 @@ func executeCopy(ctx context.Context, pgConn *pgconn.PgConn, stmt statement) err
 		return fmt.Errorf("importer: executing COPY failed: %w", err)
 	}
 	return nil
+}
+
+func isTxClosedError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	return strings.Contains(strings.ToLower(err.Error()), "tx is closed")
 }
 
 func shouldSkipExecError(stmt statement, err error) (bool, string) {
