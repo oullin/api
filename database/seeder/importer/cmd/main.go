@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -14,6 +13,8 @@ import (
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
 )
+
+const defaultSQLDumpPath = "./storage/sql/dump.sql"
 
 var (
 	environment *env.Environment
@@ -28,23 +29,22 @@ func init() {
 }
 
 func main() {
-	var filePath string
-	flag.StringVar(&filePath, "file", "", "name or path to the SQL file located in ./storage/sql to execute")
-	flag.Parse()
-
-	if err := run(filePath, environment, sentryHub); err != nil {
+	if err := run(defaultSQLDumpPath, environment, sentryHub); err != nil {
 		cli.Errorln(err.Error())
 		os.Exit(1)
 	}
 }
 
 func run(filePath string, environment *env.Environment, sentryHub *portal.Sentry) error {
-	if filePath == "" {
-		return errors.New("missing required --file flag pointing to a SQL file")
-	}
-
 	if !environment.App.IsLocal() {
 		return fmt.Errorf("sql imports can only run in the local environment (current: %s)", environment.App.Type)
+	}
+
+	if _, err := os.Stat(filePath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("importer: SQL file %s does not exist", filePath)
+		}
+		return fmt.Errorf("importer: unable to access SQL file %s: %w", filePath, err)
 	}
 
 	cli.ClearScreen()

@@ -60,13 +60,12 @@ db\:seed:
 		go run ./database/seeder/main.go
 
 db\:import:
-	@if [ -z "$(file)" ]; then \
-	echo "usage: make db:import file=path/to/seed.sql"; \
-	exit 1; \
+	@if [ ! -f "./storage/sql/dump.sql" ]; then \
+		echo "db:import requires ./storage/sql/dump.sql"; \
+		exit 1; \
 	fi
 	docker compose --env-file ./.env run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) \
-go run ./database/seeder/importer/cmd --file $(file)
-
+	go run ./database/seeder/importer/cmd
 # -------------------------------------------------------------------------------------------------------------------- #
 # --- Migrations
 # -------------------------------------------------------------------------------------------------------------------- #
