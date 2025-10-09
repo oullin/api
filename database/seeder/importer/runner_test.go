@@ -367,6 +367,7 @@ func TestSeedFromFileSkipsDuplicateSchemaMigrationsInserts(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	contents := strings.Join([]string{
+		"CREATE TABLE IF NOT EXISTS public.schema_migrations (version BIGINT PRIMARY KEY, dirty BOOLEAN NOT NULL);",
 		"INSERT INTO public.schema_migrations (version, dirty) VALUES (42, false);",
 		"INSERT INTO public.schema_migrations (version, dirty) VALUES (42, false);",
 		"CREATE TABLE schema_migration_checks (id SERIAL PRIMARY KEY, note TEXT NOT NULL);",
@@ -378,6 +379,12 @@ func TestSeedFromFileSkipsDuplicateSchemaMigrationsInserts(t *testing.T) {
 
 	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
 		t.Fatalf("seed from file: %v", err)
+	}
+
+	// Run the seed a second time to assert the duplicate handling remains idempotent
+	// across separate executions.
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("second seed from file: %v", err)
 	}
 
 	var migrationCount int64
