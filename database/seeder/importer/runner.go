@@ -658,7 +658,7 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 
 	switch pgErr.Code {
 	case "42P07", "42P06", "42710":
-		if strings.HasPrefix(upper, "CREATE ") {
+		if strings.HasPrefix(upper, "CREATE ") || strings.HasPrefix(upper, "ALTER TABLE ") || strings.HasPrefix(upper, "ALTER INDEX ") {
 			return true, fmt.Sprintf("object already exists (%s)", pgErr.Message)
 		}
 	case "42704":

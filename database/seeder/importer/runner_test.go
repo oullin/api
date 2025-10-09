@@ -236,7 +236,7 @@ func TestSeedFromFileLoadsDataOutOfConstraintOrder(t *testing.T) {
 	}
 }
 
-func TestSeedFromFileSkipsExcludedTables(t *testing.T) {
+func TestSeedFromFileSeedsAPIKeyTables(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
@@ -284,17 +284,40 @@ func TestSeedFromFileSkipsExcludedTables(t *testing.T) {
 	}
 
 	assertCount("users", 1)
-	assertCount("api_keys", 0)
-	assertCount("api_key_signatures", 0)
+	assertCount("api_keys", 2)
+	assertCount("api_key_signatures", 1)
+
+	var nextVal int64
+	if err := conn.Sql().Raw("SELECT nextval('public.api_keys_id_seq')").Scan(&nextVal).Error; err != nil {
+		t.Fatalf("nextval sequence: %v", err)
+	}
+
+	if nextVal != 100 {
+		t.Fatalf("expected nextval to be 100 after seeding API keys, got %d", nextVal)
+	}
 }
 
-func TestSeedFromFileSkipsDropSequenceForExcludedTables(t *testing.T) {
+func TestSeedFromFileRecreatesAPIKeySequence(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
+	sequenceDefinition := strings.Join([]string{
+		"CREATE SEQUENCE public.api_keys_id_seq",
+		"    AS bigint",
+		"    START WITH 1",
+		"    INCREMENT BY 1",
+		"    NO MINVALUE",
+		"    NO MAXVALUE",
+		"    CACHE 1;",
+	}, "\n")
+
 	contents := strings.Join([]string{
+		"DROP SEQUENCE IF EXISTS public.api_keys_id_seq;",
+		sequenceDefinition,
+		"ALTER SEQUENCE public.api_keys_id_seq OWNER TO test;",
+		"ALTER SEQUENCE public.api_keys_id_seq OWNED BY public.api_keys.id;",
+		"SELECT pg_catalog.setval('public.api_keys_id_seq', 42, true);",
 		"INSERT INTO users (uuid, first_name, last_name, username, email, password_hash, public_token) VALUES ('00000000-0000-0000-0000-000000000111', 'Jane', 'Doe', 'janedoe', 'jane@example.com', 'hash', 'token');",
-		"DROP SEQUENCE public.api_keys_id_seq;",
 		"",
 	}, "\n")
 
@@ -309,13 +332,24 @@ func TestSeedFromFileSkipsDropSequenceForExcludedTables(t *testing.T) {
 		t.Fatalf("nextval sequence: %v", err)
 	}
 
-	var userCount int64
-	if err := conn.Sql().Table("users").Count(&userCount).Error; err != nil {
-		t.Fatalf("count users: %v", err)
+	if nextVal != 43 {
+		t.Fatalf("expected nextval to be 43 after recreating sequence, got %d", nextVal)
 	}
+}
 
-	if userCount != 1 {
-		t.Fatalf("expected 1 user after seeding, got %d", userCount)
+func TestSeedFromFileSkipsDuplicateConstraintAdds(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"ALTER TABLE ONLY public.categories ADD CONSTRAINT categories_name_key UNIQUE (name);",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
 	}
 }
 
