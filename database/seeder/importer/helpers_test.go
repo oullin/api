@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestNormalizeQualifiedIdentifier(t *testing.T) {
@@ -97,35 +95,35 @@ func TestShouldSkipExecError(t *testing.T) {
 		{
 			name:      "duplicate schema_migrations row",
 			sql:       "INSERT INTO schema_migrations VALUES (3, false);",
-			err:       &pgconn.PgError{Code: "23505", Message: "duplicate key value violates unique constraint \"schema_migrations_pkey\""},
+			err:       &fakeSQLStateError{code: "23505", msg: "duplicate key value violates unique constraint \"schema_migrations_pkey\""},
 			wantSkip:  true,
 			wantMatch: "duplicate migration row",
 		},
 		{
 			name:      "primary key already exists",
 			sql:       "ALTER TABLE public.widgets ADD CONSTRAINT widgets_pkey PRIMARY KEY (id);",
-			err:       &pgconn.PgError{Code: "42P16", Message: "multiple primary keys for table are not allowed"},
+			err:       &fakeSQLStateError{code: "42P16", msg: "multiple primary keys for table are not allowed"},
 			wantSkip:  true,
 			wantMatch: "primary key",
 		},
 		{
 			name:      "owner change missing role",
 			sql:       "ALTER TABLE public.widgets OWNER TO missing_role;",
-			err:       &pgconn.PgError{Code: "42704", Message: "role \"missing_role\" does not exist"},
+			err:       &fakeSQLStateError{code: "42704", msg: "role \"missing_role\" does not exist"},
 			wantSkip:  true,
 			wantMatch: "owner skipped",
 		},
 		{
 			name:      "object already exists",
 			sql:       "CREATE TABLE public.widgets (id INT);",
-			err:       &pgconn.PgError{Code: "42P07", Message: "relation \"widgets\" already exists"},
+			err:       &fakeSQLStateError{code: "42P07", msg: "relation \"widgets\" already exists"},
 			wantSkip:  true,
 			wantMatch: "object already exists",
 		},
 		{
 			name:      "missing relation",
 			sql:       "DROP TABLE public.widgets;",
-			err:       &pgconn.PgError{Code: "42P01", Message: "relation \"widgets\" does not exist"},
+			err:       &fakeSQLStateError{code: "42P01", msg: "relation \"widgets\" does not exist"},
 			wantSkip:  true,
 			wantMatch: "relation skipped",
 		},
@@ -558,4 +556,17 @@ func TestLocateMigrationsDir(t *testing.T) {
 	if !strings.HasSuffix(filepath.Clean(dir), filepath.Clean(migrationsRelativeDir)) {
 		t.Fatalf("expected migrations directory suffix %q, got %q", migrationsRelativeDir, dir)
 	}
+}
+
+type fakeSQLStateError struct {
+	code string
+	msg  string
+}
+
+func (e *fakeSQLStateError) Error() string {
+	return e.msg
+}
+
+func (e *fakeSQLStateError) SQLState() string {
+	return e.code
 }

@@ -1,8 +1,10 @@
 package importer
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -12,9 +14,6 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
@@ -532,146 +531,153 @@ func executeStatements(ctx context.Context, conn *database.Connection, statement
 		return fmt.Errorf("importer: retrieve sql db: %w", err)
 	}
 
-	sqlConn, err := sqlDB.Conn(ctx)
+	tx, err := sqlDB.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("importer: acquire connection: %w", err)
+		return fmt.Errorf("importer: begin transaction: %w", err)
 	}
-	defer sqlConn.Close()
 
-	var execErr error
-	err = sqlConn.Raw(func(driverConn interface{}) error {
-		stdlibConn, ok := driverConn.(*stdlib.Conn)
-		if !ok {
-			return errors.New("importer: unexpected driver connection type")
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		if rbErr := tx.Rollback(); rbErr != nil && !isSafeToIgnoreRollbackError(rbErr) {
+			fmt.Fprintf(os.Stderr, "importer: rollback failed: %v\n", rbErr)
+		}
+	}()
+
+	if opts.disableConstraints {
+		if _, err := tx.ExecContext(ctx, "SET LOCAL session_replication_role = 'replica'"); err != nil {
+			return fmt.Errorf("importer: disable constraints failed: %w", err)
+		}
+	}
+
+	for idx, stmt := range statements {
+		statementNumber := idx + 1
+		preview := formatSnippet([]byte(stmt.sql))
+
+		if skip, reason := shouldSkipStatement(stmt, opts.skipTables); skip {
+			fmt.Fprintf(os.Stderr, "importer: skipped statement %d near %q: %s\n", statementNumber, preview, reason)
+			continue
 		}
 
-		pgxConn := stdlibConn.Conn()
-		tx, err := pgxConn.Begin(ctx)
-		if err != nil {
-			return fmt.Errorf("importer: begin transaction: %w", err)
+		savepoint := fmt.Sprintf("importer_sp_%d", statementNumber)
+		if _, err := tx.ExecContext(ctx, "SAVEPOINT "+savepoint); err != nil {
+			return fmt.Errorf("importer: begin savepoint for statement %d near %q: %w", statementNumber, preview, err)
 		}
 
-		committed := false
-		defer func() {
-			if committed {
-				return
-			}
-			if rbErr := tx.Rollback(ctx); rbErr != nil && !isTxClosedError(rbErr) {
-				execErr = errors.Join(execErr, fmt.Errorf("importer: rollback failed: %w", rbErr))
-			}
-		}()
-
-		if opts.disableConstraints {
-			if _, err := tx.Exec(ctx, "SET LOCAL session_replication_role = 'replica'"); err != nil {
-				execErr = fmt.Errorf("importer: disable constraints failed: %w", err)
-				return execErr
-			}
-		}
-
-		for idx, stmt := range statements {
-			statementNumber := idx + 1
-			preview := formatSnippet([]byte(stmt.sql))
-
-			if skip, reason := shouldSkipStatement(stmt, opts.skipTables); skip {
-				fmt.Fprintf(os.Stderr, "importer: skipped statement %d near %q: %s\n", statementNumber, preview, reason)
-				continue
-			}
+		execErr := func() error {
 			if stmt.isCopy {
-				if err := executeCopy(ctx, tx.Conn().PgConn(), stmt); err != nil {
-					execErr = fmt.Errorf("importer: executing COPY statement %d near %q failed: %w", statementNumber, preview, err)
-					return execErr
+				if err := executeCopy(ctx, tx, stmt); err != nil {
+					return fmt.Errorf("importer: executing COPY statement %d near %q failed: %w", statementNumber, preview, err)
 				}
-				continue
+				return nil
 			}
 
-			nestedTx, err := tx.Begin(ctx)
-			if err != nil {
-				execErr = fmt.Errorf("importer: begin savepoint for statement %d near %q: %w", statementNumber, preview, err)
-				return execErr
-			}
-
-			if _, err := nestedTx.Exec(ctx, stmt.sql); err != nil {
+			if _, err := tx.ExecContext(ctx, stmt.sql); err != nil {
 				if skip, reason := shouldSkipExecError(stmt, err); skip {
-					if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !isTxClosedError(rbErr) {
-						execErr = fmt.Errorf("importer: rollback savepoint for skipped statement %d near %q failed: %w", statementNumber, preview, rbErr)
-						return execErr
+					if rbErr := rollbackToSavepoint(ctx, tx, savepoint); rbErr != nil {
+						return errors.Join(fmt.Errorf("importer: skipped statement %d near %q due to %s", statementNumber, preview, reason), rbErr)
 					}
 					fmt.Fprintf(os.Stderr, "importer: skipped statement %d near %q: %s\n", statementNumber, preview, reason)
-					continue
+					return nil
 				}
 
-				if rbErr := nestedTx.Rollback(ctx); rbErr != nil && !isTxClosedError(rbErr) {
-					execErr = errors.Join(fmt.Errorf("importer: executing SQL statement %d near %q failed: %w", statementNumber, preview, err), fmt.Errorf("importer: rollback savepoint failed: %w", rbErr))
-					return execErr
+				if rbErr := rollbackToSavepoint(ctx, tx, savepoint); rbErr != nil {
+					return errors.Join(fmt.Errorf("importer: executing SQL statement %d near %q failed: %w", statementNumber, preview, err), rbErr)
 				}
 
-				execErr = fmt.Errorf("importer: executing SQL statement %d near %q failed: %w", statementNumber, preview, err)
-				return execErr
+				return fmt.Errorf("importer: executing SQL statement %d near %q failed: %w", statementNumber, preview, err)
 			}
 
-			if err := nestedTx.Commit(ctx); err != nil {
-				execErr = fmt.Errorf("importer: release savepoint for statement %d near %q failed: %w", statementNumber, preview, err)
-				return execErr
-			}
-		}
+			return nil
+		}()
 
-		if err := tx.Commit(ctx); err != nil {
-			execErr = fmt.Errorf("importer: commit failed: %w", err)
-			return execErr
-		}
-
-		committed = true
-		return nil
-	})
-	if err != nil {
 		if execErr != nil {
 			return execErr
 		}
+
+		if _, err := tx.ExecContext(ctx, "RELEASE SAVEPOINT "+savepoint); err != nil {
+			return fmt.Errorf("importer: release savepoint for statement %d near %q failed: %w", statementNumber, preview, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("importer: commit failed: %w", err)
+	}
+
+	committed = true
+	return nil
+}
+
+func rollbackToSavepoint(ctx context.Context, tx *sql.Tx, name string) error {
+	if _, err := tx.ExecContext(ctx, "ROLLBACK TO SAVEPOINT "+name); err != nil {
+		return fmt.Errorf("importer: rollback savepoint %s failed: %w", name, err)
+	}
+
+	return nil
+}
+
+func executeCopy(ctx context.Context, tx *sql.Tx, stmt statement) error {
+	table, columns, err := parseCopyStatement(stmt.sql)
+	if err != nil {
 		return err
 	}
 
-	if execErr != nil {
-		return execErr
+	if len(columns) == 0 {
+		columns, err = resolveCopyColumns(ctx, tx, table)
+		if err != nil {
+			return err
+		}
+	}
+
+	rows, err := decodeCopyRows(stmt.copyData, len(columns))
+	if err != nil {
+		return err
+	}
+
+	placeholder := make([]string, len(columns))
+	for i := range placeholder {
+		placeholder[i] = fmt.Sprintf("$%d", i+1)
+	}
+
+	insertSQL := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, strings.Join(columns, ", "), strings.Join(placeholder, ", "))
+
+	for _, row := range rows {
+		if _, err := tx.ExecContext(ctx, insertSQL, row...); err != nil {
+			return fmt.Errorf("importer: insert from COPY failed: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func executeCopy(ctx context.Context, pgConn *pgconn.PgConn, stmt statement) error {
-	reader := bytes.NewReader(stmt.copyData)
-	sql := strings.TrimSpace(stmt.sql)
-	sql = strings.TrimSuffix(sql, ";")
-	if _, err := pgConn.CopyFrom(ctx, reader, sql); err != nil {
-		return fmt.Errorf("importer: executing COPY failed: %w", err)
-	}
-	return nil
-}
-
-func isTxClosedError(err error) bool {
+func isSafeToIgnoreRollbackError(err error) bool {
 	if err == nil {
-		return false
+		return true
 	}
 
-	return strings.Contains(strings.ToLower(err.Error()), "tx is closed")
+	lower := strings.ToLower(err.Error())
+	return strings.Contains(lower, "transaction has already been committed") || strings.Contains(lower, "transaction has already been rolled back")
 }
 
 func shouldSkipExecError(stmt statement, err error) (bool, string) {
-	var pgErr *pgconn.PgError
-	if !errors.As(err, &pgErr) {
+	code, message := sqlStateFromError(err)
+	if code == "" {
 		return false, ""
 	}
 
 	upper := strings.ToUpper(strings.TrimSpace(stmt.sql))
 
-	switch pgErr.Code {
+	switch code {
 	case "42P07", "42P06", "42710":
 		if strings.HasPrefix(upper, "CREATE ") || strings.HasPrefix(upper, "ALTER TABLE ") || strings.HasPrefix(upper, "ALTER INDEX ") {
-			return true, fmt.Sprintf("object already exists (%s)", pgErr.Message)
+			return true, fmt.Sprintf("object already exists (%s)", message)
 		}
 	case "42P16":
 		if strings.HasPrefix(upper, "ALTER TABLE ") || strings.HasPrefix(upper, "CREATE TABLE ") {
 			if strings.Contains(upper, "PRIMARY KEY") {
-				return true, fmt.Sprintf("primary key skipped (%s)", pgErr.Message)
+				return true, fmt.Sprintf("primary key skipped (%s)", message)
 			}
 		}
 	case "23505":
@@ -680,16 +686,16 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 			normalized := normalizeQualifiedIdentifier(target)
 			switch normalized {
 			case "schema_migrations", "public.schema_migrations":
-				return true, fmt.Sprintf("duplicate migration row skipped (%s)", pgErr.Message)
+				return true, fmt.Sprintf("duplicate migration row skipped (%s)", message)
 			}
 		}
 	case "42704":
 		if strings.Contains(upper, " OWNER TO ") {
-			return true, fmt.Sprintf("owner skipped (%s)", pgErr.Message)
+			return true, fmt.Sprintf("owner skipped (%s)", message)
 		}
 	case "42P01":
 		if strings.HasPrefix(upper, "ALTER TABLE") || strings.HasPrefix(upper, "DROP ") {
-			return true, fmt.Sprintf("relation skipped (%s)", pgErr.Message)
+			return true, fmt.Sprintf("relation skipped (%s)", message)
 		}
 	}
 
@@ -720,6 +726,387 @@ func shouldSkipStatement(stmt statement, skipTables map[string]struct{}) (bool, 
 	}
 
 	return true, fmt.Sprintf("%s targets excluded identifier %s", operation, normalized)
+}
+
+func parseCopyStatement(sql string) (string, []string, error) {
+	trimmed := strings.TrimSpace(sql)
+	if trimmed == "" {
+		return "", nil, errors.New("importer: COPY statement is empty")
+	}
+
+	if !strings.HasPrefix(strings.ToUpper(trimmed), "COPY ") {
+		return "", nil, errors.New("importer: COPY statement must begin with COPY")
+	}
+
+	remainder := strings.TrimSpace(trimmed[len("COPY "):])
+	table := firstIdentifier(remainder, true)
+	if table == "" {
+		return "", nil, errors.New("importer: COPY statement missing table name")
+	}
+
+	remainder = strings.TrimSpace(remainder[len(table):])
+	var columns []string
+	if strings.HasPrefix(remainder, "(") {
+		end, ok := skipParentheticalSection([]byte(remainder), 0)
+		if !ok {
+			return "", nil, errors.New("importer: COPY statement column list is malformed")
+		}
+
+		list := remainder[1:end]
+		parsed, err := parseIdentifierList(list)
+		if err != nil {
+			return "", nil, err
+		}
+		columns = parsed
+
+		remainder = strings.TrimSpace(remainder[end+1:])
+	}
+
+	upperRemainder := strings.ToUpper(remainder)
+	idx := strings.Index(upperRemainder, "FROM")
+	if idx == -1 {
+		return "", nil, errors.New("importer: COPY statement missing FROM clause")
+	}
+
+	afterFrom := strings.TrimSpace(remainder[idx+len("FROM"):])
+	if !strings.HasPrefix(strings.ToUpper(afterFrom), "STDIN") {
+		return "", nil, errors.New("importer: COPY statement must target STDIN")
+	}
+
+	return table, columns, nil
+}
+
+func parseIdentifierList(input string) ([]string, error) {
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return nil, nil
+	}
+
+	var (
+		parts    []string
+		current  strings.Builder
+		inQuotes bool
+	)
+
+	data := []byte(input)
+
+	for i := 0; i < len(data); {
+		r, size := utf8DecodeRune(data[i:])
+		if size == 0 {
+			break
+		}
+
+		switch r {
+		case '"':
+			current.WriteRune(r)
+			if inQuotes && i+size < len(data) {
+				next, nextSize := utf8DecodeRune(data[i+size:])
+				if next == '"' {
+					current.WriteRune(next)
+					i += size + nextSize
+					continue
+				}
+			}
+			inQuotes = !inQuotes
+			i += size
+			continue
+		case ',':
+			if !inQuotes {
+				part := strings.TrimSpace(current.String())
+				if part != "" {
+					parts = append(parts, part)
+				}
+				current.Reset()
+				i += size
+				continue
+			}
+		}
+
+		current.WriteRune(r)
+		i += size
+	}
+
+	if current.Len() > 0 {
+		part := strings.TrimSpace(current.String())
+		if part != "" {
+			parts = append(parts, part)
+		}
+	}
+
+	if inQuotes {
+		return nil, errors.New("importer: COPY column list has unterminated quotes")
+	}
+
+	return parts, nil
+}
+
+func decodeCopyRows(data []byte, columnCount int) ([][]any, error) {
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	var rows [][]any
+	line := 0
+
+	for scanner.Scan() {
+		text := scanner.Text()
+		line++
+
+		fields := strings.Split(text, "\t")
+		if columnCount == 0 {
+			columnCount = len(fields)
+		}
+
+		if len(fields) != columnCount {
+			return nil, fmt.Errorf("importer: COPY row %d has %d fields, expected %d", line, len(fields), columnCount)
+		}
+
+		row := make([]any, columnCount)
+		for i, field := range fields {
+			value, err := decodeCopyField(field)
+			if err != nil {
+				return nil, fmt.Errorf("importer: decode COPY row %d column %d: %w", line, i+1, err)
+			}
+			row[i] = value
+		}
+		rows = append(rows, row)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("importer: read COPY data: %w", err)
+	}
+
+	return rows, nil
+}
+
+func decodeCopyField(field string) (any, error) {
+	if field == "\\N" {
+		return nil, nil
+	}
+
+	var builder strings.Builder
+
+	for i := 0; i < len(field); i++ {
+		ch := field[i]
+		if ch != '\\' {
+			builder.WriteByte(ch)
+			continue
+		}
+
+		i++
+		if i >= len(field) {
+			return nil, errors.New("importer: COPY field ends with escape prefix")
+		}
+
+		next := field[i]
+		switch next {
+		case 'b':
+			builder.WriteByte('\b')
+		case 'f':
+			builder.WriteByte('\f')
+		case 'n':
+			builder.WriteByte('\n')
+		case 'r':
+			builder.WriteByte('\r')
+		case 't':
+			builder.WriteByte('\t')
+		case 'v':
+			builder.WriteByte('\v')
+		case '0':
+			builder.WriteByte(0)
+		case '.':
+			builder.WriteByte('.')
+		case '\\':
+			builder.WriteByte('\\')
+		default:
+			if next >= '0' && next <= '7' {
+				value := int(next - '0')
+				consumed := 1
+				for consumed < 3 && i+1 < len(field) {
+					digit := field[i+1]
+					if digit < '0' || digit > '7' {
+						break
+					}
+					value = value*8 + int(digit-'0')
+					i++
+					consumed++
+				}
+				builder.WriteByte(byte(value))
+				continue
+			}
+			builder.WriteByte(next)
+		}
+	}
+
+	return builder.String(), nil
+}
+
+func sqlStateFromError(err error) (string, string) {
+	if err == nil {
+		return "", ""
+	}
+
+	var stateErr interface{ SQLState() string }
+	if errors.As(err, &stateErr) {
+		return stateErr.SQLState(), err.Error()
+	}
+
+	message := err.Error()
+	upper := strings.ToUpper(message)
+	marker := "(SQLSTATE "
+	idx := strings.LastIndex(upper, marker)
+	if idx != -1 {
+		start := idx + len(marker)
+		end := strings.Index(upper[start:], ")")
+		if end != -1 {
+			code := message[start : start+end]
+			return code, message
+		}
+	}
+
+	return "", message
+}
+
+func resolveCopyColumns(ctx context.Context, tx *sql.Tx, table string) ([]string, error) {
+	schema, name := splitTableName(table)
+	if name == "" {
+		return nil, errors.New("importer: COPY statement missing target table name")
+	}
+
+	if schema == "" {
+		schema = "public"
+	}
+
+	rows, err := tx.QueryContext(ctx, `SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position`, schema, name)
+	if err != nil {
+		return nil, fmt.Errorf("importer: lookup columns for %s.%s: %w", schema, name, err)
+	}
+	defer rows.Close()
+
+	var columns []string
+	for rows.Next() {
+		var col string
+		if err := rows.Scan(&col); err != nil {
+			return nil, fmt.Errorf("importer: scan column metadata: %w", err)
+		}
+		columns = append(columns, quoteIdentifier(col))
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("importer: iterate column metadata: %w", err)
+	}
+
+	if len(columns) == 0 {
+		return nil, fmt.Errorf("importer: table %s.%s has no columns", schema, name)
+	}
+
+	return columns, nil
+}
+
+func splitTableName(identifier string) (string, string) {
+	parts := splitQualifiedIdentifierParts(identifier)
+	if len(parts) == 0 {
+		return "", ""
+	}
+
+	if len(parts) == 1 {
+		return "", unquoteIdentifierPart(parts[0])
+	}
+
+	schema := unquoteIdentifierPart(parts[0])
+	name := unquoteIdentifierPart(parts[len(parts)-1])
+	return schema, name
+}
+
+func splitQualifiedIdentifierParts(identifier string) []string {
+	identifier = strings.TrimSpace(identifier)
+	if identifier == "" {
+		return nil
+	}
+
+	data := []byte(identifier)
+	var (
+		parts   []string
+		current strings.Builder
+		inQuote bool
+	)
+
+	for i := 0; i < len(data); {
+		r, size := utf8DecodeRune(data[i:])
+		if size == 0 {
+			break
+		}
+
+		if r == '"' {
+			current.WriteRune(r)
+			if inQuote && i+size < len(data) {
+				next, nextSize := utf8DecodeRune(data[i+size:])
+				if next == '"' {
+					current.WriteRune(next)
+					i += size + nextSize
+					continue
+				}
+			}
+			inQuote = !inQuote
+			i += size
+			continue
+		}
+
+		if r == '.' && !inQuote {
+			part := strings.TrimSpace(current.String())
+			if part != "" {
+				parts = append(parts, part)
+			}
+			current.Reset()
+			i += size
+			continue
+		}
+
+		current.WriteRune(r)
+		i += size
+	}
+
+	if current.Len() > 0 {
+		part := strings.TrimSpace(current.String())
+		if part != "" {
+			parts = append(parts, part)
+		}
+	}
+
+	return parts
+}
+
+func unquoteIdentifierPart(part string) string {
+	part = strings.TrimSpace(part)
+	if part == "" {
+		return ""
+	}
+
+	if strings.HasPrefix(part, "\"") && strings.HasSuffix(part, "\"") && len(part) >= 2 {
+		inner := part[1 : len(part)-1]
+		inner = strings.ReplaceAll(inner, `""`, `"`)
+		return inner
+	}
+
+	return strings.ToLower(part)
+}
+
+func quoteIdentifier(identifier string) string {
+	if identifier == "" {
+		return identifier
+	}
+
+	needQuote := false
+	for _, r := range identifier {
+		if !(r == '_' || r >= '0' && r <= '9' || r >= 'a' && r <= 'z') {
+			needQuote = true
+			break
+		}
+	}
+
+	if !needQuote && identifier[0] >= 'a' && identifier[0] <= 'z' {
+		return identifier
+	}
+
+	escaped := strings.ReplaceAll(identifier, `"`, `""`)
+	return fmt.Sprintf("\"%s\"", escaped)
 }
 
 func statementTarget(sql string) (string, string) {
