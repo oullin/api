@@ -353,6 +353,33 @@ func TestSeedFromFileSkipsDuplicateConstraintAdds(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsDuplicatePrimaryKeyAdds(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE duplicate_pk (id BIGINT PRIMARY KEY, name TEXT NOT NULL);",
+		"ALTER TABLE ONLY public.duplicate_pk ADD CONSTRAINT duplicate_pk_pkey PRIMARY KEY (id);",
+		"INSERT INTO duplicate_pk (id, name) VALUES (1, 'alpha');",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	var count int64
+	if err := conn.Sql().Table("duplicate_pk").Count(&count).Error; err != nil {
+		t.Fatalf("count duplicate_pk: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("expected 1 row in duplicate_pk, got %d", count)
+	}
+}
+
 func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)

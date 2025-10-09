@@ -661,6 +661,12 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 		if strings.HasPrefix(upper, "CREATE ") || strings.HasPrefix(upper, "ALTER TABLE ") || strings.HasPrefix(upper, "ALTER INDEX ") {
 			return true, fmt.Sprintf("object already exists (%s)", pgErr.Message)
 		}
+	case "42P16":
+		if strings.HasPrefix(upper, "ALTER TABLE ") || strings.HasPrefix(upper, "CREATE TABLE ") {
+			if strings.Contains(upper, "PRIMARY KEY") {
+				return true, fmt.Sprintf("primary key skipped (%s)", pgErr.Message)
+			}
+		}
 	case "42704":
 		if strings.Contains(upper, " OWNER TO ") {
 			return true, fmt.Sprintf("owner skipped (%s)", pgErr.Message)
