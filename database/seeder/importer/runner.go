@@ -317,7 +317,7 @@ func parseStatements(contents []byte) ([]statement, error) {
 
 		trimmed := strings.TrimSpace(string(rawStmt))
 		if isCopyFromStdin(trimmed) {
-			copyStart := skipIgnorableSections(data, idx)
+			copyStart := skipWhitespace(data, idx)
 			copyLen, advance, err := extractCopyData(data[copyStart:])
 			if err != nil {
 				return nil, err
@@ -415,6 +415,21 @@ func skipIgnorableSections(data []byte, idx int) int {
 		return idx
 	}
 
+	return idx
+}
+
+func skipWhitespace(data []byte, idx int) int {
+	for idx < len(data) {
+		r, size := utf8DecodeRune(data[idx:])
+		if size == 0 {
+			break
+		}
+		if unicode.IsSpace(r) {
+			idx += size
+			continue
+		}
+		break
+	}
 	return idx
 }
 
