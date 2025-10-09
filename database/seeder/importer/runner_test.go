@@ -236,7 +236,7 @@ func TestSeedFromFileLoadsDataOutOfConstraintOrder(t *testing.T) {
 	}
 }
 
-func TestSeedFromFileSeedsAPIKeyTables(t *testing.T) {
+func TestSeedFromFileSkipsExcludedTables(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
@@ -297,7 +297,7 @@ func TestSeedFromFileSeedsAPIKeyTables(t *testing.T) {
 	}
 }
 
-func TestSeedFromFileRecreatesAPIKeySequence(t *testing.T) {
+func TestSeedFromFileSkipsDropSequenceForExcludedTables(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
 
