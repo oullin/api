@@ -17,6 +17,7 @@ import (
 	_ "image/jpeg"
 
 	"github.com/andybalholm/brotli"
+	"github.com/klauspost/compress/zstd"
 )
 
 func createTestImage(width, height int) image.Image {
@@ -227,6 +228,56 @@ func TestFetchRemoteBrotliEncoded(t *testing.T) {
 	}
 }
 
+func TestFetchRemoteZstdEncoded(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.png" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+
+		var pngBuf bytes.Buffer
+		if err := png.Encode(&pngBuf, createTestImage(18, 12)); err != nil {
+			t.Fatalf("encode png: %v", err)
+		}
+
+		var zstdBuf bytes.Buffer
+		writer, err := zstd.NewWriter(&zstdBuf)
+		if err != nil {
+			t.Fatalf("create zstd writer: %v", err)
+		}
+
+		if _, err := writer.Write(pngBuf.Bytes()); err != nil {
+			t.Fatalf("write zstd payload: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("close zstd writer: %v", err)
+		}
+
+		w.Header().Set("Content-Encoding", "zstd")
+		w.Header().Set("Content-Type", "image/png")
+		if _, err := w.Write(zstdBuf.Bytes()); err != nil {
+			t.Fatalf("write zstd payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	img, format, err := Fetch(server.URL + "/cover.png")
+	if err != nil {
+		t.Fatalf("fetch zstd image: %v", err)
+	}
+
+	if format != "png" {
+		t.Fatalf("expected png format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 18 || bounds.Dy() != 12 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
 func TestFetchRemoteDecodeErrorIncludesContentType(t *testing.T) {
 	t.Parallel()
 
@@ -240,6 +291,43 @@ func TestFetchRemoteDecodeErrorIncludesContentType(t *testing.T) {
 	_, _, err := Fetch(server.URL + "/cover.png")
 	if err == nil {
 		t.Fatal("expected error decoding html response")
+	}
+
+	if !strings.Contains(err.Error(), "content-type \"text/html\"") {
+		t.Fatalf("expected content-type in error, got %v", err)
+	}
+}
+
+func TestFetchRemoteDecodeErrorIncludesContentEncoding(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Encoding", "br")
+		w.Header().Set("Content-Type", "text/html")
+
+		var brBuf bytes.Buffer
+		writer := brotli.NewWriterLevel(&brBuf, brotli.BestCompression)
+		if _, err := writer.Write([]byte("<html></html>")); err != nil {
+			t.Fatalf("write brotli payload: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("close brotli writer: %v", err)
+		}
+
+		if _, err := w.Write(brBuf.Bytes()); err != nil {
+			t.Fatalf("write brotli payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	_, _, err := Fetch(server.URL + "/cover.png")
+	if err == nil {
+		t.Fatal("expected error decoding brotli encoded html")
+	}
+
+	if !strings.Contains(err.Error(), "content-encoding \"br\"") {
+		t.Fatalf("expected content-encoding in error, got %v", err)
 	}
 
 	if !strings.Contains(err.Error(), "content-type \"text/html\"") {

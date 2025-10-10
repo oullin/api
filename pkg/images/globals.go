@@ -12,3 +12,33 @@ type composedReadCloser struct {
 	io.Reader
 	io.Closer
 }
+
+type multiCloser []io.Closer
+
+func (m multiCloser) Close() error {
+	var firstErr error
+
+	for _, closer := range m {
+		if closer == nil {
+			continue
+		}
+
+		if err := closer.Close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+
+	return firstErr
+}
+
+type noErrorCloseFunc func()
+
+func (f noErrorCloseFunc) Close() error {
+	if f == nil {
+		return nil
+	}
+
+	f()
+
+	return nil
+}

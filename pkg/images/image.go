@@ -1,6 +1,7 @@
 package images
 
 import (
+	"compress/gzip"
 	"fmt"
 	stdimage "image"
 	_ "image/gif"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/chai2010/webp"
+	"github.com/klauspost/compress/zstd"
 )
 
 func Fetch(source string) (stdimage.Image, string, error) {
@@ -28,7 +30,7 @@ func Fetch(source string) (stdimage.Image, string, error) {
 		return nil, "", fmt.Errorf("parse url: %w", err)
 	}
 
-	reader, contentType, err := openSource(parsed)
+	reader, contentType, encoding, err := openSource(parsed)
 	if err != nil {
 		return nil, "", err
 	}
@@ -36,10 +38,20 @@ func Fetch(source string) (stdimage.Image, string, error) {
 
 	img, format, err := stdimage.Decode(reader)
 	if err != nil {
-		ct := strings.TrimSpace(contentType)
-		if ct != "" {
-			return nil, "", fmt.Errorf("decode image (content-type %q): %w", ct, err)
+		var details []string
+
+		if ct := strings.TrimSpace(contentType); ct != "" {
+			details = append(details, fmt.Sprintf("content-type %q", ct))
 		}
+
+		if enc := strings.TrimSpace(encoding); enc != "" {
+			details = append(details, fmt.Sprintf("content-encoding %q", enc))
+		}
+
+		if len(details) > 0 {
+			return nil, "", fmt.Errorf("decode image (%s): %w", strings.Join(details, ", "), err)
+		}
+
 		return nil, "", fmt.Errorf("decode image: %w", err)
 	}
 
@@ -183,14 +195,14 @@ func NormalizeRelativeURL(rel string) string {
 	return b.String()
 }
 
-func openSource(parsed *url.URL) (io.ReadCloser, string, error) {
+func openSource(parsed *url.URL) (io.ReadCloser, string, string, error) {
 	switch parsed.Scheme {
 	case "http", "https":
 		client := &http.Client{Timeout: 10 * time.Second}
 
 		req, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
 		if err != nil {
-			return nil, "", fmt.Errorf("create request: %w", err)
+			return nil, "", "", fmt.Errorf("create request: %w", err)
 		}
 
 		req.Header.Set("Accept", supportedImageAcceptHeader)
@@ -198,38 +210,59 @@ func openSource(parsed *url.URL) (io.ReadCloser, string, error) {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			return nil, "", fmt.Errorf("download image: %w", err)
+			return nil, "", "", fmt.Errorf("download image: %w", err)
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			defer resp.Body.Close()
-			return nil, "", fmt.Errorf("download image: unexpected status %s", resp.Status)
+			return nil, "", "", fmt.Errorf("download image: unexpected status %s", resp.Status)
 		}
 
-		return wrapHTTPBody(resp), resp.Header.Get("Content-Type"), nil
+		reader, encoding, err := wrapHTTPBody(resp)
+		if err != nil {
+			return nil, "", "", err
+		}
+
+		return reader, resp.Header.Get("Content-Type"), encoding, nil
 	case "file":
 		reader, err := openLocal(parsed)
-		return reader, "", err
+		return reader, "", "", err
 	case "":
 		reader, err := os.Open(parsed.Path)
-		return reader, "", err
+		return reader, "", "", err
 	default:
-		return nil, "", fmt.Errorf("unsupported image scheme: %s", parsed.Scheme)
+		return nil, "", "", fmt.Errorf("unsupported image scheme: %s", parsed.Scheme)
 	}
 }
 
-func wrapHTTPBody(resp *http.Response) io.ReadCloser {
+func wrapHTTPBody(resp *http.Response) (io.ReadCloser, string, error) {
 	encoding := strings.TrimSpace(strings.ToLower(resp.Header.Get("Content-Encoding")))
 	if idx := strings.IndexRune(encoding, ','); idx >= 0 {
 		encoding = encoding[:idx]
 	}
 	switch encoding {
 	case "", "identity":
-		return resp.Body
+		return resp.Body, encoding, nil
 	case "br":
-		return composedReadCloser{Reader: brotli.NewReader(resp.Body), Closer: resp.Body}
+		return composedReadCloser{Reader: brotli.NewReader(resp.Body), Closer: resp.Body}, encoding, nil
+	case "gzip":
+		reader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			_ = resp.Body.Close()
+			return nil, encoding, fmt.Errorf("prepare gzip decoder: %w", err)
+		}
+
+		return composedReadCloser{Reader: reader, Closer: multiCloser{reader, resp.Body}}, encoding, nil
+	case "zstd", "zstandard":
+		decoder, err := zstd.NewReader(resp.Body)
+		if err != nil {
+			_ = resp.Body.Close()
+			return nil, encoding, fmt.Errorf("prepare zstd decoder: %w", err)
+		}
+
+		return composedReadCloser{Reader: decoder, Closer: multiCloser{noErrorCloseFunc(decoder.Close), resp.Body}}, encoding, nil
 	default:
-		return resp.Body
+		return resp.Body, encoding, nil
 	}
 }
 
