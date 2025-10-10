@@ -183,7 +183,15 @@ func openSource(parsed *url.URL) (io.ReadCloser, error) {
 	switch parsed.Scheme {
 	case "http", "https":
 		client := &http.Client{Timeout: 10 * time.Second}
-		resp, err := client.Get(parsed.String())
+
+		req, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
+		if err != nil {
+			return nil, fmt.Errorf("create request: %w", err)
+		}
+
+		req.Header.Set("Accept", supportedImageAcceptHeader)
+
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("download image: %w", err)
 		}

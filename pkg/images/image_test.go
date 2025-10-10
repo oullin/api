@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "image/jpeg"
@@ -131,6 +132,48 @@ func TestFetchRemoteWebP(t *testing.T) {
 
 	bounds := img.Bounds()
 	if bounds.Dx() != 1 || bounds.Dy() != 1 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteSetsAcceptHeader(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.png" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+
+		accept := r.Header.Get("Accept")
+		if strings.Contains(accept, "image/avif") {
+			t.Errorf("unexpected avif accept header: %s", accept)
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+
+		if accept != supportedImageAcceptHeader {
+			t.Errorf("unexpected accept header: %s", accept)
+		}
+
+		if err := png.Encode(w, createTestImage(10, 10)); err != nil {
+			t.Errorf("encode png: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	img, format, err := Fetch(server.URL + "/cover.png")
+	if err != nil {
+		t.Fatalf("fetch remote image: %v", err)
+	}
+
+	if format != "png" {
+		t.Fatalf("expected png format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 10 || bounds.Dy() != 10 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
 	}
 }
