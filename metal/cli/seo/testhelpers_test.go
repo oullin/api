@@ -97,7 +97,8 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 			Password: strings.Repeat("s", 16),
 		},
 		Seo: env.SeoEnvironment{
-			SpaDir: spaDir,
+			SpaDir:       spaDir,
+			SpaImagesDir: filepath.Join(spaDir, "posts", "images"),
 		},
 	}
 

@@ -18,6 +18,7 @@ const WebAboutUrl = "/about"
 
 const WebPostsName = "Posts"
 const WebPostsUrl = "/posts"
+const WebPostDetailUrl = "/post"
 
 const WebResumeName = "Resume"
 const WebResumeUrl = "/resume"

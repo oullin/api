@@ -38,7 +38,7 @@ type TemplateData struct {
 }
 
 type TagOgData struct {
-	Type        string `validate:"required,oneof=website"`
+	Type        string `validate:"required,oneof=website article"`
 	Image       string `validate:"required,url"`
 	ImageAlt    string `validate:"required,min=10"`
 	ImageWidth  string `validate:"required"`

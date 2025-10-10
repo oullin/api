@@ -3,6 +3,7 @@ package seo
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -310,6 +311,10 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 		return fmt.Errorf("%s: creating directory for %s: %w", fileName, filepath.Dir(out), err)
 	}
 
+	if err = os.Remove(out); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("%s: removing stale export %s: %w", fileName, out, err)
+	}
+
 	cli.Blueln(fmt.Sprintf("Writing file on: %s", out))
 	if err = os.WriteFile(out, buffer.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("%s: writing %s: %w", fileName, out, err)
@@ -439,9 +444,19 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 	imageAlt := g.SanitizeAltText(post.Title, g.Page.SiteName)
 	description := g.SanitizeMetaDescription(post.Excerpt, Description)
 	image := g.PreferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
+	imageType := "image/png"
+
+	if prepared, err := g.preparePostImage(post); err == nil && prepared.URL != "" {
+		image = prepared.URL
+		imageType = prepared.Mime
+	} else if err != nil {
+		cli.Errorln(fmt.Sprintf("failed to prepare post image for %s: %v", post.Slug, err))
+	}
 
 	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
 		data.OGTagOg.Image = image
+		data.OGTagOg.Type = "article"
+		data.OGTagOg.ImageType = imageType
 		data.Twitter.Image = image
 		data.Description = description
 		data.OGTagOg.ImageAlt = imageAlt
@@ -454,10 +469,10 @@ func (g *Generator) CanonicalPostPath(slug string) string {
 	cleaned = strings.Trim(cleaned, "/")
 
 	if cleaned == "" {
-		return WebPostsUrl
+		return WebPostDetailUrl
 	}
 
-	return WebPostsUrl + "/" + cleaned
+	return WebPostDetailUrl + "/" + cleaned
 }
 
 func (g *Generator) SanitizeMetaDescription(raw, fallback string) string {
