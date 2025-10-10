@@ -46,21 +46,7 @@ func Fetch(source string) (stdimage.Image, string, error) {
 
 	img, format, err := decodeImagePayload(payload)
 	if err != nil {
-		var details []string
-
-		if ct := strings.TrimSpace(contentType); ct != "" {
-			details = append(details, fmt.Sprintf("content-type %q", ct))
-		}
-
-		if enc := strings.TrimSpace(encoding); enc != "" {
-			details = append(details, fmt.Sprintf("content-encoding %q", enc))
-		}
-
-		if len(details) > 0 {
-			return nil, "", fmt.Errorf("decode image (%s): %w", strings.Join(details, ", "), err)
-		}
-
-		return nil, "", fmt.Errorf("decode image: %w", err)
+		return nil, "", newDecodeError(err, payload, contentType, encoding)
 	}
 
 	return img, format, nil
@@ -150,6 +136,10 @@ func dropUTF8BOM(data []byte) []byte {
 func expandCompressedCandidate(data []byte) [][]byte {
 	var expansions [][]byte
 
+	if decoded, err := tryBrotliDecode(data); err == nil {
+		expansions = append(expansions, decoded)
+	}
+
 	if decoded, err := tryGzipDecode(data); err == nil {
 		expansions = append(expansions, decoded)
 	}
@@ -163,6 +153,21 @@ func expandCompressedCandidate(data []byte) [][]byte {
 	}
 
 	return expansions
+}
+
+func tryBrotliDecode(data []byte) ([]byte, error) {
+	reader := brotli.NewReader(bytes.NewReader(data))
+
+	decoded, err := readLimited(reader, maxRemoteImageBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(decoded) == 0 {
+		return nil, errors.New("brotli decoded empty")
+	}
+
+	return decoded, nil
 }
 
 func tryGzipDecode(data []byte) ([]byte, error) {

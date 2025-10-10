@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"errors"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -352,6 +353,51 @@ func TestFetchRemoteBrotliEncoded(t *testing.T) {
 	}
 }
 
+func TestFetchRemoteBrotliWithoutEncodingHeader(t *testing.T) {
+	t.Parallel()
+
+	var pngBuf bytes.Buffer
+	if err := png.Encode(&pngBuf, createTestImage(28, 16)); err != nil {
+		t.Fatalf("encode png: %v", err)
+	}
+
+	var brBuf bytes.Buffer
+	writer := brotli.NewWriterLevel(&brBuf, brotli.BestCompression)
+	if _, err := writer.Write(pngBuf.Bytes()); err != nil {
+		t.Fatalf("write brotli: %v", err)
+	}
+
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close brotli writer: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.png" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "image/png")
+		if _, err := w.Write(brBuf.Bytes()); err != nil {
+			t.Fatalf("write brotli payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	img, format, err := Fetch(server.URL + "/cover.png")
+	if err != nil {
+		t.Fatalf("fetch brotli payload without header: %v", err)
+	}
+
+	if format != "png" {
+		t.Fatalf("expected png format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 28 || bounds.Dy() != 16 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
 func TestFetchRemoteZstdEncoded(t *testing.T) {
 	t.Parallel()
 
@@ -456,6 +502,58 @@ func TestFetchRemoteDecodeErrorIncludesContentEncoding(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "content-type \"text/html\"") {
 		t.Fatalf("expected content-type in error, got %v", err)
+	}
+}
+
+func TestFetchRemoteDecodeErrorProvidesDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	payload := []byte("<html>forbidden</html>")
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		if _, err := w.Write(payload); err != nil {
+			t.Fatalf("write payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	_, _, err := Fetch(server.URL + "/cover.jpg")
+	if err == nil {
+		t.Fatal("expected decode error")
+	}
+
+	var decodeErr *DecodeError
+	if !errors.As(err, &decodeErr) {
+		t.Fatalf("expected DecodeError, got %T", err)
+	}
+
+	if decodeErr.SniffedType == "" || !strings.Contains(decodeErr.SniffedType, "text/html") {
+		t.Fatalf("expected sniffed type to mention text/html, got %q", decodeErr.SniffedType)
+	}
+
+	if decodeErr.Size != len(payload) {
+		t.Fatalf("unexpected payload size: got %d want %d", decodeErr.Size, len(payload))
+	}
+
+	if decodeErr.Hash == "" {
+		t.Fatal("expected hash to be populated")
+	}
+
+	if !strings.HasPrefix(decodeErr.PrefixHex, "3c68") { // "<h"
+		t.Fatalf("expected prefix to include html bytes, got %s", decodeErr.PrefixHex)
+	}
+
+	diagnostics := decodeErr.Diagnostics()
+	var sawPrefix bool
+	for _, line := range diagnostics {
+		if strings.HasPrefix(line, "payload-prefix-hex:") {
+			sawPrefix = true
+		}
+	}
+
+	if !sawPrefix {
+		t.Fatalf("expected diagnostics to include payload prefix, got %v", diagnostics)
 	}
 }
 
