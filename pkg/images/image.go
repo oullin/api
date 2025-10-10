@@ -22,8 +22,6 @@ import (
 	"github.com/chai2010/webp"
 )
 
-const DefaultJPEGQuality = 85
-
 func Fetch(source string) (stdimage.Image, string, error) {
 	parsed, err := url.Parse(source)
 	if err != nil {
@@ -203,11 +201,6 @@ func openSource(parsed *url.URL) (io.ReadCloser, error) {
 	default:
 		return nil, fmt.Errorf("unsupported image scheme: %s", parsed.Scheme)
 	}
-}
-
-type composedReadCloser struct {
-	io.Reader
-	io.Closer
 }
 
 func wrapHTTPBody(resp *http.Response) io.ReadCloser {
