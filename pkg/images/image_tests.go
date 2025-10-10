@@ -1,4 +1,4 @@
-package seo
+package images
 
 import "testing"
 
@@ -68,8 +68,8 @@ func TestNormalizeRelativeURL(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			if got := normalizeRelativeURL(tc.input); got != tc.want {
-				t.Fatalf("normalizeRelativeURL(%q) = %q, want %q", tc.input, got, tc.want)
+			if got := NormalizeRelativeURL(tc.input); got != tc.want {
+				t.Fatalf("NormalizeRelativeURL(%q) = %q, want %q", tc.input, got, tc.want)
 			}
 		})
 	}
