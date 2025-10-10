@@ -7,13 +7,21 @@ import (
 
 func normalizeRelativeURL(rel string) string {
 	cleaned := path.Clean(rel)
-	cleaned = strings.TrimPrefix(cleaned, "./")
 
-	for strings.HasPrefix(cleaned, "../") {
-		cleaned = strings.TrimPrefix(cleaned, "../")
+	if cleaned == "." {
+		return ""
 	}
 
-	cleaned = strings.TrimPrefix(cleaned, "/")
+	parts := strings.Split(cleaned, "/")
+	normalized := make([]string, 0, len(parts))
 
-	return cleaned
+	for _, part := range parts {
+		if part == "" || part == "." || part == ".." {
+			continue
+		}
+
+		normalized = append(normalized, part)
+	}
+
+	return strings.Join(normalized, "/")
 }
