@@ -115,7 +115,7 @@ func TestFetchRemoteWebP(t *testing.T) {
 
 		w.Header().Set("Content-Type", "image/webp")
 		if _, err := w.Write(data); err != nil {
-			t.Fatalf("write webp payload: %v", err)
+			t.Errorf("write webp payload: %v", err)
 		}
 	}))
 	defer server.Close()
