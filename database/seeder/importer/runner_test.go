@@ -319,6 +319,93 @@ func TestSeedFromFileSkipsDropSequenceForExcludedTables(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsDuplicateConstraintAdds(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"ALTER TABLE ONLY public.categories ADD CONSTRAINT categories_name_key UNIQUE (name);",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+}
+
+func TestSeedFromFileSkipsDuplicatePrimaryKeyAdds(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE duplicate_pk (id BIGINT PRIMARY KEY, name TEXT NOT NULL);",
+		"ALTER TABLE ONLY public.duplicate_pk ADD CONSTRAINT duplicate_pk_pkey PRIMARY KEY (id);",
+		"INSERT INTO duplicate_pk (id, name) VALUES (1, 'alpha');",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	var count int64
+	if err := conn.Sql().Table("duplicate_pk").Count(&count).Error; err != nil {
+		t.Fatalf("count duplicate_pk: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("expected 1 row in duplicate_pk, got %d", count)
+	}
+}
+
+func TestSeedFromFileSkipsDuplicateSchemaMigrationsInserts(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE IF NOT EXISTS public.schema_migrations (version BIGINT PRIMARY KEY, dirty BOOLEAN NOT NULL);",
+		"INSERT INTO public.schema_migrations (version, dirty) VALUES (42, false);",
+		"INSERT INTO public.schema_migrations (version, dirty) VALUES (42, false);",
+		"CREATE TABLE schema_migration_checks (id SERIAL PRIMARY KEY, note TEXT NOT NULL);",
+		"INSERT INTO schema_migration_checks (note) VALUES ('ok');",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	// Run the seed a second time to assert the duplicate handling remains idempotent
+	// across separate executions.
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("second seed from file: %v", err)
+	}
+
+	var migrationCount int64
+	if err := conn.Sql().Table("schema_migrations").Where("version = ?", 42).Count(&migrationCount).Error; err != nil {
+		t.Fatalf("count schema_migrations: %v", err)
+	}
+
+	if migrationCount != 1 {
+		t.Fatalf("expected 1 schema_migrations row for version 42, got %d", migrationCount)
+	}
+
+	var noteCount int64
+	if err := conn.Sql().Table("schema_migration_checks").Count(&noteCount).Error; err != nil {
+		t.Fatalf("count schema_migration_checks: %v", err)
+	}
+
+	if noteCount < 1 {
+		t.Fatalf("expected schema_migration_checks data to persist, got %d rows", noteCount)
+	}
+}
+
 func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
@@ -574,7 +661,7 @@ func withSuffix(t *testing.T, suffix string) string {
 func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environment, func()) {
 	t.Helper()
 
-	if os.Getenv("IMPORTER_SKIP_INTEGRATION") == "1" || os.Getenv("SQLSEED_SKIP_INTEGRATION") == "1" {
+	if skipIntegrationTests() {
 		t.Skip("importer integration tests disabled via IMPORTER_SKIP_INTEGRATION or SQLSEED_SKIP_INTEGRATION")
 	}
 
@@ -640,4 +727,27 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environme
 	}
 
 	return conn, e, cleanup
+}
+
+func skipIntegrationTests() bool {
+	for _, key := range []string{"IMPORTER_SKIP_INTEGRATION", "SQLSEED_SKIP_INTEGRATION"} {
+		if truthy(os.Getenv(key)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func truthy(value string) bool {
+	if value == "" {
+		return false
+	}
+
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "1", "t", "true", "y", "yes", "on", "enable", "enabled":
+		return true
+	}
+
+	return false
 }

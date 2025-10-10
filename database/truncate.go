@@ -3,8 +3,8 @@ package database
 import (
 	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/oullin/metal/env"
 )
 
@@ -28,6 +28,8 @@ func (t Truncate) Execute() error {
 	tables := GetSchemaTables()
 	var errs []error
 
+	db := t.database.Sql()
+
 	for i := len(tables) - 1; i >= 0; i-- {
 		table := tables[i]
 
@@ -36,7 +38,12 @@ func (t Truncate) Execute() error {
 			continue
 		}
 
-		exec := t.database.Sql().Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", table))
+		if !db.Migrator().HasTable(table) {
+			fmt.Printf("[db:truncate] skipped table [%s]: table does not exist\n", table)
+			continue
+		}
+
+		exec := db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", table))
 		if exec.Error != nil {
 			if isUndefinedRelationError(exec.Error) {
 				fmt.Printf("[db:truncate] skipped table [%s]: %v\n", table, exec.Error)
@@ -58,10 +65,30 @@ func (t Truncate) Execute() error {
 }
 
 func isUndefinedRelationError(err error) bool {
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == "42P01"
+	return sqlState(err) == "42P01"
+}
+
+func sqlState(err error) string {
+	if err == nil {
+		return ""
 	}
 
-	return false
+	var stateErr interface{ SQLState() string }
+	if errors.As(err, &stateErr) {
+		return stateErr.SQLState()
+	}
+
+	message := err.Error()
+	upper := strings.ToUpper(message)
+	marker := "(SQLSTATE "
+	idx := strings.LastIndex(upper, marker)
+	if idx != -1 {
+		start := idx + len(marker)
+		end := strings.Index(upper[start:], ")")
+		if end != -1 {
+			return message[start : start+end]
+		}
+	}
+
+	return ""
 }
