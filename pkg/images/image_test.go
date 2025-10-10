@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"image"
 	"image/color"
+	"image/jpeg"
 	"image/png"
 	"net/http"
 	"net/http/httptest"
@@ -13,8 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	_ "image/jpeg"
 
 	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/zstd"
@@ -133,6 +132,83 @@ func TestFetchRemoteWebP(t *testing.T) {
 
 	bounds := img.Bounds()
 	if bounds.Dx() != 1 || bounds.Dy() != 1 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteJPEGWithLeadingNoise(t *testing.T) {
+	t.Parallel()
+
+	img := createTestImage(24, 16)
+	var jpegBuf bytes.Buffer
+	if err := jpeg.Encode(&jpegBuf, img, &jpeg.Options{Quality: 85}); err != nil {
+		t.Fatalf("encode jpeg: %v", err)
+	}
+
+	junkPrefix := []byte{0xEF, 0xBB, 0xBF, '\n', '\r', ' '}
+	payload := append(junkPrefix, jpegBuf.Bytes()...)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.jpg" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "image/jpeg")
+		if _, err := w.Write(payload); err != nil {
+			t.Fatalf("write jpeg payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	imgResult, format, err := Fetch(server.URL + "/cover.jpg")
+	if err != nil {
+		t.Fatalf("fetch jpeg with leading noise: %v", err)
+	}
+
+	if format != "jpeg" {
+		t.Fatalf("expected jpeg format, got %q", format)
+	}
+
+	bounds := imgResult.Bounds()
+	if bounds.Dx() != 24 || bounds.Dy() != 16 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteJPEGEmbeddedAfterHTML(t *testing.T) {
+	t.Parallel()
+
+	img := createTestImage(30, 22)
+	var jpegBuf bytes.Buffer
+	if err := jpeg.Encode(&jpegBuf, img, &jpeg.Options{Quality: 80}); err != nil {
+		t.Fatalf("encode jpeg: %v", err)
+	}
+
+	payload := append([]byte("<html><body>preview</body></html>"), jpegBuf.Bytes()...)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/asset" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "image/jpeg")
+		if _, err := w.Write(payload); err != nil {
+			t.Fatalf("write jpeg payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	imgResult, format, err := Fetch(server.URL + "/asset")
+	if err != nil {
+		t.Fatalf("fetch embedded jpeg: %v", err)
+	}
+
+	if format != "jpeg" {
+		t.Fatalf("expected jpeg format, got %q", format)
+	}
+
+	bounds := imgResult.Bounds()
+	if bounds.Dx() != 30 || bounds.Dy() != 22 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
 	}
 }

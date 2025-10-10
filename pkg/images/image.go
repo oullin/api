@@ -1,7 +1,9 @@
 package images
 
 import (
+	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	stdimage "image"
 	_ "image/gif"
@@ -15,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp"
@@ -34,9 +37,12 @@ func Fetch(source string) (stdimage.Image, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	defer reader.Close()
+	payload, err := readImagePayload(reader)
+	if err != nil {
+		return nil, "", err
+	}
 
-	img, format, err := stdimage.Decode(reader)
+	img, format, err := decodeImagePayload(payload)
 	if err != nil {
 		var details []string
 
@@ -56,6 +62,102 @@ func Fetch(source string) (stdimage.Image, string, error) {
 	}
 
 	return img, format, nil
+}
+
+const maxRemoteImageBytes = 32 << 20 // 32MiB should cover large blog assets.
+
+func readImagePayload(reader io.ReadCloser) ([]byte, error) {
+	defer reader.Close()
+
+	limited := io.LimitReader(reader, maxRemoteImageBytes+1)
+	data, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, fmt.Errorf("read image payload: %w", err)
+	}
+
+	if len(data) == 0 {
+		return nil, errors.New("empty image payload")
+	}
+
+	if len(data) > maxRemoteImageBytes {
+		return nil, fmt.Errorf("image payload exceeds %d bytes", maxRemoteImageBytes)
+	}
+
+	return data, nil
+}
+
+func decodeImagePayload(data []byte) (stdimage.Image, string, error) {
+	attempts := [][]byte{data}
+
+	trimmed := trimLeadingNoise(data)
+	if len(trimmed) > 0 && !bytes.Equal(trimmed, data) {
+		attempts = append(attempts, trimmed)
+	}
+
+	if start, ok := findEmbeddedImageStart(trimmed); ok && start > 0 && start < len(trimmed) {
+		attempts = append(attempts, trimmed[start:])
+	}
+
+	var lastErr error
+	for _, candidate := range attempts {
+		img, format, err := stdimage.Decode(bytes.NewReader(candidate))
+		if err == nil {
+			return img, format, nil
+		}
+
+		lastErr = err
+	}
+
+	if lastErr == nil {
+		lastErr = errors.New("image: unknown format")
+	}
+
+	return nil, "", lastErr
+}
+
+func trimLeadingNoise(data []byte) []byte {
+	trimmed := bytes.TrimLeftFunc(data, func(r rune) bool {
+		return r == unicode.ReplacementChar || unicode.IsSpace(r)
+	})
+
+	if len(trimmed) >= 3 && bytes.Equal(trimmed[:3], []byte{0xEF, 0xBB, 0xBF}) {
+		trimmed = trimmed[3:]
+	}
+
+	return trimmed
+}
+
+func findEmbeddedImageStart(data []byte) (int, bool) {
+	if idx := bytes.Index(data, []byte{0xFF, 0xD8, 0xFF}); idx >= 0 {
+		return idx, true
+	}
+
+	if idx := bytes.Index(data, []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'}); idx >= 0 {
+		return idx, true
+	}
+
+	if idx := bytes.Index(data, []byte("GIF87a")); idx >= 0 {
+		return idx, true
+	}
+
+	if idx := bytes.Index(data, []byte("GIF89a")); idx >= 0 {
+		return idx, true
+	}
+
+	for idx := bytes.Index(data, []byte("RIFF")); idx >= 0; {
+		if len(data)-idx >= 12 && bytes.Equal(data[idx+8:idx+12], []byte("WEBP")) {
+			return idx, true
+		}
+
+		next := bytes.Index(data[idx+4:], []byte("RIFF"))
+		if next < 0 {
+			break
+		}
+
+		idx += 4 + next
+	}
+
+	return 0, false
 }
 
 func Resize(src stdimage.Image, width, height int) stdimage.Image {
