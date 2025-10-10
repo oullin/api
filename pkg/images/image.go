@@ -19,6 +19,7 @@ import (
 	_ "golang.org/x/image/webp"
 
 	"github.com/andybalholm/brotli"
+	"github.com/chai2010/webp"
 )
 
 const DefaultJPEGQuality = 85
@@ -51,23 +52,26 @@ func Resize(src stdimage.Image, width, height int) stdimage.Image {
 }
 
 func DetermineExtension(source, format string) string {
-	ext := strings.ToLower(filepath.Ext(source))
-	if ext == "" {
-		ext = "." + strings.ToLower(format)
-	}
+	ext := strings.ToLower(strings.TrimSpace(filepath.Ext(source)))
+	format = strings.ToLower(strings.TrimSpace(format))
 
 	switch ext {
 	case ".jpeg":
 		return ".jpg"
-	case ".jpg", ".png":
+	case ".jpg", ".png", ".webp":
 		return ext
-	default:
-		if format == "png" {
-			return ".png"
-		}
-
-		return ".jpg"
 	}
+
+	switch format {
+	case "jpeg", "jpg":
+		return ".jpg"
+	case "png":
+		return ".png"
+	case "webp":
+		return ".webp"
+	}
+
+	return ".jpg"
 }
 
 func BuildFileName(slug, ext, fallback string) string {
@@ -93,6 +97,9 @@ func Save(path string, img stdimage.Image, ext string, quality int) error {
 	case ".png":
 		encoder := &png.Encoder{CompressionLevel: png.DefaultCompression}
 		return encoder.Encode(fh, img)
+	case ".webp":
+		options := &webp.Options{Lossless: false, Quality: float32(quality)}
+		return webp.Encode(fh, img, options)
 	default:
 		options := &jpeg.Options{Quality: quality}
 		return jpeg.Encode(fh, img, options)
@@ -139,6 +146,8 @@ func MIMEFromExtension(ext string) string {
 		return "image/png"
 	case ".jpg":
 		return "image/jpeg"
+	case ".webp":
+		return "image/webp"
 	default:
 		return "image/png"
 	}

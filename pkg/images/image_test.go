@@ -202,8 +202,10 @@ func TestDetermineExtension(t *testing.T) {
 		{"explicit png", "example.png", "jpeg", ".png"},
 		{"explicit jpg", "example.jpg", "png", ".jpg"},
 		{"explicit jpeg", "example.jpeg", "png", ".jpg"},
+		{"explicit webp", "example.webp", "jpeg", ".webp"},
 		{"missing ext png format", "example", "png", ".png"},
 		{"missing ext jpeg format", "example", "jpeg", ".jpg"},
+		{"missing ext webp format", "example", "webp", ".webp"},
 		{"unknown ext falls back to jpg", "example.gif", "jpeg", ".jpg"},
 	}
 
@@ -256,6 +258,7 @@ func TestMIMEFromExtension(t *testing.T) {
 		".jpg":  "image/jpeg",
 		".jpeg": "image/png",
 		".gif":  "image/png",
+		".webp": "image/webp",
 	}
 
 	for ext, want := range tests {
@@ -341,6 +344,37 @@ func TestSaveJPEG(t *testing.T) {
 
 	bounds := img.Bounds()
 	if bounds.Dx() != 25 || bounds.Dy() != 25 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestSaveWebP(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "photo.webp")
+
+	if err := Save(path, createTestImage(40, 20), ".webp", 80); err != nil {
+		t.Fatalf("save webp: %v", err)
+	}
+
+	fh, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("open webp: %v", err)
+	}
+	defer fh.Close()
+
+	img, format, err := image.Decode(fh)
+	if err != nil {
+		t.Fatalf("decode webp: %v", err)
+	}
+
+	if format != "webp" {
+		t.Fatalf("expected webp format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 40 || bounds.Dy() != 20 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
 	}
 }
