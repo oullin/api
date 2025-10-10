@@ -6,22 +6,29 @@ import (
 )
 
 func normalizeRelativeURL(rel string) string {
+	rel = strings.ReplaceAll(rel, "\\", "/")
+
 	cleaned := path.Clean(rel)
 
-	if cleaned == "." {
+	if cleaned == "." || cleaned == "/" {
 		return ""
 	}
 
 	parts := strings.Split(cleaned, "/")
-	normalized := make([]string, 0, len(parts))
+
+	var b strings.Builder
 
 	for _, part := range parts {
 		if part == "" || part == "." || part == ".." {
 			continue
 		}
 
-		normalized = append(normalized, part)
+		if b.Len() > 0 {
+			b.WriteByte('/')
+		}
+
+		b.WriteString(part)
 	}
 
-	return strings.Join(normalized, "/")
+	return b.String()
 }

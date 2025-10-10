@@ -17,6 +17,10 @@ func TestNormalizeRelativeURL(t *testing.T) {
 			input: ".",
 			want:  "",
 		},
+		"root slash": {
+			input: "/",
+			want:  "",
+		},
 		"double dot": {
 			input: "..",
 			want:  "",
@@ -41,9 +45,21 @@ func TestNormalizeRelativeURL(t *testing.T) {
 			input: "./foo/./bar.png",
 			want:  "foo/bar.png",
 		},
+		"current dir prefix": {
+			input: "./foo.png",
+			want:  "foo.png",
+		},
 		"cleanup mixed": {
 			input: "foo/../bar/baz.png",
 			want:  "bar/baz.png",
+		},
+		"trailing slash": {
+			input: "foo/bar/",
+			want:  "foo/bar",
+		},
+		"windows separators": {
+			input: "..\\foo\\bar\\baz.png",
+			want:  "foo/bar/baz.png",
 		},
 	}
 
