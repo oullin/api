@@ -3,6 +3,8 @@ package images
 import (
 	"bytes"
 	"compress/gzip"
+	"compress/zlib"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	stdimage "image"
@@ -66,6 +68,8 @@ func Fetch(source string) (stdimage.Image, string, error) {
 
 const maxRemoteImageBytes = 32 << 20 // 32MiB should cover large blog assets.
 
+var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
+
 func readImagePayload(reader io.ReadCloser) ([]byte, error) {
 	defer reader.Close()
 
@@ -87,25 +91,38 @@ func readImagePayload(reader io.ReadCloser) ([]byte, error) {
 }
 
 func decodeImagePayload(data []byte) (stdimage.Image, string, error) {
-	attempts := [][]byte{data}
-
-	trimmed := trimLeadingNoise(data)
-	if len(trimmed) > 0 && !bytes.Equal(trimmed, data) {
-		attempts = append(attempts, trimmed)
-	}
-
-	if start, ok := findEmbeddedImageStart(trimmed); ok && start > 0 && start < len(trimmed) {
-		attempts = append(attempts, trimmed[start:])
-	}
+	queue := [][]byte{data}
+	seen := make(map[[32]byte]struct{})
 
 	var lastErr error
-	for _, candidate := range attempts {
+
+	for len(queue) > 0 {
+		candidate := queue[0]
+		queue = queue[1:]
+
+		hash := sha256.Sum256(candidate)
+		if _, exists := seen[hash]; exists {
+			continue
+		}
+		seen[hash] = struct{}{}
+
 		img, format, err := stdimage.Decode(bytes.NewReader(candidate))
 		if err == nil {
 			return img, format, nil
 		}
 
 		lastErr = err
+
+		trimmed := trimLeadingNoise(candidate)
+		if len(trimmed) > 0 && len(trimmed) != len(candidate) {
+			queue = append(queue, trimmed)
+		}
+
+		if start, ok := findEmbeddedImageStart(candidate); ok && start > 0 && start < len(candidate) {
+			queue = append(queue, candidate[start:])
+		}
+
+		queue = append(queue, expandCompressedCandidate(candidate)...)
 	}
 
 	if lastErr == nil {
@@ -116,15 +133,107 @@ func decodeImagePayload(data []byte) (stdimage.Image, string, error) {
 }
 
 func trimLeadingNoise(data []byte) []byte {
-	trimmed := bytes.TrimLeftFunc(data, func(r rune) bool {
-		return r == unicode.ReplacementChar || unicode.IsSpace(r)
-	})
+	trimmed := dropUTF8BOM(data)
+	trimmed = bytes.TrimLeftFunc(trimmed, unicode.IsSpace)
 
-	if len(trimmed) >= 3 && bytes.Equal(trimmed[:3], []byte{0xEF, 0xBB, 0xBF}) {
-		trimmed = trimmed[3:]
+	return dropUTF8BOM(trimmed)
+}
+
+func dropUTF8BOM(data []byte) []byte {
+	for len(data) >= len(utf8BOM) && bytes.Equal(data[:len(utf8BOM)], utf8BOM) {
+		data = data[len(utf8BOM):]
 	}
 
-	return trimmed
+	return data
+}
+
+func expandCompressedCandidate(data []byte) [][]byte {
+	var expansions [][]byte
+
+	if decoded, err := tryGzipDecode(data); err == nil {
+		expansions = append(expansions, decoded)
+	}
+
+	if decoded, err := tryZlibDecode(data); err == nil {
+		expansions = append(expansions, decoded)
+	}
+
+	if decoded, err := tryZstdDecode(data); err == nil {
+		expansions = append(expansions, decoded)
+	}
+
+	return expansions
+}
+
+func tryGzipDecode(data []byte) ([]byte, error) {
+	if len(data) < 2 || data[0] != 0x1F || data[1] != 0x8B {
+		return nil, errors.New("not gzip")
+	}
+
+	reader, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	return readLimited(reader, maxRemoteImageBytes)
+}
+
+func tryZlibDecode(data []byte) ([]byte, error) {
+	if len(data) < 2 {
+		return nil, errors.New("not zlib")
+	}
+
+	cmf := data[0]
+	flg := data[1]
+
+	if cmf&0x0F != 8 { // compression method deflate
+		return nil, errors.New("not zlib deflate")
+	}
+
+	if (uint16(cmf)<<8|uint16(flg))%31 != 0 {
+		return nil, errors.New("invalid zlib header")
+	}
+
+	reader, err := zlib.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	return readLimited(reader, maxRemoteImageBytes)
+}
+
+func tryZstdDecode(data []byte) ([]byte, error) {
+	if len(data) < 4 || data[0] != 0x28 || data[1] != 0xB5 || data[2] != 0x2F || data[3] != 0xFD {
+		return nil, errors.New("not zstd")
+	}
+
+	decoder, err := zstd.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer decoder.Close()
+
+	return readLimited(decoder, maxRemoteImageBytes)
+}
+
+func readLimited(reader io.Reader, limit int) ([]byte, error) {
+	limited := io.LimitReader(reader, int64(limit)+1)
+	data, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) > limit {
+		return nil, fmt.Errorf("decompressed payload exceeds %d bytes", limit)
+	}
+
+	if len(data) == 0 {
+		return nil, errors.New("decompressed payload empty")
+	}
+
+	return data, nil
 }
 
 func findEmbeddedImageStart(data []byte) (int, bool) {

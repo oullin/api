@@ -2,6 +2,7 @@ package images
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"image"
 	"image/color"
@@ -209,6 +210,53 @@ func TestFetchRemoteJPEGEmbeddedAfterHTML(t *testing.T) {
 
 	bounds := imgResult.Bounds()
 	if bounds.Dx() != 30 || bounds.Dy() != 22 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteJPEGCompressedWithoutEncodingHeader(t *testing.T) {
+	t.Parallel()
+
+	img := createTestImage(40, 28)
+	var jpegBuf bytes.Buffer
+	if err := jpeg.Encode(&jpegBuf, img, &jpeg.Options{Quality: 85}); err != nil {
+		t.Fatalf("encode jpeg: %v", err)
+	}
+
+	var compressed bytes.Buffer
+	gzipWriter := gzip.NewWriter(&compressed)
+	if _, err := gzipWriter.Write(jpegBuf.Bytes()); err != nil {
+		t.Fatalf("compress jpeg: %v", err)
+	}
+	if err := gzipWriter.Close(); err != nil {
+		t.Fatalf("close gzip writer: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.jpg" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/jpeg")
+		if _, err := w.Write(compressed.Bytes()); err != nil {
+			t.Fatalf("write compressed payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	imgResult, format, err := Fetch(server.URL + "/cover.jpg")
+	if err != nil {
+		t.Fatalf("fetch compressed jpeg: %v", err)
+	}
+
+	if format != "jpeg" {
+		t.Fatalf("expected jpeg format, got %q", format)
+	}
+
+	bounds := imgResult.Bounds()
+	if bounds.Dx() != 40 || bounds.Dy() != 28 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
 	}
 }
