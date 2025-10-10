@@ -1,6 +1,7 @@
 package images
 
 import (
+	"bytes"
 	"encoding/base64"
 	"image"
 	"image/color"
@@ -13,6 +14,8 @@ import (
 	"testing"
 
 	_ "image/jpeg"
+
+	"github.com/andybalholm/brotli"
 )
 
 func createTestImage(width, height int) image.Image {
@@ -126,6 +129,51 @@ func TestFetchRemoteWebP(t *testing.T) {
 
 	bounds := img.Bounds()
 	if bounds.Dx() != 1 || bounds.Dy() != 1 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteBrotliEncoded(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.png" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+
+		var pngBuf bytes.Buffer
+		if err := png.Encode(&pngBuf, createTestImage(32, 24)); err != nil {
+			t.Fatalf("encode png: %v", err)
+		}
+
+		var brBuf bytes.Buffer
+		writer := brotli.NewWriterLevel(&brBuf, brotli.BestCompression)
+		if _, err := writer.Write(pngBuf.Bytes()); err != nil {
+			t.Fatalf("write brotli: %v", err)
+		}
+		if err := writer.Close(); err != nil {
+			t.Fatalf("close brotli writer: %v", err)
+		}
+
+		w.Header().Set("Content-Encoding", "br")
+		w.Header().Set("Content-Type", "image/png")
+		if _, err := w.Write(brBuf.Bytes()); err != nil {
+			t.Fatalf("write brotli payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	img, format, err := Fetch(server.URL + "/cover.png")
+	if err != nil {
+		t.Fatalf("fetch brotli image: %v", err)
+	}
+
+	if format != "png" {
+		t.Fatalf("expected png format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 32 || bounds.Dy() != 24 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
 	}
 }

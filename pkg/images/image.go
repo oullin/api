@@ -17,6 +17,8 @@ import (
 
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp"
+
+	"github.com/andybalholm/brotli"
 )
 
 const DefaultJPEGQuality = 85
@@ -184,13 +186,33 @@ func openSource(parsed *url.URL) (io.ReadCloser, error) {
 			return nil, fmt.Errorf("download image: unexpected status %s", resp.Status)
 		}
 
-		return resp.Body, nil
+		return wrapHTTPBody(resp), nil
 	case "file":
 		return openLocal(parsed)
 	case "":
 		return os.Open(parsed.Path)
 	default:
 		return nil, fmt.Errorf("unsupported image scheme: %s", parsed.Scheme)
+	}
+}
+
+type composedReadCloser struct {
+	io.Reader
+	io.Closer
+}
+
+func wrapHTTPBody(resp *http.Response) io.ReadCloser {
+	encoding := strings.TrimSpace(strings.ToLower(resp.Header.Get("Content-Encoding")))
+	if idx := strings.IndexRune(encoding, ','); idx >= 0 {
+		encoding = encoding[:idx]
+	}
+	switch encoding {
+	case "", "identity":
+		return resp.Body
+	case "br":
+		return composedReadCloser{Reader: brotli.NewReader(resp.Body), Closer: resp.Body}
+	default:
+		return resp.Body
 	}
 }
 
