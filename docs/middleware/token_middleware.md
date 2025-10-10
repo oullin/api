@@ -2,7 +2,7 @@
 
 This document describes the TokenCheckMiddleware found in
 `pkg/middleware/token_middleware.go` and its supporting helpers such as
-`valid_timestamp.go` and `pkg/portal/support.go`.
+`pkg/middleware/mwguards/valid_timestamp_guard.go` and `pkg/portal/support.go`.
 
 ---
 
