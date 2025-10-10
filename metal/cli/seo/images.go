@@ -62,7 +62,7 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 	relativeDir = strings.Trim(relativeDir, "/")
 
 	relative := path.Join(relativeDir, fileName)
-	relative = strings.TrimPrefix(relative, "/")
+	relative = normalizeRelativeURL(relative)
 
 	return preparedImage{
 		URL:  g.siteURLFor(relative),
@@ -91,4 +91,17 @@ func (g *Generator) siteURLFor(rel string) string {
 	}
 
 	return portal.SanitiseURL(base + "/" + rel)
+}
+
+func normalizeRelativeURL(rel string) string {
+	cleaned := path.Clean(rel)
+	cleaned = strings.TrimPrefix(cleaned, "./")
+
+	for strings.HasPrefix(cleaned, "../") {
+		cleaned = strings.TrimPrefix(cleaned, "../")
+	}
+
+	cleaned = strings.TrimPrefix(cleaned, "/")
+
+	return cleaned
 }

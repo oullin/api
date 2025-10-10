@@ -1,10 +1,17 @@
 package seo
 
 import (
+	"image"
+	"image/color"
+	"image/png"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/metal/env"
 )
 
 func TestGeneratorPreparePostImageMissingURL(t *testing.T) {
@@ -57,5 +64,74 @@ func TestGeneratorSiteURLFor(t *testing.T) {
 				t.Fatalf("siteURLFor(%q, %q) = %q, want %q", tc.base, tc.rel, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestGeneratorPreparePostImageNormalizesRelativeURL(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	spaDir := filepath.Join(root, "seo")
+	imagesDir := filepath.Join(root, "images", "seo")
+
+	if err := os.MkdirAll(spaDir, 0o755); err != nil {
+		t.Fatalf("create spa dir: %v", err)
+	}
+
+	if err := os.MkdirAll(imagesDir, 0o755); err != nil {
+		t.Fatalf("create images dir: %v", err)
+	}
+
+	srcPath := filepath.Join(root, "source.png")
+	fh, err := os.Create(srcPath)
+	if err != nil {
+		t.Fatalf("create source image: %v", err)
+	}
+
+	img := image.NewRGBA(image.Rect(0, 0, 20, 20))
+	for y := 0; y < 20; y++ {
+		for x := 0; x < 20; x++ {
+			img.Set(x, y, color.RGBA{R: 10, G: 20, B: 30, A: 255})
+		}
+	}
+
+	if err := png.Encode(fh, img); err != nil {
+		t.Fatalf("encode source image: %v", err)
+	}
+
+	if err := fh.Close(); err != nil {
+		t.Fatalf("close source image: %v", err)
+	}
+
+	fileURL := url.URL{Scheme: "file", Path: srcPath}
+
+	gen := &Generator{
+		Page: Page{
+			SiteName:  "SEO Test Suite",
+			SiteURL:   "https://seo.example.test",
+			OutputDir: spaDir,
+		},
+		Env: &env.Environment{Seo: env.SeoEnvironment{SpaDir: spaDir, SpaImagesDir: imagesDir}},
+	}
+
+	post := payload.PostResponse{Slug: "awesome-post", CoverImageURL: fileURL.String()}
+
+	prepared, err := gen.preparePostImage(post)
+	if err != nil {
+		t.Fatalf("prepare post image: %v", err)
+	}
+
+	if strings.Contains(prepared.URL, "../") {
+		t.Fatalf("expected url without parent traversal: %s", prepared.URL)
+	}
+
+	expectedPrefix := "https://seo.example.test/images/seo/"
+	if !strings.HasPrefix(prepared.URL, expectedPrefix) {
+		t.Fatalf("unexpected url prefix: got %s, want prefix %s", prepared.URL, expectedPrefix)
+	}
+
+	destPath := filepath.Join(imagesDir, "awesome-post.png")
+	if _, err := os.Stat(destPath); err != nil {
+		t.Fatalf("stat destination image: %v", err)
 	}
 }
