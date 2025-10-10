@@ -33,6 +33,8 @@ func GetDefaultValidator() *Validator {
 }
 
 func MakeValidatorFrom(abstract *validator.Validate) *Validator {
+	registerCustomValidations(abstract)
+
 	return &Validator{
 		Errors:   make(map[string]interface{}),
 		instance: abstract,

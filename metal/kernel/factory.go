@@ -116,6 +116,11 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		SpaDir: env.GetEnvVar("ENV_SPA_DIR"),
 	}
 
+	backupEnv := env.BackupEnvironment{
+		Cron: env.GetEnvVar("ENV_DB_BACKUP_CRON"),
+		Dir:  env.GetEnvVar("ENV_DB_BACKUP_DIR"),
+	}
+
 	if _, err := validate.Rejects(app); err != nil {
 		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJson())
 	}
@@ -144,6 +149,10 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		panic(errorSuffix + "invalid [seo] model: " + validate.GetErrorsAsJson())
 	}
 
+	if _, err := validate.Rejects(backupEnv); err != nil {
+		panic(errorSuffix + "invalid [backup] model: " + validate.GetErrorsAsJson())
+	}
+
 	blog := &env.Environment{
 		App:     app,
 		DB:      db,
@@ -152,6 +161,7 @@ func MakeEnv(validate *portal.Validator) *env.Environment {
 		Sentry:  sentryEnv,
 		Ping:    pingEnv,
 		Seo:     seoEnv,
+		Backup:  backupEnv,
 	}
 
 	if _, err := validate.Rejects(blog); err != nil {

@@ -45,6 +45,8 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_PING_PASSWORD", "abcdef1234567890")
 	t.Setenv("ENV_APP_URL", "http://localhost:8080")
 	t.Setenv("ENV_SPA_DIR", "/Users/gus/Sites/oullin/web/public/seo")
+	t.Setenv("ENV_DB_BACKUP_CRON", "@daily")
+	t.Setenv("ENV_DB_BACKUP_DIR", t.TempDir())
 }
 
 func TestMakeEnv(t *testing.T) {
@@ -97,7 +99,9 @@ func TestIgnite(t *testing.T) {
 		"ENV_SENTRY_CSP=csp\n" +
 		"ENV_SPA_DIR=/tmp\n" +
 		"ENV_PING_USERNAME=1234567890abcdef\n" +
-		"ENV_PING_PASSWORD=abcdef1234567890\n"
+		"ENV_PING_PASSWORD=abcdef1234567890\n" +
+		"ENV_DB_BACKUP_CRON=@daily\n" +
+		"ENV_DB_BACKUP_DIR=/tmp"
 
 	f, err := os.CreateTemp("", "envfile")
 

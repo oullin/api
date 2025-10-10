@@ -14,6 +14,7 @@ type Environment struct {
 	Sentry  SentryEnvironment `validate:"required"`
 	Ping    PingEnvironment   `validate:"required"`
 	Seo     SeoEnvironment    `validate:"required"`
+	Backup  BackupEnvironment `validate:"required"`
 }
 
 // SecretsDir defines where secret files are read from. It can be overridden in

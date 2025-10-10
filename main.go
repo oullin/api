@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	baseHttp "net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	_ "github.com/lib/pq"
 	"github.com/oullin/metal/kernel"
+	"github.com/oullin/pkg/agenda"
 	"github.com/oullin/pkg/portal"
 	"github.com/rs/cors"
 )
@@ -34,6 +36,20 @@ func main() {
 	defer app.Recover()
 
 	app.Boot()
+
+	backupCtx, cancelBackups := context.WithCancel(context.Background())
+	defer cancelBackups()
+
+	if scheduler, err := agenda.NewScheduler(app.GetEnv()); err != nil {
+		slog.Error("failed to create backup scheduler", "error", err)
+		panic("backup scheduler initialization failed")
+	} else if err := scheduler.Start(backupCtx); err != nil {
+		slog.Error("failed to start backup scheduler", "error", err)
+		panic("backup scheduler start failed")
+	} else {
+		slog.Info("database backup scheduler started", "cron", app.GetEnv().Backup.Cron)
+		defer scheduler.Stop()
+	}
 
 	// --- Testing
 	if err := app.GetDB().Ping(); err != nil {
