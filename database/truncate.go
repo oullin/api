@@ -28,6 +28,8 @@ func (t Truncate) Execute() error {
 	tables := GetSchemaTables()
 	var errs []error
 
+	db := t.database.Sql()
+
 	for i := len(tables) - 1; i >= 0; i-- {
 		table := tables[i]
 
@@ -36,7 +38,12 @@ func (t Truncate) Execute() error {
 			continue
 		}
 
-		exec := t.database.Sql().Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", table))
+		if !db.Migrator().HasTable(table) {
+			fmt.Printf("[db:truncate] skipped table [%s]: table does not exist\n", table)
+			continue
+		}
+
+		exec := db.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", table))
 		if exec.Error != nil {
 			if isUndefinedRelationError(exec.Error) {
 				fmt.Printf("[db:truncate] skipped table [%s]: %v\n", table, exec.Error)

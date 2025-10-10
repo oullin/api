@@ -246,18 +246,7 @@ func TestPrepareDatabaseReturnsTruncateError(t *testing.T) {
 	t.Cleanup(func() { _ = sqlDB.Close() })
 
 	environment := &env.Environment{App: env.AppEnvironment{Type: "local"}}
-	tables := database.GetSchemaTables()
-
-	for i := len(tables) - 1; i >= 0; i-- {
-		table := tables[i]
-		stmt := fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", table)
-		expectation := mock.ExpectExec(regexp.QuoteMeta(stmt))
-		if table == "api_key_signatures" {
-			expectation.WillReturnError(errors.New("truncate boom"))
-		} else {
-			expectation.WillReturnResult(sqlmock.NewResult(0, 0))
-		}
-	}
+	expectTruncateTables(t, mock, nil, "api_key_signatures", errors.New("truncate boom"))
 
 	err := prepareDatabase(context.Background(), conn, environment)
 	if err == nil || !strings.Contains(err.Error(), "truncate database") {
@@ -298,11 +287,7 @@ func TestPrepareDatabaseExecutesMigrations(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 
-	tables := database.GetSchemaTables()
-	for i := len(tables) - 1; i >= 0; i-- {
-		stmt := fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", tables[i])
-		mock.ExpectExec(regexp.QuoteMeta(stmt)).WillReturnResult(sqlmock.NewResult(0, 0))
-	}
+	expectTruncateTables(t, mock, nil, "", nil)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta("SAVEPOINT importer_sp_1")).WillReturnResult(sqlmock.NewResult(0, 0))
@@ -365,11 +350,7 @@ func TestSeedFromFileExecutesSQLStatements(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 
-	tables := database.GetSchemaTables()
-	for i := len(tables) - 1; i >= 0; i-- {
-		stmt := fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", tables[i])
-		mock.ExpectExec(regexp.QuoteMeta(stmt)).WillReturnResult(sqlmock.NewResult(0, 0))
-	}
+	expectTruncateTables(t, mock, nil, "", nil)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta("SAVEPOINT importer_sp_1")).WillReturnResult(sqlmock.NewResult(0, 0))
@@ -544,6 +525,44 @@ func TestRollbackToSavepointReturnsError(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func expectTruncateTables(t *testing.T, mock sqlmock.Sqlmock, existing map[string]bool, errorTable string, errorToReturn error) {
+	t.Helper()
+
+	query := regexp.QuoteMeta("SELECT count(*) FROM information_schema.tables WHERE table_schema = CURRENT_SCHEMA() AND table_name = $1 AND table_type = $2")
+	tables := database.GetSchemaTables()
+
+	for i := len(tables) - 1; i >= 0; i-- {
+		table := tables[i]
+		exists := true
+		if existing != nil {
+			if val, ok := existing[table]; ok {
+				exists = val
+			}
+		}
+
+		count := int64(0)
+		if exists {
+			count = 1
+		}
+
+		mock.ExpectQuery(query).
+			WithArgs(table, "BASE TABLE").
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(count))
+
+		if !exists {
+			continue
+		}
+
+		stmt := fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE;", table)
+		expectation := mock.ExpectExec(regexp.QuoteMeta(stmt))
+		if table == errorTable && errorToReturn != nil {
+			expectation.WillReturnError(errorToReturn)
+		} else {
+			expectation.WillReturnResult(sqlmock.NewResult(0, 0))
+		}
 	}
 }
 
