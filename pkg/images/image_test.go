@@ -108,7 +108,9 @@ func TestFetchRemoteWebP(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/cover.webp" {
-			t.Fatalf("unexpected path: %s", r.URL.Path)
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			http.NotFound(w, r)
+			return
 		}
 
 		w.Header().Set("Content-Type", "image/webp")
