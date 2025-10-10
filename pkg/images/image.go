@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"golang.org/x/image/draw"
+	_ "golang.org/x/image/webp"
 )
 
 const DefaultJPEGQuality = 85

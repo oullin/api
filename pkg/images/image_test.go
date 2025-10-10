@@ -1,6 +1,7 @@
 package images
 
 import (
+	"encoding/base64"
 	"image"
 	"image/color"
 	"image/png"
@@ -88,6 +89,43 @@ func TestFetchRemote(t *testing.T) {
 
 	bounds := img.Bounds()
 	if bounds.Dx() != 50 || bounds.Dy() != 40 {
+		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteWebP(t *testing.T) {
+	t.Parallel()
+
+	const webpBase64 = "UklGRjwAAABXRUJQVlA4IDAAAADQAQCdASoBAAEAAUAmJaACdLoB+AADsAD+8ut//NgVzXPv9//S4P0uD9Lg/9KQAAA="
+
+	data, err := base64.StdEncoding.DecodeString(webpBase64)
+	if err != nil {
+		t.Fatalf("decode webp fixture: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.webp" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "image/webp")
+		if _, err := w.Write(data); err != nil {
+			t.Fatalf("write webp payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	img, format, err := Fetch(server.URL + "/cover.webp")
+	if err != nil {
+		t.Fatalf("fetch remote webp: %v", err)
+	}
+
+	if format != "webp" {
+		t.Fatalf("expected webp format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 1 || bounds.Dy() != 1 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
 	}
 }
