@@ -157,6 +157,10 @@ func TestFetchRemoteSetsAcceptHeader(t *testing.T) {
 			t.Errorf("unexpected accept header: %s", accept)
 		}
 
+		if ua := r.Header.Get("User-Agent"); ua != defaultRemoteImageUA {
+			t.Errorf("unexpected user agent: %s", ua)
+		}
+
 		if err := png.Encode(w, createTestImage(10, 10)); err != nil {
 			t.Errorf("encode png: %v", err)
 		}
@@ -220,6 +224,26 @@ func TestFetchRemoteBrotliEncoded(t *testing.T) {
 	bounds := img.Bounds()
 	if bounds.Dx() != 32 || bounds.Dy() != 24 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteDecodeErrorIncludesContentType(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("<html></html>"))
+	}))
+	defer server.Close()
+
+	_, _, err := Fetch(server.URL + "/cover.png")
+	if err == nil {
+		t.Fatal("expected error decoding html response")
+	}
+
+	if !strings.Contains(err.Error(), "content-type \"text/html\"") {
+		t.Fatalf("expected content-type in error, got %v", err)
 	}
 }
 

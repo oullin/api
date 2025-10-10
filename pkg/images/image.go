@@ -28,7 +28,7 @@ func Fetch(source string) (stdimage.Image, string, error) {
 		return nil, "", fmt.Errorf("parse url: %w", err)
 	}
 
-	reader, err := openSource(parsed)
+	reader, contentType, err := openSource(parsed)
 	if err != nil {
 		return nil, "", err
 	}
@@ -36,6 +36,10 @@ func Fetch(source string) (stdimage.Image, string, error) {
 
 	img, format, err := stdimage.Decode(reader)
 	if err != nil {
+		ct := strings.TrimSpace(contentType)
+		if ct != "" {
+			return nil, "", fmt.Errorf("decode image (content-type %q): %w", ct, err)
+		}
 		return nil, "", fmt.Errorf("decode image: %w", err)
 	}
 
@@ -179,35 +183,38 @@ func NormalizeRelativeURL(rel string) string {
 	return b.String()
 }
 
-func openSource(parsed *url.URL) (io.ReadCloser, error) {
+func openSource(parsed *url.URL) (io.ReadCloser, string, error) {
 	switch parsed.Scheme {
 	case "http", "https":
 		client := &http.Client{Timeout: 10 * time.Second}
 
 		req, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
 		if err != nil {
-			return nil, fmt.Errorf("create request: %w", err)
+			return nil, "", fmt.Errorf("create request: %w", err)
 		}
 
 		req.Header.Set("Accept", supportedImageAcceptHeader)
+		req.Header.Set("User-Agent", defaultRemoteImageUA)
 
 		resp, err := client.Do(req)
 		if err != nil {
-			return nil, fmt.Errorf("download image: %w", err)
+			return nil, "", fmt.Errorf("download image: %w", err)
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			defer resp.Body.Close()
-			return nil, fmt.Errorf("download image: unexpected status %s", resp.Status)
+			return nil, "", fmt.Errorf("download image: unexpected status %s", resp.Status)
 		}
 
-		return wrapHTTPBody(resp), nil
+		return wrapHTTPBody(resp), resp.Header.Get("Content-Type"), nil
 	case "file":
-		return openLocal(parsed)
+		reader, err := openLocal(parsed)
+		return reader, "", err
 	case "":
-		return os.Open(parsed.Path)
+		reader, err := os.Open(parsed.Path)
+		return reader, "", err
 	default:
-		return nil, fmt.Errorf("unsupported image scheme: %s", parsed.Scheme)
+		return nil, "", fmt.Errorf("unsupported image scheme: %s", parsed.Scheme)
 	}
 }
 
