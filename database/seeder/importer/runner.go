@@ -840,8 +840,23 @@ func parseIdentifierList(input string) ([]string, error) {
 	return parts, nil
 }
 
+const (
+	copyScannerInitialCapacity = 64 * 1024
+	copyScannerMaxCapacity     = 16 * 1024 * 1024
+)
+
 func decodeCopyRows(data []byte, columnCount int) ([][]any, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(data))
+
+	maxCapacity := copyScannerMaxCapacity
+	if maxCapacity < copyScannerInitialCapacity {
+		maxCapacity = copyScannerInitialCapacity
+	}
+	if len(data) > maxCapacity {
+		maxCapacity = len(data)
+	}
+
+	scanner.Buffer(make([]byte, copyScannerInitialCapacity), maxCapacity)
 	var rows [][]any
 	line := 0
 

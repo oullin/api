@@ -177,6 +177,45 @@ func TestExecuteCopyResolvesColumns(t *testing.T) {
 	}
 }
 
+func TestExecuteCopyHandlesLargeRows(t *testing.T) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock: %v", err)
+	}
+	defer sqlDB.Close()
+
+	mock.ExpectBegin()
+	largePayload := strings.Repeat("a", 70_000)
+	insert := regexp.QuoteMeta("INSERT INTO public.widgets (id, payload) VALUES ($1, $2)")
+	mock.ExpectExec(insert).
+		WithArgs("1", largePayload).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectRollback()
+
+	tx, err := sqlDB.Begin()
+	if err != nil {
+		t.Fatalf("begin: %v", err)
+	}
+
+	stmt := statement{
+		sql:      "COPY public.widgets (id, payload) FROM stdin",
+		copyData: []byte("1\t" + largePayload),
+		isCopy:   true,
+	}
+
+	if err := executeCopy(context.Background(), tx, stmt); err != nil {
+		t.Fatalf("executeCopy unexpected error: %v", err)
+	}
+
+	if err := tx.Rollback(); err != nil {
+		t.Fatalf("rollback: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
 func TestResolveCopyColumnsErrorsOnEmptyMetadata(t *testing.T) {
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
