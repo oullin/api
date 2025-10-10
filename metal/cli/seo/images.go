@@ -92,16 +92,3 @@ func (g *Generator) siteURLFor(rel string) string {
 
 	return portal.SanitiseURL(base + "/" + rel)
 }
-
-func normalizeRelativeURL(rel string) string {
-	cleaned := path.Clean(rel)
-	cleaned = strings.TrimPrefix(cleaned, "./")
-
-	for strings.HasPrefix(cleaned, "../") {
-		cleaned = strings.TrimPrefix(cleaned, "../")
-	}
-
-	cleaned = strings.TrimPrefix(cleaned, "/")
-
-	return cleaned
-}
