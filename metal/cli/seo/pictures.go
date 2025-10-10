@@ -62,7 +62,7 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 	relativeDir = strings.Trim(relativeDir, "/")
 
 	relative := path.Join(relativeDir, fileName)
-	relative = strings.TrimPrefix(relative, "/")
+	relative = pkgimages.NormalizeRelativeURL(relative)
 
 	return preparedImage{
 		URL:  g.siteURLFor(relative),
