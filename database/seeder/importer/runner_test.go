@@ -661,7 +661,7 @@ func withSuffix(t *testing.T, suffix string) string {
 func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environment, func()) {
 	t.Helper()
 
-	if os.Getenv("IMPORTER_SKIP_INTEGRATION") == "1" || os.Getenv("SQLSEED_SKIP_INTEGRATION") == "1" {
+	if skipIntegrationTests() {
 		t.Skip("importer integration tests disabled via IMPORTER_SKIP_INTEGRATION or SQLSEED_SKIP_INTEGRATION")
 	}
 
@@ -727,4 +727,27 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environme
 	}
 
 	return conn, e, cleanup
+}
+
+func skipIntegrationTests() bool {
+	for _, key := range []string{"IMPORTER_SKIP_INTEGRATION", "SQLSEED_SKIP_INTEGRATION"} {
+		if truthy(os.Getenv(key)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func truthy(value string) bool {
+	if value == "" {
+		return false
+	}
+
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "1", "t", "true", "y", "yes", "on", "enable", "enabled":
+		return true
+	}
+
+	return false
 }
