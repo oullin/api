@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"sync"
 
 	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
@@ -13,6 +14,18 @@ import (
 type Client struct {
 	WebsiteRoutes *router.WebsiteRoutes
 	Fixture       router.Fixture
+
+	profileOnce sync.Once
+	profile     *payload.ProfileResponse
+	profileErr  error
+
+	projectsOnce sync.Once
+	projects     *payload.ProjectsResponse
+	projectsErr  error
+
+	recommendationsOnce sync.Once
+	recommendations     *payload.RecommendationsResponse
+	recommendationsErr  error
 }
 
 func NewClient(routes *router.WebsiteRoutes) *Client {
@@ -39,15 +52,23 @@ func (c *Client) GetTalks() (*payload.TalksResponse, error) {
 }
 
 func (c *Client) GetProfile() (*payload.ProfileResponse, error) {
-	return get[payload.ProfileResponse](func() router.StaticRouteResource {
-		return handler.MakeProfileHandler(c.Fixture.GetProfileFile())
-	}, "profile")
+	c.profileOnce.Do(func() {
+		c.profile, c.profileErr = get[payload.ProfileResponse](func() router.StaticRouteResource {
+			return handler.MakeProfileHandler(c.Fixture.GetProfileFile())
+		}, "profile")
+	})
+
+	return c.profile, c.profileErr
 }
 
 func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
-	return get[payload.ProjectsResponse](func() router.StaticRouteResource {
-		return handler.MakeProjectsHandler(c.Fixture.GetProjectsFile())
-	}, "projects")
+	c.projectsOnce.Do(func() {
+		c.projects, c.projectsErr = get[payload.ProjectsResponse](func() router.StaticRouteResource {
+			return handler.MakeProjectsHandler(c.Fixture.GetProjectsFile())
+		}, "projects")
+	})
+
+	return c.projects, c.projectsErr
 }
 
 func (c *Client) GetSocial() (*payload.SocialResponse, error) {
@@ -57,9 +78,13 @@ func (c *Client) GetSocial() (*payload.SocialResponse, error) {
 }
 
 func (c *Client) GetRecommendations() (*payload.RecommendationsResponse, error) {
-	return get[payload.RecommendationsResponse](func() router.StaticRouteResource {
-		return handler.MakeRecommendationsHandler(c.Fixture.GetRecommendationsFile())
-	}, "recommendations")
+	c.recommendationsOnce.Do(func() {
+		c.recommendations, c.recommendationsErr = get[payload.RecommendationsResponse](func() router.StaticRouteResource {
+			return handler.MakeRecommendationsHandler(c.Fixture.GetRecommendationsFile())
+		}, "recommendations")
+	})
+
+	return c.recommendations, c.recommendationsErr
 }
 
 func (c *Client) GetExperience() (*payload.ExperienceResponse, error) {
