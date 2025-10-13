@@ -32,13 +32,26 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
+type fetchRequest struct {
+	URL    *url.URL
+	Accept string
+}
+
+func (r fetchRequest) key() string {
+	if r.URL == nil {
+		return r.Accept
+	}
+
+	return r.Accept + " " + r.URL.String()
+}
+
 func Fetch(source string) (stdimage.Image, string, error) {
 	parsed, err := url.Parse(source)
 	if err != nil {
 		return nil, "", fmt.Errorf("parse url: %w", err)
 	}
 
-	queue := []*url.URL{parsed}
+	queue := []fetchRequest{{URL: parsed, Accept: supportedImageAcceptHeader}}
 	seen := make(map[string]struct{})
 
 	var (
@@ -53,11 +66,11 @@ func Fetch(source string) (stdimage.Image, string, error) {
 		current := queue[0]
 		queue = queue[1:]
 
-		if current == nil {
+		if current.URL == nil {
 			continue
 		}
 
-		key := current.String()
+		key := current.key()
 		if _, exists := seen[key]; exists {
 			continue
 		}
@@ -256,7 +269,8 @@ func decodeAVIF(data []byte) (stdimage.Image, error) {
 	return img, nil
 }
 
-func githubAttachmentFallbacks(u *url.URL, payload []byte) []*url.URL {
+func githubAttachmentFallbacks(current fetchRequest, payload []byte) []fetchRequest {
+	u := current.URL
 	if u == nil || len(payload) == 0 {
 		return nil
 	}
@@ -275,7 +289,7 @@ func githubAttachmentFallbacks(u *url.URL, payload []byte) []*url.URL {
 		{Scheme: "https", Host: "github.com", Path: path.Join("/user-attachments/assets", id)},
 	}
 
-	variants := make([]*url.URL, 0, len(basePaths)*5)
+	variants := make([]fetchRequest, 0, len(basePaths)*5)
 
 	for _, base := range basePaths {
 		if base.Host == "" {
@@ -296,14 +310,22 @@ func githubAttachmentFallbacks(u *url.URL, payload []byte) []*url.URL {
 			query.Set("format", option.format)
 			query.Set("name", option.name)
 			clone.RawQuery = query.Encode()
-			variants = append(variants, &clone)
+			accept := current.Accept
+			switch option.format {
+			case "png":
+				accept = fallbackPNGAcceptHeader
+			case "jpg":
+				accept = fallbackJPEGAcceptHeader
+			}
+
+			variants = append(variants, fetchRequest{URL: &clone, Accept: accept})
 		}
 
 		clone := *base
 		query := clone.Query()
 		query.Set("raw", "1")
 		clone.RawQuery = query.Encode()
-		variants = append(variants, &clone)
+		variants = append(variants, fetchRequest{URL: &clone, Accept: current.Accept})
 	}
 
 	return variants
@@ -602,20 +624,26 @@ func NormalizeRelativeURL(rel string) string {
 	return b.String()
 }
 
-func openSource(parsed *url.URL) (io.ReadCloser, string, string, error) {
+func openSource(req fetchRequest) (io.ReadCloser, string, string, error) {
+	parsed := req.URL
 	switch parsed.Scheme {
 	case "http", "https":
 		client := &http.Client{Timeout: 10 * time.Second}
 
-		req, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
+		httpReq, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
 		if err != nil {
 			return nil, "", "", fmt.Errorf("create request: %w", err)
 		}
 
-		req.Header.Set("Accept", supportedImageAcceptHeader)
-		req.Header.Set("User-Agent", defaultRemoteImageUA)
+		accept := strings.TrimSpace(req.Accept)
+		if accept == "" {
+			accept = supportedImageAcceptHeader
+		}
 
-		resp, err := client.Do(req)
+		httpReq.Header.Set("Accept", accept)
+		httpReq.Header.Set("User-Agent", defaultRemoteImageUA)
+
+		resp, err := client.Do(httpReq)
 		if err != nil {
 			return nil, "", "", fmt.Errorf("download image: %w", err)
 		}

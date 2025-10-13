@@ -518,10 +518,16 @@ func TestFetchRemoteAVIFGitHubFallback(t *testing.T) {
 	}
 
 	const attachmentID = "e5abb532-59bf-49bb-a9d2-0c31872718d7"
-	var requests []string
+
+	type requestInfo struct {
+		URL    string
+		Accept string
+	}
+
+	var requests []requestInfo
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requests = append(requests, r.URL.String())
+		requests = append(requests, requestInfo{URL: r.URL.String(), Accept: r.Header.Get("Accept")})
 
 		switch {
 		case r.URL.Path == "/user-attachments/assets/"+attachmentID && r.URL.RawQuery == "":
@@ -557,6 +563,25 @@ func TestFetchRemoteAVIFGitHubFallback(t *testing.T) {
 
 	if len(requests) < 2 {
 		t.Fatalf("expected fallback requests, got %v", requests)
+	}
+
+	if got := requests[0].Accept; got != supportedImageAcceptHeader {
+		t.Fatalf("unexpected accept header for initial request: %s", got)
+	}
+
+	var sawPNG bool
+	for _, req := range requests[1:] {
+		if strings.Contains(req.URL, "format=png") {
+			if req.Accept != fallbackPNGAcceptHeader {
+				t.Fatalf("expected png fallback accept header %q, got %q", fallbackPNGAcceptHeader, req.Accept)
+			}
+			sawPNG = true
+			break
+		}
+	}
+
+	if !sawPNG {
+		t.Fatalf("expected png fallback request, got %v", requests)
 	}
 }
 
