@@ -19,7 +19,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 	"unicode"
 
@@ -111,13 +110,6 @@ func Fetch(source string) (stdimage.Image, string, error) {
 
 	return nil, "", errors.New("failed to fetch image")
 }
-
-const maxRemoteImageBytes = 32 << 20 // 32MiB should cover large blog assets.
-
-var (
-	utf8BOM      = []byte{0xEF, 0xBB, 0xBF}
-	avifInitOnce sync.Once
-)
 
 func readImagePayload(reader io.ReadCloser) ([]byte, error) {
 	defer reader.Close()

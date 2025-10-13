@@ -1,6 +1,9 @@
 package images
 
-import "io"
+import (
+	"io"
+	"sync"
+)
 
 const (
 	DefaultJPEGQuality         = 85
@@ -8,6 +11,12 @@ const (
 	defaultRemoteImageUA       = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15"
 	fallbackPNGAcceptHeader    = "image/png,image/*;q=0.8,*/*;q=0.1"
 	fallbackJPEGAcceptHeader   = "image/jpeg,image/*;q=0.8,*/*;q=0.1"
+	maxRemoteImageBytes        = 32 << 20 // 32MiB should cover large blog assets.
+)
+
+var (
+	utf8BOM      = []byte{0xEF, 0xBB, 0xBF}
+	avifInitOnce sync.Once
 )
 
 type composedReadCloser struct {
