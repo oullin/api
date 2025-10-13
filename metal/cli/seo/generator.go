@@ -12,6 +12,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	_ "runtime/cgo"
+
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
@@ -22,6 +24,8 @@ import (
 
 //go:embed stub.html
 var templatesFS embed.FS
+
+const cgoEnabled = true
 
 type Generator struct {
 	Page          Page
@@ -37,8 +41,11 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	var categories []string
 	var html *template.Template
 
+	cli.Magentaln("Initialising SEO generator")
+	cli.Magentaln(fmt.Sprintf("CGO enabled: %t", cgoEnabled))
+
 	if categories, err = NewCategories(db).Generate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("initialising categories: %w", err)
 	}
 
 	page := Page{
@@ -83,26 +90,24 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 }
 
 func (g *Generator) Generate() error {
-	var err error
+	cli.Magentaln("Starting SEO generation pipeline")
+	defer cli.Magentaln("SEO generation pipeline finished")
 
-	if err = g.GenerateIndex(); err != nil {
-		return err
+	steps := []struct {
+		name string
+		fn   func() error
+	}{
+		{"index", g.GenerateIndex},
+		{"about", g.GenerateAbout},
+		{"projects", g.GenerateProjects},
+		{"resume", g.GenerateResume},
+		{"posts", g.GeneratePosts},
 	}
 
-	if err = g.GenerateAbout(); err != nil {
-		return err
-	}
-
-	if err = g.GenerateProjects(); err != nil {
-		return err
-	}
-
-	if err = g.GenerateResume(); err != nil {
-		return err
-	}
-
-	if err = g.GeneratePosts(); err != nil {
-		return err
+	for _, step := range steps {
+		if err := step.fn(); err != nil {
+			return fmt.Errorf("generating %s: %w", step.name, err)
+		}
 	}
 
 	return nil
@@ -114,16 +119,19 @@ func (g *Generator) GenerateIndex() error {
 	var profile *payload.ProfileResponse
 	var projects *payload.ProjectsResponse
 
+	cli.Cyanln("Fetching profile for home page")
 	if profile, err = g.Client.GetProfile(); err != nil {
-		return err
+		return fmt.Errorf("home: fetching profile: %w", err)
 	}
 
+	cli.Cyanln("Fetching talks for home page")
 	if talks, err = g.Client.GetTalks(); err != nil {
-		return err
+		return fmt.Errorf("home: fetching talks: %w", err)
 	}
 
+	cli.Cyanln("Fetching projects for home page")
 	if projects, err = g.Client.GetProjects(); err != nil {
-		return err
+		return fmt.Errorf("home: fetching projects: %w", err)
 	}
 
 	var html []template.HTML
@@ -152,19 +160,22 @@ func (g *Generator) GenerateIndex() error {
 }
 
 func (g *Generator) GenerateAbout() error {
+	cli.Cyanln("Fetching profile for about page")
 	profile, err := g.Client.GetProfile()
 	if err != nil {
-		return err
+		return fmt.Errorf("about: fetching profile: %w", err)
 	}
 
+	cli.Cyanln("Fetching social links for about page")
 	social, err := g.Client.GetSocial()
 	if err != nil {
-		return err
+		return fmt.Errorf("about: fetching social links: %w", err)
 	}
 
+	cli.Cyanln("Fetching recommendations for about page")
 	recommendations, err := g.Client.GetRecommendations()
 	if err != nil {
-		return err
+		return fmt.Errorf("about: fetching recommendations: %w", err)
 	}
 
 	sections := NewSections()
@@ -189,10 +200,11 @@ func (g *Generator) GenerateAbout() error {
 }
 
 func (g *Generator) GenerateProjects() error {
+	cli.Cyanln("Fetching projects for projects page")
 	projects, err := g.Client.GetProjects()
 
 	if err != nil {
-		return err
+		return fmt.Errorf("projects: fetching projects: %w", err)
 	}
 
 	sections := NewSections()
@@ -213,20 +225,23 @@ func (g *Generator) GenerateProjects() error {
 }
 
 func (g *Generator) GenerateResume() error {
+	cli.Cyanln("Fetching experience for resume page")
 	experience, err := g.Client.GetExperience()
 
 	if err != nil {
-		return err
+		return fmt.Errorf("resume: fetching experience: %w", err)
 	}
 
+	cli.Cyanln("Fetching education for resume page")
 	education, err := g.Client.GetEducation()
 	if err != nil {
-		return err
+		return fmt.Errorf("resume: fetching education: %w", err)
 	}
 
+	cli.Cyanln("Fetching recommendations for resume page")
 	recommendations, err := g.Client.GetRecommendations()
 	if err != nil {
-		return err
+		return fmt.Errorf("resume: fetching recommendations: %w", err)
 	}
 
 	sections := NewSections()
@@ -272,9 +287,12 @@ func (g *Generator) GeneratePosts() error {
 		return nil
 	}
 
+	cli.Cyanln(fmt.Sprintf("Preparing SEO for %d posts", len(posts)))
+
 	sections := NewSections()
 
 	for _, post := range posts {
+		cli.Cyanln(fmt.Sprintf("Building SEO for post: %s", post.Slug))
 		response := payload.GetPostsResponse(post)
 		body := []template.HTML{sections.Post(&response)}
 
