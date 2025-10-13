@@ -90,6 +90,7 @@ services:
             - "${ENV_SPA_DIR}:${ENV_SPA_DIR}"
           working_dir: /app
           environment:
+              CGO_ENABLED: 1
               ENV_DB_HOST: api-db
               ENV_SPA_DIR: ${ENV_SPA_DIR}
               ENV_DB_PORT: ${ENV_DB_PORT:-5432}
@@ -115,6 +116,7 @@ services:
             volumes:
               - ./.env:/app/.env:ro
             environment:
+                CGO_ENABLED: 1
                 # --- This ensures the Go web server listens for connections from other
                 #     containers (like Caddy), not just from within itself.
                 ENV_DB_HOST: api-db
