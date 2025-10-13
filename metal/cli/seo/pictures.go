@@ -27,11 +27,15 @@ const (
 func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, error) {
 	source := strings.TrimSpace(post.CoverImageURL)
 	if source == "" {
+		cli.Grayln(fmt.Sprintf("Skipping image preparation for %s: no cover image", post.Slug))
 		return preparedImage{}, errors.New("post has no cover image url")
 	}
 
+	cli.Grayln(fmt.Sprintf("Preparing post image for %s from %s", post.Slug, source))
+
 	spaImagesDir, err := g.spaImagesDir()
 	if err != nil {
+		cli.Errorln(fmt.Sprintf("Could not determine SPA images directory: %v", err))
 		return preparedImage{}, err
 	}
 
@@ -48,22 +52,29 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 		return preparedImage{}, err
 	}
 
+	bounds := img.Bounds()
+	cli.Grayln(fmt.Sprintf("Fetched image %s (%s) with bounds %dx%d", source, format, bounds.Dx(), bounds.Dy()))
+
 	resized := pkgimages.Resize(img, seoImageWidth, seoImageHeight)
+	cli.Grayln(fmt.Sprintf("Resized image to %dx%d", seoImageWidth, seoImageHeight))
 
 	ext := pkgimages.DetermineExtension(source, format)
 	fileName := pkgimages.BuildFileName(post.Slug, ext, "post-image")
 
 	if err := os.MkdirAll(spaImagesDir, 0o755); err != nil {
+		cli.Errorln(fmt.Sprintf("Unable to create SPA images directory %s: %v", spaImagesDir, err))
 		return preparedImage{}, fmt.Errorf("create destination dir: %w", err)
 	}
 
 	destPath := filepath.Join(spaImagesDir, fileName)
 	if err := pkgimages.Save(destPath, resized, ext, pkgimages.DefaultJPEGQuality); err != nil {
+		cli.Errorln(fmt.Sprintf("Unable to save resized image to %s: %v", destPath, err))
 		return preparedImage{}, fmt.Errorf("write resized image: %w", err)
 	}
 
 	relativeDir, err := filepath.Rel(g.Page.OutputDir, spaImagesDir)
 	if err != nil {
+		cli.Errorln(fmt.Sprintf("Unable to determine relative path for %s: %v", spaImagesDir, err))
 		return preparedImage{}, fmt.Errorf("determine relative image path: %w", err)
 	}
 
@@ -72,6 +83,8 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 
 	relative := path.Join(relativeDir, fileName)
 	relative = pkgimages.NormalizeRelativeURL(relative)
+
+	cli.Grayln(fmt.Sprintf("Post image relative path: %s", relative))
 
 	return preparedImage{
 		URL:  g.siteURLFor(relative),

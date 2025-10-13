@@ -294,6 +294,8 @@ func (g *Generator) GeneratePosts() error {
 	for _, post := range posts {
 		cli.Cyanln(fmt.Sprintf("Building SEO for post: %s", post.Slug))
 		response := payload.GetPostsResponse(post)
+		cli.Grayln(fmt.Sprintf("Post slug: %s", response.Slug))
+		cli.Grayln(fmt.Sprintf("Post title: %s", response.Title))
 		body := []template.HTML{sections.Post(&response)}
 
 		data, buildErr := g.BuildForPost(response, body)
@@ -457,6 +459,22 @@ func (g *Generator) TitleFor(pageName string) string {
 	return fmt.Sprintf("%s · %s", pageName, g.Page.SiteName)
 }
 
+func truncateForLog(value string) string {
+	const maxRunes = 80
+
+	cleaned := strings.TrimSpace(value)
+	if cleaned == "" {
+		return "(empty)"
+	}
+
+	if utf8.RuneCountInString(cleaned) <= maxRunes {
+		return cleaned
+	}
+
+	runes := []rune(cleaned)
+	return string(runes[:maxRunes-3]) + "..."
+}
+
 func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML) (TemplateData, error) {
 	path := g.CanonicalPostPath(post.Slug)
 	imageAlt := g.SanitizeAltText(post.Title, g.Page.SiteName)
@@ -464,11 +482,19 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 	image := g.PreferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
 	imageType := "image/png"
 
+	cli.Grayln(fmt.Sprintf("Preparing post metadata"))
+	cli.Grayln(fmt.Sprintf("  Canonical path: %s", path))
+	cli.Grayln(fmt.Sprintf("  Sanitised alt text: %s", imageAlt))
+	cli.Grayln(fmt.Sprintf("  Description preview: %s", truncateForLog(description)))
+	cli.Grayln(fmt.Sprintf("  Preferred image candidate: %s", image))
+
 	if prepared, err := g.preparePostImage(post); err == nil && prepared.URL != "" {
+		cli.Grayln(fmt.Sprintf("  Post image prepared at: %s (%s)", prepared.URL, prepared.Mime))
 		image = prepared.URL
 		imageType = prepared.Mime
 	} else if err != nil {
 		cli.Errorln(fmt.Sprintf("failed to prepare post image for %s: %v", post.Slug, err))
+		cli.Grayln(fmt.Sprintf("  Falling back to preferred image URL: %s", image))
 	}
 
 	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
