@@ -14,7 +14,10 @@ import (
 type Client struct {
 	WebsiteRoutes *router.WebsiteRoutes
 	Fixture       router.Fixture
+	data          ClientData
+}
 
+type ClientData struct {
 	profileOnce sync.Once
 	profile     *payload.ProfileResponse
 	profileErr  error
@@ -52,23 +55,23 @@ func (c *Client) GetTalks() (*payload.TalksResponse, error) {
 }
 
 func (c *Client) GetProfile() (*payload.ProfileResponse, error) {
-	c.profileOnce.Do(func() {
-		c.profile, c.profileErr = get[payload.ProfileResponse](func() router.StaticRouteResource {
+	c.data.profileOnce.Do(func() {
+		c.data.profile, c.data.profileErr = get[payload.ProfileResponse](func() router.StaticRouteResource {
 			return handler.MakeProfileHandler(c.Fixture.GetProfileFile())
 		}, "profile")
 	})
 
-	return c.profile, c.profileErr
+	return c.data.profile, c.data.profileErr
 }
 
 func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
-	c.projectsOnce.Do(func() {
-		c.projects, c.projectsErr = get[payload.ProjectsResponse](func() router.StaticRouteResource {
+	c.data.projectsOnce.Do(func() {
+		c.data.projects, c.data.projectsErr = get[payload.ProjectsResponse](func() router.StaticRouteResource {
 			return handler.MakeProjectsHandler(c.Fixture.GetProjectsFile())
 		}, "projects")
 	})
 
-	return c.projects, c.projectsErr
+	return c.data.projects, c.data.projectsErr
 }
 
 func (c *Client) GetSocial() (*payload.SocialResponse, error) {
@@ -78,13 +81,13 @@ func (c *Client) GetSocial() (*payload.SocialResponse, error) {
 }
 
 func (c *Client) GetRecommendations() (*payload.RecommendationsResponse, error) {
-	c.recommendationsOnce.Do(func() {
-		c.recommendations, c.recommendationsErr = get[payload.RecommendationsResponse](func() router.StaticRouteResource {
+	c.data.recommendationsOnce.Do(func() {
+		c.data.recommendations, c.data.recommendationsErr = get[payload.RecommendationsResponse](func() router.StaticRouteResource {
 			return handler.MakeRecommendationsHandler(c.Fixture.GetRecommendationsFile())
 		}, "recommendations")
 	})
 
-	return c.recommendations, c.recommendationsErr
+	return c.data.recommendations, c.data.recommendationsErr
 }
 
 func (c *Client) GetExperience() (*payload.ExperienceResponse, error) {
