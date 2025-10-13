@@ -20,7 +20,10 @@ const (
 )
 
 var (
-	utf8BOM      = []byte{0xEF, 0xBB, 0xBF}
+	// utf8BOM captures the optional UTF-8 byte order mark present in some image files.
+	utf8BOM = []byte{0xEF, 0xBB, 0xBF}
+
+	// avifInitOnce ensures the AVIF decoder is initialized only a single time.
 	avifInitOnce sync.Once
 )
 
