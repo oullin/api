@@ -41,10 +41,17 @@ ARG BINARY_NAME
 ARG APP_VERSION
 ARG BUILD_TAGS
 
+# Install system dependencies required to build with CGO and libwebp support.
+RUN apk add --no-cache \
+        build-base \
+        pkgconfig \
+        libwebp-dev
+
 # Configure Go build cache and module cache under our APP_DIR.
 ENV GOPATH=${APP_DIR}/.gopath
 ENV GOMODCACHE=${APP_DIR}/.gopath/pkg/mod
 ENV GOCACHE=${APP_DIR}/.gocache
+ENV CGO_ENABLED=1
 
 # Create the Go module & build cache directories.
 RUN mkdir -p ${GOMODCACHE} ${GOCACHE}
@@ -59,14 +66,13 @@ RUN go mod download
 # Copy remaining source code into the builder.
 COPY . .
 
-# Compile a statically-linked binary.
+# Compile the application binary with CGO enabled so WebP encoding is available.
 #
-#       * CGO_ENABLED=0: disable CGO for static builds.
 #       * -tags: apply build tags.
 #       * -o: output binaries path/name.
 #       * -ldflags: strip symbols and inject version.
 #
-RUN CGO_ENABLED=0 go build \
+RUN go build \
     -tags "${BUILD_TAGS}" \
     -o ${APP_DIR}/${BINARY_NAME} \
     -ldflags="-s -w -X main.Version=${APP_VERSION}" \
@@ -89,8 +95,8 @@ ARG MEDIA_DIR
 ARG FIXTURES_DIR
 ARG APP_HOST_PORT
 
-# Install timezone data so Go’s time.* functions work correctly.
-RUN apk add --no-cache tzdata
+# Install timezone data and runtime dependencies for the CGO-enabled binary.
+RUN apk add --no-cache tzdata libwebp
 ENV TZ=Asia/Singapore
 
 # Create the system group for our non-root user.
