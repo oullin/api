@@ -450,12 +450,62 @@ func TestFetchRemoteZstdEncoded(t *testing.T) {
 	}
 }
 
+func TestFetchRemoteAVIFDecode(t *testing.T) {
+	t.Parallel()
+
+	avifData, err := base64.StdEncoding.DecodeString(avifFixtureBase64)
+	if err != nil {
+		t.Fatalf("decode avif fixture: %v", err)
+	}
+
+	var requests []string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r.URL.String())
+
+		if r.URL.Path != "/user-attachments/assets/e5abb532-59bf-49bb-a9d2-0c31872718d7" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/jpeg")
+		if _, err := w.Write(avifData); err != nil {
+			t.Errorf("write avif payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	img, format, err := Fetch(server.URL + "/user-attachments/assets/e5abb532-59bf-49bb-a9d2-0c31872718d7")
+	if err != nil {
+		t.Fatalf("fetch avif image: %v", err)
+	}
+
+	if format != "avif" {
+		t.Fatalf("expected avif format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() <= 0 || bounds.Dy() <= 0 {
+		t.Fatalf("unexpected avif dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+
+	if len(requests) != 1 {
+		t.Fatalf("expected single request, got %v", requests)
+	}
+}
+
 func TestFetchRemoteAVIFGitHubFallback(t *testing.T) {
 	t.Parallel()
 
 	avifData, err := base64.StdEncoding.DecodeString(avifFixtureBase64)
 	if err != nil {
 		t.Fatalf("decode avif fixture: %v", err)
+	}
+
+	brokenAvif := append([]byte(nil), avifData...)
+	if len(brokenAvif) > 40 {
+		brokenAvif = brokenAvif[:40]
 	}
 
 	pngImage := image.NewNRGBA(image.Rect(0, 0, 2, 2))
@@ -476,7 +526,7 @@ func TestFetchRemoteAVIFGitHubFallback(t *testing.T) {
 		switch {
 		case r.URL.Path == "/user-attachments/assets/"+attachmentID && r.URL.RawQuery == "":
 			w.Header().Set("Content-Type", "image/jpeg")
-			if _, err := w.Write(avifData); err != nil {
+			if _, err := w.Write(brokenAvif); err != nil {
 				t.Errorf("write avif payload: %v", err)
 			}
 		case r.URL.Path == "/user-attachments/assets/"+attachmentID && r.URL.Query().Get("format") == "png":

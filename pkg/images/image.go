@@ -19,6 +19,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -27,6 +28,7 @@ import (
 
 	"github.com/andybalholm/brotli"
 	"github.com/chai2010/webp"
+	"github.com/gen2brain/avif"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -99,7 +101,10 @@ func Fetch(source string) (stdimage.Image, string, error) {
 
 const maxRemoteImageBytes = 32 << 20 // 32MiB should cover large blog assets.
 
-var utf8BOM = []byte{0xEF, 0xBB, 0xBF}
+var (
+	utf8BOM      = []byte{0xEF, 0xBB, 0xBF}
+	avifInitOnce sync.Once
+)
 
 func readImagePayload(reader io.ReadCloser) ([]byte, error) {
 	defer reader.Close()
@@ -145,7 +150,12 @@ func decodeImagePayload(data []byte) (stdimage.Image, string, error) {
 		lastErr = err
 
 		if isAVIF(candidate) {
-			lastErr = fmt.Errorf("decode avif payload: %w", err)
+			avifImg, avifErr := decodeAVIF(candidate)
+			if avifErr == nil {
+				return avifImg, "avif", nil
+			}
+
+			lastErr = fmt.Errorf("decode avif payload: %w", avifErr)
 		}
 
 		trimmed := trimLeadingNoise(candidate)
@@ -231,6 +241,19 @@ func isAVIF(data []byte) bool {
 	}
 
 	return false
+}
+
+func decodeAVIF(data []byte) (stdimage.Image, error) {
+	avifInitOnce.Do(func() {
+		avif.InitDecoder()
+	})
+
+	img, err := avif.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	return img, nil
 }
 
 func githubAttachmentFallbacks(u *url.URL, payload []byte) []*url.URL {
