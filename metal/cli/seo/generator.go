@@ -90,29 +90,24 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 }
 
 func (g *Generator) Generate() error {
-	var err error
-
 	cli.Magentaln("Starting SEO generation pipeline")
 	defer cli.Magentaln("SEO generation pipeline finished")
 
-	if err = g.GenerateIndex(); err != nil {
-		return fmt.Errorf("generating index: %w", err)
+	steps := []struct {
+		name string
+		fn   func() error
+	}{
+		{"index", g.GenerateIndex},
+		{"about", g.GenerateAbout},
+		{"projects", g.GenerateProjects},
+		{"resume", g.GenerateResume},
+		{"posts", g.GeneratePosts},
 	}
 
-	if err = g.GenerateAbout(); err != nil {
-		return fmt.Errorf("generating about: %w", err)
-	}
-
-	if err = g.GenerateProjects(); err != nil {
-		return fmt.Errorf("generating projects: %w", err)
-	}
-
-	if err = g.GenerateResume(); err != nil {
-		return fmt.Errorf("generating resume: %w", err)
-	}
-
-	if err = g.GeneratePosts(); err != nil {
-		return fmt.Errorf("generating posts: %w", err)
+	for _, step := range steps {
+		if err := step.fn(); err != nil {
+			return fmt.Errorf("generating %s: %w", step.name, err)
+		}
 	}
 
 	return nil
