@@ -12,6 +12,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	_ "runtime/cgo"
+
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
@@ -22,6 +24,8 @@ import (
 
 //go:embed stub.html
 var templatesFS embed.FS
+
+const cgoEnabled = true
 
 type Generator struct {
 	Page          Page
