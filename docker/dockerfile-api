@@ -43,9 +43,9 @@ ARG BUILD_TAGS
 
 # Install system dependencies required to build with CGO and libwebp support.
 RUN apk add --no-cache \
-        build-base \
-        pkgconfig \
-        libwebp-dev
+        build-base=0.5-r3 \
+        pkgconf=2.4.3-r0 \
+        libwebp-dev=1.5.0-r0
 
 # Configure Go build cache and module cache under our APP_DIR.
 ENV GOPATH=${APP_DIR}/.gopath
@@ -96,7 +96,7 @@ ARG FIXTURES_DIR
 ARG APP_HOST_PORT
 
 # Install timezone data and runtime dependencies for the CGO-enabled binary.
-RUN apk add --no-cache tzdata libwebp
+RUN apk add --no-cache tzdata=2025b-r0 libwebp=1.5.0-r0
 ENV TZ=Asia/Singapore
 
 # Create the system group for our non-root user.
