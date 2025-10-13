@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-func encodeWebp(w io.Writer, img stdimage.Image, quality int) error {
+func encodeWebp(_ io.Writer, _ stdimage.Image, _ int) error {
 	return errors.New("webp encoding requires cgo support")
 }
 
