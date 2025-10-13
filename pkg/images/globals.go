@@ -1,13 +1,30 @@
 package images
 
-import "io"
+import (
+	"io"
+	"sync"
+)
 
 const (
-	DefaultJPEGQuality         = 85
+	// Image encoding defaults.
+	DefaultJPEGQuality = 85
+
+	// Remote image download limits.
+	maxRemoteImageBytes = 32 << 20 // 32MiB should cover large blog assets.
+
+	// Remote image HTTP header values.
 	supportedImageAcceptHeader = "image/webp,image/png,image/jpeg,image/gif;q=0.9,*/*;q=0.1"
 	defaultRemoteImageUA       = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15"
 	fallbackPNGAcceptHeader    = "image/png,image/*;q=0.8,*/*;q=0.1"
 	fallbackJPEGAcceptHeader   = "image/jpeg,image/*;q=0.8,*/*;q=0.1"
+)
+
+var (
+	// utf8BOM captures the optional UTF-8 byte order mark present in some image files.
+	utf8BOM = []byte{0xEF, 0xBB, 0xBF}
+
+	// avifInitOnce ensures the AVIF decoder is initialized only a single time.
+	avifInitOnce sync.Once
 )
 
 type composedReadCloser struct {
