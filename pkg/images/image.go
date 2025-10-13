@@ -26,7 +26,6 @@ import (
 	_ "golang.org/x/image/webp"
 
 	"github.com/andybalholm/brotli"
-	"github.com/chai2010/webp"
 	"github.com/gen2brain/avif"
 	"github.com/klauspost/compress/zstd"
 )
@@ -533,8 +532,7 @@ func Save(path string, img stdimage.Image, ext string, quality int) error {
 		encoder := &png.Encoder{CompressionLevel: png.DefaultCompression}
 		return encoder.Encode(fh, img)
 	case ".webp":
-		options := &webp.Options{Lossless: false, Quality: float32(quality)}
-		return webp.Encode(fh, img, options)
+		return encodeWebp(fh, img, quality)
 	default:
 		options := &jpeg.Options{Quality: quality}
 		return jpeg.Encode(fh, img, options)

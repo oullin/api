@@ -867,6 +867,10 @@ func TestSaveJPEG(t *testing.T) {
 func TestSaveWebP(t *testing.T) {
 	t.Parallel()
 
+	if !webpEncodeSupported() {
+		t.Skip("webp encoding requires cgo")
+	}
+
 	dir := t.TempDir()
 	path := filepath.Join(dir, "photo.webp")
 
