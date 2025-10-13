@@ -29,7 +29,7 @@ ARG STORAGE_DIR=storage
 ARG LOGS_DIR=logs
 ARG MEDIA_DIR=media
 ARG FIXTURES_DIR=fixture
-ARG TZ=UTC
+ARG TZ=Asia/Singapore
 
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           BUILDER STAGE
@@ -96,8 +96,8 @@ ARG MEDIA_DIR
 ARG FIXTURES_DIR
 ARG APP_HOST_PORT
 
-# Timezone configuration (default to UTC for broad compatibility).
-ARG TZ=UTC
+# Timezone configuration (default to Asia/Singapore).
+ARG TZ=Asia/Singapore
 
 # Install timezone data and runtime dependencies for the CGO-enabled binary.
 RUN apk add --no-cache tzdata=2025b-r0 libwebp=1.5.0-r0
