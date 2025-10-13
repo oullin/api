@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/pkg/cli"
 	pkgimages "github.com/oullin/pkg/images"
 	"github.com/oullin/pkg/portal"
 )
@@ -36,6 +37,14 @@ func (g *Generator) preparePostImage(post payload.PostResponse) (preparedImage, 
 
 	img, format, err := pkgimages.Fetch(source)
 	if err != nil {
+		var decodeErr *pkgimages.DecodeError
+		if errors.As(err, &decodeErr) {
+			cli.Errorln("Failed to decode remote image. Diagnostics:")
+			for _, line := range decodeErr.Diagnostics() {
+				cli.Grayln("  " + line)
+			}
+		}
+
 		return preparedImage{}, err
 	}
 
