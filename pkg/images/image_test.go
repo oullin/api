@@ -450,46 +450,63 @@ func TestFetchRemoteZstdEncoded(t *testing.T) {
 	}
 }
 
-func TestFetchRemoteAVIF(t *testing.T) {
+func TestFetchRemoteAVIFGitHubFallback(t *testing.T) {
 	t.Parallel()
 
-	data, err := base64.StdEncoding.DecodeString(avifFixtureBase64)
+	avifData, err := base64.StdEncoding.DecodeString(avifFixtureBase64)
 	if err != nil {
 		t.Fatalf("decode avif fixture: %v", err)
 	}
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/cover.jpg" {
-			t.Errorf("unexpected path: %s", r.URL.Path)
-			http.NotFound(w, r)
-			return
-		}
+	pngImage := image.NewNRGBA(image.Rect(0, 0, 2, 2))
+	pngImage.Set(0, 0, color.NRGBA{R: 200, G: 10, B: 10, A: 255})
+	pngImage.Set(1, 1, color.NRGBA{R: 20, G: 200, B: 20, A: 255})
 
-		w.Header().Set("Content-Type", "image/jpeg")
-		if _, err := w.Write(data); err != nil {
-			t.Errorf("write avif payload: %v", err)
+	var pngBuf bytes.Buffer
+	if err := png.Encode(&pngBuf, pngImage); err != nil {
+		t.Fatalf("encode fallback png: %v", err)
+	}
+
+	const attachmentID = "e5abb532-59bf-49bb-a9d2-0c31872718d7"
+	var requests []string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r.URL.String())
+
+		switch {
+		case r.URL.Path == "/user-attachments/assets/"+attachmentID && r.URL.RawQuery == "":
+			w.Header().Set("Content-Type", "image/jpeg")
+			if _, err := w.Write(avifData); err != nil {
+				t.Errorf("write avif payload: %v", err)
+			}
+		case r.URL.Path == "/user-attachments/assets/"+attachmentID && r.URL.Query().Get("format") == "png":
+			w.Header().Set("Content-Type", "image/png")
+			if _, err := w.Write(pngBuf.Bytes()); err != nil {
+				t.Errorf("write png payload: %v", err)
+			}
+		default:
+			t.Errorf("unexpected request: %s", r.URL)
+			http.NotFound(w, r)
 		}
 	}))
 	defer server.Close()
 
-	img, format, err := Fetch(server.URL + "/cover.jpg")
+	img, format, err := Fetch(server.URL + "/user-attachments/assets/" + attachmentID)
 	if err != nil {
-		t.Fatalf("fetch remote avif: %v", err)
+		t.Fatalf("fetch remote avif fallback: %v", err)
 	}
 
-	if format != "avif" {
-		t.Fatalf("expected avif format, got %q", format)
+	if format != "png" {
+		t.Fatalf("expected png format, got %q", format)
 	}
 
 	bounds := img.Bounds()
 	if bounds.Dx() != 2 || bounds.Dy() != 2 {
-		t.Fatalf("unexpected avif dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+		t.Fatalf("unexpected fallback dimensions: %dx%d", bounds.Dx(), bounds.Dy())
 	}
 
-	if rgba, ok := img.(*image.NRGBA); ok {
-		if rgba.Pix[0] < 200 || rgba.Pix[1] > 10 || rgba.Pix[2] > 10 || rgba.Pix[3] < 200 {
-			t.Fatalf("unexpected avif pixel: %v", rgba.Pix[:4])
-		}
+	if len(requests) < 2 {
+		t.Fatalf("expected fallback requests, got %v", requests)
 	}
 }
 

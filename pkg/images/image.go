@@ -36,21 +36,65 @@ func Fetch(source string) (stdimage.Image, string, error) {
 		return nil, "", fmt.Errorf("parse url: %w", err)
 	}
 
-	reader, contentType, encoding, err := openSource(parsed)
-	if err != nil {
-		return nil, "", err
-	}
-	payload, err := readImagePayload(reader)
-	if err != nil {
-		return nil, "", err
+	queue := []*url.URL{parsed}
+	seen := make(map[string]struct{})
+
+	var (
+		lastErr         error
+		lastDecodeErr   error
+		lastPayload     []byte
+		lastContentType string
+		lastEncoding    string
+	)
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		if current == nil {
+			continue
+		}
+
+		key := current.String()
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+
+		reader, contentType, encoding, err := openSource(current)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		payload, err := readImagePayload(reader)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		img, format, err := decodeImagePayload(payload)
+		if err == nil {
+			return img, format, nil
+		}
+
+		lastDecodeErr = err
+		lastPayload = payload
+		lastContentType = contentType
+		lastEncoding = encoding
+
+		queue = append(queue, githubAttachmentFallbacks(current, payload)...)
 	}
 
-	img, format, err := decodeImagePayload(payload)
-	if err != nil {
-		return nil, "", newDecodeError(err, payload, contentType, encoding)
+	if lastDecodeErr != nil {
+		return nil, "", newDecodeError(lastDecodeErr, lastPayload, lastContentType, lastEncoding)
 	}
 
-	return img, format, nil
+	if lastErr != nil {
+		return nil, "", lastErr
+	}
+
+	return nil, "", errors.New("failed to fetch image")
 }
 
 const maxRemoteImageBytes = 32 << 20 // 32MiB should cover large blog assets.
@@ -101,13 +145,7 @@ func decodeImagePayload(data []byte) (stdimage.Image, string, error) {
 		lastErr = err
 
 		if isAVIF(candidate) {
-			if !avifSupported {
-				lastErr = errors.New("avif decoding requires cgo support")
-			} else if avifImg, avifErr := decodeAVIF(candidate); avifErr == nil {
-				return avifImg, "avif", nil
-			} else {
-				lastErr = avifErr
-			}
+			lastErr = fmt.Errorf("decode avif payload: %w", err)
 		}
 
 		trimmed := trimLeadingNoise(candidate)
@@ -193,6 +231,96 @@ func isAVIF(data []byte) bool {
 	}
 
 	return false
+}
+
+func githubAttachmentFallbacks(u *url.URL, payload []byte) []*url.URL {
+	if u == nil || len(payload) == 0 {
+		return nil
+	}
+
+	if !isAVIF(payload) {
+		return nil
+	}
+
+	id, ok := githubAttachmentID(u)
+	if !ok {
+		return nil
+	}
+
+	basePaths := []*url.URL{
+		{Scheme: u.Scheme, Host: u.Host, Path: path.Join("/user-attachments/assets", id)},
+		{Scheme: "https", Host: "github.com", Path: path.Join("/user-attachments/assets", id)},
+	}
+
+	variants := make([]*url.URL, 0, len(basePaths)*5)
+
+	for _, base := range basePaths {
+		if base.Host == "" {
+			continue
+		}
+
+		for _, option := range []struct {
+			format string
+			name   string
+		}{
+			{format: "png", name: "large"},
+			{format: "png", name: "medium"},
+			{format: "jpg", name: "large"},
+			{format: "jpg", name: "medium"},
+		} {
+			clone := *base
+			query := clone.Query()
+			query.Set("format", option.format)
+			query.Set("name", option.name)
+			clone.RawQuery = query.Encode()
+			variants = append(variants, &clone)
+		}
+
+		clone := *base
+		query := clone.Query()
+		query.Set("raw", "1")
+		clone.RawQuery = query.Encode()
+		variants = append(variants, &clone)
+	}
+
+	return variants
+}
+
+func githubAttachmentID(u *url.URL) (string, bool) {
+	if u == nil {
+		return "", false
+	}
+
+	trimmedPath := strings.Trim(u.Path, "/")
+	parts := strings.Split(trimmedPath, "/")
+	if len(parts) >= 3 && parts[0] == "user-attachments" && parts[1] == "assets" {
+		id := parts[2]
+		if id != "" {
+			return id, true
+		}
+	}
+
+	if strings.Contains(strings.ToLower(u.Host), "github-production-user-asset") {
+		base := path.Base(u.Path)
+		if base == "" {
+			return "", false
+		}
+
+		if dot := strings.LastIndex(base, "."); dot >= 0 {
+			base = base[:dot]
+		}
+
+		if dash := strings.Index(base, "-"); dash >= 0 && dash+1 < len(base) {
+			base = base[dash+1:]
+		}
+
+		base = strings.TrimSpace(base)
+		if base != "" {
+			return base, true
+		}
+	}
+
+	return "", false
 }
 
 func tryBrotliDecode(data []byte) ([]byte, error) {
