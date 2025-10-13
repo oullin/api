@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"crypto/sha256"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	stdimage "image"
@@ -99,6 +100,16 @@ func decodeImagePayload(data []byte) (stdimage.Image, string, error) {
 
 		lastErr = err
 
+		if isAVIF(candidate) {
+			if !avifSupported {
+				lastErr = errors.New("avif decoding requires cgo support")
+			} else if avifImg, avifErr := decodeAVIF(candidate); avifErr == nil {
+				return avifImg, "avif", nil
+			} else {
+				lastErr = avifErr
+			}
+		}
+
 		trimmed := trimLeadingNoise(candidate)
 		if len(trimmed) > 0 && len(trimmed) != len(candidate) {
 			queue = append(queue, trimmed)
@@ -153,6 +164,35 @@ func expandCompressedCandidate(data []byte) [][]byte {
 	}
 
 	return expansions
+}
+
+func isAVIF(data []byte) bool {
+	if len(data) < 16 {
+		return false
+	}
+
+	boxSize := binary.BigEndian.Uint32(data[:4])
+	if boxSize == 0 || int(boxSize) > len(data) {
+		boxSize = uint32(len(data))
+	}
+
+	if string(data[4:8]) != "ftyp" {
+		return false
+	}
+
+	brands := [][]byte{data[8:12]}
+	for offset := 16; offset+4 <= int(boxSize); offset += 4 {
+		brands = append(brands, data[offset:offset+4])
+	}
+
+	for _, brand := range brands {
+		switch string(brand) {
+		case "avif", "avis", "avio":
+			return true
+		}
+	}
+
+	return false
 }
 
 func tryBrotliDecode(data []byte) ([]byte, error) {

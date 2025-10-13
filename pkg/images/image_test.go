@@ -21,6 +21,8 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
+const avifFixtureBase64 = "AAAAHGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZgAAAOptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAAImlsb2MAAAAAREAAAQABAAAAAAEOAAEAAAAAAAAAHwAAACNpaW5mAAAAAAABAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAamlwcnAAAABLaXBjbwAAABNjb2xybmNseAABAA0ABoAAAAAMYXYxQ4EADAAAAAAUaXNwZQAAAAAAAAACAAAAAgAAABBwaXhpAAAAAAMICAgAAAAXaXBtYQAAAAAAAAABAAEEAYIDBAAAACdtZGF0EgAKCBgANggIaDQgMhEYAAooooQAALATVl9ApOsM/A=="
+
 func createTestImage(width, height int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for y := 0; y < height; y++ {
@@ -445,6 +447,49 @@ func TestFetchRemoteZstdEncoded(t *testing.T) {
 	bounds := img.Bounds()
 	if bounds.Dx() != 18 || bounds.Dy() != 12 {
 		t.Fatalf("unexpected dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+}
+
+func TestFetchRemoteAVIF(t *testing.T) {
+	t.Parallel()
+
+	data, err := base64.StdEncoding.DecodeString(avifFixtureBase64)
+	if err != nil {
+		t.Fatalf("decode avif fixture: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/cover.jpg" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/jpeg")
+		if _, err := w.Write(data); err != nil {
+			t.Errorf("write avif payload: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	img, format, err := Fetch(server.URL + "/cover.jpg")
+	if err != nil {
+		t.Fatalf("fetch remote avif: %v", err)
+	}
+
+	if format != "avif" {
+		t.Fatalf("expected avif format, got %q", format)
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 2 || bounds.Dy() != 2 {
+		t.Fatalf("unexpected avif dimensions: %dx%d", bounds.Dx(), bounds.Dy())
+	}
+
+	if rgba, ok := img.(*image.NRGBA); ok {
+		if rgba.Pix[0] < 200 || rgba.Pix[1] > 10 || rgba.Pix[2] > 10 || rgba.Pix[3] < 200 {
+			t.Fatalf("unexpected avif pixel: %v", rgba.Pix[:4])
+		}
 	}
 }
 
