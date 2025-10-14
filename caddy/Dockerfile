@@ -3,7 +3,7 @@
 
 # Define a build argument for the Caddy version with a sensible default.
 # This allows the version to be easily overridden from the docker-compose.yml file.
-ARG CADDY_VERSION=2.10.0
+ARG CADDY_VERSION=2.10.2
 
 # Use the official Caddy image with the latest tag.
 FROM caddy:${CADDY_VERSION}
