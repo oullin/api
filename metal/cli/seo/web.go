@@ -1,13 +1,18 @@
 package seo
 
+// const GocantoUrl = "https://gocanto.dev/"
+// const RepoApiUrl = "https://github.com/oullin/api"
+// const RepoWebUrl = "https://github.com/oullin/web"
+// const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
+// const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
 type Web struct {
 	FoundedYear int16
-	//StubPath    string
 	ThemeColor  string
 	Robots      string
 	ColorScheme string
 	Description string
 	Pages       map[string]WebPage
+	Urls        WebPageUrls
 }
 
 type WebPage struct {
@@ -15,6 +20,19 @@ type WebPage struct {
 	Url     string
 	Title   string
 	Excerpt string
+}
+
+type WebPageUrls struct {
+	GocantoUrl    string
+	RepoApiUrl    string
+	RepoWebUrl    string
+	LogoUrl       string
+	AboutPhotoUrl string
+	// const GocantoUrl = "https://gocanto.dev/"
+	// const RepoApiUrl = "https://github.com/oullin/api"
+	// const RepoWebUrl = "https://github.com/oullin/web"
+	// const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
+	// const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
 }
 
 func NewWeb() *Web {
@@ -83,6 +101,18 @@ func NewWeb() *Web {
 		ThemeColor:  "#0E172B",
 		Robots:      "index,follow",
 		ColorScheme: "light dark",
+		Urls: WebPageUrls{
+			// const GocantoUrl = "https://gocanto.dev/"
+			// const RepoApiUrl = "https://github.com/oullin/api"
+			// const RepoWebUrl = "https://github.com/oullin/web"
+			// const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
+			// const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
+			GocantoUrl:    "https://gocanto.dev/",
+			RepoApiUrl:    "https://github.com/oullin/api",
+			RepoWebUrl:    "https://github.com/oullin/web",
+			LogoUrl:       "https://oullin.io/assets/001-BBig3EFt.png",
+			AboutPhotoUrl: "https://oullin.io/images/profile/about-seo.png",
+		},
 		Description: "Gus is a full-stack Software Engineer leader with over two decades of experience in building complex web systems and products, specialising in areas like e-commerce, banking, cross-payment solutions, cyber security, and customer success.",
 	}
 }

@@ -49,6 +49,8 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		return nil, fmt.Errorf("initialising categories: %w", err)
 	}
 
+	web := NewWeb()
+
 	page := Page{
 		StubPath:      StubPath,
 		Categories:    categories,
@@ -56,15 +58,15 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		Lang:          env.App.Lang(),
 		OutputDir:     env.Seo.SpaDir,
 		Template:      &template.Template{},
-		LogoURL:       portal.SanitiseURL(LogoUrl),
-		WebRepoURL:    portal.SanitiseURL(RepoWebUrl),
-		APIRepoURL:    portal.SanitiseURL(RepoApiUrl),
+		LogoURL:       portal.SanitiseURL(web.Urls.LogoUrl),
+		WebRepoURL:    portal.SanitiseURL(web.Urls.RepoWebUrl),
+		APIRepoURL:    portal.SanitiseURL(web.Urls.RepoApiUrl),
 		SiteURL:       portal.SanitiseURL(env.App.URL),
-		AboutPhotoUrl: portal.SanitiseURL(AboutPhotoUrl),
+		AboutPhotoUrl: portal.SanitiseURL(web.Urls.AboutPhotoUrl),
 		SameAsURL: []string{
-			portal.SanitiseURL(RepoApiUrl),
-			portal.SanitiseURL(RepoWebUrl),
-			portal.SanitiseURL(GocantoUrl),
+			portal.SanitiseURL(web.Urls.RepoApiUrl),
+			portal.SanitiseURL(web.Urls.RepoWebUrl),
+			portal.SanitiseURL(web.Urls.GocantoUrl),
 		},
 	}
 
@@ -83,11 +85,11 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	return &Generator{
 		DB:            db,
 		Env:           env,
+		Web:           web,
 		Validator:     val,
 		Page:          page,
 		WebsiteRoutes: webRoutes,
 		Client:        NewClient(webRoutes),
-		Web:           NewWeb(),
 	}, nil
 }
 
