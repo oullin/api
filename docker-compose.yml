@@ -33,7 +33,7 @@ services:
                 context: ./caddy
                 dockerfile: Dockerfile
                 args:
-                    - CADDY_VERSION=2.10.0
+                    - CADDY_VERSION=2.10.2
 
             profiles: ["prod"]
             container_name: oullin_proxy_prod
@@ -60,7 +60,7 @@ services:
                 context: ./caddy
                 dockerfile: Dockerfile
                 args:
-                    - CADDY_VERSION=latest
+                    - CADDY_VERSION=2.10.2
 
             profiles: ["local"]
             container_name: oullin_local_proxy
@@ -155,7 +155,7 @@ services:
                       - api
 
         api-db-migrate:
-            image: migrate/migrate:v4.18.3
+            image: migrate/migrate:v4.19.0
             container_name: oullin_db_migrate
             networks:
                 - oullin_net
@@ -188,7 +188,7 @@ services:
             # Ensure the database always restarts on server reboot or crash.
             restart: always
 
-            image: postgres:17.3-alpine
+            image: postgres:17.6-alpine3.22
             container_name: oullin_db
 
             env_file:

@@ -34,7 +34,7 @@ ARG TZ=Asia/Singapore
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           BUILDER STAGE
 # ----------------------------------------------------------------------------------------------------------------------
-FROM golang:1.25.1-alpine@sha256:b6ed3fd0452c0e9bcdef5597f29cc1418f61672e9d3a2f55bf02e7222c014abd AS builder
+FROM golang:1.25.3-alpine3.22@sha256:c3dc5d5e8cf34ccb2172fb8d1aa399aa13cd8b60d27bba891d18e3b436a0c5f6 AS builder
 
 # Bring in the build args needed in this stage.
 ARG APP_DIR
@@ -82,7 +82,7 @@ RUN go build \
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           FINAL STAGE
 # ----------------------------------------------------------------------------------------------------------------------
-FROM alpine:3.22@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
+FROM alpine:3.22@sha256:85f2b723e106c34644cd5851d7e81ee87da98ac54672b29947c052a45d31dc2f
 
 # Bring in the runtime args.
 ARG APP_USER
