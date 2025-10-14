@@ -40,43 +40,55 @@ install-air:
 	@go install github.com/air-verse/air@latest
 
 run-cli:
-	@missing=""; \
-	for secret in "$(DB_SECRET_USERNAME)" "$(DB_SECRET_PASSWORD)" "$(DB_SECRET_DBNAME)"; do \
-	  if [ ! -f "$$secret" ]; then \
-	    missing="$$missing\n  - $$secret"; \
-	  fi; \
+	@set -euo pipefail; \
+	missing_values=""; \
+	missing_files=""; \
+	for secret_name in DB_SECRET_USERNAME DB_SECRET_PASSWORD DB_SECRET_DBNAME; do \
+		value="${!secret_name:-}"; \
+		if [ -z "$$value" ]; then \
+			missing_values="$$missing_values\n  - $$secret_name"; \
+		elif [[ "$$value" == /* || "$$value" == ./* || "$$value" == ../* ]]; then \
+			if [ ! -f "$$value" ]; then \
+				missing_files="$$missing_files\n  - $$secret_name ($$value)"; \
+			fi; \
+		fi; \
 	done; \
-	if [ -n "$$missing" ]; then \
-	  printf "\n$(RED)❌ Missing secret files:$(NC)%s\n" "$$missing"; \
-	  printf "  Please make sure the paths exist or override them when invoking $(BOLD)make run-cli$(NC).\n\n"; \
-	  exit 1; \
+	if [ -n "$$missing_values" ]; then \
+		printf "\n$(RED)❌ Missing secret values:$(NC)%s\n" "$$missing_values"; \
+		printf "  Provide them via environment variables or override them when invoking $(BOLD)make run-cli$(NC).\n\n"; \
+		exit 1; \
+	fi; \
+	if [ -n "$$missing_files" ]; then \
+		printf "\n$(RED)❌ Secret file paths not found:$(NC)%s\n" "$$missing_files"; \
+		printf "  Ensure the files exist or adjust the overrides before running $(BOLD)make run-cli$(NC).\n\n"; \
+		exit 1; \
 	fi
 	@printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"
 	@printf "           DB_SECRET_USERNAME=$(DB_SECRET_USERNAME)\n"
 	@printf "           DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD)\n"
 	@printf "           DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)\n\n"
 	@if ! command -v docker >/dev/null 2>&1; then \
-	  printf "$(YELLOW)⚠️ Docker not available. Running CLI locally without Docker.\n$(NC)"; \
-	  DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-	  DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-	  DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-	  go run ./metal/cli/main.go || { \
-	    status=$$?; \
-	    printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
-	    exit $$status; \
-	  }; \
+		printf "$(YELLOW)⚠️ Docker not available. Running CLI locally without Docker.\n$(NC)"; \
+		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
+		DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
+		DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
+		go run ./metal/cli/main.go || { \
+			status=$$?; \
+			printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
+			exit $$status; \
+		}; \
 	else \
-	  DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-	  DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-	  DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-	  docker compose run --rm api-runner go run ./metal/cli/main.go || { \
-	    status=$$?; \
-	    printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
-	    exit $$status; \
-	  }; \
+		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
+		DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
+		DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
+		docker compose run --rm api-runner go run ./metal/cli/main.go || { \
+			status=$$?; \
+			printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
+			exit $$status; \
+		}; \
 	fi
 run-cli-docker:
-	make run-cli DB_SECRET_USERNAME=./database/infra/secrets/pg_username DB_SECRET_PASSWORD=./database/infra/secrets/pg_password DB_SECRET_DBNAME=./database/infra/secrets/pg_dbname
+	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
 
 test-all:
 	go test ./...
