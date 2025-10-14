@@ -99,22 +99,22 @@ run-cli:
 		*) printf '<redacted>';; \
 		esac`; \
 	printf "           DB_SECRET_DBNAME=%s\n\n" "$$DB_SECRET_DBNAME_DISPLAY"
-       @status=0; \
-       if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
-               printf "Using docker compose to run the CLI.\n"; \
-               DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
-       elif command -v docker-compose >/dev/null 2>&1; then \
-               printf "Using docker-compose to run the CLI.\n"; \
-               DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker-compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
-       else \
-               printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
-               printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
-               exit 1; \
-       fi; \
-       if [ $$status -ne 0 ]; then \
-               printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
-               exit $$status; \
-       fi
+	@status=0; \
+	if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+		printf "Using docker compose to run the CLI.\n"; \
+		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		printf "Using docker-compose to run the CLI.\n"; \
+		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker-compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
+	else \
+		printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
+		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
+		exit 1; \
+	fi; \
+	if [ $$status -ne 0 ]; then \
+		printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
+		exit $$status; \
+	fi
 run-cli-docker:
 	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
 
