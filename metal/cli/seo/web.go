@@ -1,18 +1,13 @@
 package seo
 
-// const GocantoUrl = "https://gocanto.dev/"
-// const RepoApiUrl = "https://github.com/oullin/api"
-// const RepoWebUrl = "https://github.com/oullin/web"
-// const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
-// const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
 type Web struct {
 	FoundedYear int16
 	ThemeColor  string
 	Robots      string
 	ColorScheme string
 	Description string
-	Pages       map[string]WebPage
 	Urls        WebPageUrls
+	Pages       map[string]WebPage
 }
 
 type WebPage struct {
@@ -28,15 +23,10 @@ type WebPageUrls struct {
 	RepoWebUrl    string
 	LogoUrl       string
 	AboutPhotoUrl string
-	// const GocantoUrl = "https://gocanto.dev/"
-	// const RepoApiUrl = "https://github.com/oullin/api"
-	// const RepoWebUrl = "https://github.com/oullin/web"
-	// const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
-	// const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
 }
 
 func NewWeb() *Web {
-	var pages map[string]WebPage
+	pages := make(map[string]WebPage, 6)
 
 	//const WebHomeUrl = "/"
 	//const WebHomeName = "Home"
@@ -94,25 +84,21 @@ func NewWeb() *Web {
 	pages[PostsSlug] = posts
 	pages[PostDetailsSlug] = postsD
 
+	urls := WebPageUrls{
+		GocantoUrl:    "https://gocanto.dev/",
+		RepoApiUrl:    "https://github.com/oullin/api",
+		RepoWebUrl:    "https://github.com/oullin/web",
+		LogoUrl:       "https://oullin.io/assets/001-BBig3EFt.png",
+		AboutPhotoUrl: "https://oullin.io/images/profile/about-seo.png",
+	}
+
 	return &Web{
 		FoundedYear: 2020,
+		Urls:        urls,
 		Pages:       pages,
-		//StubPath:    "stub.html",
 		ThemeColor:  "#0E172B",
 		Robots:      "index,follow",
 		ColorScheme: "light dark",
-		Urls: WebPageUrls{
-			// const GocantoUrl = "https://gocanto.dev/"
-			// const RepoApiUrl = "https://github.com/oullin/api"
-			// const RepoWebUrl = "https://github.com/oullin/web"
-			// const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
-			// const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
-			GocantoUrl:    "https://gocanto.dev/",
-			RepoApiUrl:    "https://github.com/oullin/api",
-			RepoWebUrl:    "https://github.com/oullin/web",
-			LogoUrl:       "https://oullin.io/assets/001-BBig3EFt.png",
-			AboutPhotoUrl: "https://oullin.io/images/profile/about-seo.png",
-		},
 		Description: "Gus is a full-stack Software Engineer leader with over two decades of experience in building complex web systems and products, specialising in areas like e-commerce, banking, cross-payment solutions, cyber security, and customer success.",
 	}
 }
