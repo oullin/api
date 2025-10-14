@@ -1,5 +1,9 @@
 .PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal
 
+DB_SECRET_USERNAME ?= ./database/infra/secrets/pg_username
+DB_SECRET_PASSWORD ?= ./database/infra/secrets/pg_password
+DB_SECRET_DBNAME   ?= ./database/infra/secrets/pg_dbname
+
 format:
 	gofmt -w -s .
 
