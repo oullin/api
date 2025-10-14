@@ -70,9 +70,9 @@ func NewManifest(tmpl Page, data TemplateData, web *Web) *Manifest {
 			},
 			{
 				Icons:     icons,
-				URL:       WebProjectsUrl,
-				Name:      WebProjectsName,
-				ShortName: WebProjectsName,
+				URL:       web.GetProjectsPage().Url,
+				Name:      web.GetProjectsPage().Name,
+				ShortName: web.GetProjectsPage().Name,
 			},
 			{
 				Icons:     icons,
@@ -82,15 +82,15 @@ func NewManifest(tmpl Page, data TemplateData, web *Web) *Manifest {
 			},
 			{
 				Icons:     icons,
-				URL:       WebAboutUrl,
-				Name:      WebAboutName,
-				ShortName: WebAboutName,
+				URL:       web.GetAboutPage().Url,
+				Name:      web.GetAboutPage().Name,
+				ShortName: web.GetAboutPage().Name,
 			},
 			{
 				Icons:     icons,
-				URL:       WebResumeUrl,
-				Name:      WebResumeName,
-				ShortName: WebResumeName,
+				URL:       web.GetResumePage().Url,
+				Name:      web.GetResumePage().Name,
+				ShortName: web.GetResumePage().Name,
 			},
 		},
 	}

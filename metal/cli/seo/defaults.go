@@ -15,18 +15,10 @@ const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
 const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
 
 // --- Web Pages
-const WebAboutName = "About"
-const WebAboutUrl = "/about"
 
 const WebPostsName = "Posts"
 const WebPostsUrl = "/posts"
 const WebPostDetailUrl = "/post"
-
-const WebResumeName = "Resume"
-const WebResumeUrl = "/resume"
-
-const WebProjectsName = "Projects"
-const WebProjectsUrl = "/projects"
 
 // --- Web Meta
 

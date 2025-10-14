@@ -75,3 +75,15 @@ func NewWeb() *Web {
 func (w *Web) GetHomePage() WebPage {
 	return w.Pages[HomeSlug]
 }
+
+func (w *Web) GetAboutPage() WebPage {
+	return w.Pages[AboutSlug]
+}
+
+func (w *Web) GetResumePage() WebPage {
+	return w.Pages[ResumeSlug]
+}
+
+func (w *Web) GetProjectsPage() WebPage {
+	return w.Pages[ProjectsSlug]
+}

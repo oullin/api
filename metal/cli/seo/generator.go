@@ -188,7 +188,8 @@ func (g *Generator) GenerateAbout() error {
 	html = append(html, sections.Social(social))
 	html = append(html, sections.Recommendations(recommendations))
 
-	data, buildErr := g.buildForPage(WebAboutName, WebAboutUrl, html)
+	web := g.Web.GetAboutPage()
+	data, buildErr := g.buildForPage(web.Name, web.Url, html)
 	if buildErr != nil {
 		return fmt.Errorf("about: generating template data: %w", buildErr)
 	}
@@ -213,7 +214,8 @@ func (g *Generator) GenerateProjects() error {
 	sections := NewSections()
 	body := []template.HTML{sections.Projects(projects)}
 
-	data, buildErr := g.buildForPage(WebProjectsName, WebProjectsUrl, body)
+	web := g.Web.GetProjectsPage()
+	data, buildErr := g.buildForPage(web.Name, web.Url, body)
 	if buildErr != nil {
 		return fmt.Errorf("projects: generating template data: %w", buildErr)
 	}
@@ -254,7 +256,8 @@ func (g *Generator) GenerateResume() error {
 	html = append(html, sections.Experience(experience))
 	html = append(html, sections.Recommendations(recommendations))
 
-	data, buildErr := g.buildForPage(WebResumeName, WebResumeUrl, html)
+	web := g.Web.GetResumePage()
+	data, buildErr := g.buildForPage(web.Name, web.Url, html)
 	if buildErr != nil {
 		return fmt.Errorf("resume: generating template data: %w", buildErr)
 	}
