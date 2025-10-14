@@ -1,5 +1,9 @@
 .PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal
 
+DB_SECRET_USERNAME ?= ./database/infra/secrets/pg_username
+DB_SECRET_PASSWORD ?= ./database/infra/secrets/pg_password
+DB_SECRET_DBNAME   ?= ./database/infra/secrets/pg_dbname
+
 format:
 	gofmt -w -s .
 
@@ -36,25 +40,72 @@ install-air:
 	@go install github.com/air-verse/air@latest
 
 run-cli:
-	@if [ -z "$(DB_SECRET_USERNAME)" ] || [ -z "$(DB_SECRET_PASSWORD)" ] || [ -z "$(DB_SECRET_DBNAME)" ]; then \
-    	  printf "\n$(RED)⚠️ Usage: make run-cli \n$(NC)"; \
-    	  printf "         DB_SECRET_USERNAME=/path/to/pg_username\n"; \
-    	  printf "         DB_SECRET_PASSWORD=/path/to/pg_password\n"; \
-    	  printf "         DB_SECRET_DBNAME=/path/to/pg_dbname\n\n"; \
-    	  printf "\n------------------------------------------------------\n\n"; \
-    	  exit 1; \
-    	fi; \
-    	printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"; \
-    	printf "           DB_SECRET_USERNAME=$(DB_SECRET_USERNAME)\n"; \
-    	printf "           DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD)\n"; \
-    	printf "           DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)\n\n"; \
-    	DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-    	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-    	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-    	docker compose run --rm api-runner go run ./metal/cli/main.go
-
+	@missing_values=""; \
+	missing_files=""; \
+	check_secret() { \
+		secret_name="$$1"; \
+		secret_value="$$2"; \
+		if [ -z "$$secret_value" ]; then \
+			if [ -z "$$missing_values" ]; then \
+				missing_values="  - $$secret_name"; \
+			else \
+				missing_values="$$missing_values\n  - $$secret_name"; \
+			fi; \
+		else \
+			case "$$secret_value" in \
+				/*|./*|../*) \
+					if [ ! -f "$$secret_value" ]; then \
+						if [ -z "$$missing_files" ]; then \
+							missing_files="  - $$secret_name ($$secret_value)"; \
+						else \
+							missing_files="$$missing_files\n  - $$secret_name ($$secret_value)"; \
+						fi; \
+					fi; \
+					;; \
+			esac; \
+		fi; \
+	}; \
+	check_secret DB_SECRET_USERNAME "$(DB_SECRET_USERNAME)"; \
+	check_secret DB_SECRET_PASSWORD "$(DB_SECRET_PASSWORD)"; \
+	check_secret DB_SECRET_DBNAME "$(DB_SECRET_DBNAME)"; \
+	if [ -n "$$missing_values" ]; then \
+		printf "\n$(RED)❌ Missing secret values:$(NC)\n"; \
+		printf '%b\n' "$$missing_values"; \
+		printf "  Provide them via environment variables or override them when invoking $(BOLD)make run-cli$(NC).\n\n"; \
+		exit 1; \
+	fi; \
+	if [ -n "$$missing_files" ]; then \
+		printf "\n$(RED)❌ Secret file paths not found:$(NC)\n"; \
+		printf '%b\n' "$$missing_files"; \
+		printf "  Ensure the files exist or adjust the overrides before running $(BOLD)make run-cli$(NC).\n\n"; \
+		exit 1; \
+	fi
+	@printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"
+	@DB_SECRET_USERNAME_DISPLAY=`case "$(DB_SECRET_USERNAME)" in \
+		/*|./*|../*) printf '%s' "$(DB_SECRET_USERNAME)";; \
+		"") printf '<unset>';; \
+		*) printf '<redacted>';; \
+		esac`; \
+	printf "           DB_SECRET_USERNAME=%s\n" "$$DB_SECRET_USERNAME_DISPLAY"
+	@DB_SECRET_PASSWORD_DISPLAY=`case "$(DB_SECRET_PASSWORD)" in \
+		/*|./*|../*) printf '%s' "$(DB_SECRET_PASSWORD)";; \
+		"") printf '<unset>';; \
+		*) printf '<redacted>';; \
+		esac`; \
+	printf "           DB_SECRET_PASSWORD=%s\n" "$$DB_SECRET_PASSWORD_DISPLAY"
+	@DB_SECRET_DBNAME_DISPLAY=`case "$(DB_SECRET_DBNAME)" in \
+		/*|./*|../*) printf '%s' "$(DB_SECRET_DBNAME)";; \
+		"") printf '<unset>';; \
+		*) printf '<redacted>';; \
+		esac`; \
+	printf "           DB_SECRET_DBNAME=%s\n\n" "$$DB_SECRET_DBNAME_DISPLAY"
+        @DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker compose run --rm api-runner go run ./metal/cli/main.go || { \
+                status=$$?; \
+                printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
+                exit $$status; \
+        }
 run-cli-docker:
-	make run-cli DB_SECRET_USERNAME=./database/infra/secrets/pg_username DB_SECRET_PASSWORD=./database/infra/secrets/pg_password DB_SECRET_DBNAME=./database/infra/secrets/pg_dbname
+	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
 
 test-all:
 	go test ./...
