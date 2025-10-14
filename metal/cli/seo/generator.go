@@ -191,7 +191,11 @@ func (g *Generator) GenerateAbout() error {
 	html = append(html, sections.Recommendations(recommendations))
 
 	web := g.Web.GetAboutPage()
-	data, buildErr := g.buildForPage(web.Name, web.Url, html)
+	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
+		data.Title = g.TitleFor(web.Title)
+		data.Description = web.Excerpt
+	})
+
 	if buildErr != nil {
 		return fmt.Errorf("about: generating template data: %w", buildErr)
 	}
@@ -217,7 +221,11 @@ func (g *Generator) GenerateProjects() error {
 	body := []template.HTML{sections.Projects(projects)}
 
 	web := g.Web.GetProjectsPage()
-	data, buildErr := g.buildForPage(web.Name, web.Url, body)
+	data, buildErr := g.buildForPage(web.Name, web.Url, body, func(data *TemplateData) {
+		data.Title = g.TitleFor(web.Title)
+		data.Description = web.Excerpt
+	})
+
 	if buildErr != nil {
 		return fmt.Errorf("projects: generating template data: %w", buildErr)
 	}
@@ -259,7 +267,11 @@ func (g *Generator) GenerateResume() error {
 	html = append(html, sections.Recommendations(recommendations))
 
 	web := g.Web.GetResumePage()
-	data, buildErr := g.buildForPage(web.Name, web.Url, html)
+	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
+		data.Title = g.TitleFor(web.Title)
+		data.Description = web.Excerpt
+	})
+
 	if buildErr != nil {
 		return fmt.Errorf("resume: generating template data: %w", buildErr)
 	}
