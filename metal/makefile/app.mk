@@ -81,14 +81,24 @@ run-cli:
 		exit 1; \
 	fi
 	@printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"
-	@printf "           DB_SECRET_USERNAME=$(DB_SECRET_USERNAME)\n"
+	@DB_SECRET_USERNAME_DISPLAY=`case "$(DB_SECRET_USERNAME)" in \
+		/*|./*|../*) printf '%s' "$(DB_SECRET_USERNAME)";; \
+		"") printf '<unset>';; \
+		*) printf '<redacted>';; \
+		esac`; \
+	printf "           DB_SECRET_USERNAME=%s\n" "$$DB_SECRET_USERNAME_DISPLAY"
 	@DB_SECRET_PASSWORD_DISPLAY=`case "$(DB_SECRET_PASSWORD)" in \
-                /*|./*|../*) printf '%s' "$(DB_SECRET_PASSWORD)";; \
-                "") printf '<unset>';; \
-                *) printf '<redacted>';; \
-        esac`; \
+		/*|./*|../*) printf '%s' "$(DB_SECRET_PASSWORD)";; \
+		"") printf '<unset>';; \
+		*) printf '<redacted>';; \
+		esac`; \
 	printf "           DB_SECRET_PASSWORD=%s\n" "$$DB_SECRET_PASSWORD_DISPLAY"
-	@printf "           DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)\n\n"
+	@DB_SECRET_DBNAME_DISPLAY=`case "$(DB_SECRET_DBNAME)" in \
+		/*|./*|../*) printf '%s' "$(DB_SECRET_DBNAME)";; \
+		"") printf '<unset>';; \
+		*) printf '<redacted>';; \
+		esac`; \
+	printf "           DB_SECRET_DBNAME=%s\n\n" "$$DB_SECRET_DBNAME_DISPLAY"
 	@if ! command -v docker >/dev/null 2>&1; then \
 		printf "$(YELLOW)⚠️ Docker not available. Running CLI locally without Docker.\n$(NC)"; \
         		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" go run ./metal/cli/main.go || { \
