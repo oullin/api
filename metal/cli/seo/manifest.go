@@ -48,6 +48,10 @@ func NewManifest(tmpl Page, data TemplateData, web *Web) *Manifest {
 		icons = []ManifestIcon{{Src: tmpl.LogoURL, Sizes: "512x512", Type: "image/png", Purpose: "any"}}
 	}
 
+	if web == nil {
+		web = NewWeb()
+	}
+
 	b := &Manifest{
 		Icons:       icons,
 		Lang:        tmpl.Lang,

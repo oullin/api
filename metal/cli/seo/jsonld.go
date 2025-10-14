@@ -25,6 +25,10 @@ type JsonID struct {
 }
 
 func NewJsonID(tmpl Page, web *Web) *JsonID {
+	if web == nil {
+		web = NewWeb()
+	}
+
 	return &JsonID{
 		Lang:        tmpl.Lang,
 		SiteURL:     tmpl.SiteURL,
