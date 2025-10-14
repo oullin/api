@@ -517,12 +517,13 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 func (g *Generator) CanonicalPostPath(slug string) string {
 	cleaned := strings.TrimSpace(slug)
 	cleaned = strings.Trim(cleaned, "/")
+	web := g.Web.GetPostsDetailPage()
 
 	if cleaned == "" {
-		return WebPostDetailUrl
+		return web.Url
 	}
 
-	return WebPostDetailUrl + "/" + cleaned
+	return web.Url + "/" + cleaned
 }
 
 func (g *Generator) SanitizeMetaDescription(raw, fallback string) string {

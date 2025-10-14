@@ -5,6 +5,8 @@ const HomeSlug = "home"
 const AboutSlug = "about"
 const ProjectsSlug = "projects"
 const ResumeSlug = "resume"
+const PostsSlug = "posts"
+const PostDetailsSlug = "post-details"
 
 // --- Web URLs
 
@@ -13,12 +15,6 @@ const RepoApiUrl = "https://github.com/oullin/api"
 const RepoWebUrl = "https://github.com/oullin/web"
 const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
 const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
-
-// --- Web Pages
-
-const WebPostsName = "Posts"
-const WebPostsUrl = "/posts"
-const WebPostDetailUrl = "/post"
 
 // --- Web Meta
 

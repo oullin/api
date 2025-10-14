@@ -76,9 +76,9 @@ func NewManifest(tmpl Page, data TemplateData, web *Web) *Manifest {
 			},
 			{
 				Icons:     icons,
-				URL:       WebPostsUrl,
-				Name:      WebPostsName,
-				ShortName: WebPostsName,
+				URL:       web.GetPostsPage().Url,
+				Name:      web.GetPostsPage().Name,
+				ShortName: web.GetPostsPage().Name,
 			},
 			{
 				Icons:     icons,

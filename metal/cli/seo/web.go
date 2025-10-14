@@ -56,10 +56,25 @@ func NewWeb() *Web {
 		Excerpt: "Gus' worked closely with financial services companies, delivering secure and compliant solutions that align with industry regulations and standards. He understands the technical and operational demands of financial institutions and have implemented robust architectures that support high-availability systems, data security, and transactional integrity.",
 	}
 
+	//const WebPostsName = "Posts"
+	//const WebPostsUrl = "/posts"
+	//const WebPostDetailUrl = "/post"
+	posts := WebPage{
+		Name: "Posts",
+		Url:  "/posts",
+	}
+
+	postsD := WebPage{
+		Name: "Posts",
+		Url:  "/post",
+	}
+
 	pages[HomeSlug] = home
 	pages[AboutSlug] = about
 	pages[ProjectsSlug] = projects
 	pages[ResumeSlug] = resume
+	pages[PostsSlug] = posts
+	pages[PostDetailsSlug] = postsD
 
 	return &Web{
 		FoundedYear: 2020,
@@ -86,4 +101,12 @@ func (w *Web) GetResumePage() WebPage {
 
 func (w *Web) GetProjectsPage() WebPage {
 	return w.Pages[ProjectsSlug]
+}
+
+func (w *Web) GetPostsPage() WebPage {
+	return w.Pages[PostsSlug]
+}
+
+func (w *Web) GetPostsDetailPage() WebPage {
+	return w.Pages[PostDetailsSlug]
 }
