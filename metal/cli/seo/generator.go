@@ -490,19 +490,21 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 	image := g.PreferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
 	imageType := "image/png"
 
-	cli.Grayln(fmt.Sprintf("Preparing post metadata"))
-	cli.Grayln(fmt.Sprintf("  Canonical path: %s", path))
-	cli.Grayln(fmt.Sprintf("  Sanitised alt text: %s", imageAlt))
-	cli.Grayln(fmt.Sprintf("  Description preview: %s", truncateForLog(description)))
-	cli.Grayln(fmt.Sprintf("  Preferred image candidate: %s", image))
+	cli.Grayln("\n----------------- [POST BUILD] ----------------- ")
+
+	cli.Grayln(fmt.Sprintf("Preparing POSTS metadata"))
+	cli.Magentaln(fmt.Sprintf(" .......... Canonical path: %s", path))
+	cli.Blueln(fmt.Sprintf(" .......... Sanitised alt text: %s", imageAlt))
+	cli.Successln(fmt.Sprintf(" .......... Description preview: %s", truncateForLog(description)))
+	cli.Cyanln(fmt.Sprintf(" .......... Preferred image candidate: %s", image))
 
 	if prepared, err := g.preparePostImage(post); err == nil && prepared.URL != "" {
-		cli.Grayln(fmt.Sprintf("  Post image prepared at: %s (%s)", prepared.URL, prepared.Mime))
+		cli.Successln(fmt.Sprintf("  Post image prepared at: %s (%s)", prepared.URL, prepared.Mime))
 		image = prepared.URL
 		imageType = prepared.Mime
 	} else if err != nil {
-		cli.Errorln(fmt.Sprintf("failed to prepare post image for %s: %v", post.Slug, err))
-		cli.Grayln(fmt.Sprintf("  Falling back to preferred image URL: %s", image))
+		cli.Errorln(fmt.Sprintf("Failed to prepare post image for %s: %v", post.Slug, err))
+		cli.Warningln(fmt.Sprintf(" .......... Falling back to preferred image URL: %s", image))
 	}
 
 	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
