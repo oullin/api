@@ -40,40 +40,45 @@ install-air:
 	@go install github.com/air-verse/air@latest
 
 run-cli:
-	@set -euo pipefail; \
-	missing_values=""; \
+	@missing_values=""; \
 	missing_files=""; \
 	check_secret() { \
-		local secret_name="$$1"; \
-		local secret_value="$$2"; \
-		if [ -z "$$secret_value" ]; then \
-			if [ -z "$$missing_values" ]; then \
-				missing_values="  - $$secret_name"; \
-			else \
-				printf -v missing_values "%s\n  - %s" "$$missing_values" "$$secret_name"; \
-			fi; \
-		elif [[ "$$secret_value" == /* || "$$secret_value" == ./* || "$$secret_value" == ../* ]]; then \
-			if [ ! -f "$$secret_value" ]; then \
-				if [ -z "$$missing_files" ]; then \
-					missing_files="  - $$secret_name ($$secret_value)"; \
-				else \
-					printf -v missing_files "%s\n  - %s (%s)" "$$missing_files" "$$secret_name" "$$secret_value"; \
-				fi; \
-			fi; \
-		fi; \
-	}; \
+                secret_name="$$1"; \
+                secret_value="$$2"; \
+        	if [ -z "$$secret_value" ]; then \
+                	if [ -z "$$missing_values" ]; then \
+                        	missing_values="  - $$secret_name"; \
+                	else \
+                        	missing_values="$$missing_values\n  - $$secret_name"; \
+                	fi; \
+        	else \
+                	case "$$secret_value" in \
+                                /*|./*|../*) \
+                                	if [ ! -f "$$secret_value" ]; then \
+                                        	if [ -z "$$missing_files" ]; then \
+                                                	missing_files="  - $$secret_name ($$secret_value)"; \
+                                        	else \
+                                                	missing_files="$$missing_files\n  - $$secret_name ($$secret_value)"; \
+                                        	fi; \
+                                	fi; \
+                                        ;; \
+                	esac; \
+        	fi; \
+        }; \
 	check_secret DB_SECRET_USERNAME "$(DB_SECRET_USERNAME)"; \
 	check_secret DB_SECRET_PASSWORD "$(DB_SECRET_PASSWORD)"; \
 	check_secret DB_SECRET_DBNAME "$(DB_SECRET_DBNAME)"; \
 	if [ -n "$$missing_values" ]; then \
-		printf "\n$(RED)❌ Missing secret values:$(NC)\n%s\n" "$$missing_values"; \
-		printf "  Provide them via environment variables or override them when invoking $(BOLD)make run-cli$(NC).\n\n"; \
-		exit 1; \
+        	printf "\n$(RED)❌ Missing secret values:$(NC)\n"; \
+        	printf '%b\n' "$$missing_values"; \
+        	printf "  Provide them via environment variables or override them when invoking $(BOLD)make run-cli$(NC).\n\n"; \
+        	exit 1; \
 	fi; \
 	if [ -n "$$missing_files" ]; then \
-		printf "\n$(RED)❌ Secret file paths not found:$(NC)\n%s\n" "$$missing_files"; \
-		printf "  Ensure the files exist or adjust the overrides before running $(BOLD)make run-cli$(NC).\n\n"; \
-		exit 1; \
+        	printf "\n$(RED)❌ Secret file paths not found:$(NC)\n"; \
+        	printf '%b\n' "$$missing_files"; \
+        	printf "  Ensure the files exist or adjust the overrides before running $(BOLD)make run-cli$(NC).\n\n"; \
+        	exit 1; \
 	fi
 	@printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"
 	@printf "           DB_SECRET_USERNAME=$(DB_SECRET_USERNAME)\n"
