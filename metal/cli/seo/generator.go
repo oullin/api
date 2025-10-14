@@ -28,6 +28,7 @@ var templatesFS embed.FS
 const cgoEnabled = true
 
 type Generator struct {
+	Web           *Web
 	Page          Page
 	Client        *Client
 	Env           *env.Environment
@@ -48,6 +49,8 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		return nil, fmt.Errorf("initialising categories: %w", err)
 	}
 
+	web := NewWeb()
+
 	page := Page{
 		StubPath:      StubPath,
 		Categories:    categories,
@@ -55,15 +58,15 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		Lang:          env.App.Lang(),
 		OutputDir:     env.Seo.SpaDir,
 		Template:      &template.Template{},
-		LogoURL:       portal.SanitiseURL(LogoUrl),
-		WebRepoURL:    portal.SanitiseURL(RepoWebUrl),
-		APIRepoURL:    portal.SanitiseURL(RepoApiUrl),
+		LogoURL:       portal.SanitiseURL(web.Urls.LogoUrl),
+		WebRepoURL:    portal.SanitiseURL(web.Urls.RepoWebUrl),
+		APIRepoURL:    portal.SanitiseURL(web.Urls.RepoApiUrl),
 		SiteURL:       portal.SanitiseURL(env.App.URL),
-		AboutPhotoUrl: portal.SanitiseURL(AboutPhotoUrl),
+		AboutPhotoUrl: portal.SanitiseURL(web.Urls.AboutPhotoUrl),
 		SameAsURL: []string{
-			portal.SanitiseURL(RepoApiUrl),
-			portal.SanitiseURL(RepoWebUrl),
-			portal.SanitiseURL(GocantoUrl),
+			portal.SanitiseURL(web.Urls.RepoApiUrl),
+			portal.SanitiseURL(web.Urls.RepoWebUrl),
+			portal.SanitiseURL(web.Urls.GocantoUrl),
 		},
 	}
 
@@ -82,6 +85,7 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	return &Generator{
 		DB:            db,
 		Env:           env,
+		Web:           web,
 		Validator:     val,
 		Page:          page,
 		WebsiteRoutes: webRoutes,
@@ -145,7 +149,8 @@ func (g *Generator) GenerateIndex() error {
 
 	// ----- Template Parsing
 
-	tData, buildErr := g.buildForPage(WebHomeName, WebHomeUrl, html)
+	web := g.Web.GetHomePage()
+	tData, buildErr := g.buildForPage(web.Name, web.Url, html)
 	if buildErr != nil {
 		return fmt.Errorf("home: generating template data: %w", buildErr)
 	}
@@ -185,7 +190,8 @@ func (g *Generator) GenerateAbout() error {
 	html = append(html, sections.Social(social))
 	html = append(html, sections.Recommendations(recommendations))
 
-	data, buildErr := g.buildForPage(WebAboutName, WebAboutUrl, html)
+	web := g.Web.GetAboutPage()
+	data, buildErr := g.buildForPage(web.Name, web.Url, html)
 	if buildErr != nil {
 		return fmt.Errorf("about: generating template data: %w", buildErr)
 	}
@@ -210,7 +216,8 @@ func (g *Generator) GenerateProjects() error {
 	sections := NewSections()
 	body := []template.HTML{sections.Projects(projects)}
 
-	data, buildErr := g.buildForPage(WebProjectsName, WebProjectsUrl, body)
+	web := g.Web.GetProjectsPage()
+	data, buildErr := g.buildForPage(web.Name, web.Url, body)
 	if buildErr != nil {
 		return fmt.Errorf("projects: generating template data: %w", buildErr)
 	}
@@ -251,7 +258,8 @@ func (g *Generator) GenerateResume() error {
 	html = append(html, sections.Experience(experience))
 	html = append(html, sections.Recommendations(recommendations))
 
-	data, buildErr := g.buildForPage(WebResumeName, WebResumeUrl, html)
+	web := g.Web.GetResumePage()
+	data, buildErr := g.buildForPage(web.Name, web.Url, html)
 	if buildErr != nil {
 		return fmt.Errorf("resume: generating template data: %w", buildErr)
 	}
@@ -366,15 +374,15 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 
 	data := TemplateData{
 		OGTagOg:        og,
-		Robots:         Robots,
+		Robots:         g.Web.Robots,
 		Twitter:        twitter,
-		ThemeColor:     ThemeColor,
-		ColorScheme:    ColorScheme,
-		BgColor:        ThemeColor,
+		ThemeColor:     g.Web.ThemeColor,
+		ColorScheme:    g.Web.ColorScheme,
+		BgColor:        g.Web.ThemeColor,
 		Lang:           g.Page.Lang,
-		Description:    Description,
+		Description:    g.Web.Description,
 		Categories:     g.Page.Categories,
-		JsonLD:         NewJsonID(g.Page).Render(),
+		JsonLD:         NewJsonID(g.Page, g.Web).Render(),
 		AppleTouchIcon: portal.SanitiseURL(g.Page.LogoURL),
 		HrefLang: []HrefLangData{
 			{
@@ -394,7 +402,7 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 
 	data.Body = body
 	data.Title = g.TitleFor(pageName)
-	data.Manifest = NewManifest(g.Page, data).Render()
+	data.Manifest = NewManifest(g.Page, data, g.Web).Render()
 	data.Canonical = portal.SanitiseURL(g.CanonicalFor(path))
 
 	for _, opt := range opts {
@@ -452,7 +460,7 @@ func (g *Generator) CanonicalFor(path string) string {
 }
 
 func (g *Generator) TitleFor(pageName string) string {
-	if pageName == WebHomeName {
+	if pageName == g.Web.GetHomePage().Name {
 		return g.Page.SiteName
 	}
 
@@ -478,23 +486,25 @@ func truncateForLog(value string) string {
 func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML) (TemplateData, error) {
 	path := g.CanonicalPostPath(post.Slug)
 	imageAlt := g.SanitizeAltText(post.Title, g.Page.SiteName)
-	description := g.SanitizeMetaDescription(post.Excerpt, Description)
+	description := g.SanitizeMetaDescription(post.Excerpt, g.Web.Description)
 	image := g.PreferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
 	imageType := "image/png"
 
-	cli.Grayln(fmt.Sprintf("Preparing post metadata"))
-	cli.Grayln(fmt.Sprintf("  Canonical path: %s", path))
-	cli.Grayln(fmt.Sprintf("  Sanitised alt text: %s", imageAlt))
-	cli.Grayln(fmt.Sprintf("  Description preview: %s", truncateForLog(description)))
-	cli.Grayln(fmt.Sprintf("  Preferred image candidate: %s", image))
+	cli.Grayln("\n----------------- [POST BUILD] ----------------- ")
+
+	cli.Grayln(fmt.Sprintf("Preparing POSTS metadata"))
+	cli.Magentaln(fmt.Sprintf(" .......... Canonical path: %s", path))
+	cli.Blueln(fmt.Sprintf(" .......... Sanitised alt text: %s", imageAlt))
+	cli.Successln(fmt.Sprintf(" .......... Description preview: %s", truncateForLog(description)))
+	cli.Cyanln(fmt.Sprintf(" .......... Preferred image candidate: %s", image))
 
 	if prepared, err := g.preparePostImage(post); err == nil && prepared.URL != "" {
-		cli.Grayln(fmt.Sprintf("  Post image prepared at: %s (%s)", prepared.URL, prepared.Mime))
+		cli.Successln(fmt.Sprintf("  Post image prepared at: %s (%s)", prepared.URL, prepared.Mime))
 		image = prepared.URL
 		imageType = prepared.Mime
 	} else if err != nil {
-		cli.Errorln(fmt.Sprintf("failed to prepare post image for %s: %v", post.Slug, err))
-		cli.Grayln(fmt.Sprintf("  Falling back to preferred image URL: %s", image))
+		cli.Errorln(fmt.Sprintf("Failed to prepare post image for %s: %v", post.Slug, err))
+		cli.Warningln(fmt.Sprintf(" .......... Falling back to preferred image URL: %s", image))
 	}
 
 	return g.buildForPage(post.Title, path, body, func(data *TemplateData) {
@@ -511,12 +521,13 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 func (g *Generator) CanonicalPostPath(slug string) string {
 	cleaned := strings.TrimSpace(slug)
 	cleaned = strings.Trim(cleaned, "/")
+	web := g.Web.GetPostsDetailPage()
 
 	if cleaned == "" {
-		return WebPostDetailUrl
+		return web.Url
 	}
 
-	return WebPostDetailUrl + "/" + cleaned
+	return web.Url + "/" + cleaned
 }
 
 func (g *Generator) SanitizeMetaDescription(raw, fallback string) string {

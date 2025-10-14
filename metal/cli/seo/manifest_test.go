@@ -55,7 +55,7 @@ func TestManifestRenderUsesFavicons(t *testing.T) {
 		Body:           []template.HTML{"<p>body</p>"},
 	}
 
-	manifest := NewManifest(tmpl, data)
+	manifest := NewManifest(tmpl, data, NewWeb())
 	manifest.Now = func() time.Time { return time.Unix(0, 0).UTC() }
 
 	rendered := manifest.Render()
@@ -123,7 +123,7 @@ func TestManifestRenderFallsBackToLogo(t *testing.T) {
 		Body:           []template.HTML{"<p>body</p>"},
 	}
 
-	manifest := NewManifest(tmpl, data)
+	manifest := NewManifest(tmpl, data, NewWeb())
 	rendered := manifest.Render()
 
 	var got map[string]any
