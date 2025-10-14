@@ -92,6 +92,7 @@ services:
             - .:/app
             - go_mod_cache:/go/pkg/mod
             - "${ENV_SPA_DIR}:${ENV_SPA_DIR}"
+            - "${ENV_SPA_IMAGES_DIR}:${ENV_SPA_IMAGES_DIR}"
           working_dir: /app
           environment:
               CGO_ENABLED: 1
@@ -100,6 +101,7 @@ services:
               ENV_DB_PORT: ${ENV_DB_PORT:-5432}
               ENV_PING_USERNAME: ${ENV_PING_USERNAME}
               ENV_PING_PASSWORD: ${ENV_PING_PASSWORD}
+              ENV_SPA_IMAGES_DIR: ${ENV_SPA_IMAGES_DIR}
           networks:
             - oullin_net
           secrets:
