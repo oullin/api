@@ -372,15 +372,15 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 
 	data := TemplateData{
 		OGTagOg:        og,
-		Robots:         Robots,
+		Robots:         g.Web.Robots,
 		Twitter:        twitter,
-		ThemeColor:     ThemeColor,
-		ColorScheme:    ColorScheme,
-		BgColor:        ThemeColor,
+		ThemeColor:     g.Web.ThemeColor,
+		ColorScheme:    g.Web.ColorScheme,
+		BgColor:        g.Web.ThemeColor,
 		Lang:           g.Page.Lang,
-		Description:    Description,
+		Description:    g.Web.Description,
 		Categories:     g.Page.Categories,
-		JsonLD:         NewJsonID(g.Page).Render(),
+		JsonLD:         NewJsonID(g.Page, g.Web).Render(),
 		AppleTouchIcon: portal.SanitiseURL(g.Page.LogoURL),
 		HrefLang: []HrefLangData{
 			{
@@ -484,7 +484,7 @@ func truncateForLog(value string) string {
 func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML) (TemplateData, error) {
 	path := g.CanonicalPostPath(post.Slug)
 	imageAlt := g.SanitizeAltText(post.Title, g.Page.SiteName)
-	description := g.SanitizeMetaDescription(post.Excerpt, Description)
+	description := g.SanitizeMetaDescription(post.Excerpt, g.Web.Description)
 	image := g.PreferredImageURL(post.CoverImageURL, g.Page.AboutPhotoUrl)
 	imageType := "image/png"
 

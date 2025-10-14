@@ -2,7 +2,7 @@ package seo
 
 type Web struct {
 	FoundedYear int16
-	StubPath    string
+	//StubPath    string
 	ThemeColor  string
 	Robots      string
 	ColorScheme string
@@ -79,7 +79,7 @@ func NewWeb() *Web {
 	return &Web{
 		FoundedYear: 2020,
 		Pages:       pages,
-		StubPath:    "stub.html",
+		//StubPath:    "stub.html",
 		ThemeColor:  "#0E172B",
 		Robots:      "index,follow",
 		ColorScheme: "light dark",

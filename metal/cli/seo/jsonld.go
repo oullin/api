@@ -24,7 +24,7 @@ type JsonID struct {
 	WebName    string
 }
 
-func NewJsonID(tmpl Page) *JsonID {
+func NewJsonID(tmpl Page, web *Web) *JsonID {
 	return &JsonID{
 		Lang:        tmpl.Lang,
 		SiteURL:     tmpl.SiteURL,
@@ -35,7 +35,7 @@ func NewJsonID(tmpl Page) *JsonID {
 		SameAs:      tmpl.SameAsURL,
 		APIRepoURL:  tmpl.APIRepoURL,
 		WebRepoURL:  tmpl.WebRepoURL,
-		FoundedYear: fmt.Sprintf("%d", FoundedYear),
+		FoundedYear: fmt.Sprintf("%d", web.FoundedYear),
 		Now:         func() time.Time { return time.Now().UTC() },
 	}
 }
