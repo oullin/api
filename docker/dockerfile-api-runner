@@ -1,7 +1,0 @@
-# syntax=docker/dockerfile:1
-FROM golang:1.25.1-alpine
-
-# Install toolchain required for cgo builds
-RUN apk add --no-cache build-base
-
-WORKDIR /app
