@@ -86,24 +86,18 @@ run-cli:
 	@printf "           DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)\n\n"
 	@if ! command -v docker >/dev/null 2>&1; then \
 		printf "$(YELLOW)⚠️ Docker not available. Running CLI locally without Docker.\n$(NC)"; \
-		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-		DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-		DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-		go run ./metal/cli/main.go || { \
+        		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" go run ./metal/cli/main.go || { \
 			status=$$?; \
 			printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
 			exit $$status; \
-		}; \
-	else \
-		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-		DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-		DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-		docker compose run --rm api-runner go run ./metal/cli/main.go || { \
+                }; \
+        else \
+        		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker compose run --rm api-runner go run ./metal/cli/main.go || { \
 			status=$$?; \
 			printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
 			exit $$status; \
-		}; \
-	fi
+                }; \
+        fi
 run-cli-docker:
 	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
 
