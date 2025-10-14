@@ -53,9 +53,10 @@ func TestGeneratorBuildAndExport(t *testing.T) {
 	gen := &Generator{
 		Page:      page,
 		Validator: newTestValidator(t),
+		Web:       NewWeb(),
 	}
 
-	web := NewWeb().GetHomePage()
+	web := gen.Web.GetHomePage()
 	body := []template.HTML{"<h1>Profile</h1><p>hello</p>"}
 	data, err := gen.buildForPage(web.Name, web.Url, body)
 	if err != nil {
@@ -115,9 +116,10 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 			Categories:    []string{"golang"},
 		},
 		Validator: newTestValidator(t),
+		Web:       NewWeb(),
 	}
 
-	web := NewWeb().GetHomePage()
+	web := gen.Web.GetHomePage()
 	if _, err := gen.buildForPage(web.Name, web.Url, []template.HTML{"<p>hello</p>"}); err == nil || !strings.Contains(err.Error(), "invalid template data") {
 		t.Fatalf("expected validation error, got %v", err)
 	}
@@ -260,6 +262,7 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 			OutputDir: outputDir,
 		},
 		Env: &env.Environment{Seo: env.SeoEnvironment{SpaDir: outputDir, SpaImagesDir: imagesDir}},
+		Web: NewWeb(),
 	}
 
 	post := payload.PostResponse{Slug: "awesome-post", CoverImageURL: fileURL.String()}
@@ -341,6 +344,7 @@ func TestGeneratorPreparePostImageRemote(t *testing.T) {
 			OutputDir: outputDir,
 		},
 		Env: &env.Environment{Seo: env.SeoEnvironment{SpaDir: outputDir, SpaImagesDir: imagesDir}},
+		Web: NewWeb(),
 	}
 
 	post := payload.PostResponse{Slug: "remote-post", CoverImageURL: server.URL + "/cover.png"}
