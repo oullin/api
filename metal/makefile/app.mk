@@ -36,23 +36,41 @@ install-air:
 	@go install github.com/air-verse/air@latest
 
 run-cli:
-	@if [ -z "$(DB_SECRET_USERNAME)" ] || [ -z "$(DB_SECRET_PASSWORD)" ] || [ -z "$(DB_SECRET_DBNAME)" ]; then \
-    	  printf "\n$(RED)⚠️ Usage: make run-cli \n$(NC)"; \
-    	  printf "         DB_SECRET_USERNAME=/path/to/pg_username\n"; \
-    	  printf "         DB_SECRET_PASSWORD=/path/to/pg_password\n"; \
-    	  printf "         DB_SECRET_DBNAME=/path/to/pg_dbname\n\n"; \
-    	  printf "\n------------------------------------------------------\n\n"; \
-    	  exit 1; \
-    	fi; \
-    	printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"; \
-    	printf "           DB_SECRET_USERNAME=$(DB_SECRET_USERNAME)\n"; \
-    	printf "           DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD)\n"; \
-    	printf "           DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)\n\n"; \
-    	DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-    	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-    	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-    	docker compose run --rm api-runner go run ./metal/cli/main.go
-
+	@missing=""; \
+	for secret in "$(DB_SECRET_USERNAME)" "$(DB_SECRET_PASSWORD)" "$(DB_SECRET_DBNAME)"; do \
+	  if [ ! -f "$$secret" ]; then \
+	    missing="$$missing\n  - $$secret"; \
+	  fi; \
+	done; \
+	if [ -n "$$missing" ]; then \
+	  printf "\n$(RED)❌ Missing secret files:$(NC)%s\n" "$$missing"; \
+	  printf "  Please make sure the paths exist or override them when invoking $(BOLD)make run-cli$(NC).\n\n"; \
+	  exit 1; \
+	fi
+	@printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"
+	@printf "           DB_SECRET_USERNAME=$(DB_SECRET_USERNAME)\n"
+	@printf "           DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD)\n"
+	@printf "           DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)\n\n"
+	@if ! command -v docker >/dev/null 2>&1; then \
+	  printf "$(YELLOW)⚠️ Docker not available. Running CLI locally without Docker.\n$(NC)"; \
+	  DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
+	  DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
+	  DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
+	  go run ./metal/cli/main.go || { \
+	    status=$$?; \
+	    printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
+	    exit $$status; \
+	  }; \
+	else \
+	  DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
+	  DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
+	  DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
+	  docker compose run --rm api-runner go run ./metal/cli/main.go || { \
+	    status=$$?; \
+	    printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
+	    exit $$status; \
+	  }; \
+	fi
 run-cli-docker:
 	make run-cli DB_SECRET_USERNAME=./database/infra/secrets/pg_username DB_SECRET_PASSWORD=./database/infra/secrets/pg_password DB_SECRET_DBNAME=./database/infra/secrets/pg_dbname
 
