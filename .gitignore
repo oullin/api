@@ -45,6 +45,8 @@ storage/sql/*.*
 *.dylib
 *.test
 *.out
+.gocache
+.gopath
 go.work
 go.work.sum
 
