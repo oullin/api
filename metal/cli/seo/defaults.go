@@ -1,5 +1,11 @@
 package seo
 
+const AuthorName = "Gustavo Ocanto"
+const HomeSlug = "home"
+const AboutSlug = "about"
+const ProjectsSlug = "projects"
+const ResumeSlug = "resume"
+
 // --- Web URLs
 
 const GocantoUrl = "https://gocanto.dev/"
@@ -9,10 +15,6 @@ const LogoUrl = "https://oullin.io/assets/001-BBig3EFt.png"
 const AboutPhotoUrl = "https://oullin.io/images/profile/about-seo.png"
 
 // --- Web Pages
-
-const WebHomeUrl = "/"
-const WebHomeName = "Home"
-
 const WebAboutName = "About"
 const WebAboutUrl = "/about"
 

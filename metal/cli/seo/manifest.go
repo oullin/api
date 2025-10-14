@@ -38,7 +38,7 @@ type ManifestShortcut struct {
 	Desc      string         `json:"description,omitempty"`
 }
 
-func NewManifest(tmpl Page, data TemplateData) *Manifest {
+func NewManifest(tmpl Page, data TemplateData, web *Web) *Manifest {
 	var icons []ManifestIcon
 
 	if len(data.Favicons) > 0 {
@@ -51,7 +51,7 @@ func NewManifest(tmpl Page, data TemplateData) *Manifest {
 	b := &Manifest{
 		Icons:       icons,
 		Lang:        tmpl.Lang,
-		Scope:       WebHomeUrl,
+		Scope:       web.GetHomePage().Url,
 		BgColor:     data.BgColor,
 		StartURL:    tmpl.SiteURL,
 		Name:        tmpl.SiteName,
@@ -64,9 +64,9 @@ func NewManifest(tmpl Page, data TemplateData) *Manifest {
 		Shortcuts: []ManifestShortcut{
 			{
 				Icons:     icons,
-				URL:       WebHomeUrl,
-				Name:      WebHomeName,
-				ShortName: WebHomeName,
+				URL:       web.GetHomePage().Url,
+				Name:      web.GetHomePage().Name,
+				ShortName: web.GetHomePage().Name,
 			},
 			{
 				Icons:     icons,

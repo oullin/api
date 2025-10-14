@@ -28,6 +28,7 @@ var templatesFS embed.FS
 const cgoEnabled = true
 
 type Generator struct {
+	Web           *Web
 	Page          Page
 	Client        *Client
 	Env           *env.Environment
@@ -86,6 +87,7 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		Page:          page,
 		WebsiteRoutes: webRoutes,
 		Client:        NewClient(webRoutes),
+		Web:           NewWeb(),
 	}, nil
 }
 
@@ -145,7 +147,8 @@ func (g *Generator) GenerateIndex() error {
 
 	// ----- Template Parsing
 
-	tData, buildErr := g.buildForPage(WebHomeName, WebHomeUrl, html)
+	web := g.Web.GetHomePage()
+	tData, buildErr := g.buildForPage(web.Name, web.Url, html)
 	if buildErr != nil {
 		return fmt.Errorf("home: generating template data: %w", buildErr)
 	}
@@ -394,7 +397,7 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 
 	data.Body = body
 	data.Title = g.TitleFor(pageName)
-	data.Manifest = NewManifest(g.Page, data).Render()
+	data.Manifest = NewManifest(g.Page, data, g.Web).Render()
 	data.Canonical = portal.SanitiseURL(g.CanonicalFor(path))
 
 	for _, opt := range opts {
@@ -452,7 +455,7 @@ func (g *Generator) CanonicalFor(path string) string {
 }
 
 func (g *Generator) TitleFor(pageName string) string {
-	if pageName == WebHomeName {
+	if pageName == g.Web.GetHomePage().Name {
 		return g.Page.SiteName
 	}
 

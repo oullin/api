@@ -55,8 +55,9 @@ func TestGeneratorBuildAndExport(t *testing.T) {
 		Validator: newTestValidator(t),
 	}
 
+	web := NewWeb().GetHomePage()
 	body := []template.HTML{"<h1>Profile</h1><p>hello</p>"}
-	data, err := gen.buildForPage(WebHomeName, WebHomeUrl, body)
+	data, err := gen.buildForPage(web.Name, web.Url, body)
 	if err != nil {
 		t.Fatalf("build err: %v", err)
 	}
@@ -116,7 +117,8 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 		Validator: newTestValidator(t),
 	}
 
-	if _, err := gen.buildForPage(WebHomeName, WebHomeUrl, []template.HTML{"<p>hello</p>"}); err == nil || !strings.Contains(err.Error(), "invalid template data") {
+	web := NewWeb().GetHomePage()
+	if _, err := gen.buildForPage(web.Name, web.Url, []template.HTML{"<p>hello</p>"}); err == nil || !strings.Contains(err.Error(), "invalid template data") {
 		t.Fatalf("expected validation error, got %v", err)
 	}
 }
