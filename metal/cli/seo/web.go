@@ -38,7 +38,7 @@ func NewWeb() *Web {
 	about := WebPage{
 		Name:    "About",
 		Url:     "/about",
-		Title:   "About " + AuthorName,
+		Title:   "Who is " + AuthorName,
 		Excerpt: "Gus's an engineering leader who’s passionate about building reliable and smooth software that strive to make a difference. He also has led teams in designing and delivering scalable, high-performance systems that run efficiently even in complex environments",
 	}
 

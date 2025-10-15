@@ -150,7 +150,11 @@ func (g *Generator) GenerateIndex() error {
 	// ----- Template Parsing
 
 	web := g.Web.GetHomePage()
-	tData, buildErr := g.buildForPage(web.Name, web.Url, html)
+	tData, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
+		data.Title = web.Title
+		data.Description = web.Excerpt
+	})
+
 	if buildErr != nil {
 		return fmt.Errorf("home: generating template data: %w", buildErr)
 	}
@@ -192,7 +196,7 @@ func (g *Generator) GenerateAbout() error {
 
 	web := g.Web.GetAboutPage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
-		data.Title = g.TitleFor(web.Title)
+		data.Title = web.Title
 		data.Description = web.Excerpt
 	})
 
@@ -222,7 +226,7 @@ func (g *Generator) GenerateProjects() error {
 
 	web := g.Web.GetProjectsPage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, body, func(data *TemplateData) {
-		data.Title = g.TitleFor(web.Title)
+		data.Title = web.Title
 		data.Description = web.Excerpt
 	})
 
@@ -268,7 +272,7 @@ func (g *Generator) GenerateResume() error {
 
 	web := g.Web.GetResumePage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
-		data.Title = g.TitleFor(web.Title)
+		data.Title = web.Title
 		data.Description = web.Excerpt
 	})
 
