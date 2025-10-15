@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	baseHttp "net/http"
@@ -86,9 +87,12 @@ func (r *Response) RespondWithNotModified() {
 }
 
 func InternalError(msg string) *ApiError {
+	message := fmt.Sprintf("Internal server error: %s", msg)
+
 	return &ApiError{
-		Message: fmt.Sprintf("Internal server error: %s", msg),
+		Message: message,
 		Status:  baseHttp.StatusInternalServerError,
+		Err:     errors.New(message),
 	}
 }
 
@@ -98,13 +102,17 @@ func LogInternalError(msg string, err error) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Internal server error: %s", msg),
 		Status:  baseHttp.StatusInternalServerError,
+		Err:     err,
 	}
 }
 
 func BadRequestError(msg string) *ApiError {
+	message := fmt.Sprintf("Bad request error: %s", msg)
+
 	return &ApiError{
-		Message: fmt.Sprintf("Bad request error: %s", msg),
+		Message: message,
 		Status:  baseHttp.StatusBadRequest,
+		Err:     errors.New(message),
 	}
 }
 
@@ -114,6 +122,7 @@ func LogBadRequestError(msg string, err error) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Bad request error: %s", msg),
 		Status:  baseHttp.StatusBadRequest,
+		Err:     err,
 	}
 }
 
@@ -123,20 +132,27 @@ func LogUnauthorisedError(msg string, err error) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Unauthorised request: %s", msg),
 		Status:  baseHttp.StatusUnauthorized,
+		Err:     err,
 	}
 }
 
-func UnprocessableEntity(msg string, errors map[string]any) *ApiError {
+func UnprocessableEntity(msg string, errs map[string]any) *ApiError {
+	message := fmt.Sprintf("Unprocessable entity: %s", msg)
+
 	return &ApiError{
-		Message: fmt.Sprintf("Unprocessable entity: %s", msg),
+		Message: message,
 		Status:  baseHttp.StatusUnprocessableEntity,
-		Data:    errors,
+		Data:    errs,
+		Err:     errors.New(message),
 	}
 }
 
 func NotFound(msg string) *ApiError {
+	message := fmt.Sprintf("Not found error: %s", msg)
+
 	return &ApiError{
-		Message: fmt.Sprintf("Not found error: %s", msg),
+		Message: message,
 		Status:  baseHttp.StatusNotFound,
+		Err:     errors.New(message),
 	}
 }
