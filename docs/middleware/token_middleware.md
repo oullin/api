@@ -66,7 +66,7 @@ Main steps:
    - Errors are generic to clients (HTTP 401 with neutral messages) to avoid leaking details.
 
 Defaults (from MakeTokenMiddleware):
-- clockSkew: 10m; disallowFuture: false
+- clockSkew: 10m; disallowFuture: true
 - nonceTTL: 10m; nonceCache: in-memory TTL
 - rateLimiter: in-memory with 1m window, 10 failures threshold
 - now: time.Now (injectable for tests)
@@ -103,7 +103,7 @@ These map to the earlier docs’ Phases 1–2 checkboxes: constant-time compare,
 - In-memory state
   - Nonce cache and rate limiter are in-memory; not horizontally scalable. Replays could work across nodes, and failure limits won’t coordinate cluster-wide.
 - Future timestamp policy
-  - [x] disallowFuture is false by default, allowing future timestamps within skew; opens small window for limited replay across clocks.
+  - [x] disallowFuture is true by default, preventing clients from sending timestamps ahead of the server clock and reducing replay windows caused by clock drift.
 - Key rotation and key identification
   - Canonical/signature doesn’t include a key identifier (kid). Rotations require coordination and lookup; currently only username+public token are provided.
 - Observability and audit
@@ -125,7 +125,7 @@ These map to the earlier docs’ Phases 1–2 checkboxes: constant-time compare,
    - Use Redis or a shared backend for failure-based limiter; emit 429 Too Many Requests when threshold exceeded.
 
 2) Tighten time policy and drift support
-   - Set disallowFuture = true by default; document policy for clients.
+   - Keep disallowFuture = true by default; clearly document the policy and offer guidance for clients whose clocks may drift.
    - Reduce skew to 2 minutes (configurable), and expose a time sync endpoint returning server time (and maybe signed) to help clients adjust.
 
 3) Key management and rotation
