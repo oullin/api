@@ -56,11 +56,6 @@ func captureApiError(r *baseHttp.Request, apiErr *ApiError) {
 
 			scopeApiError := NewScopeApiError(scope, r, apiErr)
 
-			if requestID := scopeApiError.RequestID(); requestID != "" {
-				scope.SetTag("http.request_id", requestID)
-				scope.SetExtra("http_request_id", requestID)
-			}
-
 			scope.SetRequest(r)
 			scope.SetExtra("api_error_status_text", baseHttp.StatusText(apiErr.Status))
 			scope.SetExtra("api_error_message", apiErr.Message)

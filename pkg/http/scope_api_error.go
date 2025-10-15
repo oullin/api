@@ -39,6 +39,11 @@ func (s *ScopeApiError) Enrich() {
 		return
 	}
 
+	if requestID := s.RequestID(); requestID != "" {
+		s.scope.SetTag("http.request_id", requestID)
+		s.scope.SetExtra("http_request_id", requestID)
+	}
+
 	if s.apiErr.Data != nil {
 		s.scope.SetExtra("api_error_data", s.apiErr.Data)
 	}
