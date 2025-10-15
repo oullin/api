@@ -19,6 +19,7 @@ func TestMakeApiHandler(t *testing.T) {
 		return &ApiError{
 			Message: "bad",
 			Status:  http.StatusBadRequest,
+			Err:     errors.New("bad"),
 		}
 	})
 
@@ -97,7 +98,7 @@ func TestScopeApiErrorEnrichSetsLevelAndTags(t *testing.T) {
 	scope := sentry.NewScope()
 	req := httptest.NewRequest("POST", "/resource", nil)
 
-	apiErr := &ApiError{Status: http.StatusInternalServerError}
+	apiErr := &ApiError{Status: http.StatusInternalServerError, Err: errors.New("boom")}
 
 	NewScopeApiError(scope, req, apiErr).Enrich()
 
@@ -127,7 +128,7 @@ func TestScopeApiErrorEnrichSetsWarningLevelForClientErrors(t *testing.T) {
 	scope := sentry.NewScope()
 	req := httptest.NewRequest("GET", "/client", nil)
 
-	apiErr := &ApiError{Status: http.StatusBadRequest}
+	apiErr := &ApiError{Status: http.StatusBadRequest, Err: errors.New("bad request")}
 
 	NewScopeApiError(scope, req, apiErr).Enrich()
 

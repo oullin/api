@@ -9,6 +9,7 @@ func TestApiErrorError(t *testing.T) {
 	e := &ApiError{
 		Message: "boom",
 		Status:  500,
+		Err:     errors.New("boom"),
 	}
 
 	if e.Error() != "boom" {
