@@ -56,10 +56,6 @@ func captureApiError(r *baseHttp.Request, apiErr *ApiError) {
 
 			scopeApiError := NewScopeApiError(scope, r, apiErr)
 
-			scope.SetRequest(r)
-			scope.SetExtra("api_error_status_text", baseHttp.StatusText(apiErr.Status))
-			scope.SetExtra("api_error_message", apiErr.Message)
-
 			scopeApiError.Enrich()
 
 			hub.CaptureException(errToCapture)
