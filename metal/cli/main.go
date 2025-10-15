@@ -81,6 +81,13 @@ func main() {
 
 			return
 		case 6:
+			if err = generatePostSEOForSlug(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+		case 7:
 			if err = printTimestamp(); err != nil {
 				cli.Errorln(err.Error())
 				continue
@@ -172,6 +179,17 @@ func generateStaticSEO() error {
 
 func generatePostsSEO() error {
 	return runSEOGeneration((*seo.Generator).GeneratePosts)
+}
+
+func generatePostSEOForSlug(menu panel.Menu) error {
+	slug, err := menu.CapturePostSlug()
+	if err != nil {
+		return err
+	}
+
+	return runSEOGeneration(func(gen *seo.Generator) error {
+		return gen.GeneratePost(slug)
+	})
 }
 
 func newSEOGenerator() (*seo.Generator, error) {

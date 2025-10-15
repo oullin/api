@@ -20,6 +20,7 @@ import (
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
+	"gorm.io/gorm"
 )
 
 //go:embed stub.html
@@ -314,24 +315,64 @@ func (g *Generator) GeneratePosts() error {
 	sections := NewSections()
 
 	for _, post := range posts {
-		cli.Cyanln(fmt.Sprintf("Building SEO for post: %s", post.Slug))
-		response := payload.GetPostsResponse(post)
-		cli.Grayln(fmt.Sprintf("Post slug: %s", response.Slug))
-		cli.Grayln(fmt.Sprintf("Post title: %s", response.Title))
-		body := []template.HTML{sections.Post(&response)}
-
-		data, buildErr := g.BuildForPost(response, body)
-		if buildErr != nil {
-			return fmt.Errorf("posts: building seo for %s: %w", response.Slug, buildErr)
+		if err := g.generatePostSEO(sections, post); err != nil {
+			return fmt.Errorf("posts: %w", err)
 		}
-
-		origin := filepath.Join("posts", response.Slug)
-		if err = g.Export(origin, data); err != nil {
-			return fmt.Errorf("posts: exporting %s: %w", response.Slug, err)
-		}
-
-		cli.Successln(fmt.Sprintf("Post SEO template generated for %s", response.Slug))
 	}
+
+	return nil
+}
+
+func (g *Generator) GeneratePost(slug string) error {
+	cli.Magentaln(fmt.Sprintf("Starting blog post SEO generation pipeline for %s", slug))
+	defer cli.Magentaln(fmt.Sprintf("Blog post SEO generation pipeline finished for %s", slug))
+
+	var post database.Post
+
+	err := g.DB.Sql().
+		Model(&database.Post{}).
+		Preload("Author").
+		Preload("Categories").
+		Preload("Tags").
+		Where("posts.slug = ?", slug).
+		Where("posts.published_at IS NOT NULL").
+		Where("posts.deleted_at IS NULL").
+		First(&post).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("post %s: not found or not published", slug)
+	}
+
+	if err != nil {
+		return fmt.Errorf("post %s: fetching post: %w", slug, err)
+	}
+
+	if err := g.generatePostSEO(NewSections(), post); err != nil {
+		return fmt.Errorf("post %s: %w", slug, err)
+	}
+
+	return nil
+}
+
+func (g *Generator) generatePostSEO(sections Sections, post database.Post) error {
+	cli.Cyanln(fmt.Sprintf("Building SEO for post: %s", post.Slug))
+
+	response := payload.GetPostsResponse(post)
+	cli.Grayln(fmt.Sprintf("Post slug: %s", response.Slug))
+	cli.Grayln(fmt.Sprintf("Post title: %s", response.Title))
+	body := []template.HTML{sections.Post(&response)}
+
+	data, buildErr := g.BuildForPost(response, body)
+	if buildErr != nil {
+		return fmt.Errorf("building seo for %s: %w", response.Slug, buildErr)
+	}
+
+	origin := filepath.Join("posts", response.Slug)
+	if err := g.Export(origin, data); err != nil {
+		return fmt.Errorf("exporting %s: %w", response.Slug, err)
+	}
+
+	cli.Successln(fmt.Sprintf("Post SEO template generated for %s", response.Slug))
 
 	return nil
 }

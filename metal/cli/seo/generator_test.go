@@ -160,6 +160,10 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		t.Fatalf("generate posts err: %v", err)
 	}
 
+	if err := gen.GeneratePost(post.Slug); err != nil {
+		t.Fatalf("generate post by slug err: %v", err)
+	}
+
 	output := filepath.Join(env.Seo.SpaDir, "index.seo.html")
 	raw, err := os.ReadFile(output)
 	if err != nil {
