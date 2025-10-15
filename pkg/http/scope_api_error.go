@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	baseHttp "net/http"
+	"strconv"
 	"strings"
 
 	"github.com/getsentry/sentry-go"
@@ -38,6 +39,16 @@ func (s *ScopeApiError) Enrich() {
 	if s == nil || s.scope == nil || s.request == nil || s.apiErr == nil {
 		return
 	}
+
+	level := sentry.LevelWarning
+	if s.apiErr.Status >= baseHttp.StatusInternalServerError {
+		level = sentry.LevelError
+	}
+
+	s.scope.SetLevel(level)
+	s.scope.SetTag("http.method", s.request.Method)
+	s.scope.SetTag("http.status_code", strconv.Itoa(s.apiErr.Status))
+	s.scope.SetTag("http.route", s.request.URL.Path)
 
 	s.scope.SetRequest(s.request)
 	s.scope.SetExtra("api_error_status_text", baseHttp.StatusText(s.apiErr.Status))

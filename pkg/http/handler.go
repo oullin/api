@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	baseHttp "net/http"
-	"strconv"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -37,11 +36,6 @@ func captureApiError(r *baseHttp.Request, apiErr *ApiError) {
 		return
 	}
 
-	level := sentry.LevelWarning
-	if apiErr.Status >= baseHttp.StatusInternalServerError {
-		level = sentry.LevelError
-	}
-
 	errToCapture := error(apiErr)
 	if apiErr.Err != nil {
 		errToCapture = apiErr.Err
@@ -49,11 +43,6 @@ func captureApiError(r *baseHttp.Request, apiErr *ApiError) {
 
 	notify := func(hub *sentry.Hub) {
 		hub.WithScope(func(scope *sentry.Scope) {
-			scope.SetLevel(level)
-			scope.SetTag("http.method", r.Method)
-			scope.SetTag("http.status_code", strconv.Itoa(apiErr.Status))
-			scope.SetTag("http.route", r.URL.Path)
-
 			scopeApiError := NewScopeApiError(scope, r, apiErr)
 
 			scopeApiError.Enrich()

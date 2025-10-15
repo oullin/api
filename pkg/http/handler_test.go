@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -89,5 +90,53 @@ func TestScopeApiErrorBuildErrorChain(t *testing.T) {
 
 	if chain[0] != wrapped.Error() || chain[1] != root.Error() {
 		t.Fatalf("unexpected error chain: %#v", chain)
+	}
+}
+
+func TestScopeApiErrorEnrichSetsLevelAndTags(t *testing.T) {
+	scope := sentry.NewScope()
+	req := httptest.NewRequest("POST", "/resource", nil)
+
+	apiErr := &ApiError{Status: http.StatusInternalServerError}
+
+	NewScopeApiError(scope, req, apiErr).Enrich()
+
+	event := scope.ApplyToEvent(sentry.NewEvent(), nil, nil)
+	if event == nil {
+		t.Fatalf("expected event after scope enrichment")
+	}
+
+	if event.Level != sentry.LevelError {
+		t.Fatalf("expected error level, got %s", event.Level)
+	}
+
+	if got := event.Tags["http.method"]; got != "POST" {
+		t.Fatalf("expected POST method tag, got %s", got)
+	}
+
+	if got := event.Tags["http.status_code"]; got != "500" {
+		t.Fatalf("expected 500 status code tag, got %s", got)
+	}
+
+	if got := event.Tags["http.route"]; got != "/resource" {
+		t.Fatalf("expected /resource route tag, got %s", got)
+	}
+}
+
+func TestScopeApiErrorEnrichSetsWarningLevelForClientErrors(t *testing.T) {
+	scope := sentry.NewScope()
+	req := httptest.NewRequest("GET", "/client", nil)
+
+	apiErr := &ApiError{Status: http.StatusBadRequest}
+
+	NewScopeApiError(scope, req, apiErr).Enrich()
+
+	event := scope.ApplyToEvent(sentry.NewEvent(), nil, nil)
+	if event == nil {
+		t.Fatalf("expected event after scope enrichment")
+	}
+
+	if event.Level != sentry.LevelWarning {
+		t.Fatalf("expected warning level, got %s", event.Level)
 	}
 }
