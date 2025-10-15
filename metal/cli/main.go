@@ -157,22 +157,21 @@ func showApiAccount(menu panel.Menu) error {
 	return nil
 }
 
-func generateStaticSEO() error {
+func runSEOGeneration(genFunc func(*seo.Generator) error) error {
 	gen, err := newSEOGenerator()
 	if err != nil {
 		return err
 	}
 
-	return gen.GenerateStaticPages()
+	return genFunc(gen)
+}
+
+func generateStaticSEO() error {
+	return runSEOGeneration((*seo.Generator).GenerateStaticPages)
 }
 
 func generatePostsSEO() error {
-	gen, err := newSEOGenerator()
-	if err != nil {
-		return err
-	}
-
-	return gen.GeneratePosts()
+	return runSEOGeneration((*seo.Generator).GeneratePosts)
 }
 
 func newSEOGenerator() (*seo.Generator, error) {
