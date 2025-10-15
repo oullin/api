@@ -93,14 +93,6 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	}, nil
 }
 
-func (g *Generator) Generate() error {
-	if err := g.GenerateStaticPages(); err != nil {
-		return err
-	}
-
-	return g.GeneratePosts()
-}
-
 func (g *Generator) GenerateStaticPages() error {
 	cli.Magentaln("Starting static SEO generation pipeline")
 	defer cli.Magentaln("Static SEO generation pipeline finished")
