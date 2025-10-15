@@ -41,7 +41,7 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 		TokenHandler:    tokenHandler,
 		clockSkew:       10 * time.Minute,
 		failWindow:      1 * time.Minute,
-		nonceTTL:        5 * time.Minute,
+		nonceTTL:        10 * time.Minute,
 		nonceCache:      cache.NewTTLCache(),
 		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
 	}

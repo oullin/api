@@ -67,7 +67,7 @@ Main steps:
 
 Defaults (from MakeTokenMiddleware):
 - clockSkew: 10m; disallowFuture: false
-- nonceTTL: 5m; nonceCache: in-memory TTL
+- nonceTTL: 10m; nonceCache: in-memory TTL
 - rateLimiter: in-memory with 1m window, 10 failures threshold
 - now: time.Now (injectable for tests)
 
