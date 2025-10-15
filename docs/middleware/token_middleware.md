@@ -66,7 +66,7 @@ Main steps:
    - Errors are generic to clients (HTTP 401 with neutral messages) to avoid leaking details.
 
 Defaults (from MakeTokenMiddleware):
-- clockSkew: 5m; disallowFuture: false
+- clockSkew: 10m; disallowFuture: false
 - nonceTTL: 5m; nonceCache: in-memory TTL
 - rateLimiter: in-memory with 1m window, 10 failures threshold
 - now: time.Now (injectable for tests)
