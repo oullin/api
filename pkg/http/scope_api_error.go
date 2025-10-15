@@ -47,9 +47,7 @@ func (s *ScopeApiError) Enrich() {
 		s.scope.SetExtra("api_error_cause", s.apiErr.Err.Error())
 		s.scope.SetTag("api.error.cause_type", fmt.Sprintf("%T", s.apiErr.Err))
 
-		if chain := s.buildErrorChain(s.apiErr.Err); len(chain) > 0 {
-			s.scope.SetExtra("api_error_cause_chain", chain)
-		}
+		s.scope.SetExtra("api_error_cause_chain", s.buildErrorChain(s.apiErr.Err))
 	}
 
 	if accountName := s.accountName(); accountName != "" {
