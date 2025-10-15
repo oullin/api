@@ -94,8 +94,16 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 }
 
 func (g *Generator) Generate() error {
-	cli.Magentaln("Starting SEO generation pipeline")
-	defer cli.Magentaln("SEO generation pipeline finished")
+	if err := g.GenerateStaticPages(); err != nil {
+		return err
+	}
+
+	return g.GeneratePosts()
+}
+
+func (g *Generator) GenerateStaticPages() error {
+	cli.Magentaln("Starting static SEO generation pipeline")
+	defer cli.Magentaln("Static SEO generation pipeline finished")
 
 	steps := []struct {
 		name string
@@ -105,7 +113,6 @@ func (g *Generator) Generate() error {
 		{"about", g.GenerateAbout},
 		{"projects", g.GenerateProjects},
 		{"resume", g.GenerateResume},
-		{"posts", g.GeneratePosts},
 	}
 
 	for _, step := range steps {
@@ -286,6 +293,9 @@ func (g *Generator) GenerateResume() error {
 }
 
 func (g *Generator) GeneratePosts() error {
+	cli.Magentaln("Starting blog posts SEO generation pipeline")
+	defer cli.Magentaln("Blog posts SEO generation pipeline finished")
+
 	var posts []database.Post
 
 	err := g.DB.Sql().
