@@ -98,6 +98,7 @@ func LogInternalError(msg string, err error) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Internal server error: %s", msg),
 		Status:  baseHttp.StatusInternalServerError,
+		Err:     err,
 	}
 }
 
@@ -114,6 +115,7 @@ func LogBadRequestError(msg string, err error) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Bad request error: %s", msg),
 		Status:  baseHttp.StatusBadRequest,
+		Err:     err,
 	}
 }
 
@@ -123,6 +125,7 @@ func LogUnauthorisedError(msg string, err error) *ApiError {
 	return &ApiError{
 		Message: fmt.Sprintf("Unauthorised request: %s", msg),
 		Status:  baseHttp.StatusUnauthorized,
+		Err:     err,
 	}
 }
 

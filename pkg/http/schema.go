@@ -12,6 +12,7 @@ type ApiError struct {
 	Message string         `json:"message"`
 	Status  int            `json:"status"`
 	Data    map[string]any `json:"data"`
+	Err     error          `json:"-"`
 }
 
 func (e *ApiError) Error() string {
@@ -20,6 +21,14 @@ func (e *ApiError) Error() string {
 	}
 
 	return e.Message
+}
+
+func (e *ApiError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+
+	return e.Err
 }
 
 type ApiHandler func(baseHttp.ResponseWriter, *baseHttp.Request) *ApiError
