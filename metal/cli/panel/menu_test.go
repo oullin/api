@@ -128,3 +128,23 @@ func TestCapturePostURL(t *testing.T) {
 		t.Fatalf("expected error")
 	}
 }
+
+func TestCapturePostSlug(t *testing.T) {
+	m := Menu{
+		Reader: bufio.NewReader(strings.NewReader("valid-slug\n")),
+	}
+
+	slug, err := m.CapturePostSlug()
+
+	if err != nil || slug != "valid-slug" {
+		t.Fatalf("got %q err %v", slug, err)
+	}
+
+	bad := Menu{
+		Reader: bufio.NewReader(strings.NewReader("Invalid Slug\n")),
+	}
+
+	if _, err := bad.CapturePostSlug(); err == nil {
+		t.Fatalf("expected error")
+	}
+}

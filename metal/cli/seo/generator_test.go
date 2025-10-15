@@ -152,8 +152,16 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		t.Fatalf("expected categories from database")
 	}
 
-	if err := gen.Generate(); err != nil {
-		t.Fatalf("generate err: %v", err)
+	if err := gen.GenerateStaticPages(); err != nil {
+		t.Fatalf("generate static err: %v", err)
+	}
+
+	if err := gen.GeneratePosts(); err != nil {
+		t.Fatalf("generate posts err: %v", err)
+	}
+
+	if err := gen.GeneratePost(post.Slug); err != nil {
+		t.Fatalf("generate post by slug err: %v", err)
 	}
 
 	output := filepath.Join(env.Seo.SpaDir, "index.seo.html")

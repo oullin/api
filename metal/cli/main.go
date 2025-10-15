@@ -67,13 +67,27 @@ func main() {
 
 			return
 		case 4:
-			if err = generateSEO(); err != nil {
+			if err = generateStaticSEO(); err != nil {
 				cli.Errorln(err.Error())
 				continue
 			}
 
 			return
 		case 5:
+			if err = generatePostsSEO(); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+		case 6:
+			if err = generatePostSEOForSlug(menu); err != nil {
+				cli.Errorln(err.Error())
+				continue
+			}
+
+			return
+		case 7:
 			if err = printTimestamp(); err != nil {
 				cli.Errorln(err.Error())
 				continue
@@ -150,7 +164,35 @@ func showApiAccount(menu panel.Menu) error {
 	return nil
 }
 
-func generateSEO() error {
+func runSEOGeneration(genFunc func(*seo.Generator) error) error {
+	gen, err := newSEOGenerator()
+	if err != nil {
+		return err
+	}
+
+	return genFunc(gen)
+}
+
+func generateStaticSEO() error {
+	return runSEOGeneration((*seo.Generator).GenerateStaticPages)
+}
+
+func generatePostsSEO() error {
+	return runSEOGeneration((*seo.Generator).GeneratePosts)
+}
+
+func generatePostSEOForSlug(menu panel.Menu) error {
+	slug, err := menu.CapturePostSlug()
+	if err != nil {
+		return err
+	}
+
+	return runSEOGeneration(func(gen *seo.Generator) error {
+		return gen.GeneratePost(slug)
+	})
+}
+
+func newSEOGenerator() (*seo.Generator, error) {
 	gen, err := seo.NewGenerator(
 		dbConn,
 		environment,
@@ -158,14 +200,10 @@ func generateSEO() error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if err = gen.Generate(); err != nil {
-		return err
-	}
-
-	return nil
+	return gen, nil
 }
 
 func printTimestamp() error {

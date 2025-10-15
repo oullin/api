@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,8 @@ type Menu struct {
 	Reader    *bufio.Reader
 	Validator *portal.Validator
 }
+
+var slugPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 func MakeMenu() Menu {
 	menu := Menu{
@@ -89,8 +92,10 @@ func (p *Menu) Print() {
 	p.PrintOption("1) Parse Blog Posts.", inner)
 	p.PrintOption("2) Create new API account.", inner)
 	p.PrintOption("3) Show API accounts.", inner)
-	p.PrintOption("4) Generate SEO.", inner)
-	p.PrintOption("5) Print Timestamp.", inner)
+	p.PrintOption("4) Generate SEO for static pages.", inner)
+	p.PrintOption("5) Generate SEO for blog posts.", inner)
+	p.PrintOption("6) Generate SEO for a blog post by slug.", inner)
+	p.PrintOption("7) Print Timestamp.", inner)
 
 	p.PrintOption(" ", inner)
 	p.PrintOption("0) Exit.", inner)
@@ -182,4 +187,24 @@ func (p *Menu) CapturePostURL() (*posts.Input, error) {
 	}
 
 	return &input, nil
+}
+
+func (p *Menu) CapturePostSlug() (string, error) {
+	fmt.Print("Enter the blog post slug: ")
+
+	slug, err := p.Reader.ReadString('\n')
+	if err != nil {
+		return "", fmt.Errorf("%sError reading the post slug: %v %s", cli.RedColour, err, cli.Reset)
+	}
+
+	slug = strings.TrimSpace(slug)
+	if slug == "" {
+		return "", fmt.Errorf("%sError: no slug provided: %s", cli.RedColour, cli.Reset)
+	}
+
+	if !slugPattern.MatchString(slug) {
+		return "", fmt.Errorf("%sError: slug must contain only lowercase letters, numbers, or hyphens: %s", cli.RedColour, cli.Reset)
+	}
+
+	return slug, nil
 }

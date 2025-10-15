@@ -20,6 +20,7 @@ import (
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
+	"gorm.io/gorm"
 )
 
 //go:embed stub.html
@@ -93,9 +94,9 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 	}, nil
 }
 
-func (g *Generator) Generate() error {
-	cli.Magentaln("Starting SEO generation pipeline")
-	defer cli.Magentaln("SEO generation pipeline finished")
+func (g *Generator) GenerateStaticPages() error {
+	cli.Magentaln("Starting static SEO generation pipeline")
+	defer cli.Magentaln("Static SEO generation pipeline finished")
 
 	steps := []struct {
 		name string
@@ -105,7 +106,6 @@ func (g *Generator) Generate() error {
 		{"about", g.GenerateAbout},
 		{"projects", g.GenerateProjects},
 		{"resume", g.GenerateResume},
-		{"posts", g.GeneratePosts},
 	}
 
 	for _, step := range steps {
@@ -150,7 +150,11 @@ func (g *Generator) GenerateIndex() error {
 	// ----- Template Parsing
 
 	web := g.Web.GetHomePage()
-	tData, buildErr := g.buildForPage(web.Name, web.Url, html)
+	tData, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
+		data.Title = web.Title
+		data.Description = web.Excerpt
+	})
+
 	if buildErr != nil {
 		return fmt.Errorf("home: generating template data: %w", buildErr)
 	}
@@ -192,7 +196,7 @@ func (g *Generator) GenerateAbout() error {
 
 	web := g.Web.GetAboutPage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
-		data.Title = g.TitleFor(web.Title)
+		data.Title = web.Title
 		data.Description = web.Excerpt
 	})
 
@@ -222,7 +226,7 @@ func (g *Generator) GenerateProjects() error {
 
 	web := g.Web.GetProjectsPage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, body, func(data *TemplateData) {
-		data.Title = g.TitleFor(web.Title)
+		data.Title = web.Title
 		data.Description = web.Excerpt
 	})
 
@@ -268,7 +272,7 @@ func (g *Generator) GenerateResume() error {
 
 	web := g.Web.GetResumePage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
-		data.Title = g.TitleFor(web.Title)
+		data.Title = web.Title
 		data.Description = web.Excerpt
 	})
 
@@ -286,6 +290,9 @@ func (g *Generator) GenerateResume() error {
 }
 
 func (g *Generator) GeneratePosts() error {
+	cli.Magentaln("Starting blog posts SEO generation pipeline")
+	defer cli.Magentaln("Blog posts SEO generation pipeline finished")
+
 	var posts []database.Post
 
 	err := g.DB.Sql().
@@ -312,24 +319,64 @@ func (g *Generator) GeneratePosts() error {
 	sections := NewSections()
 
 	for _, post := range posts {
-		cli.Cyanln(fmt.Sprintf("Building SEO for post: %s", post.Slug))
-		response := payload.GetPostsResponse(post)
-		cli.Grayln(fmt.Sprintf("Post slug: %s", response.Slug))
-		cli.Grayln(fmt.Sprintf("Post title: %s", response.Title))
-		body := []template.HTML{sections.Post(&response)}
-
-		data, buildErr := g.BuildForPost(response, body)
-		if buildErr != nil {
-			return fmt.Errorf("posts: building seo for %s: %w", response.Slug, buildErr)
+		if err := g.generatePostSEO(sections, post); err != nil {
+			return fmt.Errorf("posts: %w", err)
 		}
-
-		origin := filepath.Join("posts", response.Slug)
-		if err = g.Export(origin, data); err != nil {
-			return fmt.Errorf("posts: exporting %s: %w", response.Slug, err)
-		}
-
-		cli.Successln(fmt.Sprintf("Post SEO template generated for %s", response.Slug))
 	}
+
+	return nil
+}
+
+func (g *Generator) GeneratePost(slug string) error {
+	cli.Magentaln(fmt.Sprintf("Starting blog post SEO generation pipeline for %s", slug))
+	defer cli.Magentaln(fmt.Sprintf("Blog post SEO generation pipeline finished for %s", slug))
+
+	var post database.Post
+
+	err := g.DB.Sql().
+		Model(&database.Post{}).
+		Preload("Author").
+		Preload("Categories").
+		Preload("Tags").
+		Where("posts.slug = ?", slug).
+		Where("posts.published_at IS NOT NULL").
+		Where("posts.deleted_at IS NULL").
+		First(&post).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("post %s: not found or not published", slug)
+	}
+
+	if err != nil {
+		return fmt.Errorf("post %s: fetching post: %w", slug, err)
+	}
+
+	if err := g.generatePostSEO(NewSections(), post); err != nil {
+		return fmt.Errorf("post %s: %w", slug, err)
+	}
+
+	return nil
+}
+
+func (g *Generator) generatePostSEO(sections Sections, post database.Post) error {
+	cli.Cyanln(fmt.Sprintf("Building SEO for post: %s", post.Slug))
+
+	response := payload.GetPostsResponse(post)
+	cli.Grayln(fmt.Sprintf("Post slug: %s", response.Slug))
+	cli.Grayln(fmt.Sprintf("Post title: %s", response.Title))
+	body := []template.HTML{sections.Post(&response)}
+
+	data, buildErr := g.BuildForPost(response, body)
+	if buildErr != nil {
+		return fmt.Errorf("building seo for %s: %w", response.Slug, buildErr)
+	}
+
+	origin := filepath.Join("posts", response.Slug)
+	if err := g.Export(origin, data); err != nil {
+		return fmt.Errorf("exporting %s: %w", response.Slug, err)
+	}
+
+	cli.Successln(fmt.Sprintf("Post SEO template generated for %s", response.Slug))
 
 	return nil
 }
