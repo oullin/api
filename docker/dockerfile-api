@@ -13,6 +13,10 @@ ARG APP_VERSION=0.0.0.1
 ARG BUILD_TAGS="posts,experience,profile,projects,social,talks,gus,gocanto"
 ARG BINARY_NAME=oullin_api
 
+# Base image digests
+ARG GOLANG_ALPINE_DIGEST=sha256:c3dc5d5e8cf34ccb2172fb8d1aa399aa13cd8b60d27bba891d18e3b436a0c5f6
+ARG ALPINE_DIGEST=sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+
 # Non-root user/group settings.
 ARG APP_USER=appuser
 ARG APP_GROUP=appgroup
@@ -34,7 +38,7 @@ ARG TZ=Asia/Singapore
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           BUILDER STAGE
 # ----------------------------------------------------------------------------------------------------------------------
-FROM golang:1.25.3-alpine3.22@sha256:c3dc5d5e8cf34ccb2172fb8d1aa399aa13cd8b60d27bba891d18e3b436a0c5f6 AS builder
+FROM golang:1.25.3-alpine3.22@${GOLANG_ALPINE_DIGEST} AS builder
 
 # Bring in the build args needed in this stage.
 ARG APP_DIR
@@ -82,7 +86,7 @@ RUN go build \
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           FINAL STAGE
 # ----------------------------------------------------------------------------------------------------------------------
-FROM alpine:3.22@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+FROM alpine:3.22@${ALPINE_DIGEST}
 
 # Bring in the runtime args.
 ARG APP_USER
