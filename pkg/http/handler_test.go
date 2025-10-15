@@ -39,41 +39,49 @@ func TestMakeApiHandler(t *testing.T) {
 	}
 }
 
-func TestRequestIDFrom(t *testing.T) {
+func TestScopeApiErrorRequestID(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set(portal.RequestIDHeader, "header-id")
 
-	if got := requestIDFrom(req); got != "header-id" {
+	scopeApiError := &ScopeApiError{request: req}
+
+	if got := scopeApiError.RequestID(); got != "header-id" {
 		t.Fatalf("expected header request id, got %s", got)
 	}
 
 	ctxReq := req.WithContext(context.WithValue(req.Context(), portal.RequestIDKey, "context-id"))
 
-	if got := requestIDFrom(ctxReq); got != "context-id" {
+	scopeApiError.request = ctxReq
+
+	if got := scopeApiError.RequestID(); got != "context-id" {
 		t.Fatalf("expected context request id, got %s", got)
 	}
 }
 
-func TestAccountNameFrom(t *testing.T) {
+func TestScopeApiErrorAccountName(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set(portal.UsernameHeader, "header-user")
 
-	if got := accountNameFrom(req); got != "header-user" {
+	scopeApiError := &ScopeApiError{request: req}
+
+	if got := scopeApiError.accountName(); got != "header-user" {
 		t.Fatalf("expected header user, got %s", got)
 	}
 
 	ctxReq := req.WithContext(context.WithValue(req.Context(), portal.AuthAccountNameKey, "context-user"))
 
-	if got := accountNameFrom(ctxReq); got != "context-user" {
+	scopeApiError.request = ctxReq
+
+	if got := scopeApiError.accountName(); got != "context-user" {
 		t.Fatalf("expected context user, got %s", got)
 	}
 }
 
-func TestBuildErrorChain(t *testing.T) {
+func TestScopeApiErrorBuildErrorChain(t *testing.T) {
 	root := errors.New("root")
 	wrapped := fmt.Errorf("layer: %w", root)
 
-	chain := buildErrorChain(wrapped)
+	chain := (&ScopeApiError{}).buildErrorChain(wrapped)
 
 	if len(chain) != 2 {
 		t.Fatalf("expected 2 errors in chain, got %d", len(chain))
