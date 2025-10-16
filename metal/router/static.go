@@ -1,14 +1,14 @@
 package router
 
 import (
-	baseHttp "net/http"
+	"net/http"
 
 	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 type StaticRouteResource interface {
-	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *http.ApiError
+	Handle(http.ResponseWriter, *http.Request) *endpoint.ApiError
 }
 
 type WebsiteRoutes struct {

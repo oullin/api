@@ -1,6 +1,6 @@
-package http
+package endpoint
 
-import baseHttp "net/http"
+import "net/http"
 
 type ErrorResponse struct {
 	Error  string         `json:"error"`
@@ -31,6 +31,6 @@ func (e *ApiError) Unwrap() error {
 	return e.Err
 }
 
-type ApiHandler func(baseHttp.ResponseWriter, *baseHttp.Request) *ApiError
+type ApiHandler func(http.ResponseWriter, *http.Request) *ApiError
 
 type Middleware func(ApiHandler) ApiHandler

@@ -2,13 +2,13 @@ package handler
 
 import (
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"time"
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -21,21 +21,21 @@ func MakeKeepAliveDBHandler(e *env.PingEnvironment, db *database.Connection) Kee
 	return KeepAliveDBHandler{env: e, db: db}
 }
 
-func (h KeepAliveDBHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h KeepAliveDBHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	user, pass, ok := r.BasicAuth()
 
 	if !ok || h.env.HasInvalidCreds(user, pass) {
-		return http.LogUnauthorisedError(
+		return endpoint.LogUnauthorisedError(
 			"invalid credentials",
 			fmt.Errorf("invalid credentials"),
 		)
 	}
 
 	if err := h.db.Ping(); err != nil {
-		return http.LogInternalError("database ping failed", err)
+		return endpoint.LogInternalError("database ping failed", err)
 	}
 
-	resp := http.MakeNoCacheResponse(w, r)
+	resp := endpoint.MakeNoCacheResponse(w, r)
 	now := time.Now().UTC()
 
 	data := payload.KeepAliveResponse{
@@ -44,7 +44,7 @@ func (h KeepAliveDBHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Reques
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		return http.LogInternalError("could not encode keep-alive response", err)
+		return endpoint.LogInternalError("could not encode keep-alive response", err)
 	}
 
 	return nil

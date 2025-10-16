@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/oullin/pkg/cache"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/limiter"
 	"github.com/oullin/pkg/middleware/mwguards"
 	"github.com/oullin/pkg/portal"
@@ -41,8 +41,8 @@ func MakePublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware 
 	}
 }
 
-func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
-	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (p PublicMiddleware) Handle(next endpoint.ApiHandler) endpoint.ApiHandler {
+	return func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		if err := p.GuardDependencies(); err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (p PublicMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	}
 }
 
-func (p PublicMiddleware) GuardDependencies() *http.ApiError {
+func (p PublicMiddleware) GuardDependencies() *endpoint.ApiError {
 	missing := []string{}
 
 	if p.requestCache == nil {
@@ -96,7 +96,7 @@ func (p PublicMiddleware) GuardDependencies() *http.ApiError {
 
 	if len(missing) > 0 {
 		err := fmt.Errorf("public middleware missing dependencies: %s", strings.Join(missing, ","))
-		return http.LogInternalError("public middleware missing dependencies", err)
+		return endpoint.LogInternalError("public middleware missing dependencies", err)
 	}
 
 	return nil

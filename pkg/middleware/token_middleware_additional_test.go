@@ -14,7 +14,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
-	pkgHttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/limiter"
 	"github.com/testcontainers/testcontainers-go"
 	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -103,7 +103,7 @@ func TestTokenMiddleware_PublicTokenMismatch(t *testing.T) {
 	repo, th, seed, _ := makeRepo(t, "mismatch")
 	tm := MakeTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
+	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil }
 	handler := tm.Handle(next)
 
 	req := makeSignedRequest(t, http.MethodGet, "https://api.test.local/v1/x", "", seed.AccountName, "wrong-"+seed.PublicKey, seed.PublicKey, time.Now(), "nonce-mm", "req-mm")
@@ -118,7 +118,7 @@ func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
 	repo, th, seed, key := makeRepo(t, "siggy")
 	tm := MakeTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil }
+	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil }
 	handler := tm.Handle(next)
 
 	req := makeSignedRequest(t, http.MethodPost, "https://api.test.local/v1/x", "body", seed.AccountName, seed.PublicKey, seed.PublicKey, time.Now(), "nonce-sig", "req-sig")
@@ -145,7 +145,7 @@ func TestTokenMiddleware_NonceReplay(t *testing.T) {
 	tm.clockSkew = time.Minute
 	tm.nonceTTL = time.Minute
 	nextCalled := 0
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		nextCalled++
 		return nil
 	}
@@ -172,7 +172,7 @@ func TestTokenMiddleware_RateLimiter(t *testing.T) {
 	tm := MakeTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
 	nextCalled := 0
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		nextCalled++
 		return nil
 	}
@@ -217,7 +217,7 @@ func TestTokenMiddleware_CustomClockValidatesSignature(t *testing.T) {
 	tm.now = func() time.Time { return past }
 
 	nextCalled := false
-	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		nextCalled = true
 		return nil
 	})

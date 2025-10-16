@@ -16,7 +16,7 @@ import (
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/auth"
-	metalhttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/llogs"
 	"github.com/oullin/pkg/middleware"
 	"github.com/oullin/pkg/portal"
@@ -368,7 +368,7 @@ func TestAppNewRouterSuccess(t *testing.T) {
 	})
 
 	t.Run("PublicMiddleware", func(t *testing.T) {
-		handler := modem.Pipeline.PublicMiddleware.Handle(func(http.ResponseWriter, *http.Request) *metalhttp.ApiError {
+		handler := modem.Pipeline.PublicMiddleware.Handle(func(http.ResponseWriter, *http.Request) *endpoint.ApiError {
 			return nil
 		})
 

@@ -2,11 +2,11 @@ package handler
 
 import (
 	"github.com/oullin/handler/payload"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type RecommendationsHandler struct {
@@ -19,16 +19,16 @@ func MakeRecommendationsHandler(filePath string) RecommendationsHandler {
 	}
 }
 
-func (h RecommendationsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.RecommendationsResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading recommendations file", "error", err)
 
-		return http.InternalError("could not read recommendations data")
+		return endpoint.InternalError("could not read recommendations data")
 	}
 
-	resp := http.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.MakeResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

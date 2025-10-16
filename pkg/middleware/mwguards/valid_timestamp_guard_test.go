@@ -1,7 +1,7 @@
 package mwguards
 
 import (
-	baseHttp "net/http"
+	"net/http"
 	"strconv"
 	"testing"
 	"time"
@@ -24,7 +24,7 @@ func TestNewValidTimestampConstructor(t *testing.T) {
 func TestValidate_EmptyTimestamp(t *testing.T) {
 	vt := NewValidTimestamp("", fixedClock(time.Unix(1_700_000_000, 0)))
 	err := vt.Validate(5*time.Minute, false)
-	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid authentication headers" {
+	if err == nil || err.Status != http.StatusUnauthorized || err.Message != "Invalid authentication headers" {
 		t.Fatalf("expected invalid request error for empty timestamp, got %#v", err)
 	}
 }
@@ -32,7 +32,7 @@ func TestValidate_EmptyTimestamp(t *testing.T) {
 func TestValidate_NonNumericTimestamp(t *testing.T) {
 	vt := NewValidTimestamp("abc", fixedClock(time.Unix(1_700_000_000, 0)))
 	err := vt.Validate(5*time.Minute, false)
-	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Invalid authentication headers" {
+	if err == nil || err.Status != http.StatusUnauthorized || err.Message != "Invalid authentication headers" {
 		t.Fatalf("expected invalid request error for non-numeric timestamp, got %#v", err)
 	}
 }
@@ -43,7 +43,7 @@ func TestValidate_TooOldTimestamp(t *testing.T) {
 	oldTs := strconv.FormatInt(base.Add(-skew).Add(-1*time.Second).Unix(), 10)
 	vt := NewValidTimestamp(oldTs, fixedClock(base))
 	err := vt.Validate(skew, false)
-	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Request timestamp expired" {
+	if err == nil || err.Status != http.StatusUnauthorized || err.Message != "Request timestamp expired" {
 		t.Fatalf("expected unauthenticated for too old timestamp, got %#v", err)
 	}
 }
@@ -62,7 +62,7 @@ func TestValidate_FutureWithinSkew_Behavior(t *testing.T) {
 	// Rejected when disallowFuture=true
 	vt = NewValidTimestamp(futureWithin, fixedClock(base))
 	err := vt.Validate(skew, true)
-	if err == nil || err.Status != baseHttp.StatusUnauthorized || err.Message != "Request timestamp invalid" {
+	if err == nil || err.Status != http.StatusUnauthorized || err.Message != "Request timestamp invalid" {
 		t.Fatalf("expected unauthenticated for future timestamp when disallowFuture=true, got %#v", err)
 	}
 }

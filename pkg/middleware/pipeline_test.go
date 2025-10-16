@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pkgHttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 func TestPipelineChainOrder(t *testing.T) {
@@ -14,25 +14,25 @@ func TestPipelineChainOrder(t *testing.T) {
 
 	order := []string{}
 
-	m1 := func(next pkgHttp.ApiHandler) pkgHttp.ApiHandler {
+	m1 := func(next endpoint.ApiHandler) endpoint.ApiHandler {
 
-		return func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		return func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 			order = append(order, "m1")
 
 			return next(w, r)
 		}
 	}
 
-	m2 := func(next pkgHttp.ApiHandler) pkgHttp.ApiHandler {
+	m2 := func(next endpoint.ApiHandler) endpoint.ApiHandler {
 
-		return func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+		return func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 			order = append(order, "m2")
 
 			return next(w, r)
 		}
 	}
 
-	final := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+	final := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		order = append(order, "final")
 
 		return nil

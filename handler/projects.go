@@ -2,11 +2,11 @@ package handler
 
 import (
 	"github.com/oullin/handler/payload"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type ProjectsHandler struct {
@@ -19,16 +19,16 @@ func MakeProjectsHandler(filePath string) ProjectsHandler {
 	}
 }
 
-func (h ProjectsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.ProjectsResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading projects file", "error", err)
 
-		return http.InternalError("could not read projects data")
+		return endpoint.InternalError("could not read projects data")
 	}
 
-	resp := http.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.MakeResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

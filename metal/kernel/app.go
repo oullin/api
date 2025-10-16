@@ -2,7 +2,7 @@ package kernel
 
 import (
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
@@ -71,7 +71,7 @@ func (a *App) NewRouter() (*router.Router, error) {
 		Db:            a.db,
 		Pipeline:      pipe,
 		Validator:     a.validator,
-		Mux:           baseHttp.NewServeMux(),
+		Mux:           http.NewServeMux(),
 		WebsiteRoutes: router.NewWebsiteRoutes(envi),
 	}
 

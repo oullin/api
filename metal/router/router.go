@@ -1,14 +1,14 @@
 package router
 
 import (
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/handler"
 	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/middleware"
 	"github.com/oullin/pkg/portal"
 )
@@ -17,13 +17,13 @@ type Router struct {
 	WebsiteRoutes *WebsiteRoutes
 	Env           *env.Environment
 	Validator     *portal.Validator
-	Mux           *baseHttp.ServeMux
+	Mux           *http.ServeMux
 	Pipeline      middleware.Pipeline
 	Db            *database.Connection
 }
 
-func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
-	return http.MakeApiHandler(
+func (r *Router) PublicPipelineFor(apiHandler endpoint.ApiHandler) http.HandlerFunc {
+	return endpoint.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
 			r.Pipeline.PublicMiddleware.Handle,
@@ -31,13 +31,13 @@ func (r *Router) PublicPipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerF
 	)
 }
 
-func (r *Router) PipelineFor(apiHandler http.ApiHandler) baseHttp.HandlerFunc {
+func (r *Router) PipelineFor(apiHandler endpoint.ApiHandler) http.HandlerFunc {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
 		r.Pipeline.TokenHandler,
 		r.Pipeline.ApiKeys,
 	)
 
-	return http.MakeApiHandler(
+	return endpoint.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
 			tokenMiddleware.Handle,
@@ -75,7 +75,7 @@ func (r *Router) Signature() {
 func (r *Router) KeepAlive() {
 	abstract := handler.MakeKeepAliveHandler(&r.Env.Ping)
 
-	apiHandler := http.MakeApiHandler(
+	apiHandler := endpoint.MakeApiHandler(
 		r.Pipeline.Chain(abstract.Handle),
 	)
 
@@ -85,7 +85,7 @@ func (r *Router) KeepAlive() {
 func (r *Router) KeepAliveDB() {
 	abstract := handler.MakeKeepAliveDBHandler(&r.Env.Ping, r.Db)
 
-	apiHandler := http.MakeApiHandler(
+	apiHandler := endpoint.MakeApiHandler(
 		r.Pipeline.Chain(abstract.Handle),
 	)
 

@@ -1,23 +1,23 @@
-package http
+package endpoint
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 )
 
 type Response struct {
 	etag         string
 	cacheControl string
-	writer       baseHttp.ResponseWriter
-	request      *baseHttp.Request
-	headers      func(w baseHttp.ResponseWriter)
+	writer       http.ResponseWriter
+	request      *http.Request
+	headers      func(w http.ResponseWriter)
 }
 
-func MakeResponseFrom(salt string, writer baseHttp.ResponseWriter, request *baseHttp.Request) *Response {
+func MakeResponseFrom(salt string, writer http.ResponseWriter, request *http.Request) *Response {
 	etag := fmt.Sprintf(
 		`"%s"`,
 		strings.TrimSpace(salt),
@@ -30,7 +30,7 @@ func MakeResponseFrom(salt string, writer baseHttp.ResponseWriter, request *base
 		request:      request,
 		etag:         strings.TrimSpace(etag),
 		cacheControl: cacheControl,
-		headers: func(w baseHttp.ResponseWriter) {
+		headers: func(w http.ResponseWriter) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.Header().Set("Cache-Control", cacheControl)
@@ -39,14 +39,14 @@ func MakeResponseFrom(salt string, writer baseHttp.ResponseWriter, request *base
 	}
 }
 
-func MakeNoCacheResponse(writer baseHttp.ResponseWriter, request *baseHttp.Request) *Response {
+func MakeNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {
 	cacheControl := "no-store"
 
 	return &Response{
 		writer:       writer,
 		request:      request,
 		cacheControl: cacheControl,
-		headers: func(w baseHttp.ResponseWriter) {
+		headers: func(w http.ResponseWriter) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.Header().Set("Cache-Control", cacheControl)
@@ -54,7 +54,7 @@ func MakeNoCacheResponse(writer baseHttp.ResponseWriter, request *baseHttp.Reque
 	}
 }
 
-func (r *Response) WithHeaders(callback func(w baseHttp.ResponseWriter)) {
+func (r *Response) WithHeaders(callback func(w http.ResponseWriter)) {
 	callback(r.writer)
 }
 
@@ -63,7 +63,7 @@ func (r *Response) RespondOk(payload any) error {
 	headers := r.headers
 
 	headers(w)
-	w.WriteHeader(baseHttp.StatusOK)
+	w.WriteHeader(http.StatusOK)
 
 	return json.NewEncoder(r.writer).Encode(payload)
 }
@@ -83,7 +83,7 @@ func (r *Response) HasCache() bool {
 }
 
 func (r *Response) RespondWithNotModified() {
-	r.writer.WriteHeader(baseHttp.StatusNotModified)
+	r.writer.WriteHeader(http.StatusNotModified)
 }
 
 func InternalError(msg string) *ApiError {
@@ -91,7 +91,7 @@ func InternalError(msg string) *ApiError {
 
 	return &ApiError{
 		Message: message,
-		Status:  baseHttp.StatusInternalServerError,
+		Status:  http.StatusInternalServerError,
 		Err:     errors.New(message),
 	}
 }
@@ -101,7 +101,7 @@ func LogInternalError(msg string, err error) *ApiError {
 
 	return &ApiError{
 		Message: fmt.Sprintf("Internal server error: %s", msg),
-		Status:  baseHttp.StatusInternalServerError,
+		Status:  http.StatusInternalServerError,
 		Err:     err,
 	}
 }
@@ -111,7 +111,7 @@ func BadRequestError(msg string) *ApiError {
 
 	return &ApiError{
 		Message: message,
-		Status:  baseHttp.StatusBadRequest,
+		Status:  http.StatusBadRequest,
 		Err:     errors.New(message),
 	}
 }
@@ -121,7 +121,7 @@ func LogBadRequestError(msg string, err error) *ApiError {
 
 	return &ApiError{
 		Message: fmt.Sprintf("Bad request error: %s", msg),
-		Status:  baseHttp.StatusBadRequest,
+		Status:  http.StatusBadRequest,
 		Err:     err,
 	}
 }
@@ -131,7 +131,7 @@ func LogUnauthorisedError(msg string, err error) *ApiError {
 
 	return &ApiError{
 		Message: fmt.Sprintf("Unauthorised request: %s", msg),
-		Status:  baseHttp.StatusUnauthorized,
+		Status:  http.StatusUnauthorized,
 		Err:     err,
 	}
 }
@@ -141,7 +141,7 @@ func UnprocessableEntity(msg string, errs map[string]any) *ApiError {
 
 	return &ApiError{
 		Message: message,
-		Status:  baseHttp.StatusUnprocessableEntity,
+		Status:  http.StatusUnprocessableEntity,
 		Data:    errs,
 		Err:     errors.New(message),
 	}
@@ -152,7 +152,7 @@ func NotFound(msg string) *ApiError {
 
 	return &ApiError{
 		Message: message,
-		Status:  baseHttp.StatusNotFound,
+		Status:  http.StatusNotFound,
 		Err:     errors.New(message),
 	}
 }

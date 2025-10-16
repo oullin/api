@@ -2,17 +2,17 @@ package handler
 
 import (
 	"encoding/json"
-	baseHttp "net/http"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
 	handlertests "github.com/oullin/handler/tests"
-	pkgHttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 type fileHandler interface {
-	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *pkgHttp.ApiError
+	Handle(http.ResponseWriter, *http.Request) *endpoint.ApiError
 }
 
 type fileHandlerTestCase struct {
@@ -44,7 +44,7 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 		t.Fatalf("err: %v", err)
 	}
 
-	if rec.Code != baseHttp.StatusOK {
+	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d", rec.Code)
 	}
 
@@ -68,7 +68,7 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 		t.Fatalf("err: %v", err)
 	}
 
-	if rec2.Code != baseHttp.StatusNotModified {
+	if rec2.Code != http.StatusNotModified {
 		t.Fatalf("status %d", rec2.Code)
 	}
 

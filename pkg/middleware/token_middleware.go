@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/limiter"
 	"github.com/oullin/pkg/middleware/mwguards"
 	"github.com/oullin/pkg/portal"
@@ -47,8 +47,8 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 	}
 }
 
-func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
-	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (t TokenCheckMiddleware) Handle(next endpoint.ApiHandler) endpoint.ApiHandler {
+	return func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		reqID := strings.TrimSpace(r.Header.Get(portal.RequestIDHeader))
 
 		if reqID == "" {
@@ -85,7 +85,7 @@ func (t TokenCheckMiddleware) Handle(next http.ApiHandler) http.ApiHandler {
 	}
 }
 
-func (t TokenCheckMiddleware) GuardDependencies() *http.ApiError {
+func (t TokenCheckMiddleware) GuardDependencies() *endpoint.ApiError {
 	missing := make([]string, 0, 4)
 
 	if t.ApiKeys == nil {
@@ -117,7 +117,7 @@ func (t TokenCheckMiddleware) GuardDependencies() *http.ApiError {
 	return nil
 }
 
-func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, requestId string) (AuthTokenHeaders, *http.ApiError) {
+func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId string) (AuthTokenHeaders, *endpoint.ApiError) {
 	intendedOriginURL := strings.TrimSpace(r.Header.Get(portal.IntendedOriginHeader))
 	accountName := strings.TrimSpace(r.Header.Get(portal.UsernameHeader))
 	signature := strings.TrimSpace(r.Header.Get(portal.SignatureHeader))
@@ -149,14 +149,14 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, request
 	}, nil
 }
 
-func (t TokenCheckMiddleware) AttachContext(r *baseHttp.Request, headers AuthTokenHeaders) *baseHttp.Request {
+func (t TokenCheckMiddleware) AttachContext(r *http.Request, headers AuthTokenHeaders) *http.Request {
 	ctx := context.WithValue(r.Context(), portal.AuthAccountNameKey, headers.AccountName)
 	ctx = context.WithValue(r.Context(), portal.RequestIDKey, headers.RequestID)
 
 	return r.WithContext(ctx)
 }
 
-func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*database.APIKey, *http.ApiError) {
+func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*database.APIKey, *endpoint.ApiError) {
 	limiterKey := headers.ClientIP + "|" + strings.ToLower(headers.AccountName)
 
 	if t.rateLimiter.TooMany(limiterKey) {
@@ -200,7 +200,7 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*datab
 	return guard.ApiKey, nil
 }
 
-func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *http.ApiError {
+func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *endpoint.ApiError {
 	var err error
 	var byteSignature []byte
 	limiterKey := headers.ClientIP + "|" + strings.ToLower(headers.AccountName)

@@ -1,9 +1,9 @@
-package http
+package endpoint
 
 import (
 	"errors"
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -13,11 +13,11 @@ import (
 
 type ScopeApiError struct {
 	scope   *sentry.Scope
-	request *baseHttp.Request
+	request *http.Request
 	apiErr  *ApiError
 }
 
-func NewScopeApiError(scope *sentry.Scope, r *baseHttp.Request, apiErr *ApiError) *ScopeApiError {
+func NewScopeApiError(scope *sentry.Scope, r *http.Request, apiErr *ApiError) *ScopeApiError {
 	return &ScopeApiError{scope: scope, request: r, apiErr: apiErr}
 }
 
@@ -41,7 +41,7 @@ func (s *ScopeApiError) Enrich() {
 	}
 
 	level := sentry.LevelWarning
-	if s.apiErr.Status >= baseHttp.StatusInternalServerError {
+	if s.apiErr.Status >= http.StatusInternalServerError {
 		level = sentry.LevelError
 	}
 
@@ -51,7 +51,7 @@ func (s *ScopeApiError) Enrich() {
 	s.scope.SetTag("http.route", s.request.URL.Path)
 
 	s.scope.SetRequest(s.request)
-	s.scope.SetExtra("api_error_status_text", baseHttp.StatusText(s.apiErr.Status))
+	s.scope.SetExtra("api_error_status_text", http.StatusText(s.apiErr.Status))
 	s.scope.SetExtra("api_error_message", s.apiErr.Message)
 
 	if requestID := s.RequestID(); requestID != "" {

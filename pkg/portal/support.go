@@ -8,7 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net"
-	baseHttp "net/http"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -99,7 +99,7 @@ func CloseWithLog(c io.Closer) {
 	}
 }
 
-func GenerateURL(r *baseHttp.Request) string {
+func GenerateURL(r *http.Request) string {
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
@@ -168,7 +168,7 @@ func BuildCanonical(method string, u *url.URL, username, public, ts, nonce, body
 	return strings.Join(parts, "\n")
 }
 
-func ParseClientIP(r *baseHttp.Request) string {
+func ParseClientIP(r *http.Request) string {
 	// prefer X-Forwarded-For if present
 
 	xff := strings.TrimSpace(r.Header.Get("X-Forwarded-For"))

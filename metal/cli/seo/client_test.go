@@ -9,18 +9,18 @@ import (
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
-	basehttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
-type failingRoute struct{ err *basehttp.ApiError }
+type failingRoute struct{ err *endpoint.ApiError }
 
 type invalidJSONRoute struct{ body string }
 
-func (f failingRoute) Handle(http.ResponseWriter, *http.Request) *basehttp.ApiError {
+func (f failingRoute) Handle(http.ResponseWriter, *http.Request) *endpoint.ApiError {
 	return f.err
 }
 
-func (i invalidJSONRoute) Handle(w http.ResponseWriter, r *http.Request) *basehttp.ApiError {
+func (i invalidJSONRoute) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	_, _ = w.Write([]byte(i.body))
 
 	return nil
@@ -30,7 +30,7 @@ func TestFetchPropagatesHandlerErrors(t *testing.T) {
 	err := fetch[payload.ProfileResponse](
 		&payload.ProfileResponse{},
 		func() router.StaticRouteResource {
-			return failingRoute{err: basehttp.InternalError("boom")}
+			return failingRoute{err: endpoint.InternalError("boom")}
 		},
 	)
 

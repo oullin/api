@@ -3,14 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/payload"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 type CategoriesHandler struct {
@@ -23,14 +23,14 @@ func MakeCategoriesHandler(categories *repository.Categories) CategoriesHandler 
 	}
 }
 
-func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h *CategoriesHandler) Index(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	result, err := h.Categories.GetAll(
 		paginate.MakeFrom(r.URL, 5),
 	)
 
 	if err != nil {
 		slog.Error("Error getting categories", "err", err)
-		return http.InternalError("Error getting categories")
+		return endpoint.InternalError("Error getting categories")
 	}
 
 	items := pagination.HydratePagination(
@@ -48,7 +48,7 @@ func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request
 	if err := json.NewEncoder(w).Encode(items); err != nil {
 		slog.Error("failed to encode response", "err", err)
 
-		return http.InternalError("There was an issue processing the response. Please, try later.")
+		return endpoint.InternalError("There was an issue processing the response. Please, try later.")
 	}
 
 	return nil

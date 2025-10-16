@@ -1,7 +1,7 @@
 package kernel
 
 import (
-	baseHttp "net/http"
+	"net/http"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/oullin/database"
@@ -68,7 +68,7 @@ func (a *App) GetSentry() *portal.Sentry {
 	return a.sentry
 }
 
-func (a *App) GetMux() *baseHttp.ServeMux {
+func (a *App) GetMux() *http.ServeMux {
 	if a.router == nil {
 		return nil
 	}
