@@ -3,7 +3,7 @@ package seeds
 import (
 	"fmt"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 )
 
 type PostViewsSeed struct {
@@ -25,7 +25,7 @@ func (s PostViewsSeed) Create(attrs []database.PostViewsAttr) error {
 			UserAgent: attr.UserAgent,
 		})
 
-		if gorm.HasDbIssues(result.Error) {
+		if model.HasDbIssues(result.Error) {
 			return fmt.Errorf("issue creating post views for post: %s", result.Error)
 		}
 	}

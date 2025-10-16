@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/repoentity"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 	"github.com/oullin/pkg/portal"
 	baseGorm "gorm.io/gorm"
 )
@@ -25,7 +25,7 @@ func (a ApiKeys) Create(attrs database.APIKeyAttr) (*database.APIKey, error) {
 		SecretKey:   attrs.SecretKey,
 	}
 
-	if result := a.DB.Sql().Create(&key); gorm.HasDbIssues(result.Error) {
+	if result := a.DB.Sql().Create(&key); model.HasDbIssues(result.Error) {
 		return nil, fmt.Errorf(
 			"issue creating the given api key pair [%s, %s]: %s",
 			attrs.PublicKey,
@@ -44,7 +44,7 @@ func (a ApiKeys) FindBy(accountName string) *database.APIKey {
 		Where("LOWER(account_name) = ?", strings.ToLower(accountName)).
 		First(&key)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil
 	}
 
@@ -80,7 +80,7 @@ func (a ApiKeys) CreateSignatureFor(entity repoentity.APIKeyCreateSignatureFor) 
 
 	err := a.DB.Sql().Transaction(func(tx *baseGorm.DB) error {
 		username := entity.Key.AccountName
-		if result := a.DB.Sql().Create(&signature); gorm.HasDbIssues(result.Error) {
+		if result := a.DB.Sql().Create(&signature); model.HasDbIssues(result.Error) {
 			return fmt.Errorf("issue creating the given api keys signature [%s, %s]: ", username, result.Error)
 		}
 
@@ -110,7 +110,7 @@ func (a ApiKeys) FindActiveSignatureFor(key *database.APIKey, origin string) *da
 		Where("expires_at > ?", time.Now()).
 		First(&item)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil
 	}
 
@@ -134,7 +134,7 @@ func (a ApiKeys) FindSignatureFrom(entity repoentity.FindSignatureFrom) *databas
 		Where("current_tries <= max_tries").
 		First(&item)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil
 	}
 
@@ -161,7 +161,7 @@ func (a ApiKeys) DisablePreviousSignatures(key *database.APIKey, signatureUUID, 
 		Where("uuid NOT IN (?)", []string{signatureUUID}).
 		Update("expired_at", time.Now())
 
-	if gorm.HasDbIssues(query.Error) {
+	if model.HasDbIssues(query.Error) {
 		return query.Error
 	}
 
@@ -178,7 +178,7 @@ func (a ApiKeys) IncreaseSignatureTries(signatureUUID string, currentTries int) 
 		Where("uuid = ? AND current_tries < max_tries", signatureUUID).
 		UpdateColumn("current_tries", baseGorm.Expr("current_tries + 1"))
 
-	if gorm.HasDbIssues(response.Error) {
+	if model.HasDbIssues(response.Error) {
 		return response.Error
 	}
 

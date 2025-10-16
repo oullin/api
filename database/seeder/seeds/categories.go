@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 	"strings"
 )
 
@@ -37,7 +37,7 @@ func (s CategoriesSeed) Create(attrs database.CategoriesAttrs) ([]database.Categ
 
 	result := s.db.Sql().Create(&categories)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil, fmt.Errorf("error seeding categories: %s", result.Error)
 	}
 

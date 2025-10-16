@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 )
 
 type Categories struct {
@@ -74,7 +74,7 @@ func (c Categories) FindBy(slug string) *database.Category {
 		Where("LOWER(slug) = ?", strings.ToLower(slug)).
 		First(&category)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil
 	}
 
@@ -106,7 +106,7 @@ func (c Categories) CreateOrUpdate(post database.Post, attrs database.PostsAttrs
 			Description: seed.Description,
 		}
 
-		if result := c.DB.Sql().Create(&category); gorm.HasDbIssues(result.Error) {
+		if result := c.DB.Sql().Create(&category); model.HasDbIssues(result.Error) {
 			return nil, fmt.Errorf("error creating category [%s]: %s", seed.Name, result.Error)
 		}
 
@@ -115,7 +115,7 @@ func (c Categories) CreateOrUpdate(post database.Post, attrs database.PostsAttrs
 			PostID:     post.ID,
 		}
 
-		if result := c.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
+		if result := c.DB.Sql().Create(&trace); model.HasDbIssues(result.Error) {
 			return nil, fmt.Errorf("error creating category trace [%s:%s]: %s", category.Name, post.Title, result.Error)
 		}
 
@@ -140,7 +140,7 @@ func (c Categories) ExistOrUpdate(seed database.CategoriesAttrs) (bool, error) {
 		category.Description = seed.Description
 	}
 
-	if result := c.DB.Sql().Save(&category); gorm.HasDbIssues(result.Error) {
+	if result := c.DB.Sql().Save(&category); model.HasDbIssues(result.Error) {
 		return false, fmt.Errorf("error on exist or update category [%s]: %s", category.Name, result.Error)
 	}
 

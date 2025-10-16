@@ -3,7 +3,7 @@ package seeds
 import (
 	"fmt"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 )
 
 type PostTagsSeed struct {
@@ -22,7 +22,7 @@ func (s PostTagsSeed) Create(tag database.Tag, post database.Post) error {
 		TagID:  tag.ID,
 	})
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return fmt.Errorf("error seeding tags: %s", result.Error)
 	}
 

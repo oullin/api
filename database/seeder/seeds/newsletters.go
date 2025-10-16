@@ -3,7 +3,7 @@ package seeds
 import (
 	"fmt"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 )
 
 type NewslettersSeed struct {
@@ -33,7 +33,7 @@ func (s NewslettersSeed) Create(attrs []database.NewsletterAttrs) error {
 
 	result := s.db.Sql().Create(&newsletters)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return fmt.Errorf("error seeding newsletters: %s", result.Error)
 	}
 

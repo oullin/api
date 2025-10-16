@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"strings"
@@ -27,7 +27,7 @@ func (t Tags) FindOrCreate(slug string) (*database.Tag, error) {
 		Name: caser.String(strings.ToLower(slug)),
 	}
 
-	if result := t.DB.Sql().Save(&tag); gorm.HasDbIssues(result.Error) {
+	if result := t.DB.Sql().Save(&tag); model.HasDbIssues(result.Error) {
 		return nil, fmt.Errorf("error creating tag [%s]: %s", slug, result.Error)
 	}
 
@@ -41,7 +41,7 @@ func (t Tags) FindBy(slug string) *database.Tag {
 		Where("LOWER(slug) = ?", strings.ToLower(slug)).
 		First(&tag)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil
 	}
 

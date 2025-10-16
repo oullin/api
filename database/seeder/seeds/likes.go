@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 )
 
 type LikesSeed struct {
@@ -30,7 +30,7 @@ func (s LikesSeed) Create(attrs ...database.LikesAttrs) ([]database.Like, error)
 
 	result := s.db.Sql().Create(&likes)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil, fmt.Errorf("error seeding likes: %s", result.Error)
 	}
 

@@ -7,7 +7,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 )
 
 type Posts struct {
@@ -62,7 +62,7 @@ func (p Posts) FindBy(slug string) *database.Post {
 		Where("LOWER(slug) = ?", slug).
 		First(&post)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil
 	}
 
@@ -99,7 +99,7 @@ func (p Posts) Create(attrs database.PostsAttrs) (*database.Post, error) {
 		PublishedAt:   attrs.PublishedAt,
 	}
 
-	if result := p.DB.Sql().Create(&post); gorm.HasDbIssues(result.Error) {
+	if result := p.DB.Sql().Create(&post); model.HasDbIssues(result.Error) {
 		return nil, fmt.Errorf("issue creating posts: %s", result.Error)
 	}
 
@@ -121,7 +121,7 @@ func (p Posts) LinkCategories(post database.Post, categories []database.Categori
 			PostID:     post.ID,
 		}
 
-		if result := p.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
+		if result := p.DB.Sql().Create(&trace); model.HasDbIssues(result.Error) {
 			return fmt.Errorf("error linking categories [%s:%s]: %s", category.Name, post.Title, result.Error)
 		}
 	}
@@ -136,7 +136,7 @@ func (p Posts) LinkTags(post database.Post, tags []database.TagAttrs) error {
 			PostID: post.ID,
 		}
 
-		if result := p.DB.Sql().Create(&trace); gorm.HasDbIssues(result.Error) {
+		if result := p.DB.Sql().Create(&trace); model.HasDbIssues(result.Error) {
 			return fmt.Errorf("error linking tags [%s:%s]: %s", tag.Name, post.Title, result.Error)
 		}
 	}

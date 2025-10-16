@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	model "github.com/oullin/pkg/model"
 )
 
 type PostsSeed struct {
@@ -42,7 +42,7 @@ func (s PostsSeed) CreatePosts(attrs database.PostsAttrs, number int) ([]databas
 
 	result := s.db.Sql().Create(&posts)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil, fmt.Errorf("issue creating posts: %s", result.Error)
 	}
 
