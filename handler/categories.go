@@ -17,7 +17,7 @@ type CategoriesHandler struct {
 	Categories *repository.Categories
 }
 
-func MakeCategoriesHandler(categories *repository.Categories) CategoriesHandler {
+func NewCategoriesHandler(categories *repository.Categories) CategoriesHandler {
 	return CategoriesHandler{
 		Categories: categories,
 	}
@@ -25,7 +25,7 @@ func MakeCategoriesHandler(categories *repository.Categories) CategoriesHandler 
 
 func (h *CategoriesHandler) Index(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	result, err := h.Categories.GetAll(
-		paginate.MakeFrom(r.URL, 5),
+		paginate.NewFrom(r.URL, 5),
 	)
 
 	if err != nil {

@@ -19,7 +19,7 @@ type PostsHandler struct {
 	Posts *repository.Posts
 }
 
-func MakePostsHandler(repo *repository.Posts) PostsHandler {
+func NewPostsHandler(repo *repository.Posts) PostsHandler {
 	return PostsHandler{Posts: repo}
 }
 
@@ -36,7 +36,7 @@ func (h *PostsHandler) Index(w http.ResponseWriter, r *http.Request) *endpoint.A
 
 	result, err := h.Posts.GetAll(
 		payload.GetPostsFiltersFrom(requestBody),
-		paginate.MakeFrom(r.URL, 10),
+		paginate.NewFrom(r.URL, 10),
 	)
 
 	if err != nil {

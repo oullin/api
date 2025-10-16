@@ -60,7 +60,7 @@ func SeedFromFile(conn *database.Connection, environment *env.Environment, fileP
 }
 
 func prepareDatabase(ctx context.Context, conn *database.Connection, environment *env.Environment) error {
-	truncate := database.MakeTruncate(conn, environment)
+	truncate := database.NewTruncate(conn, environment)
 
 	if err := truncate.Execute(); err != nil {
 		return fmt.Errorf("importer: truncate database: %w", err)

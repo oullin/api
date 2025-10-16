@@ -19,7 +19,7 @@ type Handler struct {
 	IsDebugging bool
 }
 
-func MakeHandler(input *Input, client *portal.Client, db *database.Connection) Handler {
+func NewHandler(input *Input, client *portal.Client, db *database.Connection) Handler {
 	tags := &repository.Tags{DB: db}
 	categories := &repository.Categories{DB: db}
 

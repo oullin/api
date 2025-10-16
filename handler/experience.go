@@ -13,7 +13,7 @@ type ExperienceHandler struct {
 	filePath string
 }
 
-func MakeExperienceHandler(filePath string) ExperienceHandler {
+func NewExperienceHandler(filePath string) ExperienceHandler {
 	return ExperienceHandler{
 		filePath: filePath,
 	}
@@ -28,7 +28,7 @@ func (h ExperienceHandler) Handle(w http.ResponseWriter, r *http.Request) *endpo
 		return endpoint.InternalError("could not read experience data")
 	}
 
-	resp := endpoint.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.NewResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

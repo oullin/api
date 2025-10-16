@@ -2,7 +2,7 @@ package pagination
 
 import "testing"
 
-func TestMakePagination(t *testing.T) {
+func TestNewPagination(t *testing.T) {
 	p := Paginate{
 		Page:  2,
 		Limit: 2,
@@ -10,7 +10,7 @@ func TestMakePagination(t *testing.T) {
 
 	p.SetNumItems(5)
 
-	result := MakePagination([]int{1, 2}, p)
+	result := NewPagination([]int{1, 2}, p)
 
 	if result.TotalPages != 3 {
 		t.Fatalf("expected 3 pages got %d", result.TotalPages)

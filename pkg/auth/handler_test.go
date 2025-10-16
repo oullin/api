@@ -9,7 +9,7 @@ func TestTokenHandlerLifecycle(t *testing.T) {
 		t.Fatalf("generate key: %v", err)
 	}
 
-	h, err := MakeTokensHandler(key)
+	h, err := NewTokensHandler(key)
 
 	if err != nil {
 		t.Fatalf("make handler: %v", err)
@@ -32,8 +32,8 @@ func TestTokenHandlerLifecycle(t *testing.T) {
 	}
 }
 
-func TestMakeTokensHandlerError(t *testing.T) {
-	_, err := MakeTokensHandler([]byte("short"))
+func TestNewTokensHandlerError(t *testing.T) {
+	_, err := NewTokensHandler([]byte("short"))
 
 	if err == nil {
 		t.Fatalf("expected error for short key")
@@ -47,7 +47,7 @@ func TestSetupNewAccountErrors(t *testing.T) {
 		t.Fatalf("generate key: %v", err)
 	}
 
-	h, err := MakeTokensHandler(key)
+	h, err := NewTokensHandler(key)
 
 	if err != nil {
 		t.Fatalf("make handler: %v", err)
@@ -71,7 +71,7 @@ func TestDecodeTokensForError(t *testing.T) {
 		t.Fatalf("key err: %v", err)
 	}
 
-	h, err := MakeTokensHandler(key)
+	h, err := NewTokensHandler(key)
 
 	if err != nil {
 		t.Fatalf("make handler: %v", err)

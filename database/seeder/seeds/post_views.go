@@ -10,7 +10,7 @@ type PostViewsSeed struct {
 	db *database.Connection
 }
 
-func MakePostViewsSeed(db *database.Connection) *PostViewsSeed {
+func NewPostViewsSeed(db *database.Connection) *PostViewsSeed {
 	return &PostViewsSeed{
 		db: db,
 	}

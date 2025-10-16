@@ -13,7 +13,7 @@ type Truncate struct {
 	env      *env.Environment
 }
 
-func MakeTruncate(db *Connection, env *env.Environment) *Truncate {
+func NewTruncate(db *Connection, env *env.Environment) *Truncate {
 	return &Truncate{
 		database: db,
 		env:      env,

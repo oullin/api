@@ -13,7 +13,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-func MakeTestConnection(t *testing.T, models ...interface{}) *database.Connection {
+func NewTestConnection(t *testing.T, models ...interface{}) *database.Connection {
 	t.Helper()
 
 	if _, err := exec.LookPath("docker"); err != nil {
@@ -60,7 +60,7 @@ func MakeTestConnection(t *testing.T, models ...interface{}) *database.Connectio
 		},
 	}
 
-	conn, err := database.MakeConnection(e)
+	conn, err := database.NewConnection(e)
 	if err != nil {
 		t.Fatalf("make connection: %v", err)
 	}
@@ -75,6 +75,6 @@ func MakeTestConnection(t *testing.T, models ...interface{}) *database.Connectio
 	return conn
 }
 
-func MakeTestEnv() *env.Environment {
+func NewTestEnv() *env.Environment {
 	return &env.Environment{App: env.AppEnvironment{MasterKey: uuid.NewString()[:32]}}
 }

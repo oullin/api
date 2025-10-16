@@ -16,7 +16,7 @@ type Connection struct {
 	env        *env.Environment
 }
 
-func MakeConnection(env *env.Environment) (*Connection, error) {
+func NewConnection(env *env.Environment) (*Connection, error) {
 	dbEnv := env.DB
 	driver, err := gorm.Open(postgres.Open(dbEnv.GetDSN()), &gorm.Config{})
 

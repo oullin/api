@@ -20,14 +20,14 @@ func init() {
 	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
 
 	environment = secrets
-	sentryHub = kernel.MakeSentry(environment)
+	sentryHub = kernel.NewSentry(environment)
 }
 
 func main() {
 	cli.ClearScreen()
 
-	dbConnection := kernel.MakeDbConnection(environment)
-	logs := kernel.MakeLogs(environment)
+	dbConnection := kernel.NewDbConnection(environment)
+	logs := kernel.NewLogs(environment)
 
 	defer sentry.Flush(2 * time.Second)
 	defer logs.Close()
@@ -35,7 +35,7 @@ func main() {
 	defer kernel.RecoverWithSentry(sentryHub)
 
 	// [1] --- Create the Seeder Runner.
-	seeder := seeds.MakeSeeder(dbConnection, environment)
+	seeder := seeds.NewSeeder(dbConnection, environment)
 
 	// [2] --- Truncate the db.
 	if err := seeder.TruncateDB(); err != nil {

@@ -13,7 +13,7 @@ import (
 )
 
 func TestPublicMiddleware_InvalidHeaders(t *testing.T) {
-	pm := MakePublicMiddleware("", false)
+	pm := NewPublicMiddleware("", false)
 	handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
 
 	base := time.Unix(1_700_000_000, 0)
@@ -58,7 +58,7 @@ func TestPublicMiddleware_InvalidHeaders(t *testing.T) {
 }
 
 func TestPublicMiddleware_TimestampExpired(t *testing.T) {
-	pm := MakePublicMiddleware("", false)
+	pm := NewPublicMiddleware("", false)
 	base := time.Unix(1_700_000_000, 0)
 	pm.now = func() time.Time { return base }
 	handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
@@ -75,7 +75,7 @@ func TestPublicMiddleware_TimestampExpired(t *testing.T) {
 }
 
 func TestPublicMiddleware_RateLimitAndReplay(t *testing.T) {
-	pm := MakePublicMiddleware("", false)
+	pm := NewPublicMiddleware("", false)
 	pm.rateLimiter = limiter.NewMemoryLimiter(time.Minute, 1)
 	base := time.Unix(1_700_000_000, 0)
 	pm.now = func() time.Time { return base }
@@ -110,7 +110,7 @@ func TestPublicMiddleware_RateLimitAndReplay(t *testing.T) {
 
 func TestPublicMiddleware_IPWhitelist(t *testing.T) {
 	base := time.Unix(1_700_000_000, 0)
-	pm := MakePublicMiddleware("31.97.60.190", true)
+	pm := NewPublicMiddleware("31.97.60.190", true)
 	pm.now = func() time.Time { return base }
 	handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
 
@@ -137,7 +137,7 @@ func TestPublicMiddleware_IPWhitelist(t *testing.T) {
 	})
 
 	t.Run("non-production skips restriction", func(t *testing.T) {
-		pm := MakePublicMiddleware("31.97.60.190", false)
+		pm := NewPublicMiddleware("31.97.60.190", false)
 		pm.now = func() time.Time { return base }
 		handler := pm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
 		rec := httptest.NewRecorder()

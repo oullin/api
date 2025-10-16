@@ -16,8 +16,8 @@ type Handler struct {
 	TokenHandler *auth.TokenHandler
 }
 
-func MakeHandler(db *database.Connection, env *env.Environment) (*Handler, error) {
-	tokenHandler, err := auth.MakeTokensHandler(
+func NewHandler(db *database.Connection, env *env.Environment) (*Handler, error) {
+	tokenHandler, err := auth.NewTokensHandler(
 		[]byte(env.App.MasterKey),
 	)
 

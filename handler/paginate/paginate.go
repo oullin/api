@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func MakeFrom(url *url.URL, pageSize int) pagination.Paginate {
+func NewFrom(url *url.URL, pageSize int) pagination.Paginate {
 	page := pagination.MinPage
 	values := url.Query()
 	path := strings.TrimSpace((*url).Path)

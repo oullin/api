@@ -11,7 +11,7 @@ type PostsSeed struct {
 	db *database.Connection
 }
 
-func MakePostsSeed(db *database.Connection) *PostsSeed {
+func NewPostsSeed(db *database.Connection) *PostsSeed {
 	return &PostsSeed{
 		db: db,
 	}

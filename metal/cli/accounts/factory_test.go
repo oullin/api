@@ -7,9 +7,9 @@ import (
 	"github.com/oullin/metal/cli/clitest"
 )
 
-func TestMakeHandler(t *testing.T) {
-	conn := clitest.MakeTestConnection(t, &database.APIKey{})
-	h, err := MakeHandler(conn, clitest.MakeTestEnv())
+func TestNewHandler(t *testing.T) {
+	conn := clitest.NewTestConnection(t, &database.APIKey{})
+	h, err := NewHandler(conn, clitest.NewTestEnv())
 
 	if err != nil {
 		t.Fatalf("make handler: %v", err)
@@ -30,12 +30,12 @@ func TestMakeHandler(t *testing.T) {
 	}
 }
 
-func TestMakeHandlerInvalidKey(t *testing.T) {
-	conn := clitest.MakeTestConnection(t)
-	env := clitest.MakeTestEnv()
+func TestNewHandlerInvalidKey(t *testing.T) {
+	conn := clitest.NewTestConnection(t)
+	env := clitest.NewTestEnv()
 	env.App.MasterKey = "short"
 
-	if _, err := MakeHandler(conn, env); err == nil {
+	if _, err := NewHandler(conn, env); err == nil {
 		t.Fatalf("expected error")
 	}
 }

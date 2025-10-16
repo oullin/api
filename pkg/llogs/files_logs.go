@@ -16,7 +16,7 @@ type FilesLogs struct {
 	env    *env.Environment
 }
 
-func MakeFilesLogs(env *env.Environment) (Driver, error) {
+func NewFilesLogs(env *env.Environment) (Driver, error) {
 	manager := FilesLogs{}
 	manager.env = env
 

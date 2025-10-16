@@ -13,7 +13,7 @@ type RecommendationsHandler struct {
 	filePath string
 }
 
-func MakeRecommendationsHandler(filePath string) RecommendationsHandler {
+func NewRecommendationsHandler(filePath string) RecommendationsHandler {
 	return RecommendationsHandler{
 		filePath: filePath,
 	}
@@ -28,7 +28,7 @@ func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *
 		return endpoint.InternalError("could not read recommendations data")
 	}
 
-	resp := endpoint.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.NewResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

@@ -20,7 +20,7 @@ func TestTruncateExecuteSkipsMissingTables(t *testing.T) {
 	existing := allTables(false)
 	expectTruncateCalls(t, mock, existing, nil)
 
-	truncate := MakeTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "local"}})
+	truncate := NewTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "local"}})
 	if err := truncate.Execute(); err != nil {
 		t.Fatalf("Execute unexpected error: %v", err)
 	}
@@ -42,7 +42,7 @@ func TestTruncateExecuteSkipsUndefinedRelationErrors(t *testing.T) {
 
 	expectTruncateCalls(t, mock, existing, execErrors)
 
-	truncate := MakeTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "local"}})
+	truncate := NewTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "local"}})
 	if err := truncate.Execute(); err != nil {
 		t.Fatalf("Execute unexpected error: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestTruncateExecuteAggregatesErrors(t *testing.T) {
 
 	expectTruncateCalls(t, mock, existing, execErrors)
 
-	truncate := MakeTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "local"}})
+	truncate := NewTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "local"}})
 	err := truncate.Execute()
 	if err == nil || !regexp.MustCompile(`truncate table users`).MatchString(err.Error()) {
 		t.Fatalf("expected error about users table, got %v", err)
@@ -79,7 +79,7 @@ func TestTruncateExecutePanicsInProduction(t *testing.T) {
 	conn, _, sqlDB := newTruncateMockConnection(t)
 	t.Cleanup(func() { _ = sqlDB.Close() })
 
-	truncate := MakeTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "production"}})
+	truncate := NewTruncate(conn, &env.Environment{App: env.AppEnvironment{Type: "production"}})
 
 	defer func() {
 		if r := recover(); r == nil {

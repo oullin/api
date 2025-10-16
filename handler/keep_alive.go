@@ -15,7 +15,7 @@ type KeepAliveHandler struct {
 	env *env.PingEnvironment
 }
 
-func MakeKeepAliveHandler(e *env.PingEnvironment) KeepAliveHandler {
+func NewKeepAliveHandler(e *env.PingEnvironment) KeepAliveHandler {
 	return KeepAliveHandler{env: e}
 }
 
@@ -29,7 +29,7 @@ func (h KeepAliveHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoi
 		)
 	}
 
-	resp := endpoint.MakeNoCacheResponse(w, r)
+	resp := endpoint.NewNoCacheResponse(w, r)
 	now := time.Now().UTC()
 
 	data := payload.KeepAliveResponse{

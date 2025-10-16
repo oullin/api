@@ -10,7 +10,7 @@ type PostTagsSeed struct {
 	db *database.Connection
 }
 
-func MakePostTagsSeed(db *database.Connection) *PostTagsSeed {
+func NewPostTagsSeed(db *database.Connection) *PostTagsSeed {
 	return &PostTagsSeed{
 		db: db,
 	}

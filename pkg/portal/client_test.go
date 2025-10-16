@@ -9,7 +9,7 @@ import (
 
 func TestClientTransportAndGet(t *testing.T) {
 	tr := GetDefaultTransport()
-	c := MakeDefaultClient(tr)
+	c := NewDefaultClient(tr)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("hello"))
@@ -34,7 +34,7 @@ func TestClientGetNil(t *testing.T) {
 }
 
 func TestClientOnHeadersAndAbort(t *testing.T) {
-	c := MakeDefaultClient(nil)
+	c := NewDefaultClient(nil)
 	called := false
 	c.OnHeaders = func(req *http.Request) {
 		req.Header.Set("X-Test", "ok")

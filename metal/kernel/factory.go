@@ -13,7 +13,7 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-func MakeSentry(env *env.Environment) *portal.Sentry {
+func NewSentry(env *env.Environment) *portal.Sentry {
 	cOptions := sentry.ClientOptions{
 		AttachStacktrace: true,
 		EnableTracing:    true,
@@ -43,8 +43,8 @@ func MakeSentry(env *env.Environment) *portal.Sentry {
 	}
 }
 
-func MakeDbConnection(env *env.Environment) *database.Connection {
-	dbConn, err := database.MakeConnection(env)
+func NewDbConnection(env *env.Environment) *database.Connection {
+	dbConn, err := database.NewConnection(env)
 
 	if err != nil {
 		panic("Sql: error connecting to PostgresSQL: " + err.Error())
@@ -53,8 +53,8 @@ func MakeDbConnection(env *env.Environment) *database.Connection {
 	return dbConn
 }
 
-func MakeLogs(env *env.Environment) llogs.Driver {
-	lDriver, err := llogs.MakeFilesLogs(env)
+func NewLogs(env *env.Environment) llogs.Driver {
+	lDriver, err := llogs.NewFilesLogs(env)
 
 	if err != nil {
 		panic("logs: error opening logs file: " + err.Error())
@@ -63,7 +63,7 @@ func MakeLogs(env *env.Environment) llogs.Driver {
 	return lDriver
 }
 
-func MakeEnv(validate *portal.Validator) *env.Environment {
+func NewEnv(validate *portal.Validator) *env.Environment {
 	errorSuffix := "Environment: "
 
 	port, err := strconv.Atoi(env.GetEnvVar("ENV_DB_PORT"))

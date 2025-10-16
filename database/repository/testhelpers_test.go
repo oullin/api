@@ -63,7 +63,7 @@ func newPostgresConnection(t *testing.T, models ...interface{}) *database.Connec
 		},
 	}
 
-	conn, err := database.MakeConnection(e)
+	conn, err := database.NewConnection(e)
 	if err != nil {
 		t.Fatalf("make connection: %v", err)
 	}

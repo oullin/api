@@ -10,7 +10,7 @@ func TestResponse_RespondOkAndHasCache(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 
-	r := MakeResponseFrom("salt", rec, req)
+	r := NewResponseFrom("salt", rec, req)
 
 	if err := r.RespondOk(map[string]string{"a": "b"}); err != nil {
 		t.Fatalf("respond: %v", err)
@@ -35,7 +35,7 @@ func TestResponse_NoCache(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 
-	r := MakeNoCacheResponse(rec, req)
+	r := NewNoCacheResponse(rec, req)
 
 	if err := r.RespondOk(map[string]string{"a": "b"}); err != nil {
 		t.Fatalf("respond: %v", err)
@@ -61,7 +61,7 @@ func TestResponse_NoCache(t *testing.T) {
 func TestResponse_WithHeaders(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
-	r := MakeResponseFrom("salt", rec, req)
+	r := NewResponseFrom("salt", rec, req)
 	called := false
 
 	r.WithHeaders(func(w http.ResponseWriter) { called = true })
@@ -75,7 +75,7 @@ func TestResponse_NotModified(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
 
-	r := MakeResponseFrom("salt", rec, req)
+	r := NewResponseFrom("salt", rec, req)
 	r.RespondWithNotModified()
 
 	if rec.Code != http.StatusNotModified {

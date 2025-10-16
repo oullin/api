@@ -50,14 +50,14 @@ func get[T any](handler func() router.StaticRouteResource, entityName string) (*
 
 func (c *Client) GetTalks() (*payload.TalksResponse, error) {
 	return get[payload.TalksResponse](func() router.StaticRouteResource {
-		return handler.MakeTalksHandler(c.Fixture.GetTalksFile())
+		return handler.NewTalksHandler(c.Fixture.GetTalksFile())
 	}, "talks")
 }
 
 func (c *Client) GetProfile() (*payload.ProfileResponse, error) {
 	c.data.profileOnce.Do(func() {
 		c.data.profile, c.data.profileErr = get[payload.ProfileResponse](func() router.StaticRouteResource {
-			return handler.MakeProfileHandler(c.Fixture.GetProfileFile())
+			return handler.NewProfileHandler(c.Fixture.GetProfileFile())
 		}, "profile")
 	})
 
@@ -67,7 +67,7 @@ func (c *Client) GetProfile() (*payload.ProfileResponse, error) {
 func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
 	c.data.projectsOnce.Do(func() {
 		c.data.projects, c.data.projectsErr = get[payload.ProjectsResponse](func() router.StaticRouteResource {
-			return handler.MakeProjectsHandler(c.Fixture.GetProjectsFile())
+			return handler.NewProjectsHandler(c.Fixture.GetProjectsFile())
 		}, "projects")
 	})
 
@@ -76,14 +76,14 @@ func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
 
 func (c *Client) GetSocial() (*payload.SocialResponse, error) {
 	return get[payload.SocialResponse](func() router.StaticRouteResource {
-		return handler.MakeSocialHandler(c.Fixture.GetSocialFile())
+		return handler.NewSocialHandler(c.Fixture.GetSocialFile())
 	}, "social")
 }
 
 func (c *Client) GetRecommendations() (*payload.RecommendationsResponse, error) {
 	c.data.recommendationsOnce.Do(func() {
 		c.data.recommendations, c.data.recommendationsErr = get[payload.RecommendationsResponse](func() router.StaticRouteResource {
-			return handler.MakeRecommendationsHandler(c.Fixture.GetRecommendationsFile())
+			return handler.NewRecommendationsHandler(c.Fixture.GetRecommendationsFile())
 		}, "recommendations")
 	})
 
@@ -92,13 +92,13 @@ func (c *Client) GetRecommendations() (*payload.RecommendationsResponse, error) 
 
 func (c *Client) GetExperience() (*payload.ExperienceResponse, error) {
 	return get[payload.ExperienceResponse](func() router.StaticRouteResource {
-		return handler.MakeExperienceHandler(c.Fixture.GetExperienceFile())
+		return handler.NewExperienceHandler(c.Fixture.GetExperienceFile())
 	}, "experience")
 }
 
 func (c *Client) GetEducation() (*payload.EducationResponse, error) {
 	return get[payload.EducationResponse](func() router.StaticRouteResource {
-		return handler.MakeEducationHandler(c.Fixture.GetEducationFile())
+		return handler.NewEducationHandler(c.Fixture.GetEducationFile())
 	}, "education")
 }
 

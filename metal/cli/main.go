@@ -24,8 +24,8 @@ func init() {
 	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
 
 	environment = secrets
-	dbConn = kernel.MakeDbConnection(environment)
-	sentryHub = kernel.MakeSentry(environment)
+	dbConn = kernel.NewDbConnection(environment)
+	sentryHub = kernel.NewSentry(environment)
 }
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 	defer sentry.Flush(2 * time.Second)
 	defer kernel.RecoverWithSentry(sentryHub)
 
-	menu := panel.MakeMenu()
+	menu := panel.NewMenu()
 
 	for {
 		err := menu.CaptureInput()
@@ -114,8 +114,8 @@ func createBlogPost(menu panel.Menu) error {
 		return err
 	}
 
-	httpClient := portal.MakeDefaultClient(nil)
-	handler := posts.MakeHandler(input, httpClient, dbConn)
+	httpClient := portal.NewDefaultClient(nil)
+	handler := posts.NewHandler(input, httpClient, dbConn)
 
 	if _, err = handler.NotParsed(); err != nil {
 		return err
@@ -133,7 +133,7 @@ func createNewApiAccount(menu panel.Menu) error {
 		return err
 	}
 
-	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+	if handler, err = accounts.NewHandler(dbConn, environment); err != nil {
 		return err
 	}
 
@@ -153,7 +153,7 @@ func showApiAccount(menu panel.Menu) error {
 		return err
 	}
 
-	if handler, err = accounts.MakeHandler(dbConn, environment); err != nil {
+	if handler, err = accounts.NewHandler(dbConn, environment); err != nil {
 		return err
 	}
 

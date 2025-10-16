@@ -14,7 +14,7 @@ type Stringable struct {
 	value string
 }
 
-func MakeStringable(value string) *Stringable {
+func NewStringable(value string) *Stringable {
 	return &Stringable{
 		value: strings.TrimSpace(value),
 	}

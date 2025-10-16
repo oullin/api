@@ -28,7 +28,7 @@ func captureOutput(fn func()) string {
 }
 
 func setupPostsHandler(t *testing.T) (*Handler, *database.Connection) {
-	conn := clitest.MakeTestConnection(t, &database.User{}, &database.Post{}, &database.Category{}, &database.PostCategory{}, &database.Tag{}, &database.PostTag{})
+	conn := clitest.NewTestConnection(t, &database.User{}, &database.Post{}, &database.Category{}, &database.PostCategory{}, &database.Tag{}, &database.PostTag{})
 	user := database.User{
 		UUID:         uuid.NewString(),
 		Username:     "jdoe",
@@ -56,7 +56,7 @@ func setupPostsHandler(t *testing.T) (*Handler, *database.Connection) {
 		Url: "http://example",
 	}
 
-	h := MakeHandler(input, portal.MakeDefaultClient(nil), conn)
+	h := NewHandler(input, portal.NewDefaultClient(nil), conn)
 
 	return &h, conn
 }

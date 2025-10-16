@@ -10,7 +10,7 @@ type NewslettersSeed struct {
 	db *database.Connection
 }
 
-func MakeNewslettersSeed(db *database.Connection) *NewslettersSeed {
+func NewNewslettersSeed(db *database.Connection) *NewslettersSeed {
 	return &NewslettersSeed{
 		db: db,
 	}

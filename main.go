@@ -18,7 +18,7 @@ var app *kernel.App
 func init() {
 	validate := portal.GetDefaultValidator()
 	secrets := kernel.Ignite("./.env", validate)
-	application, err := kernel.MakeApp(secrets, validate)
+	application, err := kernel.NewApp(secrets, validate)
 
 	if err != nil {
 		panic(fmt.Sprintf("init: Error creating application: %s", err))

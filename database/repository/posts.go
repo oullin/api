@@ -47,7 +47,7 @@ func (p Posts) GetAll(filters queries.PostFilters, paginate pagination.Paginate)
 	}
 
 	paginate.SetNumItems(numItems)
-	result := pagination.MakePagination[database.Post](posts, paginate)
+	result := pagination.NewPagination[database.Post](posts, paginate)
 
 	return result, nil
 }

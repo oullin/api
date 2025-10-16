@@ -14,7 +14,7 @@ type Seeder struct {
 	environment *env.Environment
 }
 
-func MakeSeeder(dbConnection *database.Connection, environment *env.Environment) *Seeder {
+func NewSeeder(dbConnection *database.Connection, environment *env.Environment) *Seeder {
 	return &Seeder{
 		dbConn:      dbConnection,
 		environment: environment,
@@ -26,7 +26,7 @@ func (s *Seeder) TruncateDB() error {
 		return fmt.Errorf("cannot truncate db at the seeder level")
 	}
 
-	truncate := database.MakeTruncate(s.dbConn, s.environment)
+	truncate := database.NewTruncate(s.dbConn, s.environment)
 
 	if err := truncate.Execute(); err != nil {
 		panic(err)
@@ -36,7 +36,7 @@ func (s *Seeder) TruncateDB() error {
 }
 
 func (s *Seeder) SeedUsers() (database.User, database.User) {
-	users := MakeUsersSeed(s.dbConn)
+	users := NewUsersSeed(s.dbConn)
 
 	UserA, err := users.Create(database.UsersAttrs{
 		Username: "gocanto",
@@ -62,7 +62,7 @@ func (s *Seeder) SeedUsers() (database.User, database.User) {
 }
 
 func (s *Seeder) SeedPosts(UserA, UserB database.User) []database.Post {
-	posts := MakePostsSeed(s.dbConn)
+	posts := NewPostsSeed(s.dbConn)
 	timex := time.Now()
 
 	PostsA, err := posts.CreatePosts(database.PostsAttrs{
@@ -95,7 +95,7 @@ func (s *Seeder) SeedPosts(UserA, UserB database.User) []database.Post {
 }
 
 func (s *Seeder) SeedCategories() []database.Category {
-	categories := MakeCategoriesSeed(s.dbConn)
+	categories := NewCategoriesSeed(s.dbConn)
 
 	result, err := categories.Create(database.CategoriesAttrs{
 		Slug:        fmt.Sprintf("category-slug-%s", uuid.NewString()),
@@ -111,7 +111,7 @@ func (s *Seeder) SeedCategories() []database.Category {
 }
 
 func (s *Seeder) SeedTags() []database.Tag {
-	seed := MakeTagsSeed(s.dbConn)
+	seed := NewTagsSeed(s.dbConn)
 
 	tags, err := seed.Create()
 
@@ -123,7 +123,7 @@ func (s *Seeder) SeedTags() []database.Tag {
 }
 
 func (s *Seeder) SeedComments(posts ...database.Post) {
-	seed := MakeCommentsSeed(s.dbConn)
+	seed := NewCommentsSeed(s.dbConn)
 
 	timex := time.Now()
 	var values []database.CommentsAttrs
@@ -144,7 +144,7 @@ func (s *Seeder) SeedComments(posts ...database.Post) {
 }
 
 func (s *Seeder) SeedLikes(posts ...database.Post) {
-	seed := MakeLikesSeed(s.dbConn)
+	seed := NewLikesSeed(s.dbConn)
 	var values []database.LikesAttrs
 
 	for _, post := range posts {
@@ -166,7 +166,7 @@ func (s *Seeder) SeedPostsCategories(categories []database.Category, posts []dat
 		return
 	}
 
-	seed := MakePostCategoriesSeed(s.dbConn)
+	seed := NewPostCategoriesSeed(s.dbConn)
 
 	var post database.Post
 	var category database.Category
@@ -192,7 +192,7 @@ func (s *Seeder) SeedPostTags(tags []database.Tag, posts []database.Post) {
 		return
 	}
 
-	seed := MakePostTagsSeed(s.dbConn)
+	seed := NewPostTagsSeed(s.dbConn)
 
 	var post database.Post
 	var label database.Tag
@@ -218,7 +218,7 @@ func (s *Seeder) SeedPostViews(posts []database.Post, users ...database.User) {
 		return
 	}
 
-	seed := MakePostViewsSeed(s.dbConn)
+	seed := NewPostViewsSeed(s.dbConn)
 
 	var values []database.PostViewsAttr
 
@@ -261,7 +261,7 @@ func (s *Seeder) SeedNewsLetters() error {
 		UnsubscribedAt: &currentTime,
 	}
 
-	seed := MakeNewslettersSeed(s.dbConn)
+	seed := NewNewslettersSeed(s.dbConn)
 	newsletters = append(newsletters, a, b)
 
 	if err := seed.Create(newsletters); err != nil {

@@ -13,7 +13,7 @@ type TalksHandler struct {
 	filePath string
 }
 
-func MakeTalksHandler(filePath string) TalksHandler {
+func NewTalksHandler(filePath string) TalksHandler {
 	return TalksHandler{
 		filePath: filePath,
 	}
@@ -28,7 +28,7 @@ func (h TalksHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.A
 		return endpoint.InternalError("could not read talks data")
 	}
 
-	resp := endpoint.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.NewResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

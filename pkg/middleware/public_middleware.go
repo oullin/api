@@ -28,7 +28,7 @@ type PublicMiddleware struct {
 	isProduction   bool
 }
 
-func MakePublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware {
+func NewPublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware {
 	return PublicMiddleware{
 		clockSkew:      5 * time.Minute,
 		disallowFuture: true,

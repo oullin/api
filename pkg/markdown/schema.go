@@ -30,7 +30,7 @@ type Parser struct {
 }
 
 func (f FrontMatter) GetPublishedAt() (*time.Time, error) {
-	stringable := portal.MakeStringable(f.PublishedAt)
+	stringable := portal.NewStringable(f.PublishedAt)
 	publishedAt, err := stringable.ToDatetime()
 
 	if err != nil {

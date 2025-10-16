@@ -14,9 +14,9 @@ import (
 )
 
 func TestKeepAliveDBHandler(t *testing.T) {
-	db, _ := handlertests.MakeTestDB(t)
+	db, _ := handlertests.NewTestDB(t)
 	e := env.PingEnvironment{Username: "user", Password: "pass"}
-	h := MakeKeepAliveDBHandler(&e, db)
+	h := NewKeepAliveDBHandler(&e, db)
 
 	t.Run("valid credentials", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/ping-db", nil)

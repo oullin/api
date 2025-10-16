@@ -7,7 +7,7 @@ type Password struct {
 	seed string
 }
 
-func MakePassword(seed string) (Password, error) {
+func NewPassword(seed string) (Password, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(seed), 10)
 
 	if err != nil {

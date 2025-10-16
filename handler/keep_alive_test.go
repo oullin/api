@@ -14,7 +14,7 @@ import (
 
 func TestKeepAliveHandler(t *testing.T) {
 	e := env.PingEnvironment{Username: "user", Password: "pass"}
-	h := MakeKeepAliveHandler(&e)
+	h := NewKeepAliveHandler(&e)
 
 	t.Run("valid credentials", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/ping", nil)

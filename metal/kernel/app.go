@@ -23,13 +23,13 @@ type App struct {
 	db        *database.Connection
 }
 
-func MakeApp(e *env.Environment, validator *portal.Validator) (*App, error) {
+func NewApp(e *env.Environment, validator *portal.Validator) (*App, error) {
 	app := App{
 		env:       e,
 		validator: validator,
-		logs:      MakeLogs(e),
-		sentry:    MakeSentry(e),
-		db:        MakeDbConnection(e),
+		logs:      NewLogs(e),
+		sentry:    NewSentry(e),
+		db:        NewDbConnection(e),
 	}
 
 	if modem, err := app.NewRouter(); err != nil {
@@ -48,7 +48,7 @@ func (a *App) NewRouter() (*router.Router, error) {
 
 	envi := a.env
 
-	tokenHandler, err := auth.MakeTokensHandler(
+	tokenHandler, err := auth.NewTokensHandler(
 		[]byte(envi.App.MasterKey),
 	)
 
@@ -60,7 +60,7 @@ func (a *App) NewRouter() (*router.Router, error) {
 		Env:          envi,
 		TokenHandler: tokenHandler,
 		ApiKeys:      &repository.ApiKeys{DB: a.db},
-		PublicMiddleware: middleware.MakePublicMiddleware(
+		PublicMiddleware: middleware.NewPublicMiddleware(
 			envi.Network.PublicAllowedIP,
 			envi.Network.IsProduction,
 		),

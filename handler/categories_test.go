@@ -16,7 +16,7 @@ import (
 )
 
 func TestCategoriesHandlerIndex_Success(t *testing.T) {
-	conn, author := handlertests.MakeTestDB(t)
+	conn, author := handlertests.NewTestDB(t)
 
 	published := time.Now()
 
@@ -54,7 +54,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("create link: %v", err)
 	}
 
-	h := MakeCategoriesHandler(&repository.Categories{
+	h := NewCategoriesHandler(&repository.Categories{
 		DB: conn,
 	})
 

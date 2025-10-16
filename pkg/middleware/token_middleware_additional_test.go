@@ -63,9 +63,9 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	if err := db.AutoMigrate(&database.APIKey{}, &database.APIKeySignatures{}); err != nil {
 		t.Skipf("migrate: %v", err)
 	}
-	th, err := auth.MakeTokensHandler(generate32(t))
+	th, err := auth.NewTokensHandler(generate32(t))
 	if err != nil {
-		t.Fatalf("MakeTokensHandler: %v", err)
+		t.Fatalf("NewTokensHandler: %v", err)
 	}
 	seed, err := th.SetupNewAccount(account)
 	if err != nil {
@@ -101,7 +101,7 @@ func TestTokenMiddlewareGuardDependencies(t *testing.T) {
 
 func TestTokenMiddleware_PublicTokenMismatch(t *testing.T) {
 	repo, th, seed, _ := makeRepo(t, "mismatch")
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
 	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil }
 	handler := tm.Handle(next)
@@ -116,7 +116,7 @@ func TestTokenMiddleware_PublicTokenMismatch(t *testing.T) {
 
 func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
 	repo, th, seed, key := makeRepo(t, "siggy")
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
 	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil }
 	handler := tm.Handle(next)
@@ -141,7 +141,7 @@ func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
 
 func TestTokenMiddleware_NonceReplay(t *testing.T) {
 	repo, th, seed, key := makeRepo(t, "replay")
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
 	tm.nonceTTL = time.Minute
 	nextCalled := 0
@@ -169,7 +169,7 @@ func TestTokenMiddleware_NonceReplay(t *testing.T) {
 
 func TestTokenMiddleware_RateLimiter(t *testing.T) {
 	repo, th, seed, key := makeRepo(t, "ratey")
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
 	nextCalled := 0
 	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
@@ -211,7 +211,7 @@ func TestTokenMiddleware_RateLimiter(t *testing.T) {
 
 func TestTokenMiddleware_CustomClockValidatesSignature(t *testing.T) {
 	repo, th, seed, key := makeRepo(t, "clock")
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 	tm.clockSkew = time.Minute
 	past := time.Now().Add(-10 * time.Minute)
 	tm.now = func() time.Time { return past }

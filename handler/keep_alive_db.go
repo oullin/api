@@ -17,7 +17,7 @@ type KeepAliveDBHandler struct {
 	db  *database.Connection
 }
 
-func MakeKeepAliveDBHandler(e *env.PingEnvironment, db *database.Connection) KeepAliveDBHandler {
+func NewKeepAliveDBHandler(e *env.PingEnvironment, db *database.Connection) KeepAliveDBHandler {
 	return KeepAliveDBHandler{env: e, db: db}
 }
 
@@ -35,7 +35,7 @@ func (h KeepAliveDBHandler) Handle(w http.ResponseWriter, r *http.Request) *endp
 		return endpoint.LogInternalError("database ping failed", err)
 	}
 
-	resp := endpoint.MakeNoCacheResponse(w, r)
+	resp := endpoint.NewNoCacheResponse(w, r)
 	now := time.Now().UTC()
 
 	data := payload.KeepAliveResponse{

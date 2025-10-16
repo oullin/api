@@ -65,7 +65,7 @@ Main steps:
    - Logs warnings for missing headers, invalid format, too many failures, account not found, replay detected, signature mismatch.
    - Errors are generic to clients (HTTP 401 with neutral messages) to avoid leaking details.
 
-Defaults (from MakeTokenMiddleware):
+Defaults (from NewTokenMiddleware):
 - clockSkew: 10m; disallowFuture: true
 - nonceTTL: 10m; nonceCache: in-memory TTL
 - rateLimiter: in-memory with 1m window, 10 failures threshold
