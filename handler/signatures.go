@@ -12,7 +12,7 @@ import (
 	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg/auth"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -28,7 +28,7 @@ func MakeSignaturesHandler(validator *portal.Validator, ApiKeys *repository.ApiK
 	}
 }
 
-func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
 	defer portal.CloseWithLog(r.Body)
 
 	var (
@@ -36,15 +36,15 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 		req payload.SignatureRequest
 	)
 
-	r.Body = baseHttp.MaxBytesReader(w, r.Body, http.MaxRequestSize)
+	r.Body = baseHttp.MaxBytesReader(w, r.Body, endpoint.MaxRequestSize)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err = dec.Decode(&req); err != nil {
-		return http.LogBadRequestError("could not parse the given data.", err)
+		return endpoint.LogBadRequestError("could not parse the given data.", err)
 	}
 
 	if _, err = s.Validator.Rejects(req); err != nil {
-		return http.UnprocessableEntity("The given fields are invalid", s.Validator.GetErrors())
+		return endpoint.UnprocessableEntity("The given fields are invalid", s.Validator.GetErrors())
 	}
 
 	serverTime := time.Now()
@@ -53,7 +53,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 
 	var keySignature *database.APIKeySignatures
 	if keySignature, err = s.CreateSignature(req, serverTime); err != nil {
-		return http.LogInternalError(err.Error(), err)
+		return endpoint.LogInternalError(err.Error(), err)
 	}
 
 	response := payload.SignatureResponse{
@@ -66,11 +66,11 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 		},
 	}
 
-	resp := http.MakeResponseFrom("0.0.1", w, r)
+	resp := endpoint.MakeResponseFrom("0.0.1", w, r)
 
 	if err = resp.RespondOk(response); err != nil {
 		slog.Error("Error marshaling JSON for signatures response", "error", err)
-		return http.LogInternalError("could not encode signatures response", err)
+		return endpoint.LogInternalError("could not encode signatures response", err)
 	}
 
 	return nil // A nil return indicates success.

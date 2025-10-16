@@ -18,7 +18,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/auth"
-	pkgHttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -27,7 +27,7 @@ import (
 func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {
 	tm := MakeTokenMiddleware(nil, nil)
 
-	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil })
+	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
@@ -40,7 +40,7 @@ func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {
 func TestTokenMiddlewareHandleInvalid(t *testing.T) {
 	tm := MakeTokenMiddleware(nil, nil)
 
-	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError { return nil })
+	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
@@ -226,7 +226,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 	tm.nonceTTL = 1 * time.Minute
 
 	nextCalled := false
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		nextCalled = true
 		return nil
 	}
@@ -307,7 +307,7 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 	tm.nonceTTL = 1 * time.Minute
 
 	nextCalled := false
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		nextCalled = true
 		return nil
 	}
@@ -372,7 +372,7 @@ func TestTokenMiddleware_RejectsFutureTimestamps(t *testing.T) {
 	tm := MakeTokenMiddleware(th, repo)
 
 	nextCalled := false
-	next := func(w http.ResponseWriter, r *http.Request) *pkgHttp.ApiError {
+	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		nextCalled = true
 		return nil
 	}

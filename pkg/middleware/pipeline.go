@@ -4,7 +4,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/auth"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 type Pipeline struct {
@@ -14,7 +14,7 @@ type Pipeline struct {
 	PublicMiddleware PublicMiddleware
 }
 
-func (m Pipeline) Chain(h http.ApiHandler, handlers ...http.Middleware) http.ApiHandler {
+func (m Pipeline) Chain(h endpoint.ApiHandler, handlers ...endpoint.Middleware) endpoint.ApiHandler {
 	for i := len(handlers) - 1; i >= 0; i-- {
 		h = handlers[i](h)
 	}

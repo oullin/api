@@ -5,7 +5,7 @@ import (
 	baseHttp "net/http"
 	"strings"
 
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 func normaliseData(data ...map[string]any) map[string]any {
@@ -33,91 +33,91 @@ func normaliseMessages(message, logMessage string) (string, string) {
 	return message, logMessage
 }
 
-func InvalidRequestError(message, logMessage string, data ...map[string]any) *http.ApiError {
+func InvalidRequestError(message, logMessage string, data ...map[string]any) *endpoint.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
 	d := normaliseData(data...)
 	slog.Error(logMessage, "data", d)
 
-	return &http.ApiError{
+	return &endpoint.ApiError{
 		Message: message,
 		Status:  baseHttp.StatusUnauthorized,
 		Data:    d,
 	}
 }
 
-func InvalidTokenFormatError(message, logMessage string, data ...map[string]any) *http.ApiError {
+func InvalidTokenFormatError(message, logMessage string, data ...map[string]any) *endpoint.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
 	d := normaliseData(data...)
 	slog.Error(logMessage, "data", d)
 
-	return &http.ApiError{
+	return &endpoint.ApiError{
 		Message: message,
 		Status:  baseHttp.StatusUnauthorized,
 		Data:    d,
 	}
 }
 
-func UnauthenticatedError(message, logMessage string, data ...map[string]any) *http.ApiError {
+func UnauthenticatedError(message, logMessage string, data ...map[string]any) *endpoint.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
 	d := normaliseData(data...)
 	slog.Error(logMessage, "data", d)
 
-	return &http.ApiError{
+	return &endpoint.ApiError{
 		Message: "2- Invalid credentials: " + logMessage,
 		Status:  baseHttp.StatusUnauthorized,
 		Data:    d,
 	}
 }
 
-func RateLimitedError(message, logMessage string, data ...map[string]any) *http.ApiError {
+func RateLimitedError(message, logMessage string, data ...map[string]any) *endpoint.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
 	d := normaliseData(data...)
 	slog.Error(logMessage, "data", d)
 
-	return &http.ApiError{
+	return &endpoint.ApiError{
 		Message: "Too many authentication attempts",
 		Status:  baseHttp.StatusTooManyRequests,
 		Data:    d,
 	}
 }
 
-func NotFound(message, logMessage string, data ...map[string]any) *http.ApiError {
+func NotFound(message, logMessage string, data ...map[string]any) *endpoint.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
 	d := normaliseData(data...)
 	slog.Error(logMessage, "data", d)
 
-	return &http.ApiError{
+	return &endpoint.ApiError{
 		Message: message,
 		Status:  baseHttp.StatusNotFound,
 		Data:    d,
 	}
 }
 
-func TimestampTooOldError(message, logMessage string, data ...map[string]any) *http.ApiError {
+func TimestampTooOldError(message, logMessage string, data ...map[string]any) *endpoint.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
 	d := normaliseData(data...)
 	slog.Error(logMessage, "data", d)
 
-	return &http.ApiError{
+	return &endpoint.ApiError{
 		Message: "Request timestamp expired",
 		Status:  baseHttp.StatusUnauthorized,
 		Data:    d,
 	}
 }
 
-func TimestampTooNewError(message, logMessage string, data ...map[string]any) *http.ApiError {
+func TimestampTooNewError(message, logMessage string, data ...map[string]any) *endpoint.ApiError {
 	message, logMessage = normaliseMessages(message, logMessage)
 
 	d := normaliseData(data...)
 	slog.Error(logMessage, "data", d)
 
-	return &http.ApiError{
+	return &endpoint.ApiError{
 		Message: "Request timestamp invalid",
 		Status:  baseHttp.StatusUnauthorized,
 		Data:    d,

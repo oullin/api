@@ -7,7 +7,7 @@ import (
 
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -19,17 +19,17 @@ func MakeKeepAliveHandler(e *env.PingEnvironment) KeepAliveHandler {
 	return KeepAliveHandler{env: e}
 }
 
-func (h KeepAliveHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h KeepAliveHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
 	user, pass, ok := r.BasicAuth()
 
 	if !ok || h.env.HasInvalidCreds(user, pass) {
-		return http.LogUnauthorisedError(
+		return endpoint.LogUnauthorisedError(
 			"invalid credentials",
 			fmt.Errorf("invalid credentials"),
 		)
 	}
 
-	resp := http.MakeNoCacheResponse(w, r)
+	resp := endpoint.MakeNoCacheResponse(w, r)
 	now := time.Now().UTC()
 
 	data := payload.KeepAliveResponse{
@@ -38,7 +38,7 @@ func (h KeepAliveHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request)
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		return http.LogInternalError("could not encode keep-alive response", err)
+		return endpoint.LogInternalError("could not encode keep-alive response", err)
 	}
 
 	return nil

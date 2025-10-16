@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/oullin/handler/payload"
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
@@ -19,16 +19,16 @@ func MakeProfileHandler(filePath string) ProfileHandler {
 	}
 }
 
-func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *http.ApiError {
+func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.ProfileResponse](h.filePath)
 
 	if err != nil {
 		slog.Error("Error reading profile file", "error", err)
 
-		return http.InternalError("could not read profile data")
+		return endpoint.InternalError("could not read profile data")
 	}
 
-	resp := http.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.MakeResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

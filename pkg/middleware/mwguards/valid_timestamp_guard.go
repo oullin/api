@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 type ValidTimestamp struct {
@@ -20,14 +20,14 @@ func NewValidTimestamp(ts string, now func() time.Time) ValidTimestamp {
 	}
 }
 
-func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *http.ApiError {
+func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *endpoint.ApiError {
 	if v.ts == "" {
-		return &http.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
+		return &endpoint.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
 	}
 
 	epoch, err := strconv.ParseInt(v.ts, 10, 64)
 	if err != nil {
-		return &http.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
+		return &endpoint.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
 	}
 
 	nowFn := v.now

@@ -1,4 +1,4 @@
-package http
+package endpoint
 
 import baseHttp "net/http"
 

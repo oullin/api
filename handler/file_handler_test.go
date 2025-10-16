@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	handlertests "github.com/oullin/handler/tests"
-	pkgHttp "github.com/oullin/pkg/http"
+	"github.com/oullin/pkg/endpoint"
 )
 
 type fileHandler interface {
-	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *pkgHttp.ApiError
+	Handle(baseHttp.ResponseWriter, *baseHttp.Request) *endpoint.ApiError
 }
 
 type fileHandlerTestCase struct {
