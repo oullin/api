@@ -87,9 +87,6 @@ services:
             context: .
             dockerfile: ./docker/dockerfile-api
             target: builder
-            args:
-              - GO_VERSION=1.25.3
-              - GO_IMAGE_VARIANT=alpine3.22
           image: api-api-runner
           volumes:
             - .:/app
@@ -140,8 +137,6 @@ services:
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
                     - APP_DIR=/app
                     - BINARY_NAME=oullin_api
-                    - GO_VERSION=1.25.3
-                    - GO_IMAGE_VARIANT=alpine3.22
             container_name: oullin_api
             restart: unless-stopped
             secrets:
