@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
-	model "github.com/oullin/pkg/model"
+	"github.com/oullin/pkg/model"
 	"strings"
 )
 

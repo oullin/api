@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
-	model "github.com/oullin/pkg/model"
+	"github.com/oullin/pkg/model"
 )
 
 type Categories struct {

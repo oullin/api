@@ -7,7 +7,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
-	model "github.com/oullin/pkg/model"
+	"github.com/oullin/pkg/model"
 )
 
 type Posts struct {

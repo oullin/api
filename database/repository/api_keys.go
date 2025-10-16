@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/repoentity"
-	model "github.com/oullin/pkg/model"
+	"github.com/oullin/pkg/model"
 	"github.com/oullin/pkg/portal"
 	baseGorm "gorm.io/gorm"
 )

@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	model "github.com/oullin/pkg/model"
+	"github.com/oullin/pkg/model"
 	"github.com/oullin/pkg/portal"
 
 	"strings"

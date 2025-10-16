@@ -3,7 +3,7 @@ package seeds
 import (
 	"fmt"
 	"github.com/oullin/database"
-	model "github.com/oullin/pkg/model"
+	"github.com/oullin/pkg/model"
 )
 
 type PostViewsSeed struct {
