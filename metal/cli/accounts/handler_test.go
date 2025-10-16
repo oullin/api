@@ -12,7 +12,7 @@ func setupAccountHandler(t *testing.T) *Handler {
 	h, err := NewHandler(conn, clitest.NewTestEnv())
 
 	if err != nil {
-		t.Fatalf("make handler: %v", err)
+		t.Fatalf("new handler: %v", err)
 	}
 
 	return h

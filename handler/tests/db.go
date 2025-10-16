@@ -64,7 +64,7 @@ func NewTestDB(t *testing.T) (*database.Connection, database.User) {
 
 	conn, err := database.NewConnection(e)
 	if err != nil {
-		t.Fatalf("make connection: %v", err)
+		t.Fatalf("new connection: %v", err)
 	}
 	t.Cleanup(func() { conn.Close() })
 

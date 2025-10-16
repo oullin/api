@@ -12,7 +12,7 @@ func TestTokenHandlerLifecycle(t *testing.T) {
 	h, err := NewTokensHandler(key)
 
 	if err != nil {
-		t.Fatalf("make handler: %v", err)
+		t.Fatalf("new handler: %v", err)
 	}
 
 	token, err := h.SetupNewAccount("tester")
@@ -50,7 +50,7 @@ func TestSetupNewAccountErrors(t *testing.T) {
 	h, err := NewTokensHandler(key)
 
 	if err != nil {
-		t.Fatalf("make handler: %v", err)
+		t.Fatalf("new handler: %v", err)
 	}
 
 	if _, err := h.SetupNewAccount("ab"); err == nil {
@@ -74,7 +74,7 @@ func TestDecodeTokensForError(t *testing.T) {
 	h, err := NewTokensHandler(key)
 
 	if err != nil {
-		t.Fatalf("make handler: %v", err)
+		t.Fatalf("new handler: %v", err)
 	}
 
 	if _, err := h.DecodeTokensFor("acc", []byte("bad"), []byte("bad")); err == nil {

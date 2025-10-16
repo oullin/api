@@ -25,7 +25,7 @@ func TestNewMediaAndUpload(t *testing.T) {
 	m, err := NewMedia("uid", data, "pic.jpg")
 
 	if err != nil {
-		t.Fatalf("make: %v", err)
+		t.Fatalf("new: %v", err)
 	}
 
 	if !strings.HasPrefix(m.GetFileName(), "uid-") {
@@ -76,7 +76,7 @@ func TestGetFilePath(t *testing.T) {
 	m, err := NewMedia("u", []byte{1}, "a.jpg")
 
 	if err != nil {
-		t.Fatalf("make: %v", err)
+		t.Fatalf("new: %v", err)
 	}
 
 	p := m.GetFilePath("thumb")

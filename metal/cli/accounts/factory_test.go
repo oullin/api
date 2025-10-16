@@ -12,7 +12,7 @@ func TestNewHandler(t *testing.T) {
 	h, err := NewHandler(conn, clitest.NewTestEnv())
 
 	if err != nil {
-		t.Fatalf("make handler: %v", err)
+		t.Fatalf("new handler: %v", err)
 	}
 
 	if h.TokenHandler == nil || h.Tokens == nil {

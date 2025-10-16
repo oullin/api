@@ -19,7 +19,7 @@ func TestFilesLogs(t *testing.T) {
 	d, err := NewFilesLogs(e)
 
 	if err != nil {
-		t.Fatalf("make logs: %v", err)
+		t.Fatalf("new logs: %v", err)
 	}
 
 	fl := d.(FilesLogs)
