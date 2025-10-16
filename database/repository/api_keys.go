@@ -10,7 +10,7 @@ import (
 	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/model"
 	"github.com/oullin/pkg/portal"
-	baseGorm "gorm.io/gorm"
+	"gorm.io/gorm"
 )
 
 type ApiKeys struct {
@@ -78,7 +78,7 @@ func (a ApiKeys) CreateSignatureFor(entity repoentity.APIKeyCreateSignatureFor) 
 		CurrentTries: 1,
 	}
 
-	err := a.DB.Sql().Transaction(func(tx *baseGorm.DB) error {
+	err := a.DB.Sql().Transaction(func(_ *gorm.DB) error {
 		username := entity.Key.AccountName
 		if result := a.DB.Sql().Create(&signature); model.HasDbIssues(result.Error) {
 			return fmt.Errorf("issue creating the given api keys signature [%s, %s]: ", username, result.Error)
@@ -176,7 +176,7 @@ func (a ApiKeys) IncreaseSignatureTries(signatureUUID string, currentTries int) 
 	response := a.DB.Sql().
 		Model(&database.APIKeySignatures{}).
 		Where("uuid = ? AND current_tries < max_tries", signatureUUID).
-		UpdateColumn("current_tries", baseGorm.Expr("current_tries + 1"))
+		UpdateColumn("current_tries", gorm.Expr("current_tries + 1"))
 
 	if model.HasDbIssues(response.Error) {
 		return response.Error
