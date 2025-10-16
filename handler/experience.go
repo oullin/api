@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type ExperienceHandler struct {
@@ -19,7 +19,7 @@ func MakeExperienceHandler(filePath string) ExperienceHandler {
 	}
 }
 
-func (h ExperienceHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h ExperienceHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.ExperienceResponse](h.filePath)
 
 	if err != nil {

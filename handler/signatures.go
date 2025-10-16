@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 	"time"
 
 	"github.com/oullin/database"
@@ -28,7 +28,7 @@ func MakeSignaturesHandler(validator *portal.Validator, ApiKeys *repository.ApiK
 	}
 }
 
-func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (s *SignaturesHandler) Generate(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	defer portal.CloseWithLog(r.Body)
 
 	var (
@@ -36,7 +36,7 @@ func (s *SignaturesHandler) Generate(w baseHttp.ResponseWriter, r *baseHttp.Requ
 		req payload.SignatureRequest
 	)
 
-	r.Body = baseHttp.MaxBytesReader(w, r.Body, endpoint.MaxRequestSize)
+	r.Body = http.MaxBytesReader(w, r.Body, endpoint.MaxRequestSize)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err = dec.Decode(&req); err != nil {

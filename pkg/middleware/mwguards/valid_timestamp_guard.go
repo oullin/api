@@ -1,7 +1,7 @@
 package mwguards
 
 import (
-	baseHttp "net/http"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -22,12 +22,12 @@ func NewValidTimestamp(ts string, now func() time.Time) ValidTimestamp {
 
 func (v ValidTimestamp) Validate(skew time.Duration, disallowFuture bool) *endpoint.ApiError {
 	if v.ts == "" {
-		return &endpoint.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
+		return &endpoint.ApiError{Message: "Invalid authentication headers", Status: http.StatusUnauthorized}
 	}
 
 	epoch, err := strconv.ParseInt(v.ts, 10, 64)
 	if err != nil {
-		return &endpoint.ApiError{Message: "Invalid authentication headers", Status: baseHttp.StatusUnauthorized}
+		return &endpoint.ApiError{Message: "Invalid authentication headers", Status: http.StatusUnauthorized}
 	}
 
 	nowFn := v.now

@@ -3,7 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
@@ -23,7 +23,7 @@ func MakeCategoriesHandler(categories *repository.Categories) CategoriesHandler 
 	}
 }
 
-func (h *CategoriesHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h *CategoriesHandler) Index(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	result, err := h.Categories.GetAll(
 		paginate.MakeFrom(r.URL, 5),
 	)

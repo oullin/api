@@ -2,7 +2,7 @@ package mwguards
 
 import (
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 
 	"github.com/oullin/pkg/endpoint"
@@ -41,7 +41,7 @@ func InvalidRequestError(message, logMessage string, data ...map[string]any) *en
 
 	return &endpoint.ApiError{
 		Message: message,
-		Status:  baseHttp.StatusUnauthorized,
+		Status:  http.StatusUnauthorized,
 		Data:    d,
 	}
 }
@@ -54,7 +54,7 @@ func InvalidTokenFormatError(message, logMessage string, data ...map[string]any)
 
 	return &endpoint.ApiError{
 		Message: message,
-		Status:  baseHttp.StatusUnauthorized,
+		Status:  http.StatusUnauthorized,
 		Data:    d,
 	}
 }
@@ -67,7 +67,7 @@ func UnauthenticatedError(message, logMessage string, data ...map[string]any) *e
 
 	return &endpoint.ApiError{
 		Message: "2- Invalid credentials: " + logMessage,
-		Status:  baseHttp.StatusUnauthorized,
+		Status:  http.StatusUnauthorized,
 		Data:    d,
 	}
 }
@@ -80,7 +80,7 @@ func RateLimitedError(message, logMessage string, data ...map[string]any) *endpo
 
 	return &endpoint.ApiError{
 		Message: "Too many authentication attempts",
-		Status:  baseHttp.StatusTooManyRequests,
+		Status:  http.StatusTooManyRequests,
 		Data:    d,
 	}
 }
@@ -93,7 +93,7 @@ func NotFound(message, logMessage string, data ...map[string]any) *endpoint.ApiE
 
 	return &endpoint.ApiError{
 		Message: message,
-		Status:  baseHttp.StatusNotFound,
+		Status:  http.StatusNotFound,
 		Data:    d,
 	}
 }
@@ -106,7 +106,7 @@ func TimestampTooOldError(message, logMessage string, data ...map[string]any) *e
 
 	return &endpoint.ApiError{
 		Message: "Request timestamp expired",
-		Status:  baseHttp.StatusUnauthorized,
+		Status:  http.StatusUnauthorized,
 		Data:    d,
 	}
 }
@@ -119,7 +119,7 @@ func TimestampTooNewError(message, logMessage string, data ...map[string]any) *e
 
 	return &endpoint.ApiError{
 		Message: "Request timestamp invalid",
-		Status:  baseHttp.StatusUnauthorized,
+		Status:  http.StatusUnauthorized,
 		Data:    d,
 	}
 }

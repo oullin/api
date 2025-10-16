@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 	"time"
 
@@ -48,7 +48,7 @@ func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Ap
 }
 
 func (t TokenCheckMiddleware) Handle(next endpoint.ApiHandler) endpoint.ApiHandler {
-	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+	return func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		reqID := strings.TrimSpace(r.Header.Get(portal.RequestIDHeader))
 
 		if reqID == "" {
@@ -117,7 +117,7 @@ func (t TokenCheckMiddleware) GuardDependencies() *endpoint.ApiError {
 	return nil
 }
 
-func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, requestId string) (AuthTokenHeaders, *endpoint.ApiError) {
+func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId string) (AuthTokenHeaders, *endpoint.ApiError) {
 	intendedOriginURL := strings.TrimSpace(r.Header.Get(portal.IntendedOriginHeader))
 	accountName := strings.TrimSpace(r.Header.Get(portal.UsernameHeader))
 	signature := strings.TrimSpace(r.Header.Get(portal.SignatureHeader))
@@ -149,7 +149,7 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *baseHttp.Request, request
 	}, nil
 }
 
-func (t TokenCheckMiddleware) AttachContext(r *baseHttp.Request, headers AuthTokenHeaders) *baseHttp.Request {
+func (t TokenCheckMiddleware) AttachContext(r *http.Request, headers AuthTokenHeaders) *http.Request {
 	ctx := context.WithValue(r.Context(), portal.AuthAccountNameKey, headers.AccountName)
 	ctx = context.WithValue(r.Context(), portal.RequestIDKey, headers.RequestID)
 

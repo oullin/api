@@ -5,7 +5,7 @@ import (
 	"github.com/oullin/database/repository/queries"
 	"github.com/oullin/pkg/portal"
 
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -45,7 +45,7 @@ func GetPostsFiltersFrom(request IndexRequestBody) queries.PostFilters {
 	}
 }
 
-func GetSlugFrom(r *baseHttp.Request) string {
+func GetSlugFrom(r *http.Request) string {
 	str := portal.MakeStringable(r.PathValue("slug"))
 
 	return strings.TrimSpace(str.ToLower())

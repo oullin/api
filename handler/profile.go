@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type ProfileHandler struct {
@@ -19,7 +19,7 @@ func MakeProfileHandler(filePath string) ProfileHandler {
 	}
 }
 
-func (h ProfileHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h ProfileHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.ProfileResponse](h.filePath)
 
 	if err != nil {

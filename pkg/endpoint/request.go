@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	baseHttp "net/http"
+	"net/http"
 )
 
 const MaxRequestSize = 1 << 20 // 1MB limit
 
-func ParseRequestBody[T any](r *baseHttp.Request) (T, error) {
+func ParseRequestBody[T any](r *http.Request) (T, error) {
 	var err error
 	var request T
 	var data []byte

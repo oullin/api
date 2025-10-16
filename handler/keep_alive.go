@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"time"
 
 	"github.com/oullin/handler/payload"
@@ -19,7 +19,7 @@ func MakeKeepAliveHandler(e *env.PingEnvironment) KeepAliveHandler {
 	return KeepAliveHandler{env: e}
 }
 
-func (h KeepAliveHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h KeepAliveHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	user, pass, ok := r.BasicAuth()
 
 	if !ok || h.env.HasInvalidCreds(user, pass) {

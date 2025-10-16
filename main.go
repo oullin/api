@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -42,20 +42,20 @@ func main() {
 	slog.Info("Starting new server on :" + app.GetEnv().Network.HttpPort)
 	// ---
 
-	if err := baseHttp.ListenAndServe(app.GetEnv().Network.GetHostURL(), serverHandler()); err != nil {
+	if err := http.ListenAndServe(app.GetEnv().Network.GetHostURL(), serverHandler()); err != nil {
 		sentry.CurrentHub().CaptureException(err)
 		slog.Error("Error starting server", "error", err)
 		panic("Error starting server." + err.Error())
 	}
 }
 
-func serverHandler() baseHttp.Handler {
+func serverHandler() http.Handler {
 	mux := app.GetMux()
 	if mux == nil {
-		return baseHttp.NotFoundHandler()
+		return http.NotFoundHandler()
 	}
 
-	var handler baseHttp.Handler = mux
+	var handler http.Handler = mux
 
 	if !app.IsProduction() { // Caddy handles CORS.
 		localhost := app.GetEnv().Network.GetHostURL()
@@ -78,7 +78,7 @@ func serverHandler() baseHttp.Handler {
 
 		c := cors.New(cors.Options{
 			AllowedOrigins:   []string{localhost, "http://localhost:5173"},
-			AllowedMethods:   []string{baseHttp.MethodGet, baseHttp.MethodPost, baseHttp.MethodPut, baseHttp.MethodDelete, baseHttp.MethodOptions},
+			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
 			AllowedHeaders:   headers,
 			AllowCredentials: true,
 			Debug:            true,

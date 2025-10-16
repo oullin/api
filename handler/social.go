@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type SocialHandler struct {
@@ -19,7 +19,7 @@ func MakeSocialHandler(filePath string) SocialHandler {
 	}
 }
 
-func (h SocialHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h SocialHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.SocialResponse](h.filePath)
 
 	if err != nil {

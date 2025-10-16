@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type ProjectsHandler struct {
@@ -19,7 +19,7 @@ func MakeProjectsHandler(filePath string) ProjectsHandler {
 	}
 }
 
-func (h ProjectsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.ProjectsResponse](h.filePath)
 
 	if err != nil {

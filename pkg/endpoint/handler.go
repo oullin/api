@@ -3,13 +3,13 @@ package endpoint
 import (
 	"encoding/json"
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 
 	"github.com/getsentry/sentry-go"
 )
 
-func MakeApiHandler(fn ApiHandler) baseHttp.HandlerFunc {
-	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) {
+func MakeApiHandler(fn ApiHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if err := fn(w, r); err != nil {
 			slog.Error("API Error", "message", err.Message, "status", err.Status)
 
@@ -31,7 +31,7 @@ func MakeApiHandler(fn ApiHandler) baseHttp.HandlerFunc {
 	}
 }
 
-func captureApiError(r *baseHttp.Request, apiErr *ApiError) {
+func captureApiError(r *http.Request, apiErr *ApiError) {
 	if apiErr == nil {
 		return
 	}

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"time"
 
 	"github.com/oullin/database"
@@ -21,7 +21,7 @@ func MakeKeepAliveDBHandler(e *env.PingEnvironment, db *database.Connection) Kee
 	return KeepAliveDBHandler{env: e, db: db}
 }
 
-func (h KeepAliveDBHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h KeepAliveDBHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	user, pass, ok := r.BasicAuth()
 
 	if !ok || h.env.HasInvalidCreds(user, pass) {

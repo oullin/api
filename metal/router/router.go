@@ -1,7 +1,7 @@
 package router
 
 import (
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 
 	"github.com/oullin/database"
@@ -17,12 +17,12 @@ type Router struct {
 	WebsiteRoutes *WebsiteRoutes
 	Env           *env.Environment
 	Validator     *portal.Validator
-	Mux           *baseHttp.ServeMux
+	Mux           *http.ServeMux
 	Pipeline      middleware.Pipeline
 	Db            *database.Connection
 }
 
-func (r *Router) PublicPipelineFor(apiHandler endpoint.ApiHandler) baseHttp.HandlerFunc {
+func (r *Router) PublicPipelineFor(apiHandler endpoint.ApiHandler) http.HandlerFunc {
 	return endpoint.MakeApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
@@ -31,7 +31,7 @@ func (r *Router) PublicPipelineFor(apiHandler endpoint.ApiHandler) baseHttp.Hand
 	)
 }
 
-func (r *Router) PipelineFor(apiHandler endpoint.ApiHandler) baseHttp.HandlerFunc {
+func (r *Router) PipelineFor(apiHandler endpoint.ApiHandler) http.HandlerFunc {
 	tokenMiddleware := middleware.MakeTokenMiddleware(
 		r.Pipeline.TokenHandler,
 		r.Pipeline.ApiKeys,

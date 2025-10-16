@@ -12,7 +12,7 @@ import (
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type PostsHandler struct {
@@ -23,7 +23,7 @@ func MakePostsHandler(repo *repository.Posts) PostsHandler {
 	return PostsHandler{Posts: repo}
 }
 
-func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h *PostsHandler) Index(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	defer portal.CloseWithLog(r.Body)
 
 	requestBody, err := endpoint.ParseRequestBody[payload.IndexRequestBody](r)
@@ -59,7 +59,7 @@ func (h *PostsHandler) Index(w baseHttp.ResponseWriter, r *baseHttp.Request) *en
 	return nil
 }
 
-func (h *PostsHandler) Show(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h *PostsHandler) Show(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	slug := payload.GetSlugFrom(r)
 
 	if slug == "" {

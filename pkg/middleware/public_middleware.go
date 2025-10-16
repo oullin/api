@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	baseHttp "net/http"
+	"net/http"
 	"strings"
 	"time"
 
@@ -42,7 +42,7 @@ func MakePublicMiddleware(allowedIP string, isProduction bool) PublicMiddleware 
 }
 
 func (p PublicMiddleware) Handle(next endpoint.ApiHandler) endpoint.ApiHandler {
-	return func(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+	return func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 		if err := p.GuardDependencies(); err != nil {
 			return err
 		}

@@ -6,7 +6,7 @@ import (
 	"github.com/oullin/pkg/portal"
 
 	"log/slog"
-	baseHttp "net/http"
+	"net/http"
 )
 
 type RecommendationsHandler struct {
@@ -19,7 +19,7 @@ func MakeRecommendationsHandler(filePath string) RecommendationsHandler {
 	}
 }
 
-func (h RecommendationsHandler) Handle(w baseHttp.ResponseWriter, r *baseHttp.Request) *endpoint.ApiError {
+func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	data, err := portal.ParseJsonFile[payload.RecommendationsResponse](h.filePath)
 
 	if err != nil {
