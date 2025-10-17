@@ -16,19 +16,18 @@ import (
 
 const defaultSQLDumpPath = "./storage/sql/dump.sql"
 
-var (
-	environment *env.Environment
-	sentryHub   *portal.Sentry
-)
-
-func init() {
-	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
-
-	environment = secrets
-	sentryHub = kernel.NewSentry(environment)
-}
-
 func main() {
+	defer sentry.Flush(2 * time.Second)
+
+	validate := portal.GetDefaultValidator()
+	environment, err := kernel.Ignite("./.env", validate)
+	if err != nil {
+		cli.Errorln(fmt.Errorf("ignite environment: %w", err).Error())
+		os.Exit(1)
+	}
+
+	sentryHub := kernel.NewSentry(environment)
+
 	if err := run(defaultSQLDumpPath, environment, sentryHub); err != nil {
 		cli.Errorln(err.Error())
 		os.Exit(1)
@@ -52,7 +51,6 @@ func run(filePath string, environment *env.Environment, sentryHub *portal.Sentry
 	dbConnection := kernel.NewDbConnection(environment)
 	logs := kernel.NewLogs(environment)
 
-	defer sentry.Flush(2 * time.Second)
 	defer logs.Close()
 	defer dbConnection.Close()
 	defer kernel.RecoverWithSentry(sentryHub)

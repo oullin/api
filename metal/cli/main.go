@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -16,87 +18,76 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-var environment *env.Environment
-var dbConn *database.Connection
-var sentryHub *portal.Sentry
+func main() {
+	defer sentry.Flush(2 * time.Second)
 
-func init() {
-	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
-
-	environment = secrets
-	dbConn = kernel.NewDbConnection(environment)
-	sentryHub = kernel.NewSentry(environment)
+	if err := run(); err != nil {
+		sentry.CurrentHub().CaptureException(err)
+		cli.Errorln(err.Error())
+		sentry.Flush(2 * time.Second)
+		os.Exit(1)
+	}
 }
 
-func main() {
+func run() error {
 	cli.ClearScreen()
 
-	defer sentry.Flush(2 * time.Second)
-	defer kernel.RecoverWithSentry(sentryHub)
+	validate := portal.GetDefaultValidator()
+	environment, err := kernel.Ignite("./.env", validate)
+	if err != nil {
+		return fmt.Errorf("ignite environment: %w", err)
+	}
+
+	hub := kernel.NewSentry(environment)
+
+	defer kernel.RecoverWithSentry(hub)
+
+	dbConn := kernel.NewDbConnection(environment)
+	if dbConn == nil {
+		return errors.New("database connection is nil")
+	}
+	defer dbConn.Close()
 
 	menu := panel.NewMenu()
 
 	for {
-		err := menu.CaptureInput()
-
-		if err != nil {
+		if err := menu.CaptureInput(); err != nil {
 			cli.Errorln(err.Error())
 			continue
 		}
 
 		switch menu.GetChoice() {
 		case 1:
-			if err = createBlogPost(menu); err != nil {
-				cli.Errorln(err.Error())
-				continue
+			if err := createBlogPost(menu, dbConn); err != nil {
+				return err
 			}
-
-			return
 		case 2:
-			if err = createNewApiAccount(menu); err != nil {
-				cli.Errorln(err.Error())
-				continue
+			if err := createNewApiAccount(menu, dbConn, environment); err != nil {
+				return err
 			}
-
-			return
 		case 3:
-			if err = showApiAccount(menu); err != nil {
-				cli.Errorln(err.Error())
-				continue
+			if err := showApiAccount(menu, dbConn, environment); err != nil {
+				return err
 			}
-
-			return
 		case 4:
-			if err = generateStaticSEO(); err != nil {
-				cli.Errorln(err.Error())
-				continue
+			if err := generateStaticSEO(dbConn, environment); err != nil {
+				return err
 			}
-
-			return
 		case 5:
-			if err = generatePostsSEO(); err != nil {
-				cli.Errorln(err.Error())
-				continue
+			if err := generatePostsSEO(dbConn, environment); err != nil {
+				return err
 			}
-
-			return
 		case 6:
-			if err = generatePostSEOForSlug(menu); err != nil {
-				cli.Errorln(err.Error())
-				continue
+			if err := generatePostSEOForSlug(menu, dbConn, environment); err != nil {
+				return err
 			}
-
-			return
 		case 7:
-			if err = printTimestamp(); err != nil {
-				cli.Errorln(err.Error())
-				continue
+			if err := printTimestamp(); err != nil {
+				return err
 			}
-
-			return
 		case 0:
 			cli.Successln("Goodbye!")
-			return
+			return nil
 		default:
 			cli.Errorln("Unknown option. Try again.")
 		}
@@ -107,9 +98,8 @@ func main() {
 	}
 }
 
-func createBlogPost(menu panel.Menu) error {
+func createBlogPost(menu panel.Menu, dbConn *database.Connection) error {
 	input, err := menu.CapturePostURL()
-
 	if err != nil {
 		return err
 	}
@@ -124,16 +114,14 @@ func createBlogPost(menu panel.Menu) error {
 	return nil
 }
 
-func createNewApiAccount(menu panel.Menu) error {
-	var err error
-	var account string
-	var handler *accounts.Handler
-
-	if account, err = menu.CaptureAccountName(); err != nil {
+func createNewApiAccount(menu panel.Menu, dbConn *database.Connection, environment *env.Environment) error {
+	account, err := menu.CaptureAccountName()
+	if err != nil {
 		return err
 	}
 
-	if handler, err = accounts.NewHandler(dbConn, environment); err != nil {
+	handler, err := accounts.NewHandler(dbConn, environment)
+	if err != nil {
 		return err
 	}
 
@@ -144,16 +132,14 @@ func createNewApiAccount(menu panel.Menu) error {
 	return nil
 }
 
-func showApiAccount(menu panel.Menu) error {
-	var err error
-	var account string
-	var handler *accounts.Handler
-
-	if account, err = menu.CaptureAccountName(); err != nil {
+func showApiAccount(menu panel.Menu, dbConn *database.Connection, environment *env.Environment) error {
+	account, err := menu.CaptureAccountName()
+	if err != nil {
 		return err
 	}
 
-	if handler, err = accounts.NewHandler(dbConn, environment); err != nil {
+	handler, err := accounts.NewHandler(dbConn, environment)
+	if err != nil {
 		return err
 	}
 
@@ -164,8 +150,8 @@ func showApiAccount(menu panel.Menu) error {
 	return nil
 }
 
-func runSEOGeneration(genFunc func(*seo.Generator) error) error {
-	gen, err := newSEOGenerator()
+func runSEOGeneration(dbConn *database.Connection, environment *env.Environment, genFunc func(*seo.Generator) error) error {
+	gen, err := newSEOGenerator(dbConn, environment)
 	if err != nil {
 		return err
 	}
@@ -173,32 +159,31 @@ func runSEOGeneration(genFunc func(*seo.Generator) error) error {
 	return genFunc(gen)
 }
 
-func generateStaticSEO() error {
-	return runSEOGeneration((*seo.Generator).GenerateStaticPages)
+func generateStaticSEO(dbConn *database.Connection, environment *env.Environment) error {
+	return runSEOGeneration(dbConn, environment, (*seo.Generator).GenerateStaticPages)
 }
 
-func generatePostsSEO() error {
-	return runSEOGeneration((*seo.Generator).GeneratePosts)
+func generatePostsSEO(dbConn *database.Connection, environment *env.Environment) error {
+	return runSEOGeneration(dbConn, environment, (*seo.Generator).GeneratePosts)
 }
 
-func generatePostSEOForSlug(menu panel.Menu) error {
+func generatePostSEOForSlug(menu panel.Menu, dbConn *database.Connection, environment *env.Environment) error {
 	slug, err := menu.CapturePostSlug()
 	if err != nil {
 		return err
 	}
 
-	return runSEOGeneration(func(gen *seo.Generator) error {
+	return runSEOGeneration(dbConn, environment, func(gen *seo.Generator) error {
 		return gen.GeneratePost(slug)
 	})
 }
 
-func newSEOGenerator() (*seo.Generator, error) {
+func newSEOGenerator(dbConn *database.Connection, environment *env.Environment) (*seo.Generator, error) {
 	gen, err := seo.NewGenerator(
 		dbConn,
 		environment,
 		portal.GetDefaultValidator(),
 	)
-
 	if err != nil {
 		return nil, err
 	}

@@ -80,6 +80,7 @@ services:
 
         # A dedicated service for running one-off Go commands
         api-runner:
+          container_name: runner
           restart: no
           env_file:
             - ./.env
@@ -87,7 +88,6 @@ services:
             context: .
             dockerfile: ./docker/dockerfile-api
             target: builder
-          image: api-api-runner
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
@@ -116,7 +116,6 @@ services:
             user: root
             security_opt:
               - apparmor:unconfined
-            image: api-api
             env_file:
                 - .env
             volumes:
@@ -137,7 +136,6 @@ services:
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
                     - APP_DIR=/app
                     - BINARY_NAME=oullin_api
-            container_name: oullin_api
             restart: unless-stopped
             secrets:
                 - pg_username

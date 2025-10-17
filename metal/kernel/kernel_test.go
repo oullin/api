@@ -111,30 +111,27 @@ func TestIgnite(t *testing.T) {
 	f.WriteString(content)
 	f.Close()
 
-	env := Ignite(f.Name(), portal.GetDefaultValidator())
+	env, err := Ignite(f.Name(), portal.GetDefaultValidator())
+	if err != nil {
+		t.Fatalf("ignite environment: %v", err)
+	}
 
 	if env.Network.HttpPort != "8080" {
 		t.Fatalf("env not loaded")
 	}
 }
 
-func TestIgnitePanicsOnMissingFile(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("expected panic when env file is missing")
-		} else {
-			msg, ok := r.(string)
-			if !ok {
-				t.Fatalf("unexpected panic type: %T", r)
-			}
+func TestIgniteReturnsErrorOnMissingFile(t *testing.T) {
+	t.Parallel()
 
-			if !strings.Contains(msg, "failed to read the .env file/values") {
-				t.Fatalf("unexpected panic message: %v", r)
-			}
-		}
-	}()
+	_, err := Ignite("/nonexistent/.env", portal.GetDefaultValidator())
+	if err == nil {
+		t.Fatalf("expected error when env file is missing")
+	}
 
-	Ignite("/nonexistent/.env", portal.GetDefaultValidator())
+	if !strings.Contains(err.Error(), "load environment") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
 }
 
 func TestAppBootNil(t *testing.T) {
