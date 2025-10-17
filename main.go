@@ -33,7 +33,10 @@ func main() {
 
 func run() error {
 	validate := portal.GetDefaultValidator()
-	secrets := kernel.Ignite("./.env", validate)
+	secrets, err := kernel.Ignite("./.env", validate)
+	if err != nil {
+		return fmt.Errorf("ignite environment: %w", err)
+	}
 
 	app, err := kernel.NewApp(secrets, validate)
 	if err != nil {

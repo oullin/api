@@ -33,9 +33,9 @@ func run() error {
 	cli.ClearScreen()
 
 	validate := portal.GetDefaultValidator()
-	environment := kernel.Ignite("./.env", validate)
-	if environment == nil {
-		return errors.New("environment is nil")
+	environment, err := kernel.Ignite("./.env", validate)
+	if err != nil {
+		return fmt.Errorf("ignite environment: %w", err)
 	}
 
 	hub := kernel.NewSentry(environment)
