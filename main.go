@@ -23,8 +23,10 @@ func main() {
 
 	if err := run(); err != nil {
 		sentry.CurrentHub().CaptureException(err)
+		if !sentry.Flush(2 * time.Second) {
+			slog.Warn("sentry flush timed out after capture")
+		}
 		slog.Error("server exited with error", "error", err)
-		sentry.Flush(2 * time.Second)
 		os.Exit(1)
 	}
 }
