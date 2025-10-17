@@ -109,6 +109,7 @@ type Category struct {
 	Name        string    `gorm:"type:varchar(255);unique;not null"`
 	Slug        string    `gorm:"type:varchar(255);unique;not null"`
 	Description string    `gorm:"type:text"`
+	Sort        int       `gorm:"type:int;default:0;index:idx_categories_sort"`
 	CreatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 	DeletedAt   gorm.DeletedAt
