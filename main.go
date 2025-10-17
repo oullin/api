@@ -43,7 +43,7 @@ func run() error {
 	app.Boot()
 
 	if err := app.GetDB().Ping(); err != nil {
-		slog.Error("database ping failed", "error", err)
+		return fmt.Errorf("database ping failed: %w", err)
 	}
 
 	env := app.GetEnv()
