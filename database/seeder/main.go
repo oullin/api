@@ -1,53 +1,68 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/oullin/database"
 	"github.com/oullin/database/seeder/seeds"
-	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
 )
 
-var sentryHub *portal.Sentry
-var environment *env.Environment
-
-func init() {
-	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
-
-	environment = secrets
-	sentryHub = kernel.NewSentry(environment)
+func main() {
+	if err := run(); err != nil {
+		sentry.CurrentHub().CaptureException(err)
+		cli.Errorln(err.Error())
+		os.Exit(1)
+	}
 }
 
-func main() {
+func run() error {
 	cli.ClearScreen()
 
-	dbConnection := kernel.NewDbConnection(environment)
-	logs := kernel.NewLogs(environment)
-
-	defer sentry.Flush(2 * time.Second)
-	defer logs.Close()
-	defer (*dbConnection).Close()
-	defer kernel.RecoverWithSentry(sentryHub)
-
-	// [1] --- Create the Seeder Runner.
-	seeder := seeds.NewSeeder(dbConnection, environment)
-
-	// [2] --- Truncate the db.
-	if err := seeder.TruncateDB(); err != nil {
-		panic(err)
-	} else {
-		cli.Successln("db Truncated successfully ...")
-		time.Sleep(2 * time.Second)
+	validate := portal.GetDefaultValidator()
+	environment := kernel.Ignite("./.env", validate)
+	if environment == nil {
+		return errors.New("environment is nil")
 	}
 
-	// [3] --- Seed users and posts sequentially because the below seeders depend on them.
-	UserA, UserB := seeder.SeedUsers()
-	posts := seeder.SeedPosts(UserA, UserB)
+	hub := kernel.NewSentry(environment)
+
+	defer sentry.Flush(2 * time.Second)
+	defer kernel.RecoverWithSentry(hub)
+
+	dbConnection := kernel.NewDbConnection(environment)
+	if dbConnection == nil {
+		return errors.New("database connection is nil")
+	}
+	defer dbConnection.Close()
+
+	logs := kernel.NewLogs(environment)
+	if logs == nil {
+		return errors.New("logs driver is nil")
+	}
+	defer logs.Close()
+
+	seeder := seeds.NewSeeder(dbConnection, environment)
+	if seeder == nil {
+		return errors.New("seeder is nil")
+	}
+
+	if err := seeder.TruncateDB(); err != nil {
+		return fmt.Errorf("truncate database: %w", err)
+	}
+
+	cli.Successln("db Truncated successfully ...")
+	time.Sleep(2 * time.Second)
+
+	userA, userB := seeder.SeedUsers()
+	posts := seeder.SeedPosts(userA, userB)
 
 	categoriesChan := make(chan []database.Category)
 	tagsChan := make(chan []database.Tag)
@@ -66,11 +81,9 @@ func main() {
 		tagsChan <- seeder.SeedTags()
 	}()
 
-	// [4] Use channels to concurrently seed categories and tags since they are main dependencies.
 	categories := <-categoriesChan
 	tags := <-tagsChan
 
-	// [5] Use a WaitGroup to run independent seeding tasks concurrently.
 	var wg sync.WaitGroup
 	wg.Add(6)
 
@@ -106,7 +119,7 @@ func main() {
 		defer wg.Done()
 
 		cli.Warningln("Seeding views ...")
-		seeder.SeedPostViews(posts, UserA, UserB)
+		seeder.SeedPostViews(posts, userA, userB)
 	}()
 
 	go func() {
@@ -122,4 +135,6 @@ func main() {
 	wg.Wait()
 
 	cli.Magentaln("db seeded as expected ....")
+
+	return nil
 }
