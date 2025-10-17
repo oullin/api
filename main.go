@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -13,21 +15,23 @@ import (
 	"github.com/rs/cors"
 )
 
-var app *kernel.App
-
-func init() {
-	validate := portal.GetDefaultValidator()
-	secrets := kernel.Ignite("./.env", validate)
-	application, err := kernel.NewApp(secrets, validate)
-
-	if err != nil {
-		panic(fmt.Sprintf("init: Error creating application: %s", err))
+func main() {
+	if err := run(); err != nil {
+		sentry.CurrentHub().CaptureException(err)
+		slog.Error("server exited with error", "error", err)
+		os.Exit(1)
 	}
-
-	app = application
 }
 
-func main() {
+func run() error {
+	validate := portal.GetDefaultValidator()
+	secrets := kernel.Ignite("./.env", validate)
+
+	app, err := kernel.NewApp(secrets, validate)
+	if err != nil {
+		return fmt.Errorf("create application: %w", err)
+	}
+
 	defer sentry.Flush(2 * time.Second)
 	defer app.CloseDB()
 	defer app.CloseLogs()
@@ -35,21 +39,29 @@ func main() {
 
 	app.Boot()
 
-	// --- Testing
 	if err := app.GetDB().Ping(); err != nil {
 		slog.Error("database ping failed", "error", err)
 	}
-	slog.Info("Starting new server on :" + app.GetEnv().Network.HttpPort)
-	// ---
 
-	if err := http.ListenAndServe(app.GetEnv().Network.GetHostURL(), serverHandler()); err != nil {
-		sentry.CurrentHub().CaptureException(err)
-		slog.Error("Error starting server", "error", err)
-		panic("Error starting server." + err.Error())
+	env := app.GetEnv()
+	slog.Info("starting server", slog.String("address", env.Network.GetHostURL()))
+
+	if err := http.ListenAndServe(env.Network.GetHostURL(), serverHandler(app)); err != nil {
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+
+		return fmt.Errorf("listen and serve: %w", err)
 	}
+
+	return nil
 }
 
-func serverHandler() http.Handler {
+func serverHandler(app *kernel.App) http.Handler {
+	if app == nil {
+		return http.NotFoundHandler()
+	}
+
 	mux := app.GetMux()
 	if mux == nil {
 		return http.NotFoundHandler()
@@ -58,7 +70,8 @@ func serverHandler() http.Handler {
 	var handler http.Handler = mux
 
 	if !app.IsProduction() { // Caddy handles CORS.
-		localhost := app.GetEnv().Network.GetHostURL()
+		env := app.GetEnv()
+		localhost := env.Network.GetHostURL()
 
 		headers := []string{
 			"Accept",
@@ -73,7 +86,7 @@ func serverHandler() http.Handler {
 			"X-API-Nonce",
 			"X-Request-ID",
 			"If-None-Match",
-			"X-API-Intended-Origin", //new
+			"X-API-Intended-Origin", // new
 		}
 
 		c := cors.New(cors.Options{
