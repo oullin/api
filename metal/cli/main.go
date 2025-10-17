@@ -61,44 +61,30 @@ func run() error {
 			if err := createBlogPost(menu, dbConn); err != nil {
 				return err
 			}
-
-			return nil
 		case 2:
 			if err := createNewApiAccount(menu, dbConn, environment); err != nil {
 				return err
 			}
-
-			return nil
 		case 3:
 			if err := showApiAccount(menu, dbConn, environment); err != nil {
 				return err
 			}
-
-			return nil
 		case 4:
 			if err := generateStaticSEO(dbConn, environment); err != nil {
 				return err
 			}
-
-			return nil
 		case 5:
 			if err := generatePostsSEO(dbConn, environment); err != nil {
 				return err
 			}
-
-			return nil
 		case 6:
 			if err := generatePostSEOForSlug(menu, dbConn, environment); err != nil {
 				return err
 			}
-
-			return nil
 		case 7:
 			if err := printTimestamp(); err != nil {
 				return err
 			}
-
-			return nil
 		case 0:
 			cli.Successln("Goodbye!")
 			return nil
