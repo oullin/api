@@ -19,14 +19,14 @@ import (
 )
 
 func main() {
+	defer sentry.Flush(2 * time.Second)
+
 	if err := run(); err != nil {
 		sentry.CurrentHub().CaptureException(err)
 		slog.Error("server exited with error", "error", err)
 		sentry.Flush(2 * time.Second)
 		os.Exit(1)
 	}
-
-	sentry.Flush(2 * time.Second)
 }
 
 func run() error {
