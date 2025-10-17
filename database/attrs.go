@@ -21,7 +21,7 @@ type CategoriesAttrs struct {
 	Slug        string
 	Name        string
 	Description string
-	Sort        *int
+	Sort        int
 }
 
 type TagAttrs struct {
