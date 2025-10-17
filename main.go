@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -44,15 +47,68 @@ func run() error {
 	}
 
 	env := app.GetEnv()
-	slog.Info("starting server", slog.String("address", env.Network.GetHostURL()))
+	if env == nil {
+		return errors.New("application environment is nil")
+	}
+	addr := env.Network.GetHostURL()
+	handler := serverHandler(app)
 
-	if err := http.ListenAndServe(env.Network.GetHostURL(), serverHandler(app)); err != nil {
-		if errors.Is(err, http.ErrServerClosed) {
-			return nil
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadTimeout:       15 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
+
+	slog.Info("starting server", slog.String("address", addr))
+
+	select {
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("listen and serve: %w", err)
 		}
 
+		return nil
+	case sig := <-sigCh:
+		slog.Info("shutdown signal received", slog.Any("signal", sig))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	slog.Info("shutting down server", slog.String("address", addr))
+
+	if err := server.Shutdown(ctx); err != nil {
+		switch {
+		case errors.Is(err, context.Canceled), errors.Is(err, http.ErrServerClosed):
+			// expected shutdown path
+		case errors.Is(err, context.DeadlineExceeded):
+			slog.Warn("graceful shutdown timed out, forcing close", slog.String("address", addr))
+
+			if closeErr := server.Close(); closeErr != nil {
+				slog.Error("force close server failed", slog.String("address", addr), "error", closeErr)
+			}
+		default:
+			return fmt.Errorf("shutdown server: %w", err)
+		}
+	}
+
+	if err := <-errCh; err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("listen and serve: %w", err)
 	}
+
+	slog.Info("server stopped", slog.String("address", addr))
 
 	return nil
 }
@@ -67,10 +123,13 @@ func serverHandler(app *kernel.App) http.Handler {
 		return http.NotFoundHandler()
 	}
 
-	var handler http.Handler = mux
+	handler := http.Handler(mux)
 
 	if !app.IsProduction() { // Caddy handles CORS.
 		env := app.GetEnv()
+		if env == nil {
+			return handler
+		}
 		localhost := env.Network.GetHostURL()
 
 		headers := []string{
@@ -86,7 +145,7 @@ func serverHandler(app *kernel.App) http.Handler {
 			"X-API-Nonce",
 			"X-Request-ID",
 			"If-None-Match",
-			"X-API-Intended-Origin", // new
+			"X-API-Intended-Origin",
 		}
 
 		c := cors.New(cors.Options{
