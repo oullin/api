@@ -33,7 +33,7 @@ func (s CategoriesSeed) Create(attrs database.CategoriesAttrs) ([]database.Categ
 			Name:        seed,
 			Slug:        strings.ToLower(seed),
 			Description: attrs.Description,
-			Sort:        &sort,
+			Sort:        sort,
 		})
 	}
 

@@ -100,12 +100,17 @@ func (c Categories) CreateOrUpdate(post database.Post, attrs database.PostsAttrs
 			return nil, fmt.Errorf("error creating/updating category [%s]: %s", seed.Name, err)
 		}
 
+		sort := 0
+		if seed.Sort != nil {
+			sort = *seed.Sort
+		}
+
 		category := database.Category{
 			UUID:        uuid.NewString(),
 			Name:        seed.Name,
 			Slug:        seed.Slug,
 			Description: seed.Description,
-			Sort:        seed.Sort,
+			Sort:        sort,
 		}
 
 		if result := c.DB.Sql().Create(&category); model.HasDbIssues(result.Error) {
@@ -143,7 +148,7 @@ func (c Categories) ExistOrUpdate(seed database.CategoriesAttrs) (bool, error) {
 	}
 
 	if seed.Sort != nil {
-		category.Sort = seed.Sort
+		category.Sort = *seed.Sort
 	}
 
 	if result := c.DB.Sql().Save(&category); model.HasDbIssues(result.Error) {

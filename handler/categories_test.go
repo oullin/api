@@ -34,13 +34,12 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("create post: %v", err)
 	}
 
-	sort := 10
 	cat := database.Category{
 		UUID:        uuid.NewString(),
 		Name:        "Cat",
 		Slug:        "cat",
 		Description: "desc",
-		Sort:        &sort,
+		Sort:        10,
 	}
 
 	if err := conn.Sql().Create(&cat).Error; err != nil {
@@ -77,7 +76,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("decode: %v", err)
 	}
 
-	if len(resp.Data) != 1 || resp.Data[0].Slug != "cat" || resp.Data[0].Sort == nil || *resp.Data[0].Sort != 10 {
+	if len(resp.Data) != 1 || resp.Data[0].Slug != "cat" || resp.Data[0].Sort != 10 {
 		t.Fatalf("unexpected data: %+v", resp.Data)
 	}
 }

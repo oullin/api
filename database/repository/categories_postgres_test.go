@@ -29,20 +29,18 @@ func TestCategoriesGetOrdersBySort(t *testing.T) {
 
 	repo := repository.Categories{DB: conn}
 
-	lowSort := 10
 	low := database.Category{
 		UUID: uuid.NewString(),
 		Name: "Low",
 		Slug: "low",
-		Sort: &lowSort,
+		Sort: 10,
 	}
 
-	highSort := 20
 	high := database.Category{
 		UUID: uuid.NewString(),
 		Name: "High",
 		Slug: "high",
-		Sort: &highSort,
+		Sort: 20,
 	}
 
 	if err := conn.Sql().Create(&high).Error; err != nil {
