@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	"github.com/oullin/pkg/model"
 	"strings"
 )
 
@@ -37,7 +37,7 @@ func (s TagsSeed) Create() ([]database.Tag, error) {
 
 	result := s.db.Sql().Create(&tags)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil, fmt.Errorf("issues creating tags: %s", result.Error)
 	}
 

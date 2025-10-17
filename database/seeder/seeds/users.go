@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/gorm"
+	"github.com/oullin/pkg/model"
 	"github.com/oullin/pkg/portal"
 
 	"strings"
@@ -44,7 +44,7 @@ func (s UsersSeed) Create(attrs database.UsersAttrs) (database.User, error) {
 
 	result := s.db.Sql().Create(&fake)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return database.User{}, fmt.Errorf("issues creating users: %s", result.Error)
 	}
 

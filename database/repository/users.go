@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg/gorm"
+	"github.com/oullin/pkg/model"
 	"strings"
 )
 
@@ -19,7 +19,7 @@ func (u Users) FindBy(username string) *database.User {
 		Where("LOWER(username) = ?", strings.ToLower(username)).
 		First(&user)
 
-	if gorm.HasDbIssues(result.Error) {
+	if model.HasDbIssues(result.Error) {
 		return nil
 	}
 
