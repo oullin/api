@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -112,6 +113,10 @@ func NewServerHandler(cfg ServerHandlerConfig) http.Handler {
 
 		origins := []string{"http://localhost:5173"}
 		if host := cfg.DevHost; host != "" {
+			if !strings.Contains(host, "://") {
+				host = "http://" + host
+			}
+
 			origins = append(origins, host)
 		}
 
