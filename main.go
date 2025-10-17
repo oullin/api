@@ -19,11 +19,19 @@ import (
 )
 
 func main() {
+	os.Exit(realMain())
+}
+
+func realMain() int {
+	defer sentry.Flush(2 * time.Second)
+
 	if err := run(); err != nil {
 		sentry.CurrentHub().CaptureException(err)
 		slog.Error("server exited with error", "error", err)
-		os.Exit(1)
+		return 1
 	}
+
+	return 0
 }
 
 func run() error {
@@ -35,7 +43,6 @@ func run() error {
 		return fmt.Errorf("create application: %w", err)
 	}
 
-	defer sentry.Flush(2 * time.Second)
 	defer app.CloseDB()
 	defer app.CloseLogs()
 	defer app.Recover()

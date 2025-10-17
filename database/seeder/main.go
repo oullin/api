@@ -16,11 +16,19 @@ import (
 )
 
 func main() {
+	os.Exit(realMain())
+}
+
+func realMain() int {
+	defer sentry.Flush(2 * time.Second)
+
 	if err := run(); err != nil {
 		sentry.CurrentHub().CaptureException(err)
 		cli.Errorln(err.Error())
-		os.Exit(1)
+		return 1
 	}
+
+	return 0
 }
 
 func run() error {
@@ -34,7 +42,6 @@ func run() error {
 
 	hub := kernel.NewSentry(environment)
 
-	defer sentry.Flush(2 * time.Second)
 	defer kernel.RecoverWithSentry(hub)
 
 	dbConnection := kernel.NewDbConnection(environment)
