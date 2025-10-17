@@ -41,6 +41,7 @@ func (h *CategoriesHandler) Index(w http.ResponseWriter, r *http.Request) *endpo
 				Name:        s.Name,
 				Slug:        s.Slug,
 				Description: s.Description,
+				Sort:        s.Sort,
 			}
 		},
 	)

@@ -26,12 +26,14 @@ func (s CategoriesSeed) Create(attrs database.CategoriesAttrs) ([]database.Categ
 		"Cloud", "Data", "DevOps", "ML", "Startups", "Engineering",
 	}
 
-	for _, seed := range seeds {
+	for index, seed := range seeds {
+		sort := index + 1
 		categories = append(categories, database.Category{
 			UUID:        uuid.NewString(),
 			Name:        seed,
 			Slug:        strings.ToLower(seed),
 			Description: attrs.Description,
+			Sort:        sort,
 		})
 	}
 

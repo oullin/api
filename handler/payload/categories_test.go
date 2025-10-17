@@ -13,12 +13,13 @@ func TestGetCategoriesResponse(t *testing.T) {
 			Name:        "n",
 			Slug:        "s",
 			Description: "d",
+			Sort:        2,
 		},
 	}
 
 	r := GetCategoriesResponse(cats)
 
-	if len(r) != 1 || r[0].Slug != "s" {
+	if len(r) != 1 || r[0].Slug != "s" || r[0].Sort != 2 {
 		t.Fatalf("unexpected %#v", r)
 	}
 }

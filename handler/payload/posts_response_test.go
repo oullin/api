@@ -25,6 +25,7 @@ func TestGetPostsResponse(t *testing.T) {
 				Name:        "cn",
 				Slug:        "cs",
 				Description: "cd",
+				Sort:        3,
 			},
 		},
 		Tags: []database.Tag{
@@ -50,7 +51,7 @@ func TestGetPostsResponse(t *testing.T) {
 
 	r := GetPostsResponse(p)
 
-	if r.UUID != "1" || r.Author.UUID != "u1" || len(r.Categories) != 1 || len(r.Tags) != 1 {
+	if r.UUID != "1" || r.Author.UUID != "u1" || len(r.Categories) != 1 || len(r.Tags) != 1 || r.Categories[0].Sort != 3 {
 		t.Fatalf("unexpected response: %+v", r)
 	}
 }
