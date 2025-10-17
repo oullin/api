@@ -142,7 +142,7 @@ func (c Categories) ExistOrUpdate(seed database.CategoriesAttrs) (bool, error) {
 		category.Description = seed.Description
 	}
 
-	if seed.Sort != 0 {
+	if seed.Sort != nil {
 		category.Sort = seed.Sort
 	}
 

@@ -9,6 +9,7 @@ import (
 
 func TestGetPostsResponse(t *testing.T) {
 	now := time.Now()
+	sort := 3
 	p := database.Post{
 		UUID:          "1",
 		Slug:          "slug",
@@ -25,7 +26,7 @@ func TestGetPostsResponse(t *testing.T) {
 				Name:        "cn",
 				Slug:        "cs",
 				Description: "cd",
-				Sort:        3,
+				Sort:        &sort,
 			},
 		},
 		Tags: []database.Tag{
@@ -51,7 +52,7 @@ func TestGetPostsResponse(t *testing.T) {
 
 	r := GetPostsResponse(p)
 
-	if r.UUID != "1" || r.Author.UUID != "u1" || len(r.Categories) != 1 || len(r.Tags) != 1 || r.Categories[0].Sort != 3 {
+	if r.UUID != "1" || r.Author.UUID != "u1" || len(r.Categories) != 1 || len(r.Tags) != 1 || r.Categories[0].Sort == nil || *r.Categories[0].Sort != 3 {
 		t.Fatalf("unexpected response: %+v", r)
 	}
 }

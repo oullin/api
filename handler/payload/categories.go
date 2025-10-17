@@ -7,7 +7,7 @@ type CategoryResponse struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
-	Sort        int    `json:"sort"`
+	Sort        *int   `json:"sort"`
 }
 
 func GetCategoriesResponse(categories []database.Category) []CategoryResponse {
