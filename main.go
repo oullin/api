@@ -61,7 +61,7 @@ func run() error {
 		wrap = sentry.Handler.Handle
 	}
 
-	handler := endpoint.ServerHandler(endpoint.ServerHandlerConfig{
+	handler := endpoint.NewServerHandler(endpoint.ServerHandlerConfig{
 		Mux:          app.GetMux(),
 		IsProduction: app.IsProduction(),
 		DevHost:      addr,

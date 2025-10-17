@@ -82,11 +82,11 @@ type ServerHandlerConfig struct {
 	Wrap         func(http.Handler) http.Handler
 }
 
-// ServerHandler constructs the HTTP handler using the provided configuration.
+// NewServerHandler constructs the HTTP handler using the provided configuration.
 // In development environments it applies permissive CORS settings so the
 // client app can communicate with the API, and it optionally wraps the handler
 // with Sentry instrumentation when supplied.
-func ServerHandler(cfg ServerHandlerConfig) http.Handler {
+func NewServerHandler(cfg ServerHandlerConfig) http.Handler {
 	if cfg.Mux == nil {
 		return http.NotFoundHandler()
 	}
