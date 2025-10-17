@@ -16,19 +16,14 @@ import (
 )
 
 func main() {
-	os.Exit(realMain())
-}
-
-func realMain() int {
-	defer sentry.Flush(2 * time.Second)
-
 	if err := run(); err != nil {
 		sentry.CurrentHub().CaptureException(err)
 		cli.Errorln(err.Error())
-		return 1
+		sentry.Flush(2 * time.Second)
+		os.Exit(1)
 	}
 
-	return 0
+	sentry.Flush(2 * time.Second)
 }
 
 func run() error {
