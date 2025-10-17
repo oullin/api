@@ -80,6 +80,7 @@ services:
 
         # A dedicated service for running one-off Go commands
         api-runner:
+          container_name: runner
           restart: no
           env_file:
             - ./.env
