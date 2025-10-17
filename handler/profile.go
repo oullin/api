@@ -13,7 +13,7 @@ type ProfileHandler struct {
 	filePath string
 }
 
-func MakeProfileHandler(filePath string) ProfileHandler {
+func NewProfileHandler(filePath string) ProfileHandler {
 	return ProfileHandler{
 		filePath: filePath,
 	}
@@ -28,7 +28,7 @@ func (h ProfileHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint
 		return endpoint.InternalError("could not read profile data")
 	}
 
-	resp := endpoint.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.NewResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

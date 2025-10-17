@@ -10,7 +10,7 @@ type PostCategoriesSeed struct {
 	db *database.Connection
 }
 
-func MakePostCategoriesSeed(db *database.Connection) *PostCategoriesSeed {
+func NewPostCategoriesSeed(db *database.Connection) *PostCategoriesSeed {
 	return &PostCategoriesSeed{
 		db: db,
 	}

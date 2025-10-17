@@ -17,7 +17,7 @@ type Response struct {
 	headers      func(w http.ResponseWriter)
 }
 
-func MakeResponseFrom(salt string, writer http.ResponseWriter, request *http.Request) *Response {
+func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Request) *Response {
 	etag := fmt.Sprintf(
 		`"%s"`,
 		strings.TrimSpace(salt),
@@ -39,7 +39,7 @@ func MakeResponseFrom(salt string, writer http.ResponseWriter, request *http.Req
 	}
 }
 
-func MakeNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {
+func NewNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {
 	cacheControl := "no-store"
 
 	return &Response{

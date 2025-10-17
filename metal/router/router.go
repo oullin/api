@@ -23,7 +23,7 @@ type Router struct {
 }
 
 func (r *Router) PublicPipelineFor(apiHandler endpoint.ApiHandler) http.HandlerFunc {
-	return endpoint.MakeApiHandler(
+	return endpoint.NewApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
 			r.Pipeline.PublicMiddleware.Handle,
@@ -32,12 +32,12 @@ func (r *Router) PublicPipelineFor(apiHandler endpoint.ApiHandler) http.HandlerF
 }
 
 func (r *Router) PipelineFor(apiHandler endpoint.ApiHandler) http.HandlerFunc {
-	tokenMiddleware := middleware.MakeTokenMiddleware(
+	tokenMiddleware := middleware.NewTokenMiddleware(
 		r.Pipeline.TokenHandler,
 		r.Pipeline.ApiKeys,
 	)
 
-	return endpoint.MakeApiHandler(
+	return endpoint.NewApiHandler(
 		r.Pipeline.Chain(
 			apiHandler,
 			tokenMiddleware.Handle,
@@ -47,7 +47,7 @@ func (r *Router) PipelineFor(apiHandler endpoint.ApiHandler) http.HandlerFunc {
 
 func (r *Router) Posts() {
 	repo := repository.Posts{DB: r.Db}
-	abstract := handler.MakePostsHandler(&repo)
+	abstract := handler.NewPostsHandler(&repo)
 
 	index := r.PipelineFor(abstract.Index)
 	show := r.PipelineFor(abstract.Show)
@@ -58,7 +58,7 @@ func (r *Router) Posts() {
 
 func (r *Router) Categories() {
 	repo := repository.Categories{DB: r.Db}
-	abstract := handler.MakeCategoriesHandler(&repo)
+	abstract := handler.NewCategoriesHandler(&repo)
 
 	index := r.PipelineFor(abstract.Index)
 
@@ -66,16 +66,16 @@ func (r *Router) Categories() {
 }
 
 func (r *Router) Signature() {
-	abstract := handler.MakeSignaturesHandler(r.Validator, r.Pipeline.ApiKeys)
+	abstract := handler.NewSignaturesHandler(r.Validator, r.Pipeline.ApiKeys)
 	generate := r.PublicPipelineFor(abstract.Generate)
 
 	r.Mux.HandleFunc("POST /generate-signature", generate)
 }
 
 func (r *Router) KeepAlive() {
-	abstract := handler.MakeKeepAliveHandler(&r.Env.Ping)
+	abstract := handler.NewKeepAliveHandler(&r.Env.Ping)
 
-	apiHandler := endpoint.MakeApiHandler(
+	apiHandler := endpoint.NewApiHandler(
 		r.Pipeline.Chain(abstract.Handle),
 	)
 
@@ -83,9 +83,9 @@ func (r *Router) KeepAlive() {
 }
 
 func (r *Router) KeepAliveDB() {
-	abstract := handler.MakeKeepAliveDBHandler(&r.Env.Ping, r.Db)
+	abstract := handler.NewKeepAliveDBHandler(&r.Env.Ping, r.Db)
 
-	apiHandler := endpoint.MakeApiHandler(
+	apiHandler := endpoint.NewApiHandler(
 		r.Pipeline.Chain(abstract.Handle),
 	)
 
@@ -93,7 +93,7 @@ func (r *Router) KeepAliveDB() {
 }
 
 func (r *Router) Profile() {
-	maker := handler.MakeProfileHandler
+	maker := handler.NewProfileHandler
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetProfile(),
@@ -104,7 +104,7 @@ func (r *Router) Profile() {
 }
 
 func (r *Router) Experience() {
-	maker := handler.MakeExperienceHandler
+	maker := handler.NewExperienceHandler
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetExperience(),
@@ -115,7 +115,7 @@ func (r *Router) Experience() {
 }
 
 func (r *Router) Projects() {
-	maker := handler.MakeProjectsHandler
+	maker := handler.NewProjectsHandler
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetProjects(),
@@ -126,7 +126,7 @@ func (r *Router) Projects() {
 }
 
 func (r *Router) Social() {
-	maker := handler.MakeSocialHandler
+	maker := handler.NewSocialHandler
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetSocial(),
@@ -137,7 +137,7 @@ func (r *Router) Social() {
 }
 
 func (r *Router) Talks() {
-	maker := handler.MakeTalksHandler
+	maker := handler.NewTalksHandler
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetTalks(),
@@ -148,7 +148,7 @@ func (r *Router) Talks() {
 }
 
 func (r *Router) Education() {
-	maker := handler.MakeEducationHandler
+	maker := handler.NewEducationHandler
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetEducation(),
@@ -159,7 +159,7 @@ func (r *Router) Education() {
 }
 
 func (r *Router) Recommendations() {
-	maker := handler.MakeRecommendationsHandler
+	maker := handler.NewRecommendationsHandler
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetRecommendations(),

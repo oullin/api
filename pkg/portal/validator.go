@@ -22,7 +22,7 @@ var (
 
 func GetDefaultValidator() *Validator {
 	defaultOnce.Do(func() {
-		defaultValidator = MakeValidatorFrom(
+		defaultValidator = NewValidatorFrom(
 			validator.New(
 				validator.WithRequiredStructEnabled(),
 			),
@@ -32,7 +32,7 @@ func GetDefaultValidator() *Validator {
 	return defaultValidator
 }
 
-func MakeValidatorFrom(abstract *validator.Validate) *Validator {
+func NewValidatorFrom(abstract *validator.Validate) *Validator {
 	return &Validator{
 		Errors:   make(map[string]interface{}),
 		instance: abstract,
@@ -81,7 +81,7 @@ func (v *Validator) parseError(validateErrs validator.ValidationErrors) {
 	var e error
 
 	for _, current := range validateErrs {
-		field := MakeStringable(current.Field()).ToSnakeCase()
+		field := NewStringable(current.Field()).ToSnakeCase()
 
 		switch strings.ToLower(current.Tag()) {
 		case "required":

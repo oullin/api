@@ -12,7 +12,7 @@ type CategoriesSeed struct {
 	db *database.Connection
 }
 
-func MakeCategoriesSeed(db *database.Connection) *CategoriesSeed {
+func NewCategoriesSeed(db *database.Connection) *CategoriesSeed {
 	return &CategoriesSeed{
 		db: db,
 	}

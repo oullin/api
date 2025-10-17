@@ -46,7 +46,7 @@ func GetPostsFiltersFrom(request IndexRequestBody) queries.PostFilters {
 }
 
 func GetSlugFrom(r *http.Request) string {
-	str := portal.MakeStringable(r.PathValue("slug"))
+	str := portal.NewStringable(r.PathValue("slug"))
 
 	return strings.TrimSpace(str.ToLower())
 }

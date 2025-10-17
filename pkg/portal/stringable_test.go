@@ -6,7 +6,7 @@ import (
 )
 
 func TestStringable_ToLower(t *testing.T) {
-	s := MakeStringable(" FooBar ")
+	s := NewStringable(" FooBar ")
 
 	if got := s.ToLower(); got != "foobar" {
 		t.Fatalf("expected foobar got %s", got)
@@ -14,7 +14,7 @@ func TestStringable_ToLower(t *testing.T) {
 }
 
 func TestStringable_ToSnakeCase(t *testing.T) {
-	s := MakeStringable("HelloWorldTest")
+	s := NewStringable("HelloWorldTest")
 
 	if got := s.ToSnakeCase(); got != "hello_world_test" {
 		t.Fatalf("expected hello_world_test got %s", got)
@@ -22,7 +22,7 @@ func TestStringable_ToSnakeCase(t *testing.T) {
 }
 
 func TestStringable_ToDatetime(t *testing.T) {
-	s := MakeStringable("2024-06-09")
+	s := NewStringable("2024-06-09")
 	dt, err := s.ToDatetime()
 
 	if err != nil {
@@ -35,7 +35,7 @@ func TestStringable_ToDatetime(t *testing.T) {
 }
 
 func TestStringable_ToDatetimeError(t *testing.T) {
-	s := MakeStringable("bad-date")
+	s := NewStringable("bad-date")
 
 	if _, err := s.ToDatetime(); err == nil {
 		t.Fatalf("expected error")
@@ -44,5 +44,5 @@ func TestStringable_ToDatetimeError(t *testing.T) {
 
 func TestStringable_Dd(t *testing.T) {
 	// just ensure it does not panic and prints
-	MakeStringable("test").Dd(struct{ X int }{1})
+	NewStringable("test").Dd(struct{ X int }{1})
 }

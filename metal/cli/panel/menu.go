@@ -24,7 +24,7 @@ type Menu struct {
 
 var slugPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 
-func MakeMenu() Menu {
+func NewMenu() Menu {
 	menu := Menu{
 		Reader:    bufio.NewReader(os.Stdin),
 		Validator: portal.GetDefaultValidator(),

@@ -5,7 +5,7 @@
 The current Sentry implementation in this application is **incomplete and ineffective** for properly reporting anomalies. While the basic infrastructure for Sentry is present, it's not actually being used to capture and report errors.
 
 ### What's Present:
-1. **Basic Initialization**: Sentry is initialized in `MakeSentry()` with a DSN from environment variables.
+1. **Basic Initialization**: Sentry is initialized in `NewSentry()` with a DSN from environment variables.
 2. **HTTP Handler Creation**: A Sentry HTTP handler is created but never integrated into the request pipeline.
 3. **Flush Call**: There's a `sentry.Flush()` call in main.go to ensure events are sent before shutdown.
 
@@ -24,7 +24,7 @@ To properly implement Sentry for effective anomaly reporting:
 
 2. **Add Recovery Middleware**: Create middleware to recover from panics and report them to Sentry.
 
-3. **Report API Errors to Sentry**: Modify the MakeApiHandler function to report errors to Sentry.
+3. **Report API Errors to Sentry**: Modify the NewApiHandler function to report errors to Sentry.
 
 4. **Add Context to Sentry Events**: Enrich Sentry events with user and request information.
 

@@ -16,7 +16,7 @@ func TestSignatureRoute_PublicMiddleware(t *testing.T) {
 	r := Router{
 		Mux: http.NewServeMux(),
 		Pipeline: middleware.Pipeline{
-			PublicMiddleware: middleware.MakePublicMiddleware("", false),
+			PublicMiddleware: middleware.NewPublicMiddleware("", false),
 		},
 		Validator: portal.GetDefaultValidator(),
 	}

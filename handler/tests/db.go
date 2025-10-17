@@ -13,9 +13,9 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-// MakeTestDB starts a PostgreSQL test container, runs migrations, and seeds a default user.
+// NewTestDB starts a PostgreSQL test container, runs migrations, and seeds a default user.
 // It returns the database connection and the created user.
-func MakeTestDB(t *testing.T) (*database.Connection, database.User) {
+func NewTestDB(t *testing.T) (*database.Connection, database.User) {
 	t.Helper()
 
 	if _, err := exec.LookPath("docker"); err != nil {
@@ -62,9 +62,9 @@ func MakeTestDB(t *testing.T) (*database.Connection, database.User) {
 		},
 	}
 
-	conn, err := database.MakeConnection(e)
+	conn, err := database.NewConnection(e)
 	if err != nil {
-		t.Fatalf("make connection: %v", err)
+		t.Fatalf("new connection: %v", err)
 	}
 	t.Cleanup(func() { conn.Close() })
 

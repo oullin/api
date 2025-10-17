@@ -2,8 +2,8 @@ package portal
 
 import "testing"
 
-func TestPassword_MakeAndValidate(t *testing.T) {
-	pw, err := MakePassword("secret")
+func TestPassword_NewAndValidate(t *testing.T) {
+	pw, err := NewPassword("secret")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

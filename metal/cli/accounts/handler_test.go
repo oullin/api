@@ -8,11 +8,11 @@ import (
 )
 
 func setupAccountHandler(t *testing.T) *Handler {
-	conn := clitest.MakeTestConnection(t, &database.APIKey{})
-	h, err := MakeHandler(conn, clitest.MakeTestEnv())
+	conn := clitest.NewTestConnection(t, &database.APIKey{})
+	h, err := NewHandler(conn, clitest.NewTestEnv())
 
 	if err != nil {
-		t.Fatalf("make handler: %v", err)
+		t.Fatalf("new handler: %v", err)
 	}
 
 	return h

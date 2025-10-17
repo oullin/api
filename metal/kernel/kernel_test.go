@@ -48,10 +48,10 @@ func validEnvVars(t *testing.T) {
 	t.Setenv("ENV_SPA_IMAGES_DIR", "/Users/gus/Sites/oullin/web/public/seo/posts/images")
 }
 
-func TestMakeEnv(t *testing.T) {
+func TestNewEnv(t *testing.T) {
 	validEnvVars(t)
 
-	env := MakeEnv(portal.GetDefaultValidator())
+	env := NewEnv(portal.GetDefaultValidator())
 
 	if env.App.Name != "guss" {
 		t.Fatalf("env not loaded")
@@ -62,7 +62,7 @@ func TestMakeEnv(t *testing.T) {
 	}
 }
 
-func TestMakeEnvRequiresIPInProduction(t *testing.T) {
+func TestNewEnvRequiresIPInProduction(t *testing.T) {
 	validEnvVars(t)
 	t.Setenv("ENV_APP_ENV_TYPE", "production")
 	t.Setenv("ENV_PUBLIC_ALLOWED_IP", "")
@@ -73,7 +73,7 @@ func TestMakeEnvRequiresIPInProduction(t *testing.T) {
 		}
 	}()
 
-	MakeEnv(portal.GetDefaultValidator())
+	NewEnv(portal.GetDefaultValidator())
 }
 
 func TestIgnite(t *testing.T) {
@@ -152,7 +152,7 @@ func TestAppHelpers(t *testing.T) {
 	app := &App{}
 
 	mux := http.NewServeMux()
-	r := router.Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)}}
+	r := router.Router{Mux: mux, Pipeline: middleware.Pipeline{PublicMiddleware: middleware.NewPublicMiddleware("", false)}}
 
 	app.SetRouter(r)
 
@@ -175,7 +175,7 @@ func TestAppHelpers(t *testing.T) {
 func TestAppAccessorsReturnValues(t *testing.T) {
 	validEnvVars(t)
 
-	e := MakeEnv(portal.GetDefaultValidator())
+	e := NewEnv(portal.GetDefaultValidator())
 	dbConn := &database.Connection{}
 	sentryHub := &portal.Sentry{}
 
@@ -232,7 +232,7 @@ func TestAppRecoverRepanics(t *testing.T) {
 func TestAppBootRoutes(t *testing.T) {
 	validEnvVars(t)
 
-	env := MakeEnv(portal.GetDefaultValidator())
+	env := NewEnv(portal.GetDefaultValidator())
 
 	key, err := auth.GenerateAESKey()
 
@@ -240,7 +240,7 @@ func TestAppBootRoutes(t *testing.T) {
 		t.Fatalf("key err: %v", err)
 	}
 
-	handler, err := auth.MakeTokensHandler(key)
+	handler, err := auth.NewTokensHandler(key)
 
 	if err != nil {
 		t.Fatalf("handler err: %v", err)
@@ -253,7 +253,7 @@ func TestAppBootRoutes(t *testing.T) {
 			Env:              env,
 			ApiKeys:          &repository.ApiKeys{DB: &database.Connection{}},
 			TokenHandler:     handler,
-			PublicMiddleware: middleware.MakePublicMiddleware("", false),
+			PublicMiddleware: middleware.NewPublicMiddleware("", false),
 		},
 		WebsiteRoutes: router.NewWebsiteRoutes(env),
 		Db:            &database.Connection{},
@@ -316,7 +316,7 @@ func TestAppNewRouterTokenHandlerError(t *testing.T) {
 func TestAppNewRouterSuccess(t *testing.T) {
 	validEnvVars(t)
 
-	e := MakeEnv(portal.GetDefaultValidator())
+	e := NewEnv(portal.GetDefaultValidator())
 	dbConn := &database.Connection{}
 	validator := portal.GetDefaultValidator()
 
@@ -384,7 +384,7 @@ func TestAppNewRouterSuccess(t *testing.T) {
 	})
 }
 
-func TestMakeLogs(t *testing.T) {
+func TestNewLogs(t *testing.T) {
 	// Create a temporary directory with a lowercase path
 	tempDir := getLowerTempDir(t)
 	// Ensure the directory exists
@@ -398,9 +398,9 @@ func TestMakeLogs(t *testing.T) {
 	validEnvVars(t)
 	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 
-	env := MakeEnv(portal.GetDefaultValidator())
+	env := NewEnv(portal.GetDefaultValidator())
 
-	driver := MakeLogs(env)
+	driver := NewLogs(env)
 	fl := driver.(llogs.FilesLogs)
 
 	if !strings.HasPrefix(fl.DefaultPath(), tempDir) {
@@ -412,12 +412,12 @@ func TestMakeLogs(t *testing.T) {
 	}
 }
 
-func TestMakeDbConnectionPanic(t *testing.T) {
+func TestNewDbConnectionPanic(t *testing.T) {
 	validEnvVars(t)
 	t.Setenv("ENV_DB_PORT", "1")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(portal.GetDefaultValidator())
+	env := NewEnv(portal.GetDefaultValidator())
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -425,10 +425,10 @@ func TestMakeDbConnectionPanic(t *testing.T) {
 		}
 	}()
 
-	MakeDbConnection(env)
+	NewDbConnection(env)
 }
 
-func TestMakeAppPanic(t *testing.T) {
+func TestNewAppPanic(t *testing.T) {
 	// Create a temporary directory with a lowercase path
 	tempDir := getLowerTempDir(t)
 	// Ensure the directory exists
@@ -444,7 +444,7 @@ func TestMakeAppPanic(t *testing.T) {
 	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(portal.GetDefaultValidator())
+	env := NewEnv(portal.GetDefaultValidator())
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -452,16 +452,16 @@ func TestMakeAppPanic(t *testing.T) {
 		}
 	}()
 
-	MakeApp(env, portal.GetDefaultValidator())
+	NewApp(env, portal.GetDefaultValidator())
 }
 
-func TestMakeSentry(t *testing.T) {
+func TestNewSentry(t *testing.T) {
 	validEnvVars(t)
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(portal.GetDefaultValidator())
+	env := NewEnv(portal.GetDefaultValidator())
 
-	s := MakeSentry(env)
+	s := NewSentry(env)
 
 	if s == nil || s.Handler == nil || s.Options == nil {
 		t.Fatalf("sentry setup failed")
@@ -484,8 +484,8 @@ func TestMakeSentry(t *testing.T) {
 	t.Run("production environment", func(t *testing.T) {
 		t.Setenv("ENV_APP_ENV_TYPE", "production")
 
-		prodEnv := MakeEnv(portal.GetDefaultValidator())
-		prodSentry := MakeSentry(prodEnv)
+		prodEnv := NewEnv(portal.GetDefaultValidator())
+		prodSentry := NewSentry(prodEnv)
 
 		if !prodSentry.Options.WaitForDelivery {
 			t.Fatalf("expected WaitForDelivery to be enabled in production")
@@ -603,9 +603,9 @@ func TestCloseLogs(t *testing.T) {
 	t.Setenv("ENV_APP_LOGS_DIR", tempDir+"/log-%s.txt")
 	t.Setenv("ENV_SENTRY_DSN", "https://public@o0.ingest.sentry.io/0")
 
-	env := MakeEnv(portal.GetDefaultValidator())
+	env := NewEnv(portal.GetDefaultValidator())
 
-	logs := MakeLogs(env)
+	logs := NewLogs(env)
 	app := &App{logs: logs}
 
 	app.CloseLogs()

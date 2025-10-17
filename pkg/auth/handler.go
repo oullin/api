@@ -13,7 +13,7 @@ type TokenHandler struct {
 	AccountNameMinLength int
 }
 
-func MakeTokensHandler(encryptionKey []byte) (*TokenHandler, error) {
+func NewTokensHandler(encryptionKey []byte) (*TokenHandler, error) {
 	if len(encryptionKey) != EncryptionKeyLength {
 		return nil, fmt.Errorf("encryption key length must be equal to %d bytes", EncryptionKeyLength)
 	}

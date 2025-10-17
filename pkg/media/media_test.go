@@ -18,14 +18,14 @@ func setupTempDir(t *testing.T) string {
 	return dir
 }
 
-func TestMakeMediaAndUpload(t *testing.T) {
+func TestNewMediaAndUpload(t *testing.T) {
 	setupTempDir(t)
 	data := []byte{1, 2, 3}
 
-	m, err := MakeMedia("uid", data, "pic.jpg")
+	m, err := NewMedia("uid", data, "pic.jpg")
 
 	if err != nil {
-		t.Fatalf("make: %v", err)
+		t.Fatalf("new: %v", err)
 	}
 
 	if !strings.HasPrefix(m.GetFileName(), "uid-") {
@@ -53,30 +53,30 @@ func TestMakeMediaAndUpload(t *testing.T) {
 	}
 }
 
-func TestMakeMediaErrors(t *testing.T) {
+func TestNewMediaErrors(t *testing.T) {
 	setupTempDir(t)
 
-	if _, err := MakeMedia("u", []byte{}, "a.jpg"); err == nil {
+	if _, err := NewMedia("u", []byte{}, "a.jpg"); err == nil {
 		t.Fatalf("expected empty file error")
 	}
 
 	big := make([]byte, maxFileSize+1)
 
-	if _, err := MakeMedia("u", big, "a.jpg"); err == nil {
+	if _, err := NewMedia("u", big, "a.jpg"); err == nil {
 		t.Fatalf("expected size error")
 	}
 
-	if _, err := MakeMedia("u", []byte{1}, "a.txt"); err == nil {
+	if _, err := NewMedia("u", []byte{1}, "a.txt"); err == nil {
 		t.Fatalf("expected ext error")
 	}
 }
 
 func TestGetFilePath(t *testing.T) {
 	setupTempDir(t)
-	m, err := MakeMedia("u", []byte{1}, "a.jpg")
+	m, err := NewMedia("u", []byte{1}, "a.jpg")
 
 	if err != nil {
-		t.Fatalf("make: %v", err)
+		t.Fatalf("new: %v", err)
 	}
 
 	p := m.GetFilePath("thumb")

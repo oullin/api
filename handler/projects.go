@@ -13,7 +13,7 @@ type ProjectsHandler struct {
 	filePath string
 }
 
-func MakeProjectsHandler(filePath string) ProjectsHandler {
+func NewProjectsHandler(filePath string) ProjectsHandler {
 	return ProjectsHandler{
 		filePath: filePath,
 	}
@@ -28,7 +28,7 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return endpoint.InternalError("could not read projects data")
 	}
 
-	resp := endpoint.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.NewResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

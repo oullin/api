@@ -62,7 +62,7 @@ func (c Categories) GetAll(paginate pagination.Paginate) (*pagination.Pagination
 	}
 
 	paginate.SetNumItems(numItems)
-	result := pagination.MakePagination[database.Category](categories, paginate)
+	result := pagination.NewPagination[database.Category](categories, paginate)
 
 	return result, nil
 }

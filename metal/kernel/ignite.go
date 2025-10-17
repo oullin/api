@@ -11,5 +11,5 @@ func Ignite(envPath string, validate *portal.Validator) *env.Environment {
 		panic("failed to read the .env file/values: " + err.Error())
 	}
 
-	return MakeEnv(validate)
+	return NewEnv(validate)
 }

@@ -27,7 +27,7 @@ import (
 func newTestValidator(t *testing.T) *portal.Validator {
 	t.Helper()
 
-	return portal.MakeValidatorFrom(validator.New(validator.WithRequiredStructEnabled()))
+	return portal.NewValidatorFrom(validator.New(validator.WithRequiredStructEnabled()))
 }
 
 func TestGeneratorBuildAndExport(t *testing.T) {

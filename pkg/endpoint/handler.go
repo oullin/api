@@ -8,7 +8,7 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-func MakeApiHandler(fn ApiHandler) http.HandlerFunc {
+func NewApiHandler(fn ApiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := fn(w, r); err != nil {
 			slog.Error("API Error", "message", err.Message, "status", err.Status)

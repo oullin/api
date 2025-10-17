@@ -12,7 +12,7 @@ type TagsSeed struct {
 	db *database.Connection
 }
 
-func MakeTagsSeed(db *database.Connection) *TagsSeed {
+func NewTagsSeed(db *database.Connection) *TagsSeed {
 	return &TagsSeed{
 		db: db,
 	}

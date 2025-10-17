@@ -35,7 +35,7 @@ func (f PostFilters) GetTag() string {
 }
 
 func (f PostFilters) sanitiseString(seed string) string {
-	str := portal.MakeStringable(seed)
+	str := portal.NewStringable(seed)
 
 	return strings.TrimSpace(str.ToLower())
 }

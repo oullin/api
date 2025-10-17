@@ -10,7 +10,7 @@ type CommentsSeed struct {
 	db *database.Connection
 }
 
-func MakeCommentsSeed(db *database.Connection) *CommentsSeed {
+func NewCommentsSeed(db *database.Connection) *CommentsSeed {
 	return &CommentsSeed{
 		db: db,
 	}

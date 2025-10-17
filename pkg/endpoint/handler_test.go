@@ -13,8 +13,8 @@ import (
 	"github.com/oullin/pkg/portal"
 )
 
-func TestMakeApiHandler(t *testing.T) {
-	h := MakeApiHandler(func(w http.ResponseWriter, r *http.Request) *ApiError {
+func TestNewApiHandler(t *testing.T) {
+	h := NewApiHandler(func(w http.ResponseWriter, r *http.Request) *ApiError {
 
 		return &ApiError{
 			Message: "bad",

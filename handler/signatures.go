@@ -21,7 +21,7 @@ type SignaturesHandler struct {
 	ApiKeys   *repository.ApiKeys
 }
 
-func MakeSignaturesHandler(validator *portal.Validator, ApiKeys *repository.ApiKeys) SignaturesHandler {
+func NewSignaturesHandler(validator *portal.Validator, ApiKeys *repository.ApiKeys) SignaturesHandler {
 	return SignaturesHandler{
 		Validator: validator,
 		ApiKeys:   ApiKeys,
@@ -66,7 +66,7 @@ func (s *SignaturesHandler) Generate(w http.ResponseWriter, r *http.Request) *en
 		},
 	}
 
-	resp := endpoint.MakeResponseFrom("0.0.1", w, r)
+	resp := endpoint.NewResponseFrom("0.0.1", w, r)
 
 	if err = resp.RespondOk(response); err != nil {
 		slog.Error("Error marshaling JSON for signatures response", "error", err)

@@ -13,7 +13,7 @@ func TestKeepAliveRoute(t *testing.T) {
 	r := Router{
 		Env:      &env.Environment{Ping: env.PingEnvironment{Username: "user", Password: "pass"}},
 		Mux:      http.NewServeMux(),
-		Pipeline: middleware.Pipeline{PublicMiddleware: middleware.MakePublicMiddleware("", false)},
+		Pipeline: middleware.Pipeline{PublicMiddleware: middleware.NewPublicMiddleware("", false)},
 	}
 	r.KeepAlive()
 

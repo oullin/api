@@ -21,7 +21,7 @@ type Pagination[T any] struct {
 	PreviousPage *int  `json:"previous_page,omitempty"`
 }
 
-func MakePagination[T any](data []T, paginate Paginate) *Pagination[T] {
+func NewPagination[T any](data []T, paginate Paginate) *Pagination[T] {
 	pSize := float64(paginate.Limit)
 	if pSize <= 0 {
 		pSize = 10

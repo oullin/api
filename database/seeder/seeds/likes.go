@@ -11,7 +11,7 @@ type LikesSeed struct {
 	db *database.Connection
 }
 
-func MakeLikesSeed(db *database.Connection) *LikesSeed {
+func NewLikesSeed(db *database.Connection) *LikesSeed {
 	return &LikesSeed{
 		db: db,
 	}

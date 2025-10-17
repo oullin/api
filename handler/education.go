@@ -13,7 +13,7 @@ type EducationHandler struct {
 	filePath string
 }
 
-func MakeEducationHandler(filePath string) EducationHandler {
+func NewEducationHandler(filePath string) EducationHandler {
 	return EducationHandler{
 		filePath: filePath,
 	}
@@ -28,7 +28,7 @@ func (h EducationHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoi
 		return endpoint.InternalError("could not read education data")
 	}
 
-	resp := endpoint.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.NewResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

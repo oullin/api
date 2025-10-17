@@ -16,14 +16,14 @@ type UsersSeed struct {
 	db *database.Connection
 }
 
-func MakeUsersSeed(db *database.Connection) *UsersSeed {
+func NewUsersSeed(db *database.Connection) *UsersSeed {
 	return &UsersSeed{
 		db: db,
 	}
 }
 
 func (s UsersSeed) Create(attrs database.UsersAttrs) (database.User, error) {
-	pass, err := portal.MakePassword("password")
+	pass, err := portal.NewPassword("password")
 	if err != nil {
 		return database.User{}, fmt.Errorf("failed to generate seed password: %w", err)
 	}

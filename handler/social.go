@@ -13,7 +13,7 @@ type SocialHandler struct {
 	filePath string
 }
 
-func MakeSocialHandler(filePath string) SocialHandler {
+func NewSocialHandler(filePath string) SocialHandler {
 	return SocialHandler{
 		filePath: filePath,
 	}
@@ -28,7 +28,7 @@ func (h SocialHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.
 		return endpoint.InternalError("could not read social data")
 	}
 
-	resp := endpoint.MakeResponseFrom(data.Version, w, r)
+	resp := endpoint.NewResponseFrom(data.Version, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

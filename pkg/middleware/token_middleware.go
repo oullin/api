@@ -32,7 +32,7 @@ type TokenCheckMiddleware struct {
 	rateLimiter     *limiter.MemoryLimiter
 }
 
-func MakeTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
+func NewTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
 	return TokenCheckMiddleware{
 		maxFailPerScope: 10,
 		disallowFuture:  true,

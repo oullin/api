@@ -23,7 +23,7 @@ func GetDefaultTransport() *http.Transport {
 	}
 }
 
-func MakeDefaultClient(transport *http.Transport) *Client {
+func NewDefaultClient(transport *http.Transport) *Client {
 	if transport == nil {
 		transport = GetDefaultTransport()
 	}

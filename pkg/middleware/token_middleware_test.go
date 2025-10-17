@@ -25,7 +25,7 @@ import (
 )
 
 func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {
-	tm := MakeTokenMiddleware(nil, nil)
+	tm := NewTokenMiddleware(nil, nil)
 
 	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
 
@@ -38,7 +38,7 @@ func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {
 }
 
 func TestTokenMiddlewareHandleInvalid(t *testing.T) {
-	tm := MakeTokenMiddleware(nil, nil)
+	tm := NewTokenMiddleware(nil, nil)
 
 	handler := tm.Handle(func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError { return nil })
 
@@ -52,7 +52,7 @@ func TestTokenMiddlewareHandleInvalid(t *testing.T) {
 }
 
 func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
-	tm := MakeTokenMiddleware(nil, nil)
+	tm := NewTokenMiddleware(nil, nil)
 	req := httptest.NewRequest("GET", "/", nil)
 
 	if _, apiErr := tm.ValidateAndGetHeaders(req, "req-1"); apiErr == nil || apiErr.Status != http.StatusUnauthorized {
@@ -71,7 +71,7 @@ func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
 }
 
 func TestAttachContext(t *testing.T) {
-	tm := MakeTokenMiddleware(nil, nil)
+	tm := NewTokenMiddleware(nil, nil)
 	req := httptest.NewRequest("GET", "/", nil)
 	headers := AuthTokenHeaders{AccountName: "Alice", RequestID: "RID-123"}
 	r := tm.AttachContext(req, headers)
@@ -200,9 +200,9 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 	conn := setupDB(t)
 
 	// Prepare TokenHandler and seed an account with encrypted keys
-	th, err := auth.MakeTokensHandler(generate32(t))
+	th, err := auth.NewTokensHandler(generate32(t))
 	if err != nil {
-		t.Fatalf("MakeTokensHandler: %v", err)
+		t.Fatalf("NewTokensHandler: %v", err)
 	}
 	seed, err := th.SetupNewAccount("acme-user")
 	if err != nil {
@@ -220,7 +220,7 @@ func TestTokenMiddleware_DB_Integration(t *testing.T) {
 	}
 
 	// Build middleware
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 	// make it tolerant and fast for test
 	tm.clockSkew = 2 * time.Minute
 	tm.nonceTTL = 1 * time.Minute
@@ -281,9 +281,9 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 	conn := setupDB(t)
 
 	// Prepare TokenHandler and seed an account with encrypted keys
-	th, err := auth.MakeTokensHandler(generate32(t))
+	th, err := auth.NewTokensHandler(generate32(t))
 	if err != nil {
-		t.Fatalf("MakeTokensHandler: %v", err)
+		t.Fatalf("NewTokensHandler: %v", err)
 	}
 	seed, err := th.SetupNewAccount("acme-user-happy")
 	if err != nil {
@@ -301,7 +301,7 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 	}
 
 	// Build middleware
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 	// Relax window for test
 	tm.clockSkew = 2 * time.Minute
 	tm.nonceTTL = 1 * time.Minute
@@ -334,10 +334,10 @@ func TestTokenMiddleware_DB_Integration_HappyPath(t *testing.T) {
 	}
 }
 
-// TestMakeTokenMiddleware_DefaultDisallowFuture verifies that disallowFuture is true by default
-func TestMakeTokenMiddleware_DefaultDisallowFuture(t *testing.T) {
+// TestNewTokenMiddleware_DefaultDisallowFuture verifies that disallowFuture is true by default
+func TestNewTokenMiddleware_DefaultDisallowFuture(t *testing.T) {
 	// Create middleware with default settings
-	tm := MakeTokenMiddleware(nil, nil)
+	tm := NewTokenMiddleware(nil, nil)
 
 	// Verify disallowFuture is true by default
 	if !tm.disallowFuture {
@@ -350,9 +350,9 @@ func TestTokenMiddleware_RejectsFutureTimestamps(t *testing.T) {
 	conn := setupDB(t)
 
 	// Prepare TokenHandler and seed an account with encrypted keys
-	th, err := auth.MakeTokensHandler(generate32(t))
+	th, err := auth.NewTokensHandler(generate32(t))
 	if err != nil {
-		t.Fatalf("MakeTokensHandler: %v", err)
+		t.Fatalf("NewTokensHandler: %v", err)
 	}
 	seed, err := th.SetupNewAccount("acme-user-future")
 	if err != nil {
@@ -369,7 +369,7 @@ func TestTokenMiddleware_RejectsFutureTimestamps(t *testing.T) {
 	}
 
 	// Build middleware with default settings (disallowFuture = true)
-	tm := MakeTokenMiddleware(th, repo)
+	tm := NewTokenMiddleware(th, repo)
 
 	nextCalled := false
 	next := func(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {

@@ -61,10 +61,10 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 		TimeZone:     "UTC",
 	}
 
-	conn, err := database.MakeConnection(e)
+	conn, err := database.NewConnection(e)
 
 	if err != nil {
-		t.Fatalf("make connection: %v", err)
+		t.Fatalf("new connection: %v", err)
 	}
 
 	t.Cleanup(func() { conn.Close() })
@@ -92,7 +92,7 @@ func setupSeeder(t *testing.T) *Seeder {
 
 	conn := testConnection(t, e)
 
-	return MakeSeeder(conn, e)
+	return NewSeeder(conn, e)
 }
 
 func TestSeederWorkflow(t *testing.T) {

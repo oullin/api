@@ -25,7 +25,7 @@ func init() {
 	secrets := kernel.Ignite("./.env", portal.GetDefaultValidator())
 
 	environment = secrets
-	sentryHub = kernel.MakeSentry(environment)
+	sentryHub = kernel.NewSentry(environment)
 }
 
 func main() {
@@ -49,8 +49,8 @@ func run(filePath string, environment *env.Environment, sentryHub *portal.Sentry
 
 	cli.ClearScreen()
 
-	dbConnection := kernel.MakeDbConnection(environment)
-	logs := kernel.MakeLogs(environment)
+	dbConnection := kernel.NewDbConnection(environment)
+	logs := kernel.NewLogs(environment)
 
 	defer sentry.Flush(2 * time.Second)
 	defer logs.Close()

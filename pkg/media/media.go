@@ -27,7 +27,7 @@ type Media struct {
 	size         int64
 }
 
-func MakeMedia(uniqueId string, file []byte, baseFileName string) (*Media, error) {
+func NewMedia(uniqueId string, file []byte, baseFileName string) (*Media, error) {
 	if len(file) <= 0 {
 		return nil, errors.New("the given file is empty")
 	}

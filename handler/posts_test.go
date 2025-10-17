@@ -43,7 +43,7 @@ func TestPostsHandlerShow_MissingSlug(t *testing.T) {
 }
 
 func TestPostsHandlerIndex_Success(t *testing.T) {
-	conn, author := handlertests.MakeTestDB(t)
+	conn, author := handlertests.NewTestDB(t)
 	published := time.Now()
 	post := database.Post{
 		UUID:        uuid.NewString(),
@@ -59,7 +59,7 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("create post: %v", err)
 	}
 
-	h := MakePostsHandler(&repository.Posts{
+	h := NewPostsHandler(&repository.Posts{
 		DB: conn,
 	})
 
@@ -86,7 +86,7 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 }
 
 func TestPostsHandlerShow_Success(t *testing.T) {
-	conn, author := handlertests.MakeTestDB(t)
+	conn, author := handlertests.NewTestDB(t)
 	published := time.Now()
 	post := database.Post{
 		UUID:        uuid.NewString(),
@@ -102,7 +102,7 @@ func TestPostsHandlerShow_Success(t *testing.T) {
 		t.Fatalf("create post: %v", err)
 	}
 
-	h := MakePostsHandler(&repository.Posts{
+	h := NewPostsHandler(&repository.Posts{
 		DB: conn,
 	})
 
