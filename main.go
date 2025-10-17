@@ -13,7 +13,6 @@ import (
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
-	"github.com/rs/cors"
 )
 
 func main() {
@@ -56,7 +55,18 @@ func run() error {
 		return errors.New("application environment is nil")
 	}
 	addr := env.Network.GetHostURL()
-	handler := serverHandler(app)
+
+	var wrap func(http.Handler) http.Handler
+	if sentry := app.GetSentry(); sentry != nil && sentry.Handler != nil {
+		wrap = sentry.Handler.Handle
+	}
+
+	handler := endpoint.ServerHandler(endpoint.ServerHandlerConfig{
+		Mux:          app.GetMux(),
+		IsProduction: app.IsProduction(),
+		DevHost:      addr,
+		Wrap:         wrap,
+	})
 
 	server := &http.Server{
 		Addr:              addr,
@@ -72,57 +82,4 @@ func run() error {
 	}
 
 	return nil
-}
-
-func serverHandler(app *kernel.App) http.Handler {
-	if app == nil {
-		return http.NotFoundHandler()
-	}
-
-	mux := app.GetMux()
-	if mux == nil {
-		return http.NotFoundHandler()
-	}
-
-	handler := http.Handler(mux)
-
-	if !app.IsProduction() { // Caddy handles CORS.
-		env := app.GetEnv()
-		if env == nil {
-			return handler
-		}
-		localhost := env.Network.GetHostURL()
-
-		headers := []string{
-			"Accept",
-			"Authorization",
-			"Content-Type",
-			"X-CSRF-Token",
-			"User-Agent",
-			"X-API-Key",
-			"X-API-Username",
-			"X-API-Signature",
-			"X-API-Timestamp",
-			"X-API-Nonce",
-			"X-Request-ID",
-			"If-None-Match",
-			"X-API-Intended-Origin",
-		}
-
-		c := cors.New(cors.Options{
-			AllowedOrigins:   []string{localhost, "http://localhost:5173"},
-			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-			AllowedHeaders:   headers,
-			AllowCredentials: true,
-			Debug:            true,
-		})
-
-		handler = c.Handler(handler)
-	}
-
-	if sentry := app.GetSentry(); sentry != nil && sentry.Handler != nil {
-		handler = sentry.Handler.Handle(handler)
-	}
-
-	return handler
 }

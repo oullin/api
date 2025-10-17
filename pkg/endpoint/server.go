@@ -10,6 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/rs/cors"
 )
 
 // RunServer starts the provided HTTP server, listens for shutdown signals, and
@@ -69,4 +71,64 @@ func RunServer(addr string, server *http.Server) error {
 	slog.Info("server stopped", slog.String("address", addr))
 
 	return nil
+}
+
+// ServerHandlerConfig describes the dependencies required to construct the
+// HTTP handler exposed by the API server.
+type ServerHandlerConfig struct {
+	Mux          http.Handler
+	IsProduction bool
+	DevHost      string
+	Wrap         func(http.Handler) http.Handler
+}
+
+// ServerHandler constructs the HTTP handler using the provided configuration.
+// In development environments it applies permissive CORS settings so the
+// client app can communicate with the API, and it optionally wraps the handler
+// with Sentry instrumentation when supplied.
+func ServerHandler(cfg ServerHandlerConfig) http.Handler {
+	if cfg.Mux == nil {
+		return http.NotFoundHandler()
+	}
+
+	handler := cfg.Mux
+
+	if !cfg.IsProduction {
+		headers := []string{
+			"Accept",
+			"Authorization",
+			"Content-Type",
+			"X-CSRF-Token",
+			"User-Agent",
+			"X-API-Key",
+			"X-API-Username",
+			"X-API-Signature",
+			"X-API-Timestamp",
+			"X-API-Nonce",
+			"X-Request-ID",
+			"If-None-Match",
+			"X-API-Intended-Origin",
+		}
+
+		origins := []string{"http://localhost:5173"}
+		if host := cfg.DevHost; host != "" {
+			origins = append(origins, host)
+		}
+
+		c := cors.New(cors.Options{
+			AllowedOrigins:   origins,
+			AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+			AllowedHeaders:   headers,
+			AllowCredentials: true,
+			Debug:            true,
+		})
+
+		handler = c.Handler(handler)
+	}
+
+	if cfg.Wrap != nil {
+		handler = cfg.Wrap(handler)
+	}
+
+	return handler
 }
