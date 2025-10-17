@@ -93,7 +93,6 @@ services:
             - "${ENV_SPA_DIR}:${ENV_SPA_DIR}"
             - "${ENV_SPA_IMAGES_DIR}:${ENV_SPA_IMAGES_DIR}"
           working_dir: /app
-          container_name: api-runner
           environment:
               CGO_ENABLED: 1
               ENV_DB_HOST: api-db
@@ -136,7 +135,6 @@ services:
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
                     - APP_DIR=/app
                     - BINARY_NAME=oullin_api
-            container_name: api
             restart: unless-stopped
             secrets:
                 - pg_username
