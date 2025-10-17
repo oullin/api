@@ -87,13 +87,13 @@ services:
             context: .
             dockerfile: ./docker/dockerfile-api
             target: builder
-          image: api-api-runner
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
             - "${ENV_SPA_DIR}:${ENV_SPA_DIR}"
             - "${ENV_SPA_IMAGES_DIR}:${ENV_SPA_IMAGES_DIR}"
           working_dir: /app
+          container_name: api-runner
           environment:
               CGO_ENABLED: 1
               ENV_DB_HOST: api-db
@@ -116,7 +116,6 @@ services:
             user: root
             security_opt:
               - apparmor:unconfined
-            image: api-api
             env_file:
                 - .env
             volumes:
@@ -137,7 +136,7 @@ services:
                     - APP_GROUP=${ENV_DOCKER_USER_GROUP}
                     - APP_DIR=/app
                     - BINARY_NAME=oullin_api
-            container_name: oullin_api
+            container_name: api
             restart: unless-stopped
             secrets:
                 - pg_username
