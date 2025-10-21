@@ -149,7 +149,7 @@ func TestCategoriesExistOrUpdatePreservesSortWhenZero(t *testing.T) {
 	}
 }
 
-func TestCategoriesExistOrUpdateUpdatesSortWhenNonZero(t *testing.T) {
+func TestCategoriesExistOrUpdatePreservesSortWhenNonZero(t *testing.T) {
 	conn := newPostgresConnection(t, &database.Category{})
 
 	repo := repository.Categories{DB: conn}
@@ -183,8 +183,8 @@ func TestCategoriesExistOrUpdateUpdatesSortWhenNonZero(t *testing.T) {
 		t.Fatalf("reload category: %v", err)
 	}
 
-	if updated.Sort != 30 {
-		t.Fatalf("expected sort to be updated to 30, got %d", updated.Sort)
+	if updated.Sort != original.Sort {
+		t.Fatalf("expected sort to remain %d, got %d", original.Sort, updated.Sort)
 	}
 
 	if updated.Name != "Renamed" {
