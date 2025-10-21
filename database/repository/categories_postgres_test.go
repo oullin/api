@@ -11,7 +11,7 @@ import (
 func TestCategoriesFindByPostgres(t *testing.T) {
 	conn := newPostgresConnection(t, &database.Category{})
 
-	category := seedCategory(t, conn, "news", "News")
+	category := seedCategory(t, conn, "news", "News", 1)
 
 	repo := repository.Categories{DB: conn}
 

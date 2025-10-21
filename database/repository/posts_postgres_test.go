@@ -21,7 +21,7 @@ func TestPostsCreateLinksAssociationsPostgres(t *testing.T) {
 	)
 
 	user := seedUser(t, conn, "Alice", "Smith", "alice")
-	category := seedCategory(t, conn, "tech", "Tech")
+	category := seedCategory(t, conn, "tech", "Tech", 1)
 	tag := seedTag(t, conn, "go", "Go")
 
 	postsRepo := repository.Posts{
@@ -89,7 +89,7 @@ func TestPostsFindByLoadsAssociationsPostgres(t *testing.T) {
 	)
 
 	user := seedUser(t, conn, "Bob", "Jones", "bobj")
-	category := seedCategory(t, conn, "career", "Career")
+	category := seedCategory(t, conn, "career", "Career", 1)
 	tag := seedTag(t, conn, "work", "Work")
 	post := seedPost(t, conn, user, category, tag, "career-path", "Career Path", true)
 
@@ -138,7 +138,7 @@ func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
 	authorOne := seedUser(t, conn, "Carol", "One", "carol")
 	authorTwo := seedUser(t, conn, "Dave", "Two", "dave")
 
-	category := seedCategory(t, conn, "engineering", "Engineering")
+	category := seedCategory(t, conn, "engineering", "Engineering", 1)
 	tag := seedTag(t, conn, "backend", "Backend")
 	otherTag := seedTag(t, conn, "frontend", "Frontend")
 
@@ -196,8 +196,8 @@ func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
 
 	author := seedUser(t, conn, "Eve", "Duplicates", "eve")
 
-	primaryCategory := seedCategory(t, conn, "engineering", "Engineering")
-	secondaryCategory := seedCategory(t, conn, "engagement", "Engagement")
+	primaryCategory := seedCategory(t, conn, "engineering", "Engineering", 1)
+	secondaryCategory := seedCategory(t, conn, "engagement", "Engagement", 2)
 
 	primaryTag := seedTag(t, conn, "eng-backend", "Eng Backend")
 	secondaryTag := seedTag(t, conn, "eng-frontend", "Eng Frontend")
@@ -240,7 +240,7 @@ func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
 func TestPostsFindCategoryByDelegatesPostgres(t *testing.T) {
 	conn := newPostgresConnection(t, &database.Category{})
 
-	category := seedCategory(t, conn, "lifestyle", "Lifestyle")
+	category := seedCategory(t, conn, "lifestyle", "Lifestyle", 1)
 
 	postsRepo := repository.Posts{
 		DB:         conn,
