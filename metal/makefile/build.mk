@@ -42,6 +42,7 @@ build-deploy:
 	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)"
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/postgres-entrypoint.sh" && \
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/run-migration.sh" && \
+	make db:migrate && \
 	docker compose --env-file ./.env --profile prod up -d
 
 build-release:
