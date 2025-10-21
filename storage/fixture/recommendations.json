@@ -6,8 +6,8 @@
             "relation": "Grant reported to Gus directly.",
             "text": "Gus was an exceptional manager who truly valued his people. He led with empathy, clarity, and consistency - qualities that made our team stronger and more motivated. I’m grateful for his mentorship and would gladly work with him again.",
             "person": {
-                "avatar": "recommendation/amen-reghimi.png",
-                "full_name": "grant-riggle.jpeg",
+                "avatar": "recommendation/grant-riggle.jpeg",
+                "full_name": "Grant Riggle",
                 "company": "Perx Technologies",
                 "designation": "Solutions Architect"
             },
@@ -58,7 +58,7 @@
             "relation": "Gus was Rob's client.",
             "text": "I had the pleasure of working with Gus at Perx Technologies from June 2024 to March 2025, where I served as a consultant on platform infrastructure while he led the engineering team.<br/><br/>Gus's passion for the product and unwavering work ethic pushed the team forward through difficult technical challenges. His straightforward approach and commitment to getting things done, even in high-pressure situations, demonstrated his resilience as a leader.<br/><br/>Any organization facing tough engineering challenges would benefit from Gus's determination and technical grit.",
             "person": {
-                "avatar": "recommendation/amrith-g.jpeg",
+                "avatar": "recommendation/rob-roach.jpeg",
                 "full_name": "Rob Roach",
                 "company": "Perx Technologies",
                 "designation": "Infrastructure Solutions Vendor"
@@ -69,9 +69,9 @@
         {
             "uuid": "2eed9ce3-2c48-4b06-9dfc-9fc3a2c75f01",
             "relation": "Guillem reported to Gus directly.",
-            "text": " had the privilege of working with Gus for the past nine months, during which he demonstrated genuine care and unwavering dedication to our team's success.<br/><br/>He consistently prioritised our well-being and professional growth, fostering an environment where everyone felt valued. Gus spearheaded significant improvements in our engineering processes, streamlining workflows, developing comprehensive documentation and enhancing efficiency.",
+            "text": "I had the privilege of working with Gus for the past twelve months, during which he demonstrated genuine care and unwavering dedication to our team's success.<br/><br/>He consistently prioritised our well-being and professional growth, fostering an environment where everyone felt valued. Gus spearheaded significant improvements in our engineering processes, streamlining workflows, developing comprehensive documentation and enhancing efficiency.",
             "person": {
-                "avatar": "recommendation/amrith-g.jpeg",
+                "avatar": "recommendation/guillem-roma.jpeg",
                 "full_name": "Guillem Roma",
                 "company": "Perx Technologies",
                 "designation": "Tech Lead"
@@ -84,7 +84,7 @@
             "relation": "Waseem reported to Gus directly.",
             "text": " I had the privilege of working under Gus’s leadership at Perx, and his impact on our team was truly remarkable. He has a strategic approach to process optimization, always focusing on long-term efficiency rather than just quick fixes. His improvements in workflows, documentation, and monitoring significantly enhanced our software quality and delivery.<br/><br/>What sets Gus apart is his leadership style, he provides clear direction while trusting his team to work independently. His support and guidance through regular check-ins create an environment where developers feel empowered and motivated. Additionally, his ability to bridge gaps between product and engineering strengthened cross-team collaboration, driving overall success.<br/><br/>Gus is a leader who not only optimizes processes but also elevates the people around him. I highly recommend him for any role where expertise, innovation, and leadership are key.",
             "person": {
-                "avatar": "recommendation/amrith-g.jpeg",
+                "avatar": "recommendation/waseem-hakeem.jpeg",
                 "full_name": "Waseem Hakeem",
                 "company": "Perx Technologies",
                 "designation": "Software Engineer"
