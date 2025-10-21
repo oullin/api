@@ -64,3 +64,44 @@ func TestCategoriesGetOrdersBySort(t *testing.T) {
 		t.Fatalf("expected sort ordering, got %+v", items)
 	}
 }
+
+func TestCategoriesGetOrdersBySortAndName(t *testing.T) {
+	conn := newPostgresConnection(t, &database.Category{})
+
+	repo := repository.Categories{DB: conn}
+
+	alpha := database.Category{
+		UUID: uuid.NewString(),
+		Name: "Alpha",
+		Slug: "alpha",
+		Sort: 10,
+	}
+
+	bravo := database.Category{
+		UUID: uuid.NewString(),
+		Name: "Bravo",
+		Slug: "bravo",
+		Sort: 10,
+	}
+
+	if err := conn.Sql().Create(&bravo).Error; err != nil {
+		t.Fatalf("create bravo: %v", err)
+	}
+
+	if err := conn.Sql().Create(&alpha).Error; err != nil {
+		t.Fatalf("create alpha: %v", err)
+	}
+
+	items, err := repo.Get()
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if len(items) != 2 {
+		t.Fatalf("expected 2 categories, got %d", len(items))
+	}
+
+	if items[0].Slug != "alpha" || items[1].Slug != "bravo" {
+		t.Fatalf("expected secondary name ordering, got %+v", items)
+	}
+}
