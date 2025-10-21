@@ -46,6 +46,7 @@ func setupPostsHandler(t *testing.T) (*Handler, *database.Connection) {
 		UUID: uuid.NewString(),
 		Name: "Tech",
 		Slug: "tech",
+		Sort: 1,
 	})
 	conn.Sql().Create(&database.Tag{
 		UUID: uuid.NewString(),
