@@ -106,88 +106,57 @@ func TestCategoriesGetOrdersBySortAndName(t *testing.T) {
 	}
 }
 
-func TestCategoriesExistOrUpdatePreservesSortWhenZero(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Category{})
-
-	repo := repository.Categories{DB: conn}
-
-	original := database.Category{
-		UUID: uuid.NewString(),
-		Name: "Original",
-		Slug: "original",
-		Sort: 25,
+func TestCategoriesExistOrUpdatePreservesSort(t *testing.T) {
+	testCases := []struct {
+		name     string
+		sortAttr int
+	}{
+		{name: "when sort is zero", sortAttr: 0},
+		{name: "when sort is non-zero", sortAttr: 30},
 	}
 
-	if err := conn.Sql().Create(&original).Error; err != nil {
-		t.Fatalf("create original: %v", err)
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			conn := newPostgresConnection(t, &database.Category{})
 
-	existed, err := repo.ExistOrUpdate(database.CategoriesAttrs{
-		Slug: "original",
-		Name: "Renamed",
-		Sort: 0,
-	})
-	if err != nil {
-		t.Fatalf("exist or update: %v", err)
-	}
+			repo := repository.Categories{DB: conn}
 
-	if !existed {
-		t.Fatalf("expected category to exist")
-	}
+			original := database.Category{
+				UUID: uuid.NewString(),
+				Name: "Original",
+				Slug: "original",
+				Sort: 25,
+			}
 
-	var updated database.Category
-	if err := conn.Sql().Where("id = ?", original.ID).First(&updated).Error; err != nil {
-		t.Fatalf("reload category: %v", err)
-	}
+			if err := conn.Sql().Create(&original).Error; err != nil {
+				t.Fatalf("create original: %v", err)
+			}
 
-	if updated.Sort != original.Sort {
-		t.Fatalf("expected sort to remain %d, got %d", original.Sort, updated.Sort)
-	}
+			existed, err := repo.ExistOrUpdate(database.CategoriesAttrs{
+				Slug: "original",
+				Name: "Renamed",
+				Sort: tc.sortAttr,
+			})
+			if err != nil {
+				t.Fatalf("exist or update: %v", err)
+			}
 
-	if updated.Name != "Renamed" {
-		t.Fatalf("expected name to be updated, got %s", updated.Name)
-	}
-}
+			if !existed {
+				t.Fatalf("expected category to exist")
+			}
 
-func TestCategoriesExistOrUpdateUpdatesSortWhenNonZero(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Category{})
+			var updated database.Category
+			if err := conn.Sql().Where("id = ?", original.ID).First(&updated).Error; err != nil {
+				t.Fatalf("reload category: %v", err)
+			}
 
-	repo := repository.Categories{DB: conn}
+			if updated.Sort != original.Sort {
+				t.Fatalf("expected sort to remain %d, got %d", original.Sort, updated.Sort)
+			}
 
-	original := database.Category{
-		UUID: uuid.NewString(),
-		Name: "Original",
-		Slug: "original",
-		Sort: 25,
-	}
-
-	if err := conn.Sql().Create(&original).Error; err != nil {
-		t.Fatalf("create original: %v", err)
-	}
-
-	existed, err := repo.ExistOrUpdate(database.CategoriesAttrs{
-		Slug: "original",
-		Name: "Renamed",
-		Sort: 30,
-	})
-	if err != nil {
-		t.Fatalf("exist or update: %v", err)
-	}
-
-	if !existed {
-		t.Fatalf("expected category to exist")
-	}
-
-	var updated database.Category
-	if err := conn.Sql().Where("id = ?", original.ID).First(&updated).Error; err != nil {
-		t.Fatalf("reload category: %v", err)
-	}
-
-	if updated.Sort != 30 {
-		t.Fatalf("expected sort to be updated to 30, got %d", updated.Sort)
-	}
-
-	if updated.Name != "Renamed" {
-		t.Fatalf("expected name to be updated, got %s", updated.Name)
+			if updated.Name != "Renamed" {
+				t.Fatalf("expected name to be updated, got %s", updated.Name)
+			}
+		})
 	}
 }
