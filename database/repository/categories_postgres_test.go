@@ -148,3 +148,46 @@ func TestCategoriesExistOrUpdatePreservesSortWhenZero(t *testing.T) {
 		t.Fatalf("expected name to be updated, got %s", updated.Name)
 	}
 }
+
+func TestCategoriesExistOrUpdateUpdatesSortWhenNonZero(t *testing.T) {
+	conn := newPostgresConnection(t, &database.Category{})
+
+	repo := repository.Categories{DB: conn}
+
+	original := database.Category{
+		UUID: uuid.NewString(),
+		Name: "Original",
+		Slug: "original",
+		Sort: 25,
+	}
+
+	if err := conn.Sql().Create(&original).Error; err != nil {
+		t.Fatalf("create original: %v", err)
+	}
+
+	existed, err := repo.ExistOrUpdate(database.CategoriesAttrs{
+		Slug: "original",
+		Name: "Renamed",
+		Sort: 30,
+	})
+	if err != nil {
+		t.Fatalf("exist or update: %v", err)
+	}
+
+	if !existed {
+		t.Fatalf("expected category to exist")
+	}
+
+	var updated database.Category
+	if err := conn.Sql().Where("id = ?", original.ID).First(&updated).Error; err != nil {
+		t.Fatalf("reload category: %v", err)
+	}
+
+	if updated.Sort != 30 {
+		t.Fatalf("expected sort to be updated to 30, got %d", updated.Sort)
+	}
+
+	if updated.Name != "Renamed" {
+		t.Fatalf("expected name to be updated, got %s", updated.Name)
+	}
+}
