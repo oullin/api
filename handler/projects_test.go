@@ -7,6 +7,6 @@ func TestProjectsHandler(t *testing.T) {
 		make:     func(f string) fileHandler { return NewProjectsHandler(f) },
 		endpoint: "/projects",
 		fixture:  "../storage/fixture/projects.json",
-		assert:   assertFirstUUID("00a0a12e-6af0-4f5a-b96d-3c95cc7c365c"),
+		assert:   assertFirstUUID("538e5f1d-86f0-4071-b270-6aa61a156612"),
 	})
 }

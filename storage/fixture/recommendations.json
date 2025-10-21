@@ -1,6 +1,19 @@
 {
-    "version": "1.0.4",
+    "version": "1.0.5",
     "data": [
+        {
+            "uuid": "be1f8226-61d8-4b9b-a30f-0cdb521bd841",
+            "relation": "Grant reported to Gus directly.",
+            "text": "Gus was an exceptional manager who truly valued his people. He led with empathy, clarity, and consistency - qualities that made our team stronger and more motivated. I’m grateful for his mentorship and would gladly work with him again.",
+            "person": {
+                "avatar": "recommendation/grant-riggle.jpeg",
+                "full_name": "Grant Riggle",
+                "company": "Perx Technologies",
+                "designation": "Solutions Architect"
+            },
+            "created_at": "2025-10-20",
+            "updated_at": "2025-10-20"
+        },
         {
             "uuid": "0fa21471-c13a-4c8a-83ba-9b5d8782ab72",
             "relation": "Amen managed Gus directly.",
@@ -39,6 +52,45 @@
             },
             "created_at": "2025-03-26",
             "updated_at": "2025-03-26"
+        },
+        {
+            "uuid": "68d753fa-e523-4c68-a3f3-944bfee52e44",
+            "relation": "Gus was Rob's client.",
+            "text": "I had the pleasure of working with Gus at Perx Technologies from June 2024 to March 2025, where I served as a consultant on platform infrastructure while he led the engineering team.<br/><br/>Gus's passion for the product and unwavering work ethic pushed the team forward through difficult technical challenges. His straightforward approach and commitment to getting things done, even in high-pressure situations, demonstrated his resilience as a leader.<br/><br/>Any organization facing tough engineering challenges would benefit from Gus's determination and technical grit.",
+            "person": {
+                "avatar": "recommendation/rob-roach.jpeg",
+                "full_name": "Rob Roach",
+                "company": "Perx Technologies",
+                "designation": "Infrastructure Solutions Vendor"
+            },
+            "created_at": "2025-03-10",
+            "updated_at": "2025-03-10"
+        },
+        {
+            "uuid": "2eed9ce3-2c48-4b06-9dfc-9fc3a2c75f01",
+            "relation": "Guillem reported to Gus directly.",
+            "text": "I had the privilege of working with Gus for the past twelve months, during which he demonstrated genuine care and unwavering dedication to our team's success.<br/><br/>He consistently prioritised our well-being and professional growth, fostering an environment where everyone felt valued. Gus spearheaded significant improvements in our engineering processes, streamlining workflows, developing comprehensive documentation and enhancing efficiency.",
+            "person": {
+                "avatar": "recommendation/guillem-roma.jpeg",
+                "full_name": "Guillem Roma",
+                "company": "Perx Technologies",
+                "designation": "Tech Lead"
+            },
+            "created_at": "2025-03-09",
+            "updated_at": "2025-03-09"
+        },
+        {
+            "uuid": "fcf927e0-e8ab-4c4b-adfa-65ecfcf902de",
+            "relation": "Waseem reported to Gus directly.",
+            "text": " I had the privilege of working under Gus’s leadership at Perx, and his impact on our team was truly remarkable. He has a strategic approach to process optimization, always focusing on long-term efficiency rather than just quick fixes. His improvements in workflows, documentation, and monitoring significantly enhanced our software quality and delivery.<br/><br/>What sets Gus apart is his leadership style, he provides clear direction while trusting his team to work independently. His support and guidance through regular check-ins create an environment where developers feel empowered and motivated. Additionally, his ability to bridge gaps between product and engineering strengthened cross-team collaboration, driving overall success.<br/><br/>Gus is a leader who not only optimizes processes but also elevates the people around him. I highly recommend him for any role where expertise, innovation, and leadership are key.",
+            "person": {
+                "avatar": "recommendation/waseem-hakeem.jpeg",
+                "full_name": "Waseem Hakeem",
+                "company": "Perx Technologies",
+                "designation": "Software Engineer"
+            },
+            "created_at": "2025-03-06",
+            "updated_at": "2025-03-06"
         },
         {
             "uuid": "86fa5273-4e21-45e0-80de-5ec908cf6f81",

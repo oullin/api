@@ -7,6 +7,6 @@ func TestRecommendationsHandler(t *testing.T) {
 		make:     func(f string) fileHandler { return NewRecommendationsHandler(f) },
 		endpoint: "/recommendations",
 		fixture:  "../storage/fixture/recommendations.json",
-		assert:   assertFirstUUID("0fa21471-c13a-4c8a-83ba-9b5d8782ab72"),
+		assert:   assertFirstUUID("be1f8226-61d8-4b9b-a30f-0cdb521bd841"),
 	})
 }
