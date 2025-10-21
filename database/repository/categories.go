@@ -142,7 +142,9 @@ func (c Categories) ExistOrUpdate(seed database.CategoriesAttrs) (bool, error) {
 		category.Description = seed.Description
 	}
 
-	category.Sort = seed.Sort
+	if seed.Sort != 0 {
+		category.Sort = seed.Sort
+	}
 
 	if result := c.DB.Sql().Save(&category); model.HasDbIssues(result.Error) {
 		return false, fmt.Errorf("error on exist or update category [%s]: %s", category.Name, result.Error)
