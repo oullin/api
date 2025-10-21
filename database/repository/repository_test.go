@@ -149,6 +149,7 @@ func TestCategoriesFindBy(t *testing.T) {
 		UUID: uuid.NewString(),
 		Name: "News",
 		Slug: "news",
+		Sort: 1,
 	}
 
 	if err := conn.Sql().Create(&c).Error; err != nil {
@@ -192,6 +193,7 @@ func TestPostsCreateAndFind(t *testing.T) {
 		UUID: uuid.NewString(),
 		Name: "Tech",
 		Slug: "tech",
+		Sort: 1,
 	}
 
 	if err := conn.Sql().Create(&cat).Error; err != nil {

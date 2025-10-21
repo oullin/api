@@ -500,8 +500,8 @@ func TestSeedFromFileRunsMigrations(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	contents := strings.Join([]string{
-		"INSERT INTO categories (uuid, name, slug)",
-		"VALUES ('00000000-0000-0000-0000-00000000c001', 'Tech', 'tech');",
+		"INSERT INTO categories (uuid, name, slug, sort)",
+		"VALUES ('00000000-0000-0000-0000-00000000c001', 'Tech', 'tech', 1);",
 	}, "\n")
 
 	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)

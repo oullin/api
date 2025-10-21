@@ -20,6 +20,7 @@ func (c Categories) Get() ([]database.Category, error) {
 	err := c.DB.Sql().
 		Model(&database.Category{}).
 		Where("categories.deleted_at is null").
+		Order("categories.sort asc, categories.name asc").
 		Find(&categories).Error
 
 	if err != nil {
@@ -53,7 +54,7 @@ func (c Categories) GetAll(paginate pagination.Paginate) (*pagination.Pagination
 		Preload("Posts", "posts.deleted_at IS NULL AND posts.published_at IS NOT NULL").
 		Offset(offset).
 		Limit(paginate.Limit).
-		Order("categories.name asc").
+		Order("categories.sort asc, categories.name asc").
 		Group(group).
 		Find(&categories).Error
 
@@ -104,6 +105,7 @@ func (c Categories) CreateOrUpdate(post database.Post, attrs database.PostsAttrs
 			Name:        seed.Name,
 			Slug:        seed.Slug,
 			Description: seed.Description,
+			Sort:        seed.Sort,
 		}
 
 		if result := c.DB.Sql().Create(&category); model.HasDbIssues(result.Error) {

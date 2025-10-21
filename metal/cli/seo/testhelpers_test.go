@@ -131,6 +131,7 @@ func seedCategory(t *testing.T, conn *database.Connection, slug, name string) da
 		UUID: uuid.NewString(),
 		Slug: slug,
 		Name: name,
+		Sort: 1,
 	}
 
 	if err := conn.Sql().Create(&category).Error; err != nil {

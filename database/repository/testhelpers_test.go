@@ -106,13 +106,14 @@ func seedUser(t *testing.T, conn *database.Connection, first, last, username str
 	return user
 }
 
-func seedCategory(t *testing.T, conn *database.Connection, slug, name string) database.Category {
+func seedCategory(t *testing.T, conn *database.Connection, slug, name string, sort int) database.Category {
 	t.Helper()
 
 	category := database.Category{
 		UUID: uuid.NewString(),
 		Slug: slug,
 		Name: name,
+		Sort: sort,
 	}
 
 	if err := conn.Sql().Create(&category).Error; err != nil {
