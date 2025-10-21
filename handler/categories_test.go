@@ -34,25 +34,46 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("create post: %v", err)
 	}
 
-	cat := database.Category{
+	catB := database.Category{
 		UUID:        uuid.NewString(),
-		Name:        "Cat",
-		Slug:        "cat",
+		Name:        "Beta",
+		Slug:        "beta",
 		Description: "desc",
 		Sort:        10,
 	}
 
-	if err := conn.Sql().Create(&cat).Error; err != nil {
-		t.Fatalf("create category: %v", err)
+	if err := conn.Sql().Create(&catB).Error; err != nil {
+		t.Fatalf("create category beta: %v", err)
 	}
 
-	link := database.PostCategory{
+	catA := database.Category{
+		UUID:        uuid.NewString(),
+		Name:        "Alpha",
+		Slug:        "alpha",
+		Description: "desc",
+		Sort:        10,
+	}
+
+	if err := conn.Sql().Create(&catA).Error; err != nil {
+		t.Fatalf("create category alpha: %v", err)
+	}
+
+	linkBeta := database.PostCategory{
 		PostID:     post.ID,
-		CategoryID: cat.ID,
+		CategoryID: catB.ID,
 	}
 
-	if err := conn.Sql().Create(&link).Error; err != nil {
-		t.Fatalf("create link: %v", err)
+	if err := conn.Sql().Create(&linkBeta).Error; err != nil {
+		t.Fatalf("create beta link: %v", err)
+	}
+
+	linkAlpha := database.PostCategory{
+		PostID:     post.ID,
+		CategoryID: catA.ID,
+	}
+
+	if err := conn.Sql().Create(&linkAlpha).Error; err != nil {
+		t.Fatalf("create alpha link: %v", err)
 	}
 
 	h := NewCategoriesHandler(&repository.Categories{
@@ -76,7 +97,15 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("decode: %v", err)
 	}
 
-	if len(resp.Data) != 1 || resp.Data[0].Slug != "cat" || resp.Data[0].Sort != 10 {
-		t.Fatalf("unexpected data: %+v", resp.Data)
+	if len(resp.Data) != 2 {
+		t.Fatalf("unexpected data length: %+v", resp.Data)
+	}
+
+	if resp.Data[0].Name != "Alpha" || resp.Data[0].Slug != "alpha" || resp.Data[0].Sort != 10 {
+		t.Fatalf("unexpected first category: %+v", resp.Data[0])
+	}
+
+	if resp.Data[1].Name != "Beta" || resp.Data[1].Slug != "beta" || resp.Data[1].Sort != 10 {
+		t.Fatalf("unexpected second category: %+v", resp.Data[1])
 	}
 }
