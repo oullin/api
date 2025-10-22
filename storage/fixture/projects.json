@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "1.0.2",
     "data": [
         {
             "uuid": "538e5f1d-86f0-4071-b270-6aa61a156612",
@@ -48,9 +48,9 @@
         {
             "uuid": "2d178e11-a584-4e20-a493-3b84007dd358",
             "language": "Vue / TypeScript",
-            "title": "Gus's personal website.",
+            "title": "Gus's portfolio.",
             "excerpt": "Gus is a full-stack Software Engineer who has been building web technologies for more two decades.",
-            "url": "https://github.com/gocantodev/client",
+            "url": "https://github.com/oullin-link/gocanto-dev-client",
             "is_open_source": true,
             "icon": "icons/icon-02.svg",
             "created_at": "2021-11-03",
