@@ -1,4 +1,4 @@
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal prometheus-dashboard
 
 DB_SECRET_USERNAME ?= ./database/infra/secrets/pg_username
 DB_SECRET_PASSWORD ?= ./database/infra/secrets/pg_password
@@ -123,3 +123,22 @@ test-all:
 
 run-metal:
 	go run metal/cli/main.go
+
+prometheus-dashboard:
+	@url="http://localhost:9090"; \
+	printf "Attempting to open Prometheus dashboard at %s\\n" "$$url"; \
+	if command -v xdg-open >/dev/null 2>&1; then \
+		xdg-open "$$url"; \
+	elif command -v sensible-browser >/dev/null 2>&1; then \
+		sensible-browser "$$url"; \
+	elif command -v w3m >/dev/null 2>&1; then \
+		w3m "$$url"; \
+	elif command -v lynx >/dev/null 2>&1; then \
+		lynx "$$url"; \
+	elif command -v links >/dev/null 2>&1; then \
+		links "$$url"; \
+	elif command -v python3 >/dev/null 2>&1; then \
+		python3 -m webbrowser "$$url"; \
+	else \
+		printf "Unable to locate a browser command. Please open %s manually.\\n" "$$url"; \
+	fi
