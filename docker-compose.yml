@@ -76,6 +76,7 @@ services:
             depends_on:
                 - caddy_prod
                 - cadvisor
+                - postgres-exporter
 
         cadvisor:
             image: gcr.io/cadvisor/cadvisor:v0.49.1
@@ -92,6 +93,31 @@ services:
                 - /var/lib/docker/:/var/lib/docker:ro
             networks:
                 - caddy_net
+
+        postgres-exporter:
+            image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+            profiles: ["prod"]
+            container_name: oullin_postgres_exporter
+            restart: unless-stopped
+            environment:
+                DATA_SOURCE_USER_FILE: /run/secrets/pg_username
+                DATA_SOURCE_PASS_FILE: /run/secrets/pg_password
+            command:
+                - /bin/sh
+                - -ec
+                - |
+                    export DATA_SOURCE_URI="api-db:${ENV_DB_PORT:-5432}/$(cat /run/secrets/pg_dbname)?sslmode=require"
+                    exec /bin/postgres_exporter
+            secrets:
+                - pg_username
+                - pg_password
+                - pg_dbname
+            depends_on:
+                api-db:
+                    condition: service_healthy
+            networks:
+                - caddy_net
+                - oullin_net
 
         caddy_local:
             build:
