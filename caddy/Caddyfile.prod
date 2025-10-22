@@ -85,14 +85,25 @@ oullin.io {
 		}
 	}
 
-	# --- Default handler: proxy to web, preserving Host (ALL inside reverse_proxy)
-	handle {
-		reverse_proxy web:80 {
-			header_up Host {host}
-			header_up X-Forwarded-Host {host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-For {remote}
+	@early_hints {
+		method GET HEAD
+		expression {env.EARLY_HINTS_LINKS} != ""
+	}
+
+	# --- Default handler: optional Early Hints before proxying to web
+	reverse_proxy web:80 {
+		handle_response @early_hints {
+			respond 103 {
+				header Link {env.EARLY_HINTS_LINKS}
+			}
+
+			copy_response
 		}
+
+		header_up Host {host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote}
 	}
 }
 
