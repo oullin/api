@@ -73,7 +73,7 @@ services:
                         - proxy
 
         prometheus:
-            image: prom/prometheus:v3.0.1
+            image: prom/prometheus:v3.7.1
             profiles: ["prod"]
             container_name: oullin_prometheus
             restart: unless-stopped
