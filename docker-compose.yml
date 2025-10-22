@@ -76,6 +76,7 @@ services:
             depends_on:
                 - caddy_prod
                 - cadvisor
+                - node-exporter
                 - postgres-exporter
 
         cadvisor:
@@ -91,6 +92,23 @@ services:
                 - /var/run:/var/run:ro
                 - /sys:/sys:ro
                 - /var/lib/docker/:/var/lib/docker:ro
+            networks:
+                - caddy_net
+
+        node-exporter:
+            image: prom/node-exporter:v1.8.1
+            profiles: ["prod"]
+            container_name: oullin_node_exporter
+            restart: unless-stopped
+            pid: host
+            command:
+                - "--path.procfs=/host/proc"
+                - "--path.sysfs=/host/sys"
+                - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+            volumes:
+                - /proc:/host/proc:ro
+                - /sys:/host/sys:ro
+                - /:/rootfs:ro
             networks:
                 - caddy_net
 
