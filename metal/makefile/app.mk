@@ -1,4 +1,4 @@
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal open-prometheus
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal open-prometheus open-prometheus-local
 
 DB_SECRET_USERNAME ?= ./database/infra/secrets/pg_username
 DB_SECRET_PASSWORD ?= ./database/infra/secrets/pg_password
@@ -125,10 +125,10 @@ run-metal:
 	go run metal/cli/main.go
 
 open-prometheus:
-	@url="http://localhost:9090"; \
-	printf "Attempting to open Prometheus dashboard at %s\\n" "$$url"; \
-	if command -v xdg-open >/dev/null 2>&1; then \
-		xdg-open "$$url"; \
+        @url="http://localhost:9090"; \
+        printf "Attempting to open Prometheus dashboard at %s\\n" "$$url"; \
+        if command -v xdg-open >/dev/null 2>&1; then \
+                xdg-open "$$url"; \
 	elif command -v sensible-browser >/dev/null 2>&1; then \
 		sensible-browser "$$url"; \
 	elif command -v w3m >/dev/null 2>&1; then \
@@ -139,6 +139,44 @@ open-prometheus:
 		links "$$url"; \
 	elif command -v python3 >/dev/null 2>&1; then \
 		python3 -m webbrowser "$$url"; \
-	else \
-		printf "Unable to locate a browser command. Please open %s manually.\\n" "$$url"; \
-	fi
+        else \
+                printf "Unable to locate a browser command. Please open %s manually.\\n" "$$url"; \
+        fi
+
+open-prometheus-local:
+        @raw_url=""; \
+        if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+                raw_url="$$(docker compose port prometheus 9090 2>/dev/null | tail -n1)"; \
+                if [ -z "$$raw_url" ]; then \
+                        raw_url="$$(docker compose --profile prod port prometheus 9090 2>/dev/null | tail -n1)"; \
+                fi; \
+        elif command -v docker-compose >/dev/null 2>&1; then \
+                raw_url="$$(docker-compose port prometheus 9090 2>/dev/null | tail -n1)"; \
+                if [ -z "$$raw_url" ]; then \
+                        raw_url="$$(docker-compose --profile prod port prometheus 9090 2>/dev/null | tail -n1)"; \
+                fi; \
+        fi; \
+        if [ -z "$$raw_url" ]; then \
+                url="http://localhost:9090"; \
+        else \
+                case "$$raw_url" in \
+                        http://*|https://*) url="$$raw_url" ;; \
+                        *) url="http://$$raw_url" ;; \
+                esac; \
+        fi; \
+        printf "Attempting to open Prometheus dashboard at %s\\n" "$$url"; \
+        if command -v xdg-open >/dev/null 2>&1; then \
+                xdg-open "$$url"; \
+        elif command -v sensible-browser >/dev/null 2>&1; then \
+                sensible-browser "$$url"; \
+        elif command -v w3m >/dev/null 2>&1; then \
+                w3m "$$url"; \
+        elif command -v lynx >/dev/null 2>&1; then \
+                lynx "$$url"; \
+        elif command -v links >/dev/null 2>&1; then \
+                links "$$url"; \
+        elif command -v python3 >/dev/null 2>&1; then \
+                python3 -m webbrowser "$$url"; \
+        else \
+                printf "Unable to locate a browser command. Please open %s manually.\\n" "$$url"; \
+        fi
