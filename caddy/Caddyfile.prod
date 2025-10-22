@@ -91,17 +91,19 @@ oullin.io {
 	}
 
 	# --- Default handler: optional Early Hints before proxying to web
-	route {
-		respond @early_hints 103 {
-			header Link {env.EARLY_HINTS_LINKS}
+	reverse_proxy web:80 {
+		handle_response @early_hints {
+			respond 103 {
+				header Link {env.EARLY_HINTS_LINKS}
+			}
+
+			copy_response
 		}
 
-		reverse_proxy web:80 {
-			header_up Host {host}
-			header_up X-Forwarded-Host {host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-For {remote}
-		}
+		header_up Host {host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote}
 	}
 }
 

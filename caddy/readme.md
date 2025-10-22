@@ -15,4 +15,7 @@ values (for example: `</assets/index-CQed9K_I.css>; rel=preload; as=style, </ass
 When this variable is defined Caddy will emit an HTTP `103 Early Hints`
 response for eligible GET and HEAD requests before proxying traffic, allowing
 clients to start fetching the referenced assets while the upstream response is
-prepared.
+prepared. The local and production Caddyfiles attach a `handle_response`
+interceptor to `reverse_proxy` so the proxy can send the Early Hints response
+and then `copy_response` from the upstream service without interrupting the
+request flow.

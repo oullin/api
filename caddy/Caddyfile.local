@@ -43,11 +43,13 @@
 	# Reverse proxy all incoming requests to the 'api' service.
 	# 	- The service name 'api' is resolved by Docker's internal DNS to the correct container IP on the 'caddy_net' network.
 	# 	- The API container listens on port 8080 (from the ENV_HTTP_PORT).
-	route {
-		respond @early_hints 103 {
-			header Link {env.EARLY_HINTS_LINKS}
-		}
+	reverse_proxy api:8080 {
+		handle_response @early_hints {
+			respond 103 {
+				header Link {env.EARLY_HINTS_LINKS}
+			}
 
-		reverse_proxy api:8080
+			copy_response
+		}
 	}
 }
