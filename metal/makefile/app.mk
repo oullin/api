@@ -1,4 +1,4 @@
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal prometheus-dashboard
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal open-prometheus
 
 DB_SECRET_USERNAME ?= ./database/infra/secrets/pg_username
 DB_SECRET_PASSWORD ?= ./database/infra/secrets/pg_password
@@ -124,7 +124,7 @@ test-all:
 run-metal:
 	go run metal/cli/main.go
 
-prometheus-dashboard:
+open-prometheus:
 	@url="http://localhost:9090"; \
 	printf "Attempting to open Prometheus dashboard at %s\\n" "$$url"; \
 	if command -v xdg-open >/dev/null 2>&1; then \

@@ -75,6 +75,23 @@ services:
                 - caddy_net
             depends_on:
                 - caddy_prod
+                - cadvisor
+
+        cadvisor:
+            image: gcr.io/cadvisor/cadvisor:v0.49.1
+            profiles: ["prod"]
+            container_name: oullin_cadvisor
+            restart: unless-stopped
+            privileged: true
+            command:
+                - "--docker_only=true"
+            volumes:
+                - /:/rootfs:ro
+                - /var/run:/var/run:ro
+                - /sys:/sys:ro
+                - /var/lib/docker/:/var/lib/docker:ro
+            networks:
+                - caddy_net
 
         caddy_local:
             build:
