@@ -13,6 +13,14 @@ storage/seo/*.*
 caddy/mtls/*.*
 !caddy/mtls/.gitkeep
 
+# --- [Caddy]: Admin mtls
+caddy/admin-mtls/*.*
+!caddy/admin-mtls/.gitkeep
+
+# --- [Metrics]: Admin client mtls
+metrics/admin-mtls/*.*
+!metrics/admin-mtls/.gitkeep
+
 # --- [API]: Bin
 bin/*
 !bin/.gitkeep

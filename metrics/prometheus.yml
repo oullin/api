@@ -3,7 +3,13 @@ global:
 
 scrape_configs:
   - job_name: "caddy"
+    scheme: https
     metrics_path: /metrics
+    tls_config:
+      ca_file: /run/secrets/caddy_admin_ca
+      cert_file: /run/secrets/caddy_admin_client_cert
+      key_file: /run/secrets/caddy_admin_client_key
+      server_name: proxy
     static_configs:
       - targets:
           - proxy:2019

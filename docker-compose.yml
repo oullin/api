@@ -6,6 +6,16 @@ secrets:
         file: ${DB_SECRET_PASSWORD:-./database/infra/secrets/pg_password}
     pg_dbname:
         file: ${DB_SECRET_DBNAME:-./database/infra/secrets/pg_dbname}
+    caddy_admin_server_cert:
+        file: ${CADDY_ADMIN_SERVER_CERT:-./caddy/admin-mtls/server.pem}
+    caddy_admin_server_key:
+        file: ${CADDY_ADMIN_SERVER_KEY:-./caddy/admin-mtls/server.key}
+    caddy_admin_ca:
+        file: ${CADDY_ADMIN_CA:-./caddy/admin-mtls/ca.pem}
+    caddy_admin_client_cert:
+        file: ${CADDY_ADMIN_CLIENT_CERT:-./metrics/admin-mtls/client.pem}
+    caddy_admin_client_key:
+        file: ${CADDY_ADMIN_CLIENT_KEY:-./metrics/admin-mtls/client.key}
 
 volumes:
     caddy_data:
@@ -53,6 +63,10 @@ services:
                 - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile
                 - ${CADDY_LOGS_PATH}:/var/log/caddy
                 - ./caddy/mtls:/etc/caddy/mtls:ro
+            secrets:
+                - caddy_admin_server_cert
+                - caddy_admin_server_key
+                - caddy_admin_ca
             networks:
                 caddy_net:
                     aliases:
@@ -71,6 +85,10 @@ services:
             volumes:
                 - prometheus_data:/prometheus
                 - ./metrics/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            secrets:
+                - caddy_admin_client_cert
+                - caddy_admin_client_key
+                - caddy_admin_ca
             networks:
                 - caddy_net
             depends_on:

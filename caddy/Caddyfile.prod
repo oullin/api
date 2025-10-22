@@ -1,6 +1,14 @@
-# Enable Prometheus metrics on the admin endpoint so the monitoring stack can scrape them.
+# Enable Prometheus metrics on the admin endpoint with mutual TLS so that only trusted clients
+# (Prometheus) can access it. TLS materials are provided through Docker secrets at runtime.
 {
-        admin 0.0.0.0:2019
+        admin https://0.0.0.0:2019 {
+                tls /run/secrets/caddy_admin_server_cert /run/secrets/caddy_admin_server_key {
+                        client_auth {
+                                mode require_and_verify
+                                trust_pool file /run/secrets/caddy_admin_ca
+                        }
+                }
+        }
         metrics
 }
 
