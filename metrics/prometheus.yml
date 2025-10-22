@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "caddy"
+    scheme: https
+    metrics_path: /metrics
+    tls_config:
+      ca_file: /run/secrets/caddy_admin_ca
+      cert_file: /run/secrets/caddy_admin_client_cert
+      key_file: /run/secrets/caddy_admin_client_key
+      server_name: proxy
+    static_configs:
+      - targets:
+          - proxy:2019
+
+  - job_name: "prometheus"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name: "cadvisor"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - cadvisor:8080
+
+  - job_name: "host"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - node-exporter:9100
+
+  - job_name: "postgres"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - postgres-exporter:9187
