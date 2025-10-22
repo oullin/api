@@ -13,6 +13,9 @@ volumes:
     go_mod_cache:
         driver: local
 
+    prometheus_data:
+        driver: local
+
     # --- DB: Define a named volume at the top level.
     #     Docker will manage its lifecycle.
     oullin_db_data:
@@ -52,8 +55,26 @@ services:
                 - ./caddy/mtls:/etc/caddy/mtls:ro
             networks:
                 caddy_net:
-                  aliases:
-                    - proxy
+                    aliases:
+                        - proxy
+
+        prometheus:
+            image: prom/prometheus:v3.0.1
+            profiles: ["prod"]
+            container_name: oullin_prometheus
+            restart: unless-stopped
+            command:
+                - "--config.file=/etc/prometheus/prometheus.yml"
+                - "--storage.tsdb.path=/prometheus"
+            ports:
+                - "127.0.0.1:9090:9090"
+            volumes:
+                - prometheus_data:/prometheus
+                - ./metrics/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            networks:
+                - caddy_net
+            depends_on:
+                - caddy_prod
 
         caddy_local:
             build:

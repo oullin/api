@@ -1,3 +1,9 @@
+# Enable Prometheus metrics on the admin endpoint so the monitoring stack can scrape them.
+{
+        admin 0.0.0.0:2019
+        metrics
+}
+
 # Caddy will automatically provision a Let's Encrypt certificate.
 gocanto.dev, www.gocanto.dev {
 	log {
