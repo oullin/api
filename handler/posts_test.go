@@ -142,7 +142,7 @@ func TestPostsHandlerShow_Success(t *testing.T) {
 		t.Fatalf("unexpected slug: %s", resp.Slug)
 	}
 
-	if len(resp.Tags) != 1 || resp.Tags[0].Slug != "go" {
+	if len(resp.Tags) != 1 || resp.Tags[0].Slug != "go" || resp.Tags[0].Name != "Go" {
 		t.Fatalf("unexpected tags: %+v", resp.Tags)
 	}
 }
