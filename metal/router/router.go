@@ -54,6 +54,7 @@ func (r *Router) Posts() {
 
 	r.Mux.HandleFunc("POST /posts", index)
 	r.Mux.HandleFunc("GET /posts/{slug}", show)
+	r.Mux.HandleFunc("GET /post/{slug}", show)
 }
 
 func (r *Router) Categories() {

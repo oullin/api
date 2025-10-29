@@ -88,6 +88,16 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 func TestPostsHandlerShow_Success(t *testing.T) {
 	conn, author := handlertests.NewTestDB(t)
 	published := time.Now()
+	tag := database.Tag{
+		UUID: uuid.NewString(),
+		Name: "Go",
+		Slug: "go",
+	}
+
+	if err := conn.Sql().Create(&tag).Error; err != nil {
+		t.Fatalf("create tag: %v", err)
+	}
+
 	post := database.Post{
 		UUID:        uuid.NewString(),
 		AuthorID:    author.ID,
@@ -100,6 +110,10 @@ func TestPostsHandlerShow_Success(t *testing.T) {
 
 	if err := conn.Sql().Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
+	}
+
+	if err := conn.Sql().Create(&database.PostTag{PostID: post.ID, TagID: tag.ID}).Error; err != nil {
+		t.Fatalf("create post tag: %v", err)
 	}
 
 	h := NewPostsHandler(&repository.Posts{
@@ -126,5 +140,9 @@ func TestPostsHandlerShow_Success(t *testing.T) {
 
 	if resp.Slug != "hello" {
 		t.Fatalf("unexpected slug: %s", resp.Slug)
+	}
+
+	if len(resp.Tags) != 1 || resp.Tags[0].Slug != "go" {
+		t.Fatalf("unexpected tags: %+v", resp.Tags)
 	}
 }
