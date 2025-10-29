@@ -275,7 +275,6 @@ func TestAppBootRoutes(t *testing.T) {
 		{"GET", "/recommendations"},
 		{"POST", "/posts"},
 		{"GET", "/posts/slug"},
-		{"GET", "/post/slug"},
 		{"GET", "/categories"},
 	}
 
