@@ -6,11 +6,24 @@ secrets:
         file: ${DB_SECRET_PASSWORD:-./database/infra/secrets/pg_password}
     pg_dbname:
         file: ${DB_SECRET_DBNAME:-./database/infra/secrets/pg_dbname}
+    caddy_admin_server_cert:
+        file: ${CADDY_ADMIN_SERVER_CERT:-./caddy/admin-mtls/server.pem}
+    caddy_admin_server_key:
+        file: ${CADDY_ADMIN_SERVER_KEY:-./caddy/admin-mtls/server.key}
+    caddy_admin_ca:
+        file: ${CADDY_ADMIN_CA:-./caddy/admin-mtls/ca.pem}
+    caddy_admin_client_cert:
+        file: ${CADDY_ADMIN_CLIENT_CERT:-./metrics/admin-mtls/client.pem}
+    caddy_admin_client_key:
+        file: ${CADDY_ADMIN_CLIENT_KEY:-./metrics/admin-mtls/client.key}
 
 volumes:
     caddy_data:
     caddy_config:
     go_mod_cache:
+        driver: local
+
+    prometheus_data:
         driver: local
 
     # --- DB: Define a named volume at the top level.
@@ -50,10 +63,97 @@ services:
                 - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile
                 - ${CADDY_LOGS_PATH}:/var/log/caddy
                 - ./caddy/mtls:/etc/caddy/mtls:ro
+            secrets:
+                - caddy_admin_server_cert
+                - caddy_admin_server_key
+                - caddy_admin_ca
             networks:
                 caddy_net:
-                  aliases:
-                    - proxy
+                    aliases:
+                        - proxy
+
+        prometheus:
+            image: prom/prometheus:v3.7.1
+            profiles: ["prod"]
+            container_name: oullin_prometheus
+            restart: unless-stopped
+            command:
+                - "--config.file=/etc/prometheus/prometheus.yml"
+                - "--storage.tsdb.path=/prometheus"
+            ports:
+                - "127.0.0.1:9090:9090"
+            volumes:
+                - prometheus_data:/prometheus
+                - ./metrics/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            secrets:
+                - caddy_admin_client_cert
+                - caddy_admin_client_key
+                - caddy_admin_ca
+            networks:
+                - caddy_net
+            depends_on:
+                - caddy_prod
+                - cadvisor
+                - node-exporter
+                - postgres-exporter
+
+        cadvisor:
+            image: gcr.io/cadvisor/cadvisor:v0.49.1
+            profiles: ["prod"]
+            container_name: oullin_cadvisor
+            restart: unless-stopped
+            privileged: true
+            command:
+                - "--docker_only=true"
+            volumes:
+                - /:/rootfs:ro
+                - /var/run:/var/run:ro
+                - /sys:/sys:ro
+                - /var/lib/docker/:/var/lib/docker:ro
+            networks:
+                - caddy_net
+
+        node-exporter:
+            image: prom/node-exporter:v1.8.1
+            profiles: ["prod"]
+            container_name: oullin_node_exporter
+            restart: unless-stopped
+            pid: host
+            command:
+                - "--path.procfs=/host/proc"
+                - "--path.sysfs=/host/sys"
+                - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+            volumes:
+                - /proc:/host/proc:ro
+                - /sys:/host/sys:ro
+                - /:/rootfs:ro
+            networks:
+                - caddy_net
+
+        postgres-exporter:
+            image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+            profiles: ["prod"]
+            container_name: oullin_postgres_exporter
+            restart: unless-stopped
+            environment:
+                DATA_SOURCE_USER_FILE: /run/secrets/pg_username
+                DATA_SOURCE_PASS_FILE: /run/secrets/pg_password
+            command:
+                - /bin/sh
+                - -ec
+                - |
+                    export DATA_SOURCE_URI="api-db:${ENV_DB_PORT:-5432}/$(cat /run/secrets/pg_dbname)?sslmode=require"
+                    exec /bin/postgres_exporter
+            secrets:
+                - pg_username
+                - pg_password
+                - pg_dbname
+            depends_on:
+                api-db:
+                    condition: service_healthy
+            networks:
+                - caddy_net
+                - oullin_net
 
         caddy_local:
             build:
