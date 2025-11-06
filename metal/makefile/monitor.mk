@@ -279,7 +279,7 @@ monitor-backup:
 ## Export Grafana dashboards to JSON files
 monitor-export-dashboards:
 	@printf "$(BOLD)$(CYAN)Exporting Grafana dashboards...$(NC)\n"
-	@./scripts/export-grafana-dashboards.sh
+	@./grafana/export-dashboards.sh
 
 ## Show monitoring help
 monitor-help:
