@@ -12,6 +12,8 @@ volumes:
     caddy_config:
     go_mod_cache:
         driver: local
+    prometheus_data:
+        driver: local
 
     # --- DB: Define a named volume at the top level.
     #     Docker will manage its lifecycle.
@@ -44,6 +46,8 @@ services:
                 - "80:80"
                 - "443:443"
                 - "443:443/udp" # Required for HTTP/3
+            expose:
+                - "2019" # Caddy admin API for Prometheus metrics
             volumes:
                 - caddy_data:/data
                 - caddy_config:/config
@@ -77,6 +81,27 @@ services:
                 - ./caddy/Caddyfile.local:/etc/caddy/Caddyfile
             networks:
                 - caddy_net
+
+        prometheus:
+            image: prom/prometheus:v3.0.1
+            profiles: ["prod"]
+            container_name: oullin_prometheus
+            restart: unless-stopped
+            command:
+                - '--config.file=/etc/prometheus/prometheus.yml'
+                - '--storage.tsdb.path=/prometheus'
+                - '--storage.tsdb.retention.time=30d'
+                - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+                - '--web.console.templates=/usr/share/prometheus/consoles'
+            ports:
+                - "127.0.0.1:9090:9090"
+            volumes:
+                - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+                - prometheus_data:/prometheus
+            networks:
+                - caddy_net
+            depends_on:
+                - caddy_prod
 
         # A dedicated service for running one-off Go commands
         api-runner:

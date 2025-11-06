@@ -1,0 +1,23 @@
+# Prometheus configuration for monitoring Caddy
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'oullin-prod'
+
+scrape_configs:
+  # Caddy metrics endpoint
+  - job_name: 'caddy'
+    static_configs:
+      - targets: ['caddy_prod:2019']
+        labels:
+          service: 'caddy'
+          environment: 'production'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          environment: 'production'
