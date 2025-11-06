@@ -46,6 +46,7 @@ services:
                 - "80:80"
                 - "443:443"
                 - "443:443/udp" # Required for HTTP/3
+                - "127.0.0.1:2019:2019" # Caddy admin API - localhost only
             expose:
                 - "2019" # Caddy admin API for Prometheus metrics
             volumes:
