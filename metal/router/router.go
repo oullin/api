@@ -92,6 +92,11 @@ func (r *Router) KeepAliveDB() {
 	r.Mux.HandleFunc("GET /ping-db", apiHandler)
 }
 
+func (r *Router) Metrics() {
+	metricsHandler := handler.NewMetricsHandler()
+	r.Mux.Handle("GET /metrics", metricsHandler)
+}
+
 func (r *Router) Profile() {
 	maker := handler.NewProfileHandler
 

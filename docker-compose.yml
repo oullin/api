@@ -100,8 +100,30 @@ services:
                 - prometheus_data:/prometheus
             networks:
                 - caddy_net
+                - oullin_net
             depends_on:
                 - caddy_prod
+                - postgres_exporter
+
+        postgres_exporter:
+            image: prometheuscommunity/postgres-exporter:v0.15.0
+            profiles: ["prod"]
+            container_name: oullin_postgres_exporter
+            restart: unless-stopped
+            environment:
+                DATA_SOURCE_NAME: "postgresql://$(cat /run/secrets/pg_username):$(cat /run/secrets/pg_password)@api-db:5432/$(cat /run/secrets/pg_dbname)?sslmode=require"
+            secrets:
+                - pg_username
+                - pg_password
+                - pg_dbname
+            networks:
+                - oullin_net
+                - caddy_net
+            depends_on:
+                api-db:
+                    condition: service_healthy
+            expose:
+                - "9187"
 
         # A dedicated service for running one-off Go commands
         api-runner:
