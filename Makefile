@@ -108,11 +108,11 @@ help:
 	@printf "  $(BOLD)$(GREEN)caddy-validate$(NC)   : Validates caddy's files syntax.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Monitoring Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)monitor:up$(NC)       : Start the monitoring stack (Prometheus, Grafana).\n"
-	@printf "  $(BOLD)$(GREEN)monitor:down$(NC)     : Stop the monitoring stack.\n"
-	@printf "  $(BOLD)$(GREEN)monitor:status$(NC)   : Show status of monitoring services.\n"
-	@printf "  $(BOLD)$(GREEN)monitor:test$(NC)     : Run monitoring stack test suite.\n"
-	@printf "  $(BOLD)$(GREEN)monitor:grafana$(NC)  : Open Grafana dashboards in browser.\n"
-	@printf "  $(BOLD)$(GREEN)monitor:help$(NC)     : Show detailed monitoring commands.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-up$(NC)       : Start the monitoring stack (Prometheus, Grafana).\n"
+	@printf "  $(BOLD)$(GREEN)monitor-down$(NC)     : Stop the monitoring stack.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-status$(NC)   : Show status of monitoring services.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-test$(NC)     : Run monitoring stack test suite.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-grafana$(NC)  : Open Grafana dashboards in browser.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-help$(NC)     : Show detailed monitoring commands.\n"
 
 	@printf "$(NC)\n"
