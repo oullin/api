@@ -276,6 +276,11 @@ monitor-backup:
 		tar czf /backup/prometheus-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
 	@printf "$(BOLD)$(GREEN)✓ Backup created in ./backups/$(NC)\n\n"
 
+## Export Grafana dashboards to JSON files
+monitor-export-dashboards:
+	@printf "$(BOLD)$(CYAN)Exporting Grafana dashboards...$(NC)\n"
+	@./scripts/export-grafana-dashboards.sh
+
 ## Show monitoring help
 monitor-help:
 	@printf "\n$(BOLD)$(CYAN)Monitoring Stack Commands$(NC)\n\n"
@@ -321,6 +326,7 @@ monitor-help:
 	@printf "  $(GREEN)monitor-stats$(NC)                 - Show resource usage\n"
 	@printf "  $(GREEN)monitor-config$(NC)                - Show Prometheus config\n"
 	@printf "  $(GREEN)monitor-backup$(NC)                - Backup Prometheus data\n"
+	@printf "  $(GREEN)monitor-export-dashboards$(NC)     - Export Grafana dashboards to JSON\n"
 	@printf "  $(GREEN)monitor-clean$(NC)                 - Clean all monitoring data\n\n"
 	@printf "$(BOLD)Quick Start:$(NC)\n"
 	@printf "  1. $(YELLOW)make monitor-up$(NC)           - Start the stack\n"
