@@ -227,7 +227,7 @@ monitor-metrics:
 monitor-traffic:
 	@printf "$(BOLD)$(CYAN)Generating test traffic...$(NC)\n"
 	@printf "Making 100 requests to /ping endpoint...\n"
-	@for i in {1..100}; do \
+	@for i in $$(seq 1 100); do \
 		curl -s http://localhost:8080/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
 		sleep 0.1; \
 	done
@@ -238,8 +238,8 @@ monitor-traffic:
 monitor-traffic-heavy:
 	@printf "$(BOLD)$(CYAN)Generating heavy test traffic...$(NC)\n"
 	@printf "Making 500 requests with 5 concurrent connections...\n"
-	@for i in {1..100}; do \
-		(for j in {1..5}; do curl -s http://localhost:8080/ping > /dev/null & done; wait); \
+	@for i in $$(seq 1 100); do \
+		(for j in $$(seq 1 5); do curl -s http://localhost:8080/ping > /dev/null & done; wait); \
 		printf "."; \
 		sleep 0.05; \
 	done
