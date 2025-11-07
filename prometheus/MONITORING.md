@@ -59,6 +59,8 @@ ports:
   - "127.0.0.1:3000:3000"  # Grafana - localhost only
 ```
 
+**Grafana Authentication**: The default "admin" password is **disabled for security**. You must set `GRAFANA_ADMIN_PASSWORD` in your `.env` file. Docker Compose will refuse to start Grafana without this variable, preventing the use of well-known default credentials.
+
 Access remotely via SSH tunneling:
 ```bash
 ssh -L 3000:localhost:3000 -L 9090:localhost:9090 user@production-server
@@ -71,6 +73,24 @@ ssh -L 3000:localhost:3000 -L 9090:localhost:9090 user@production-server
 1. Docker and Docker Compose installed
 2. `.env` file configured with database credentials
 3. Database secrets in `database/infra/secrets/`
+4. **REQUIRED**: `GRAFANA_ADMIN_PASSWORD` set in `.env` file (no default for security)
+
+### Setup
+
+Before starting the monitoring stack, you **must** set a secure Grafana admin password in your `.env` file:
+
+```bash
+# Add to your .env file
+GRAFANA_ADMIN_PASSWORD=your-secure-password-here
+```
+
+**Security Note**: The default "admin" password has been intentionally disabled. Docker Compose will fail to start Grafana if `GRAFANA_ADMIN_PASSWORD` is not set. This prevents the use of well-known default credentials that could be exploited by attackers with server access.
+
+Generate a strong password:
+```bash
+# Use openssl to generate a random password
+openssl rand -base64 32
+```
 
 ### Starting the Monitoring Stack Locally
 
@@ -94,7 +114,7 @@ This will start:
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| Grafana | http://localhost:3000 | admin / (set via GRAFANA_ADMIN_PASSWORD) |
+| Grafana | http://localhost:3000 | admin / (value from GRAFANA_ADMIN_PASSWORD env var) |
 | Prometheus | http://localhost:9090 | None |
 | Caddy Admin | http://localhost:2019 | None |
 | API | http://localhost:8080 | (your API auth) |
@@ -238,6 +258,10 @@ docker compose --profile local down -v
 ```
 
 ## Production Deployment
+
+### Prerequisites
+
+Ensure `GRAFANA_ADMIN_PASSWORD` is set in your production `.env` file with a strong, unique password. See the Local Testing > Setup section for details.
 
 ### Starting the Production Stack
 
