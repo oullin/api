@@ -67,7 +67,7 @@ Dashboards can be edited through the Grafana UI. To persist changes:
 
 ## Directory Structure
 
-```
+```text
 grafana/
 ├── README.md
 ├── dashboards/               # Dashboard JSON files
