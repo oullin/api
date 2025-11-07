@@ -47,7 +47,7 @@ if [ "$SELECTION" = "all" ]; then
     while IFS= read -r line; do
         UID=$(echo "$line" | awk '{print $1}')
         TITLE=$(echo "$line" | cut -d' ' -f2-)
-        FILENAME=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-').json
+        FILENAME="${UID}-$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-').json"
 
         echo "Exporting: $TITLE -> $FILENAME"
 
@@ -62,7 +62,7 @@ else
     SELECTED_LINE=$(echo "$DASHBOARDS" | sed -n "${SELECTION}p")
     UID=$(echo "$SELECTED_LINE" | awk '{print $1}')
     TITLE=$(echo "$SELECTED_LINE" | cut -d' ' -f2-)
-    FILENAME=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-').json
+    FILENAME="${UID}-$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-').json"
 
     echo ""
     echo "Exporting: $TITLE"
