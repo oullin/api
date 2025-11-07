@@ -139,8 +139,12 @@ services:
             profiles: ["prod"]
             container_name: oullin_postgres_exporter
             restart: unless-stopped
-            environment:
-                DATA_SOURCE_NAME: "postgresql://$(cat /run/secrets/pg_username):$(cat /run/secrets/pg_password)@api-db:5432/$(cat /run/secrets/pg_dbname)?sslmode=require"
+            command:
+                - /bin/sh
+                - -c
+                - |
+                  export DATA_SOURCE_NAME="postgresql://$(cat /run/secrets/pg_username):$(cat /run/secrets/pg_password)@api-db:5432/$(cat /run/secrets/pg_dbname)?sslmode=require"
+                  exec /bin/postgres_exporter
             secrets:
                 - pg_username
                 - pg_password
@@ -159,8 +163,12 @@ services:
             profiles: ["local"]
             container_name: oullin_postgres_exporter_local
             restart: unless-stopped
-            environment:
-                DATA_SOURCE_NAME: "postgresql://$(cat /run/secrets/pg_username):$(cat /run/secrets/pg_password)@api-db:5432/$(cat /run/secrets/pg_dbname)?sslmode=require"
+            command:
+                - /bin/sh
+                - -c
+                - |
+                  export DATA_SOURCE_NAME="postgresql://$(cat /run/secrets/pg_username):$(cat /run/secrets/pg_password)@api-db:5432/$(cat /run/secrets/pg_dbname)?sslmode=require"
+                  exec /bin/postgres_exporter
             secrets:
                 - pg_username
                 - pg_password
