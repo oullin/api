@@ -148,9 +148,11 @@ monitor-logs-db:
 # Testing & Verification Commands
 # -------------------------------------------------------------------------------------------------------------------- #
 
-## Run full monitoring stack test suite
+## Run full monitoring stack test suite (local profile only)
 monitor-test:
-	@printf "$(BOLD)$(CYAN)Running monitoring stack tests...$(NC)\n\n"
+	@printf "$(BOLD)$(CYAN)Running monitoring stack tests (local profile)...$(NC)\n"
+	@printf "$(YELLOW)Note: This target is for local development only.$(NC)\n"
+	@printf "$(YELLOW)For production, verify monitoring from the server directly.$(NC)\n\n"
 	@printf "$(BOLD)1. Checking services are running...$(NC)\n"
 	@docker ps --filter "name=prometheus_local" --filter "name=grafana_local" --filter "name=postgres_exporter_local" --format "  ✓ {{.Names}}: {{.Status}}" || echo "  $(RED)✗ Services not running$(NC)"
 	@printf "\n$(BOLD)2. Testing Prometheus targets...$(NC)\n"
@@ -223,9 +225,9 @@ monitor-metrics:
 # Traffic Generation & Testing
 # -------------------------------------------------------------------------------------------------------------------- #
 
-## Generate test traffic to populate metrics
+## Generate test traffic to populate metrics (local profile)
 monitor-traffic:
-	@printf "$(BOLD)$(CYAN)Generating test traffic...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Generating test traffic (local)...$(NC)\n"
 	@printf "Making 100 requests to /ping endpoint...\n"
 	@for i in $$(seq 1 100); do \
 		curl -s http://localhost:8080/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
@@ -234,9 +236,9 @@ monitor-traffic:
 	@printf "\n$(BOLD)$(GREEN)✓ Test traffic generated$(NC)\n"
 	@printf "\nCheck dashboards at: $(GREEN)http://localhost:3000$(NC)\n\n"
 
-## Generate heavy test traffic
+## Generate heavy test traffic (local profile)
 monitor-traffic-heavy:
-	@printf "$(BOLD)$(CYAN)Generating heavy test traffic...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Generating heavy test traffic (local)...$(NC)\n"
 	@printf "Making 500 requests with 5 concurrent connections...\n"
 	@for i in $$(seq 1 100); do \
 		(for j in $$(seq 1 5); do curl -s http://localhost:8080/ping > /dev/null & done; wait); \
@@ -244,6 +246,30 @@ monitor-traffic-heavy:
 		sleep 0.05; \
 	done
 	@printf "\n$(BOLD)$(GREEN)✓ Heavy test traffic generated$(NC)\n\n"
+
+## Generate test traffic to populate metrics (production profile)
+monitor-traffic-prod:
+	@printf "$(BOLD)$(CYAN)Generating test traffic (production)...$(NC)\n"
+	@printf "Making 100 requests to /api/ping endpoint...\n"
+	@for i in $$(seq 1 100); do \
+		curl -s http://localhost/api/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
+		sleep 0.1; \
+	done
+	@printf "\n$(BOLD)$(GREEN)✓ Test traffic generated$(NC)\n"
+	@printf "\n$(YELLOW)Note: Run this from the production server$(NC)\n"
+	@printf "SSH tunnel for Grafana: $(GREEN)ssh -L 3000:localhost:3000 user@server$(NC)\n\n"
+
+## Generate heavy test traffic (production profile)
+monitor-traffic-heavy-prod:
+	@printf "$(BOLD)$(CYAN)Generating heavy test traffic (production)...$(NC)\n"
+	@printf "Making 500 requests with 5 concurrent connections...\n"
+	@for i in $$(seq 1 100); do \
+		(for j in $$(seq 1 5); do curl -s http://localhost/api/ping > /dev/null & done; wait); \
+		printf "."; \
+		sleep 0.05; \
+	done
+	@printf "\n$(BOLD)$(GREEN)✓ Heavy test traffic generated$(NC)\n"
+	@printf "\n$(YELLOW)Note: Run this from the production server$(NC)\n\n"
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Utility Commands
@@ -268,13 +294,17 @@ monitor-stats:
 		echo "$(RED)No monitoring containers running$(NC)"
 	@printf "\n"
 
-## Backup Prometheus data
+## Backup Prometheus data (with automatic rotation)
 monitor-backup:
 	@printf "$(BOLD)$(CYAN)Backing up Prometheus data...$(NC)\n"
 	@mkdir -p ./backups
 	@docker run --rm -v prometheus_data:/data -v $(PWD)/backups:/backup alpine \
 		tar czf /backup/prometheus-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
-	@printf "$(BOLD)$(GREEN)✓ Backup created in ./backups/$(NC)\n\n"
+	@printf "$(BOLD)$(GREEN)✓ Backup created in ./backups/$(NC)\n"
+	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
+	@ls -t ./backups/prometheus-backup-*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+	@BACKUP_COUNT=$$(ls -1 ./backups/prometheus-backup-*.tar.gz 2>/dev/null | wc -l); \
+		printf "$(BOLD)$(GREEN)✓ Backup rotation complete ($${BACKUP_COUNT} backups kept)$(NC)\n\n"
 
 ## Export Grafana dashboards to JSON files
 monitor-export-dashboards:
@@ -311,10 +341,12 @@ monitor-help:
 	@printf "  $(GREEN)monitor-logs-grafana$(NC)          - Show Grafana logs\n"
 	@printf "  $(GREEN)monitor-logs-db$(NC)               - Show PostgreSQL exporter logs\n\n"
 	@printf "$(BOLD)$(BLUE)Testing:$(NC)\n"
-	@printf "  $(GREEN)monitor-test$(NC)                  - Run full test suite\n"
+	@printf "  $(GREEN)monitor-test$(NC)                  - Run full test suite (local only)\n"
 	@printf "  $(GREEN)monitor-targets$(NC)               - Show Prometheus targets status\n"
-	@printf "  $(GREEN)monitor-traffic$(NC)               - Generate test traffic\n"
-	@printf "  $(GREEN)monitor-traffic-heavy$(NC)         - Generate heavy test traffic\n\n"
+	@printf "  $(GREEN)monitor-traffic$(NC)               - Generate test traffic (local)\n"
+	@printf "  $(GREEN)monitor-traffic-heavy$(NC)         - Generate heavy test traffic (local)\n"
+	@printf "  $(GREEN)monitor-traffic-prod$(NC)          - Generate test traffic (production)\n"
+	@printf "  $(GREEN)monitor-traffic-heavy-prod$(NC)    - Generate heavy test traffic (prod)\n\n"
 	@printf "$(BOLD)$(BLUE)Access:$(NC)\n"
 	@printf "  $(GREEN)monitor-grafana$(NC)               - Open Grafana in browser\n"
 	@printf "  $(GREEN)monitor-prometheus$(NC)            - Open Prometheus in browser\n"
