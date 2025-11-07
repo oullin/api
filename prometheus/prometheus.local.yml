@@ -10,7 +10,7 @@ scrape_configs:
   # Caddy metrics endpoint (local)
   - job_name: 'caddy'
     static_configs:
-      - targets: ['caddy_local:2019']
+      - targets: ['oullin_local_proxy:2019']
         labels:
           service: 'caddy'
           environment: 'local'
@@ -18,7 +18,7 @@ scrape_configs:
   # PostgreSQL database metrics via postgres_exporter (local)
   - job_name: 'postgresql'
     static_configs:
-      - targets: ['postgres_exporter_local:9187']
+      - targets: ['oullin_postgres_exporter_local:9187']
         labels:
           service: 'postgresql'
           environment: 'local'
