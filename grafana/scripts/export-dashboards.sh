@@ -44,22 +44,56 @@ if [ "$SELECTION" = "all" ]; then
     echo ""
     echo "Exporting all dashboards..."
 
+    EXPORT_COUNT=0
+    FAIL_COUNT=0
+
     while IFS= read -r line; do
         UID=$(echo "$line" | awk '{print $1}')
         TITLE=$(echo "$line" | cut -d' ' -f2-)
         FILENAME="${UID}-$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-').json"
 
-        echo "Exporting: $TITLE -> $FILENAME"
+        echo -n "Exporting: $TITLE -> $FILENAME ... "
 
-        curl -s -u "$GRAFANA_USER:$GRAFANA_PASSWORD" \
+        # Temporarily disable errexit for this operation
+        set +e
+        if curl -s -u "$GRAFANA_USER:$GRAFANA_PASSWORD" \
             "$GRAFANA_URL/api/dashboards/uid/$UID" | \
             jq 'del(.meta) | .dashboard.id = null | .overwrite = true' > \
-            "$OUTPUT_DIR/$FILENAME"
+            "$OUTPUT_DIR/$FILENAME" 2>/dev/null; then
+
+            # Verify the file is valid JSON and not empty
+            if [ -s "$OUTPUT_DIR/$FILENAME" ] && jq empty "$OUTPUT_DIR/$FILENAME" 2>/dev/null; then
+                echo "✓ Success"
+                ((EXPORT_COUNT++))
+            else
+                echo "✗ Failed (invalid JSON)"
+                rm -f "$OUTPUT_DIR/$FILENAME"
+                ((FAIL_COUNT++))
+            fi
+        else
+            echo "✗ Failed (export error)"
+            rm -f "$OUTPUT_DIR/$FILENAME"
+            ((FAIL_COUNT++))
+        fi
+        set -e
     done <<< "$DASHBOARDS"
+
+    echo ""
+    echo "Export summary: $EXPORT_COUNT succeeded, $FAIL_COUNT failed"
+
+    if [ $FAIL_COUNT -gt 0 ]; then
+        exit 1
+    fi
 
 else
     # Export single dashboard
     SELECTED_LINE=$(echo "$DASHBOARDS" | sed -n "${SELECTION}p")
+
+    if [ -z "$SELECTED_LINE" ]; then
+        echo "Error: Invalid selection"
+        exit 1
+    fi
+
     UID=$(echo "$SELECTED_LINE" | awk '{print $1}')
     TITLE=$(echo "$SELECTED_LINE" | cut -d' ' -f2-)
     FILENAME="${UID}-$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-').json"
@@ -67,12 +101,27 @@ else
     echo ""
     echo "Exporting: $TITLE"
 
-    curl -s -u "$GRAFANA_USER:$GRAFANA_PASSWORD" \
+    # Temporarily disable errexit for this operation
+    set +e
+    if curl -s -u "$GRAFANA_USER:$GRAFANA_PASSWORD" \
         "$GRAFANA_URL/api/dashboards/uid/$UID" | \
         jq 'del(.meta) | .dashboard.id = null | .overwrite = true' > \
-        "$OUTPUT_DIR/$FILENAME"
+        "$OUTPUT_DIR/$FILENAME" 2>/dev/null; then
 
-    echo "Saved to: $OUTPUT_DIR/$FILENAME"
+        # Verify the file is valid JSON and not empty
+        if [ -s "$OUTPUT_DIR/$FILENAME" ] && jq empty "$OUTPUT_DIR/$FILENAME" 2>/dev/null; then
+            echo "✓ Saved to: $OUTPUT_DIR/$FILENAME"
+        else
+            echo "✗ Error: Export produced invalid JSON"
+            rm -f "$OUTPUT_DIR/$FILENAME"
+            exit 1
+        fi
+    else
+        echo "✗ Error: Failed to export dashboard"
+        rm -f "$OUTPUT_DIR/$FILENAME"
+        exit 1
+    fi
+    set -e
 fi
 
 echo ""
