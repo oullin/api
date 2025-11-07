@@ -39,6 +39,22 @@ echo ""
 # Ask user which dashboard to export
 read -p "Enter dashboard number to export (or 'all' for all dashboards): " SELECTION
 
+# Validate selection
+if [ "$SELECTION" != "all" ]; then
+    # Check if selection is a valid number
+    if ! [[ "$SELECTION" =~ ^[0-9]+$ ]]; then
+        echo "Error: Please enter a valid number or 'all'"
+        exit 1
+    fi
+
+    # Check if selection is within valid range
+    DASHBOARD_COUNT=$(echo "$DASHBOARDS" | wc -l)
+    if [ "$SELECTION" -lt 1 ] || [ "$SELECTION" -gt "$DASHBOARD_COUNT" ]; then
+        echo "Error: Selection out of range (1-$DASHBOARD_COUNT)"
+        exit 1
+    fi
+fi
+
 if [ "$SELECTION" = "all" ]; then
     # Export all dashboards
     echo ""
