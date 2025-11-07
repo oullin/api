@@ -10,6 +10,60 @@ The monitoring stack consists of:
 - **postgres_exporter**: PostgreSQL metrics exporter
 - **Caddy Admin API**: Proxy metrics endpoint
 
+## Security Model
+
+### Caddy Admin API Security
+
+**CRITICAL**: The Caddy admin API exposes powerful administrative endpoints (`/load`, `/config`, `/stop`) with **no authentication**. Improper exposure could allow unauthorized control of your reverse proxy.
+
+#### Production Configuration
+
+In production, the admin API is configured for **internal network access only**:
+
+1. **Inside Container**: Bound to `0.0.0.0:2019` in `Caddyfile.prod`
+   - Allows Prometheus to scrape metrics via Docker DNS (`caddy_prod:2019`)
+   - Other containers in `caddy_net` can access it (acceptable risk within trusted network)
+
+2. **Host Exposure**: Port 2019 is **NOT** exposed to the host in `docker-compose.yml`
+   - No `ports` mapping for 2019 in production
+   - The admin API is only accessible within the Docker network
+   - Prevents unauthorized access from the host or public internet
+
+#### Local Configuration
+
+For local development, limited host access is provided for debugging:
+
+- Port 2019 is exposed to `127.0.0.1` only
+- Allows local debugging: `curl http://localhost:2019/metrics`
+- Not exposed to external network interfaces
+
+#### Security Best Practices
+
+✅ **DO**:
+- Keep admin API within Docker networks only in production
+- Use SSH tunneling for remote access: `ssh -L 2019:localhost:2019 user@server`
+- Monitor admin API access logs
+
+❌ **DON'T**:
+- Never expose admin API to `0.0.0.0` on the host
+- Never use `-p 2019:2019` in production (exposes to all interfaces)
+- Never expose admin API to the public internet
+
+### Grafana and Prometheus Security
+
+Both Grafana and Prometheus UIs are bound to `127.0.0.1` on the host in production:
+
+```yaml
+ports:
+  - "127.0.0.1:9090:9090"  # Prometheus - localhost only
+  - "127.0.0.1:3000:3000"  # Grafana - localhost only
+```
+
+Access remotely via SSH tunneling:
+```bash
+ssh -L 3000:localhost:3000 -L 9090:localhost:9090 user@production-server
+```
+
 ## Local Testing
 
 ### Prerequisites
@@ -200,7 +254,12 @@ All services are bound to localhost for security:
 |---------|-------------------|---------------------------|
 | Grafana | http://localhost:3000 | `ssh -L 3000:localhost:3000 user@server` |
 | Prometheus | http://localhost:9090 | `ssh -L 9090:localhost:9090 user@server` |
-| Caddy Admin | http://localhost:2019 | `ssh -L 2019:localhost:2019 user@server` |
+| Caddy Admin | *(internal network only)* | Not exposed to host for security |
+
+**Note**: The Caddy admin API is only accessible within the Docker network for Prometheus scraping. To access it for debugging, use:
+```bash
+docker exec -it oullin_proxy_prod curl http://localhost:2019/metrics
+```
 
 ### Verifying Production Setup
 
@@ -210,8 +269,8 @@ SSH into your server and run:
 # Check Prometheus targets
 curl http://localhost:9090/targets
 
-# Check Caddy metrics
-curl http://localhost:2019/metrics
+# Check Caddy metrics (from within the container)
+docker exec -it oullin_proxy_prod curl http://localhost:2019/metrics
 
 # View Grafana dashboards
 # Open SSH tunnel, then access http://localhost:3000 from your browser
