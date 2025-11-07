@@ -16,9 +16,9 @@ This guide explains how to create, export, and manage Grafana dashboards for the
 
 The project includes three pre-configured dashboards:
 
-1. **overview.json** - High-level metrics from all services
-2. **postgresql.json** - Detailed database monitoring
-3. **caddy.json** - Reverse proxy performance
+1. **oullin-overview-oullin-overview.json** - High-level metrics from all services
+2. **oullin-postgresql-postgresql-database-metrics.json** - Detailed database monitoring
+3. **oullin-caddy-caddy-proxy-metrics.json** - Reverse proxy performance
 
 These were manually created to provide a starting point.
 

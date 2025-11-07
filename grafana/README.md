@@ -71,9 +71,9 @@ Dashboards can be edited through the Grafana UI. To persist changes:
 grafana/
 ├── README.md
 ├── dashboards/               # Dashboard JSON files
-│   ├── overview.json
-│   ├── postgresql.json
-│   └── caddy.json
+│   ├── oullin-overview-oullin-overview.json
+│   ├── oullin-postgresql-postgresql-database-metrics.json
+│   └── oullin-caddy-caddy-proxy-metrics.json
 └── provisioning/
     ├── datasources/          # Data source configuration
     │   └── prometheus.yml
