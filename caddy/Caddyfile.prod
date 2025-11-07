@@ -1,7 +1,9 @@
 # Global options: Enable the admin API with metrics endpoint
 {
-	# Enable the admin API on port 2019 (default) with metrics
-	admin 0.0.0.0:2019
+	# Enable the admin API on port 2019 with metrics endpoint
+	admin 0.0.0.0:2019 {
+		metrics
+	}
 }
 
 # Caddy will automatically provision a Let's Encrypt certificate.

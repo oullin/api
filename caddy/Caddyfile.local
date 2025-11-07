@@ -2,8 +2,10 @@
 # This is the most reliable way to ensure Caddy acts as a simple HTTP proxy locally.
 {
 	auto_https off
-	# Enable the admin API on port 2019 (default) with metrics
-	admin 0.0.0.0:2019
+	# Enable the admin API on port 2019 with metrics endpoint
+	admin 0.0.0.0:2019 {
+		metrics
+	}
 }
 
 # It tells Caddy to listen on its internal port 80 for any incoming hostname.
