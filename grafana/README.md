@@ -113,13 +113,16 @@ rate(pg_stat_database_blks_hit[5m]) / (rate(pg_stat_database_blks_hit[5m]) + rat
 ### Caddy Metrics
 ```promql
 # Request rate
-rate(caddy_http_requests_total[5m])
+rate(caddy_http_request_count_total[5m])
 
 # Response time (95th percentile)
 histogram_quantile(0.95, rate(caddy_http_request_duration_seconds_bucket[5m]))
 
-# Active connections
-caddy_http_connections_open
+# Response traffic rate
+rate(caddy_http_response_size_bytes_sum[5m])
+
+# Error rate
+rate(caddy_http_request_errors_total[5m])
 ```
 
 ## Troubleshooting

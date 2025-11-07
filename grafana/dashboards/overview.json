@@ -53,7 +53,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "rate(caddy_http_requests_total[5m])",
+          "expr": "rate(caddy_http_request_count_total[5m])",
           "legendFormat": "Caddy Requests/s",
           "refId": "A"
         }
@@ -199,7 +199,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "rate(caddy_http_requests_total[5m])",
+          "expr": "rate(caddy_http_request_count_total[5m])",
           "legendFormat": "{{handler}} - {{code}}",
           "refId": "A"
         }

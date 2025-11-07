@@ -153,9 +153,10 @@ curl http://localhost:2019/metrics
 
 You should see metrics like:
 ```
-caddy_http_requests_total
+caddy_http_request_count_total
 caddy_http_request_duration_seconds
-caddy_http_connections_open
+caddy_http_response_size_bytes
+caddy_http_request_errors_total
 ```
 
 #### 4. Test API metrics endpoint
@@ -348,16 +349,16 @@ rate(pg_stat_database_xact_rollback[5m])
 ### Caddy Performance
 ```promql
 # Request rate by status
-sum by(code) (rate(caddy_http_requests_total[5m]))
+sum by(code) (rate(caddy_http_request_count_total[5m]))
 
 # 95th percentile response time
 histogram_quantile(0.95, rate(caddy_http_request_duration_seconds_bucket[5m]))
 
-# Error rate (5xx responses)
-sum(rate(caddy_http_requests_total{code=~"5.."}[5m]))
+# Error rate
+sum(rate(caddy_http_request_errors_total[5m]))
 
-# Active connections
-caddy_http_connections_open
+# Response traffic rate
+rate(caddy_http_response_size_bytes_sum[5m])
 ```
 
 ## Troubleshooting

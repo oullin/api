@@ -44,7 +44,7 @@ Login: `admin` / (your GRAFANA_ADMIN_PASSWORD)
 3. Write your PromQL query:
    ```promql
    # Example queries
-   rate(caddy_http_requests_total[5m])
+   rate(caddy_http_request_count_total[5m])
    go_memstats_alloc_bytes{job="api"}
    pg_stat_database_numbackends
    ```
@@ -380,16 +380,16 @@ rate(pg_stat_database_tup_deleted[5m])
 
 ```promql
 # Request rate by status
-sum by(code) (rate(caddy_http_requests_total[5m]))
+sum by(code) (rate(caddy_http_request_count_total[5m]))
 
 # Response time percentiles
 histogram_quantile(0.95, rate(caddy_http_request_duration_seconds_bucket[5m]))
 histogram_quantile(0.99, rate(caddy_http_request_duration_seconds_bucket[5m]))
 
-# Active connections
-caddy_http_connections_open
+# Error rate
+sum(rate(caddy_http_request_errors_total[5m]))
 
-# Traffic rate
+# Response traffic rate
 rate(caddy_http_response_size_bytes_sum[5m])
 ```
 

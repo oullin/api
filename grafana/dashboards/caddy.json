@@ -33,7 +33,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -53,7 +53,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "sum(rate(caddy_http_requests_total[5m]))",
+          "expr": "sum(rate(caddy_http_request_count_total[5m]))",
           "legendFormat": "Requests/s",
           "refId": "A"
         }
@@ -81,66 +81,13 @@
               }
             ]
           },
-          "unit": "short"
-        }
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 8,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "expr": "caddy_http_connections_open",
-          "legendFormat": "Open",
-          "refId": "A"
-        }
-      ],
-      "title": "Active Connections",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
           "unit": "s"
         }
       },
       "gridPos": {
         "h": 6,
-        "w": 8,
-        "x": 16,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
       "id": 3,
@@ -244,7 +191,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "sum by(code) (rate(caddy_http_requests_total[5m]))",
+          "expr": "sum by(code) (rate(caddy_http_request_count_total[5m]))",
           "legendFormat": "{{code}}",
           "refId": "A"
         }
@@ -427,14 +374,9 @@
           "expr": "rate(caddy_http_response_size_bytes_sum[5m])",
           "legendFormat": "Response",
           "refId": "A"
-        },
-        {
-          "expr": "rate(caddy_http_request_size_bytes_sum[5m])",
-          "legendFormat": "Request",
-          "refId": "B"
         }
       ],
-      "title": "Traffic Rate",
+      "title": "Response Traffic Rate",
       "type": "timeseries"
     },
     {
@@ -514,17 +456,12 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "caddy_http_connections_open",
-          "legendFormat": "Open",
+          "expr": "sum(rate(caddy_http_request_errors_total[5m]))",
+          "legendFormat": "Errors/s",
           "refId": "A"
-        },
-        {
-          "expr": "caddy_http_connections_idle",
-          "legendFormat": "Idle",
-          "refId": "B"
         }
       ],
-      "title": "Connection States",
+      "title": "Request Errors",
       "type": "timeseries"
     }
   ],
