@@ -4,7 +4,7 @@ global:
   evaluation_interval: 15s
   external_labels:
     monitor: 'oullin-local'
-    environment: 'development'
+    environment: 'local'
 
 scrape_configs:
   # Caddy metrics endpoint (local)
