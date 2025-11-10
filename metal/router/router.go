@@ -95,7 +95,8 @@ func (r *Router) KeepAliveDB() {
 func (r *Router) Metrics() {
 	abstract := handler.NewMetricsHandler()
 
-	apiHandler := r.PipelineFor(abstract.Handle)
+	// Metrics endpoint bypasses middleware - it's for Prometheus/monitoring tools
+	apiHandler := endpoint.NewApiHandler(abstract.Handle)
 
 	r.Mux.HandleFunc("GET /metrics", apiHandler)
 }

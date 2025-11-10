@@ -13,8 +13,7 @@ func NewMetricsHandler() MetricsHandler {
 	return MetricsHandler{}
 }
 
-// Handle returns the Prometheus metrics handler (protected endpoint)
-// This endpoint requires authentication via the token middleware
+// Handle returns the Prometheus metrics handler (public endpoint for Prometheus scraping)
 func (h MetricsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	// Serve Prometheus metrics using the standard promhttp handler
 	promhttp.Handler().ServeHTTP(w, r)
