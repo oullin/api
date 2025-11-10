@@ -37,7 +37,7 @@ echo "$DASHBOARDS" | nl
 echo ""
 
 # Ask user which dashboard to export
-read -p "Enter dashboard number to export (or 'all' for all dashboards): " SELECTION
+read -r -p "Enter dashboard number to export (or 'all' for all dashboards): " SELECTION
 
 # Validate selection
 if [ "$SELECTION" != "all" ]; then
