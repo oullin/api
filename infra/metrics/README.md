@@ -431,7 +431,7 @@ make monitor-restart-prod
 
 If you have a domain, configure Caddy for automatic HTTPS.
 
-Edit `caddy/Caddyfile.prod`:
+Edit `infra/caddy/Caddyfile.prod`:
 
 ```caddyfile
 your-domain.com {

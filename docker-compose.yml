@@ -55,9 +55,9 @@ services:
             volumes:
                 - caddy_data:/data
                 - caddy_config:/config
-                - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile
+                - ./infra/caddy/Caddyfile.prod:/etc/caddy/Caddyfile
                 - ${CADDY_LOGS_PATH}:/var/log/caddy
-                - ./caddy/mtls:/etc/caddy/mtls:ro
+                - ./infra/caddy/mtls:/etc/caddy/mtls:ro
             networks:
                 caddy_net:
                   aliases:
@@ -84,8 +84,8 @@ services:
             volumes:
                 - caddy_data:/data
                 - caddy_config:/config
-                - ./caddy/mtls:/etc/caddy/mtls:ro
-                - ./caddy/Caddyfile.local:/etc/caddy/Caddyfile
+                - ./infra/caddy/mtls:/etc/caddy/mtls:ro
+                - ./infra/caddy/Caddyfile.local:/etc/caddy/Caddyfile
             networks:
                 - caddy_net
 
