@@ -4,15 +4,16 @@ This directory contains the Grafana configuration for monitoring the Oullin appl
 
 ## Table of Contents
 1. [Access](#access)
-2. [Pre-configured Dashboards](#pre-configured-dashboards)
-3. [Data Source](#data-source)
-4. [Creating Custom Dashboards](#creating-custom-dashboards)
-5. [Dashboard Best Practices](#dashboard-best-practices)
-6. [Directory Structure](#directory-structure)
-7. [Example Queries by Service](#example-queries-by-service)
-8. [Troubleshooting](#troubleshooting)
-9. [Resources](#resources)
-10. [Quick Reference](#quick-reference)
+2. [Deploying on Ubuntu VPS (Hostinger)](#deploying-on-ubuntu-vps-hostinger)
+3. [Pre-configured Dashboards](#pre-configured-dashboards)
+4. [Data Source](#data-source)
+5. [Creating Custom Dashboards](#creating-custom-dashboards)
+6. [Dashboard Best Practices](#dashboard-best-practices)
+7. [Directory Structure](#directory-structure)
+8. [Example Queries by Service](#example-queries-by-service)
+9. [Troubleshooting](#troubleshooting)
+10. [Resources](#resources)
+11. [Quick Reference](#quick-reference)
 
 ---
 
@@ -35,6 +36,433 @@ ssh -L 3000:localhost:3000 user@your-server.com
 ```
 
 Then open `http://localhost:3000` in your browser.
+
+---
+
+## Deploying on Ubuntu VPS (Hostinger)
+
+This guide walks you through deploying the full monitoring stack (Prometheus, Grafana, postgres_exporter, Caddy) on an Ubuntu VPS from Hostinger.
+
+### Prerequisites
+
+- Hostinger VPS with Ubuntu 20.04 or 22.04
+- SSH access to your VPS
+- Domain name (optional, but recommended for SSL)
+- At least 2GB RAM and 20GB storage
+
+### Step 1: Initial Server Setup
+
+Connect to your VPS via SSH:
+
+```bash
+ssh root@your-vps-ip
+```
+
+Update the system:
+
+```bash
+apt update && apt upgrade -y
+```
+
+Create a non-root user (recommended for security):
+
+```bash
+# Create user
+adduser deployer
+
+# Add to sudo group
+usermod -aG sudo deployer
+
+# Switch to new user
+su - deployer
+```
+
+### Step 2: Install Docker and Docker Compose
+
+Install required packages:
+
+```bash
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+```
+
+Add Docker's official GPG key:
+
+```bash
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+```
+
+Add Docker repository:
+
+```bash
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
+Install Docker:
+
+```bash
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
+
+Add your user to the docker group:
+
+```bash
+sudo usermod -aG docker ${USER}
+```
+
+Log out and back in for group changes to take effect, then verify:
+
+```bash
+docker --version
+docker compose version
+```
+
+### Step 3: Install Make (if not present)
+
+```bash
+sudo apt install -y make
+```
+
+### Step 4: Clone Your Repository
+
+```bash
+cd ~
+git clone https://github.com/yourusername/your-repo.git
+cd your-repo
+```
+
+### Step 5: Configure Environment Variables
+
+Create your `.env` file with production settings:
+
+```bash
+cat > .env << 'EOF'
+# Database Configuration
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=your_strong_db_password
+POSTGRES_DB=your_database_name
+
+# Grafana Configuration (REQUIRED - no default)
+GRAFANA_ADMIN_PASSWORD=your_very_strong_grafana_password
+
+# Production Domain (optional, for SSL)
+DOMAIN=your-domain.com
+
+# Environment
+ENVIRONMENT=production
+EOF
+```
+
+**Important Security Notes:**
+- Use strong, unique passwords for all credentials
+- Never commit `.env` to version control (already in `.gitignore`)
+- Consider using a password manager to generate strong passwords
+
+### Step 6: Set Up Docker Secrets
+
+Create Docker secrets for sensitive data:
+
+```bash
+# Create secrets directory (if using file-based secrets for local testing)
+mkdir -p secrets
+
+# PostgreSQL credentials
+echo "your_db_user" | docker secret create pg_username - 2>/dev/null || \
+  echo "your_db_user" > secrets/pg_username
+
+echo "your_strong_db_password" | docker secret create pg_password - 2>/dev/null || \
+  echo "your_strong_db_password" > secrets/pg_password
+
+echo "your_database_name" | docker secret create pg_dbname - 2>/dev/null || \
+  echo "your_database_name" > secrets/pg_dbname
+```
+
+**Note:** Docker secrets work differently in Swarm mode vs Compose mode. The above creates file-based secrets for Compose.
+
+### Step 7: Configure Firewall
+
+Set up UFW firewall to secure your VPS:
+
+```bash
+# Enable UFW
+sudo ufw --force enable
+
+# Allow SSH (IMPORTANT: Do this first!)
+sudo ufw allow 22/tcp
+
+# Allow HTTP and HTTPS (for Caddy)
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+# Verify rules
+sudo ufw status
+```
+
+**Do NOT expose Prometheus (9090), Grafana (3000), or postgres_exporter (9187) ports directly.** Access these services via SSH tunnel for security.
+
+### Step 8: Deploy the Monitoring Stack
+
+Deploy using the production profile:
+
+```bash
+# Start the monitoring stack with production profile
+make monitor-up-prod
+
+# Or manually:
+docker compose --profile prod up -d
+```
+
+Verify all services are running:
+
+```bash
+docker compose ps
+```
+
+You should see:
+- `oullin_prometheus` - Running
+- `oullin_grafana` - Running
+- `oullin_postgres_exporter` - Running
+- `oullin_proxy_prod` (Caddy) - Running
+- `oullin_db` (PostgreSQL) - Running
+
+### Step 9: Verify Monitoring Stack
+
+Check that Prometheus is scraping targets:
+
+```bash
+# From your VPS
+curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health}'
+```
+
+All targets should show `"health": "up"`.
+
+### Step 10: Access Grafana Remotely
+
+Create an SSH tunnel from your local machine to access Grafana securely:
+
+```bash
+# From your LOCAL machine (not the VPS)
+ssh -L 3000:localhost:3000 deployer@your-vps-ip
+```
+
+Then open `http://localhost:3000` in your browser.
+
+**Login:**
+- Username: `admin`
+- Password: The value you set in `GRAFANA_ADMIN_PASSWORD`
+
+### Step 11: Production Considerations
+
+#### Enable Automatic Restarts
+
+Ensure containers restart automatically:
+
+```bash
+# Check restart policies
+docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.RestartPolicy}}"
+```
+
+The `docker-compose.yml` should have `restart: unless-stopped` for all services.
+
+#### Set Up Backups
+
+Schedule regular Prometheus data backups:
+
+```bash
+# Create a cron job for daily backups
+crontab -e
+```
+
+Add this line to backup daily at 2 AM:
+
+```cron
+0 2 * * * cd /home/deployer/your-repo && make monitor-backup >> /var/log/prometheus-backup.log 2>&1
+```
+
+#### Monitor Disk Space
+
+Prometheus data can grow over time. Monitor disk usage:
+
+```bash
+# Check disk space
+df -h
+
+# Check Prometheus data size
+docker exec oullin_prometheus du -sh /prometheus
+```
+
+Consider setting up retention policies in `prometheus/prometheus.yml`:
+
+```yaml
+global:
+  # Keep data for 30 days
+  storage.tsdb.retention.time: 30d
+```
+
+#### Configure Log Rotation
+
+Set up log rotation for Docker containers:
+
+```bash
+sudo tee /etc/docker/daemon.json > /dev/null << 'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOF
+
+# Restart Docker
+sudo systemctl restart docker
+
+# Restart containers
+make monitor-restart-prod
+```
+
+#### Enable SSL/TLS (Optional)
+
+If you have a domain, configure Caddy for automatic HTTPS:
+
+Edit `caddy/Caddyfile.prod`:
+
+```caddyfile
+your-domain.com {
+    reverse_proxy api:8080
+
+    log {
+        output file /var/log/caddy/access.log
+    }
+}
+
+# Admin API (internal only)
+:2019 {
+    admin {
+        metrics
+    }
+}
+```
+
+Caddy will automatically obtain Let's Encrypt certificates.
+
+### Step 12: Generate Test Traffic
+
+Generate some traffic to populate the dashboards:
+
+```bash
+# From the VPS
+make monitor-traffic-prod
+```
+
+Wait a few minutes for data to appear in Grafana.
+
+### Troubleshooting VPS Deployment
+
+#### Services won't start
+
+```bash
+# Check logs
+make monitor-logs-grafana
+make monitor-logs-prometheus
+
+# Check Docker daemon
+sudo systemctl status docker
+```
+
+#### Can't connect via SSH tunnel
+
+```bash
+# Verify Grafana is listening
+docker exec oullin_grafana netstat -tlnp | grep 3000
+
+# Check if port is already in use locally
+lsof -i :3000
+```
+
+#### Prometheus targets are down
+
+```bash
+# Check container DNS resolution
+docker exec oullin_prometheus nslookup oullin_proxy_prod
+docker exec oullin_prometheus nslookup oullin_postgres_exporter
+
+# Verify containers are on the same network
+docker network inspect your-repo_default
+```
+
+#### Out of disk space
+
+```bash
+# Clean up Docker resources
+docker system prune -a --volumes
+
+# Rotate old backups
+make monitor-backup  # This automatically keeps only last 5 backups
+
+# Clear old Prometheus data (if retention is too long)
+docker exec oullin_prometheus rm -rf /prometheus/wal/*
+```
+
+### Updating the Monitoring Stack
+
+To update your monitoring stack:
+
+```bash
+# Pull latest changes
+cd ~/your-repo
+git pull origin main
+
+# Rebuild and restart
+make monitor-down-prod
+make monitor-up-prod
+
+# Or with Docker Compose directly
+docker compose --profile prod down
+docker compose --profile prod up -d --build
+```
+
+### Monitoring Resource Usage
+
+Keep an eye on VPS resource usage:
+
+```bash
+# CPU and Memory usage
+docker stats
+
+# Disk usage by container
+docker system df -v
+
+# Container logs size
+sudo du -sh /var/lib/docker/containers/*/*-json.log
+```
+
+### Security Checklist
+
+- ✅ Firewall configured (UFW)
+- ✅ Only necessary ports exposed (22, 80, 443)
+- ✅ Monitoring services NOT exposed to internet
+- ✅ Strong passwords for all services
+- ✅ Docker secrets for sensitive data
+- ✅ Regular backups scheduled
+- ✅ Log rotation configured
+- ✅ SSH key-based authentication (recommended)
+- ✅ Fail2ban installed (optional but recommended)
+
+### Installing Fail2ban (Recommended)
+
+Protect against brute-force SSH attacks:
+
+```bash
+sudo apt install -y fail2ban
+
+# Start and enable
+sudo systemctl start fail2ban
+sudo systemctl enable fail2ban
+
+# Check status
+sudo fail2ban-client status sshd
+```
 
 ---
 
