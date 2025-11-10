@@ -24,8 +24,11 @@ CADDY_ADMIN_PORT    := 2019
 CADDY_ADMIN_URL     := http://$(CADDY_ADMIN_HOST):$(CADDY_ADMIN_PORT)
 
 API_HOST            := localhost
-API_PORT            := 8080
+API_PORT            := 18080
 API_URL             := http://$(API_HOST):$(API_PORT)
+PING_USERNAME       ?= $(ENV_PING_USERNAME)
+PING_PASSWORD       ?= $(ENV_PING_PASSWORD)
+PING_AUTH_FLAG      := $(if $(and $(PING_USERNAME),$(PING_PASSWORD)),-u $(PING_USERNAME):$(PING_PASSWORD),)
 
 # Production API endpoint (behind Caddy)
 API_PROD_HOST       := localhost
@@ -276,10 +279,14 @@ monitor-metrics:
 
 ## Generate test traffic to populate metrics (local profile)
 monitor-traffic:
+	@if [ -z "$(PING_USERNAME)" ] || [ -z "$(PING_PASSWORD)" ]; then \
+		printf "$(RED)Missing ping credentials. Export ENV_PING_USERNAME/ENV_PING_PASSWORD or pass PING_USERNAME/PING_PASSWORD to make.$(NC)\n"; \
+		exit 1; \
+	fi
 	@printf "$(BOLD)$(CYAN)Generating test traffic (local)...$(NC)\n"
 	@printf "Making 100 requests to /ping endpoint...\n"
 	@for i in $$(seq 1 100); do \
-		curl -s $(API_URL)/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
+		curl -s $(PING_AUTH_FLAG) $(API_URL)/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
 		sleep 0.1; \
 	done
 	@printf "\n$(BOLD)$(GREEN)✓ Test traffic generated$(NC)\n"

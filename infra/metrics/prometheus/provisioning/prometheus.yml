@@ -9,7 +9,7 @@ scrape_configs:
   # Caddy metrics endpoint
   - job_name: 'caddy'
     static_configs:
-      - targets: ['oullin_proxy_prod:2019']
+      - targets: ['caddy_prod:2019']
         labels:
           service: 'caddy'
           environment: 'production'

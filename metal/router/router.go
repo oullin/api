@@ -97,7 +97,7 @@ func (r *Router) Metrics() {
 
 	apiHandler := r.PipelineFor(abstract.Handle)
 
-	r.Mux.HandleFunc("POST /metrics", apiHandler)
+	r.Mux.HandleFunc("GET /metrics", apiHandler)
 }
 
 func (r *Router) Profile() {
