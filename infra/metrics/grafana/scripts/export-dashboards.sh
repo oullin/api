@@ -6,7 +6,7 @@ set -e
 GRAFANA_URL="${GRAFANA_URL:-http://localhost:3000}"
 GRAFANA_USER="${GRAFANA_USER:-admin}"
 GRAFANA_PASSWORD="${GRAFANA_PASSWORD:-admin}"
-OUTPUT_DIR="./infra/monitoring/grafana/dashboards"
+OUTPUT_DIR="./infra/metrics/grafana/dashboards"
 
 echo "================================"
 echo "Grafana Dashboard Export Tool"

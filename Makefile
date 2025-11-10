@@ -34,15 +34,15 @@ CGO_ENABLED           := 1
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
-include ./metal/makefile/helpers.mk
-include ./metal/makefile/env.mk
-include ./metal/makefile/db.mk
-include ./metal/makefile/app.mk
-include ./metal/makefile/logs.mk
-include ./metal/makefile/build.mk
-include ./metal/makefile/infra.mk
-include ./metal/makefile/caddy.mk
-include ./metal/makefile/monitor.mk
+include ./infra/makefile/helpers.mk
+include ./infra/makefile/env.mk
+include ./infra/makefile/db.mk
+include ./infra/makefile/app.mk
+include ./infra/makefile/logs.mk
+include ./infra/makefile/build.mk
+include ./infra/makefile/infra.mk
+include ./infra/makefile/caddy.mk
+include ./infra/makefile/monitor.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #

@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------------------------------------------------- #
 
 ROOT_PATH           := $(shell pwd)
-MONITORING_DIR      := $(ROOT_PATH)/infra/monitoring
+MONITORING_DIR      := $(ROOT_PATH)/infra/metrics
 BACKUPS_DIR         := $(ROOT_PATH)/storage/monitoring/backups
 
 # Monitoring service URLs and ports

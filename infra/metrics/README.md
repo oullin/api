@@ -53,7 +53,7 @@ Three dashboards are automatically provisioned:
 ### Directory Structure
 
 ```text
-monitoring/
+infra/metrics/
 ├── README.md                    # This file
 ├── grafana/
 │   ├── dashboards/              # Dashboard JSON files
@@ -534,7 +534,7 @@ sudo fail2ban-client status sshd
 
 ### Dashboard Files
 
-All dashboards are in `monitoring/grafana/dashboards/`:
+All dashboards are in `infra/metrics/grafana/dashboards/`:
 - `oullin-overview-oullin-overview.json`
 - `oullin-postgresql-postgresql-database-metrics.json`
 - `oullin-caddy-caddy-proxy-metrics.json`
@@ -550,7 +550,7 @@ make monitor-export-dashboards
 This will:
 1. List all dashboards in Grafana
 2. Let you select which to export
-3. Save to `monitoring/grafana/dashboards/`
+3. Save to `infra/metrics/grafana/dashboards/`
 4. Format properly for provisioning
 
 ### Manual Export
@@ -558,7 +558,7 @@ This will:
 1. Open your dashboard in Grafana
 2. Click **"Share"** → **"Export"** tab
 3. Click **"Save to file"** or **"View JSON"**
-4. Save to `monitoring/grafana/dashboards/`
+4. Save to `infra/metrics/grafana/dashboards/`
 5. Restart Grafana: `make monitor-restart`
 
 ---
@@ -697,7 +697,7 @@ rate(caddy_http_response_size_bytes_sum[5m])
 
 ```bash
 # Check JSON syntax
-jq . < monitoring/grafana/dashboards/my-dashboard.json
+jq . < infra/metrics/grafana/dashboards/my-dashboard.json
 
 # Check Grafana logs
 docker logs oullin_grafana

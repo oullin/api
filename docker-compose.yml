@@ -103,7 +103,7 @@ services:
             ports:
                 - "127.0.0.1:9090:9090"
             volumes:
-                - ./infra/monitoring/prometheus/provisioning/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+                - ./infra/metrics/prometheus/provisioning/prometheus.yml:/etc/prometheus/prometheus.yml:ro
                 - prometheus_data:/prometheus
             networks:
                 - caddy_net
@@ -126,7 +126,7 @@ services:
             ports:
                 - "9090:9090"
             volumes:
-                - ./infra/monitoring/prometheus/provisioning/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+                - ./infra/metrics/prometheus/provisioning/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
                 - prometheus_data:/prometheus
             networks:
                 - caddy_net
@@ -142,7 +142,7 @@ services:
             restart: unless-stopped
             entrypoint: ["/postgres-exporter-entrypoint.sh"]
             volumes:
-                - ./infra/monitoring/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
+                - ./infra/metrics/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
             secrets:
                 - pg_username
                 - pg_password
@@ -163,7 +163,7 @@ services:
             restart: unless-stopped
             entrypoint: ["/postgres-exporter-entrypoint.sh"]
             volumes:
-                - ./infra/monitoring/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
+                - ./infra/metrics/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
             secrets:
                 - pg_username
                 - pg_password
@@ -193,8 +193,8 @@ services:
                 - GF_INSTALL_PLUGINS=
             volumes:
                 - grafana_data:/var/lib/grafana
-                - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-                - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+                - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
+                - ./infra/metrics/grafana/dashboards:/var/lib/grafana/dashboards:ro
             networks:
                 - caddy_net
             depends_on:
@@ -216,8 +216,8 @@ services:
                 - GF_INSTALL_PLUGINS=
             volumes:
                 - grafana_data:/var/lib/grafana
-                - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-                - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+                - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
+                - ./infra/metrics/grafana/dashboards:/var/lib/grafana/dashboards:ro
             networks:
                 - caddy_net
             depends_on:
@@ -231,7 +231,7 @@ services:
             - ./.env
           build:
             context: .
-            dockerfile: ./docker/dockerfile-api
+            dockerfile: ./infra/docker/dockerfile-api
             target: builder
           volumes:
             - .:/app
@@ -273,7 +273,7 @@ services:
                 ENV_HTTP_HOST: 0.0.0.0
             build:
                 context: .
-                dockerfile: ./docker/dockerfile-api
+                dockerfile: ./infra/docker/dockerfile-api
                 args:
                     - APP_VERSION=0.0.0.1
                     - APP_HOST_PORT=${ENV_HTTP_PORT}
