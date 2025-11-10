@@ -562,7 +562,7 @@ Login: `admin` / (your GRAFANA_ADMIN_PASSWORD)
 6. Save to project:
    ```bash
    # Replace MY-DASHBOARD with your filename
-   cat > ./grafana/dashboards/my-custom-dashboard.json << 'EOF'
+   cat > ./monitoring/grafana/dashboards/my-custom-dashboard.json << 'EOF'
    {
      paste your JSON here
    }
@@ -580,7 +580,7 @@ make monitor-export-dashboards
 This will:
 1. List all dashboards in Grafana
 2. Let you select which to export
-3. Save to `grafana/dashboards/`
+3. Save to `monitoring/grafana/dashboards/`
 4. Format properly for provisioning
 
 #### Step 5: Reload Grafana
@@ -622,7 +622,7 @@ Grafana has thousands of pre-built dashboards at https://grafana.com/grafana/das
 **Via Dashboard JSON:**
 1. Visit dashboard page (e.g., https://grafana.com/grafana/dashboards/9628)
 2. Click **"Download JSON"**
-3. Save to `grafana/dashboards/postgres-community.json`
+3. Save to `monitoring/grafana/dashboards/postgres-community.json`
 4. Edit the file and add these properties:
    ```json
    {
@@ -654,7 +654,7 @@ Grafonnet is a Jsonnet library for generating Grafana dashboards programmaticall
 
 #### Example Grafonnet Dashboard:
 
-Create `grafana/grafonnet/api-metrics.jsonnet`:
+Create `monitoring/grafana/grafonnet/api-metrics.jsonnet`:
 
 ```jsonnet
 local grafana = import 'grafonnet/grafana.libsonnet';
@@ -705,11 +705,11 @@ dashboard.new(
 go install github.com/google/go-jsonnet/cmd/jsonnet@latest
 
 # Install grafonnet
-git clone https://github.com/grafana/grafonnet-lib.git grafana/grafonnet-lib
+git clone https://github.com/grafana/grafonnet-lib.git monitoring/grafana/grafonnet-lib
 
 # Generate dashboard
-jsonnet -J grafana/grafonnet-lib grafana/grafonnet/api-metrics.jsonnet \
-  > grafana/dashboards/api-metrics-generated.json
+jsonnet -J monitoring/grafana/grafonnet-lib monitoring/grafana/grafonnet/api-metrics.jsonnet \
+  > monitoring/grafana/dashboards/api-metrics-generated.json
 ```
 
 ---
@@ -820,19 +820,20 @@ Use in query: `metric_name{environment="$environment"}`
 ## Directory Structure
 
 ```text
-grafana/
-├── README.md
-├── dashboards/               # Dashboard JSON files
-│   ├── oullin-overview-oullin-overview.json
-│   ├── oullin-postgresql-postgresql-database-metrics.json
-│   └── oullin-caddy-caddy-proxy-metrics.json
-├── scripts/
-│   └── export-dashboards.sh # Dashboard export script
-└── provisioning/
-    ├── datasources/          # Data source configuration
-    │   └── prometheus.yml
-    └── dashboards/           # Dashboard provisioning config
-        └── default.yml
+monitoring/
+└── grafana/
+    ├── README.md
+    ├── dashboards/               # Dashboard JSON files
+    │   ├── oullin-overview-oullin-overview.json
+    │   ├── oullin-postgresql-postgresql-database-metrics.json
+    │   └── oullin-caddy-caddy-proxy-metrics.json
+    ├── scripts/
+    │   └── export-dashboards.sh # Dashboard export script
+    └── provisioning/
+        ├── datasources/          # Data source configuration
+        │   └── prometheus.yml
+        └── dashboards/           # Dashboard provisioning config
+            └── default.yml
 ```
 
 ---
@@ -903,7 +904,7 @@ rate(caddy_http_response_size_bytes_sum[5m])
 
 ### Dashboards Don't Load
 
-1. Check JSON syntax: `jq . < grafana/dashboards/my-dashboard.json`
+1. Check JSON syntax: `jq . < monitoring/grafana/dashboards/my-dashboard.json`
 2. Ensure `"id": null` in dashboard definition
 3. Check Grafana logs: `docker logs oullin_grafana` or `make monitor-logs-grafana`
 4. Verify file is in correct directory
@@ -921,10 +922,10 @@ rate(caddy_http_response_size_bytes_sum[5m])
 
 ### Dashboard Not Auto-Loading
 
-1. Verify provisioning config: `grafana/provisioning/dashboards/default.yml`
-2. Check file permissions: `ls -la grafana/dashboards/`
+1. Verify provisioning config: `monitoring/grafana/provisioning/dashboards/default.yml`
+2. Check file permissions: `ls -la monitoring/grafana/dashboards/`
 3. Restart Grafana: `make monitor-restart`
-4. Check mount in docker-compose: `./grafana/dashboards:/var/lib/grafana/dashboards:ro`
+4. Check mount in docker-compose: `./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro`
 
 ---
 
@@ -951,7 +952,7 @@ make monitor-grafana
 make monitor-export-dashboards
 
 # View current dashboard files
-ls -la grafana/dashboards/
+ls -la monitoring/grafana/dashboards/
 
 # Test a PromQL query
 curl 'http://localhost:9090/api/v1/query?query=up'
