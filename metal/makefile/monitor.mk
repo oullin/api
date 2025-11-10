@@ -302,7 +302,7 @@ monitor-backup:
 		tar czf /backup/prometheus-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
 	@printf "$(BOLD)$(GREEN)✓ Backup created in ./backups/$(NC)\n"
 	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
-	@ls -t ./backups/prometheus-backup-*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+	@for f in $$(ls -t ./backups/prometheus-backup-*.tar.gz 2>/dev/null | tail -n +6); do rm -f "$$f"; done || true
 	@BACKUP_COUNT=$$(ls -1 ./backups/prometheus-backup-*.tar.gz 2>/dev/null | wc -l); \
 		printf "$(BOLD)$(GREEN)✓ Backup rotation complete ($${BACKUP_COUNT} backups kept)$(NC)\n\n"
 
