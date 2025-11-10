@@ -4,7 +4,7 @@ This directory contains the Grafana configuration for monitoring the Oullin appl
 
 ## Access
 
-Grafana is accessible at `http://localhost:3000` (from the server)
+Grafana is accessible at [http://localhost:3000](http://localhost:3000) (from the server)
 
 **Default Credentials:**
 - Username: `admin`
@@ -20,7 +20,7 @@ To access Grafana from your local machine:
 ssh -L 3000:localhost:3000 user@your-server.com
 ```
 
-Then open `http://localhost:3000` in your browser.
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Pre-configured Dashboards
 
