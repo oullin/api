@@ -66,6 +66,6 @@ caddy-del-certs:
 
 caddy-validate:
 	@docker run --rm \
-	  -v "$(ROOT_PATH)/infra/caddy/Caddyfile.prod:/etc/infra/caddy/Caddyfile:ro" \
-	  -v "$(ROOT_PATH)/infra/caddy/mtls:/etc/infra/caddy/mtls:ro" \
-	  caddy:2.10.0 caddy validate --config /etc/infra/caddy/Caddyfile
+	  -v "$(ROOT_PATH)/infra/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro" \
+	  -v "$(ROOT_PATH)/infra/caddy/mtls:/etc/caddy/mtls:ro" \
+	  caddy:2.10.0 caddy validate --config /etc/caddy/Caddyfile
