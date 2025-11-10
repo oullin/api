@@ -103,7 +103,7 @@ services:
             ports:
                 - "127.0.0.1:9090:9090"
             volumes:
-                - ./monitoring/prometheus/provisioning/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+                - ./infra/monitoring/prometheus/provisioning/prometheus.yml:/etc/prometheus/prometheus.yml:ro
                 - prometheus_data:/prometheus
             networks:
                 - caddy_net
@@ -126,7 +126,7 @@ services:
             ports:
                 - "9090:9090"
             volumes:
-                - ./monitoring/prometheus/provisioning/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+                - ./infra/monitoring/prometheus/provisioning/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
                 - prometheus_data:/prometheus
             networks:
                 - caddy_net
@@ -142,7 +142,7 @@ services:
             restart: unless-stopped
             entrypoint: ["/postgres-exporter-entrypoint.sh"]
             volumes:
-                - ./monitoring/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
+                - ./infra/monitoring/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
             secrets:
                 - pg_username
                 - pg_password
@@ -163,7 +163,7 @@ services:
             restart: unless-stopped
             entrypoint: ["/postgres-exporter-entrypoint.sh"]
             volumes:
-                - ./monitoring/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
+                - ./infra/monitoring/prometheus/scripts/postgres-exporter-entrypoint.sh:/postgres-exporter-entrypoint.sh:ro
             secrets:
                 - pg_username
                 - pg_password
@@ -193,8 +193,8 @@ services:
                 - GF_INSTALL_PLUGINS=
             volumes:
                 - grafana_data:/var/lib/grafana
-                - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-                - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+                - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+                - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
             networks:
                 - caddy_net
             depends_on:
@@ -216,8 +216,8 @@ services:
                 - GF_INSTALL_PLUGINS=
             volumes:
                 - grafana_data:/var/lib/grafana
-                - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-                - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+                - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+                - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
             networks:
                 - caddy_net
             depends_on:
