@@ -1,6 +1,8 @@
-# Global options: Enable the admin API
+# Global options: Enable the admin API and metrics
 {
-	# Caddy upstream image lacks the metrics subdirective, so only expose the admin API.
+	# Enable metrics collection for HTTP handlers
+	metrics
+	# Expose admin API for Prometheus scraping
 	admin 0.0.0.0:2019
 }
 

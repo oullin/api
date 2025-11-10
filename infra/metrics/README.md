@@ -676,7 +676,7 @@ rate(pg_stat_database_tup_deleted[5m])
 
 ```promql
 # Request rate by status
-sum by(code) (rate(caddy_http_request_count_total[5m]))
+sum by(code) (rate(caddy_http_requests_total[5m]))
 
 # Response time percentiles
 histogram_quantile(0.95, rate(caddy_http_request_duration_seconds_bucket[5m]))

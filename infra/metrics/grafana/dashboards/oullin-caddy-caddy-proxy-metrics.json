@@ -53,7 +53,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "sum(rate(caddy_http_request_count_total[5m]))",
+          "expr": "sum(rate(caddy_http_request_duration_seconds_count[5m]))",
           "legendFormat": "Requests/s",
           "refId": "A"
         }
@@ -191,7 +191,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "sum by(code) (rate(caddy_http_request_count_total[5m]))",
+          "expr": "sum by(code) (rate(caddy_http_request_duration_seconds_count[5m]))",
           "legendFormat": "{{code}}",
           "refId": "A"
         }
@@ -456,7 +456,7 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
-          "expr": "sum(rate(caddy_http_request_errors_total[5m]))",
+          "expr": "sum(rate(caddy_http_request_errors_total[5m])) or vector(0)",
           "legendFormat": "Errors/s",
           "refId": "A"
         }

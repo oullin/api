@@ -2,7 +2,9 @@
 # This is the most reliable way to ensure Caddy acts as a simple HTTP proxy locally.
 {
 	auto_https off
-	# Caddy build in use does not include the metrics subdirective, so expose only the admin API.
+	# Enable metrics collection for HTTP handlers
+	metrics
+	# Expose admin API for Prometheus scraping
 	admin 0.0.0.0:2019
 }
 
