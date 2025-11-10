@@ -8,7 +8,7 @@
 
 ROOT_PATH           := $(shell pwd)
 MONITORING_DIR      := $(ROOT_PATH)/monitoring
-BACKUPS_DIR         := $(ROOT_PATH)/backups
+BACKUPS_DIR         := $(ROOT_PATH)/storage/monitoring/backups
 
 # Monitoring service URLs and ports
 GRAFANA_HOST        := localhost
