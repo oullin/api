@@ -2,6 +2,44 @@
 # Monitoring Stack Targets
 # -------------------------------------------------------------------------------------------------------------------- #
 
+# -------------------------------------------------------------------------------------------------------------------- #
+# Configuration Variables
+# -------------------------------------------------------------------------------------------------------------------- #
+
+ROOT_PATH           := $(shell pwd)
+MONITORING_DIR      := $(ROOT_PATH)/monitoring
+BACKUPS_DIR         := $(ROOT_PATH)/backups
+
+# Monitoring service URLs and ports
+GRAFANA_HOST        := localhost
+GRAFANA_PORT        := 3000
+GRAFANA_URL         := http://$(GRAFANA_HOST):$(GRAFANA_PORT)
+
+PROMETHEUS_HOST     := localhost
+PROMETHEUS_PORT     := 9090
+PROMETHEUS_URL      := http://$(PROMETHEUS_HOST):$(PROMETHEUS_PORT)
+
+CADDY_ADMIN_HOST    := localhost
+CADDY_ADMIN_PORT    := 2019
+CADDY_ADMIN_URL     := http://$(CADDY_ADMIN_HOST):$(CADDY_ADMIN_PORT)
+
+API_HOST            := localhost
+API_PORT            := 8080
+API_URL             := http://$(API_HOST):$(API_PORT)
+
+# Production API endpoint (behind Caddy)
+API_PROD_HOST       := localhost
+API_PROD_URL        := http://$(API_PROD_HOST)
+
+# Internal service URLs (Docker network)
+PG_EXPORTER_HOST    := postgres_exporter_local
+PG_EXPORTER_PORT    := 9187
+PG_EXPORTER_URL     := http://$(PG_EXPORTER_HOST):$(PG_EXPORTER_PORT)
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# PHONY Targets
+# -------------------------------------------------------------------------------------------------------------------- #
+
 .PHONY: monitor-up monitor-up-prod monitor-down monitor-down-prod monitor-restart \
 	monitor-up-full monitor-up-full-prod monitor-up-logs monitor-down-remove \
 	monitor-pull monitor-docker-config monitor-docker-exec-prometheus \
@@ -24,9 +62,9 @@ monitor-up:
 	@sleep 3
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack started$(NC)\n"
 	@printf "\n$(BOLD)Access points:$(NC)\n"
-	@printf "  $(GREEN)Grafana:$(NC)     http://localhost:3000\n"
-	@printf "  $(GREEN)Prometheus:$(NC)  http://localhost:9090\n"
-	@printf "  $(GREEN)Caddy Admin:$(NC) http://localhost:2019\n\n"
+	@printf "  $(GREEN)Grafana:$(NC)     $(GRAFANA_URL)\n"
+	@printf "  $(GREEN)Prometheus:$(NC)  $(PROMETHEUS_URL)\n"
+	@printf "  $(GREEN)Caddy Admin:$(NC) $(CADDY_ADMIN_URL)\n\n"
 
 ## Start monitoring stack (production)
 monitor-up-prod:
@@ -35,9 +73,9 @@ monitor-up-prod:
 	@sleep 3
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack started$(NC)\n"
 	@printf "\n$(BOLD)Access points (from server):$(NC)\n"
-	@printf "  $(GREEN)Grafana:$(NC)     http://localhost:3000\n"
-	@printf "  $(GREEN)Prometheus:$(NC)  http://localhost:9090\n"
-	@printf "  $(GREEN)Caddy Admin:$(NC) http://localhost:2019\n\n"
+	@printf "  $(GREEN)Grafana:$(NC)     $(GRAFANA_URL)\n"
+	@printf "  $(GREEN)Prometheus:$(NC)  $(PROMETHEUS_URL)\n"
+	@printf "  $(GREEN)Caddy Admin:$(NC) $(CADDY_ADMIN_URL)\n\n"
 
 ## Stop monitoring stack (local)
 monitor-down:
@@ -167,19 +205,19 @@ monitor-test:
 	@printf "$(BOLD)1. Checking services are running...$(NC)\n"
 	@docker ps --filter "name=prometheus_local" --filter "name=grafana_local" --filter "name=postgres_exporter_local" --format "  ✓ {{.Names}}: {{.Status}}" || echo "  $(RED)✗ Services not running$(NC)"
 	@printf "\n$(BOLD)2. Testing Prometheus targets...$(NC)\n"
-	@curl -s http://localhost:9090/api/v1/targets | grep -q '"health":"up"' && echo "  $(GREEN)✓ Prometheus targets are UP$(NC)" || echo "  $(RED)✗ Some targets are DOWN$(NC)"
+	@curl -s $(PROMETHEUS_URL)/api/v1/targets | grep -q '"health":"up"' && echo "  $(GREEN)✓ Prometheus targets are UP$(NC)" || echo "  $(RED)✗ Some targets are DOWN$(NC)"
 	@printf "\n$(BOLD)3. Testing Caddy metrics endpoint...$(NC)\n"
-	@curl -s http://localhost:2019/metrics | grep -q "caddy_http_requests_total" && echo "  $(GREEN)✓ Caddy metrics accessible$(NC)" || echo "  $(RED)✗ Caddy metrics unavailable$(NC)"
+	@curl -s $(CADDY_ADMIN_URL)/metrics | grep -q "caddy_http_requests_total" && echo "  $(GREEN)✓ Caddy metrics accessible$(NC)" || echo "  $(RED)✗ Caddy metrics unavailable$(NC)"
 	@printf "\n$(BOLD)4. Testing API metrics endpoint...$(NC)\n"
-	@curl -s http://localhost:8080/metrics | grep -q "go_goroutines" && echo "  $(GREEN)✓ API metrics accessible$(NC)" || echo "  $(RED)✗ API metrics unavailable$(NC)"
+	@curl -s $(API_URL)/metrics | grep -q "go_goroutines" && echo "  $(GREEN)✓ API metrics accessible$(NC)" || echo "  $(RED)✗ API metrics unavailable$(NC)"
 	@printf "\n$(BOLD)5. Testing Grafana...$(NC)\n"
-	@curl -s http://localhost:3000/api/health | grep -q "ok" && echo "  $(GREEN)✓ Grafana is healthy$(NC)" || echo "  $(RED)✗ Grafana is unhealthy$(NC)"
+	@curl -s $(GRAFANA_URL)/api/health | grep -q "ok" && echo "  $(GREEN)✓ Grafana is healthy$(NC)" || echo "  $(RED)✗ Grafana is unhealthy$(NC)"
 	@printf "\n$(BOLD)$(GREEN)Test suite completed!$(NC)\n\n"
 
 ## Verify Prometheus targets status
 monitor-targets:
 	@printf "$(BOLD)$(CYAN)Prometheus Targets Status$(NC)\n\n"
-	@curl -s http://localhost:9090/api/v1/targets | jq -r '.data.activeTargets[] | "[\(.health | ascii_upcase)] \(.labels.job) - \(.scrapeUrl)"' || echo "$(RED)Failed to fetch targets. Is Prometheus running?$(NC)"
+	@curl -s $(PROMETHEUS_URL)/api/v1/targets | jq -r '.data.activeTargets[] | "[\(.health | ascii_upcase)] \(.labels.job) - \(.scrapeUrl)"' || echo "$(RED)Failed to fetch targets. Is Prometheus running?$(NC)"
 	@printf "\n"
 
 ## Check Prometheus configuration
@@ -194,43 +232,43 @@ monitor-config:
 ## Open Grafana in browser
 monitor-grafana:
 	@printf "$(BOLD)$(CYAN)Opening Grafana...$(NC)\n"
-	@printf "URL: $(GREEN)http://localhost:3000$(NC)\n"
+	@printf "URL: $(GREEN)$(GRAFANA_URL)$(NC)\n"
 	@printf "Credentials: admin / (set via GRAFANA_ADMIN_PASSWORD)\n\n"
-	@which xdg-open > /dev/null && xdg-open http://localhost:3000 || which open > /dev/null && open http://localhost:3000 || echo "Please open http://localhost:3000 in your browser"
+	@which xdg-open > /dev/null && xdg-open $(GRAFANA_URL) || which open > /dev/null && open $(GRAFANA_URL) || echo "Please open $(GRAFANA_URL) in your browser"
 
 ## Open Prometheus in browser
 monitor-prometheus:
 	@printf "$(BOLD)$(CYAN)Opening Prometheus...$(NC)\n"
-	@printf "URL: $(GREEN)http://localhost:9090$(NC)\n\n"
-	@which xdg-open > /dev/null && xdg-open http://localhost:9090 || which open > /dev/null && open http://localhost:9090 || echo "Please open http://localhost:9090 in your browser"
+	@printf "URL: $(GREEN)$(PROMETHEUS_URL)$(NC)\n\n"
+	@which xdg-open > /dev/null && xdg-open $(PROMETHEUS_URL) || which open > /dev/null && open $(PROMETHEUS_URL) || echo "Please open $(PROMETHEUS_URL) in your browser"
 
 ## Show Caddy metrics
 monitor-caddy-metrics:
 	@printf "$(BOLD)$(CYAN)Caddy Metrics$(NC)\n\n"
-	@curl -s http://localhost:2019/metrics | grep "^caddy_" | head -20
+	@curl -s $(CADDY_ADMIN_URL)/metrics | grep "^caddy_" | head -20
 	@printf "\n$(YELLOW)... (showing first 20 metrics)$(NC)\n"
-	@printf "Full metrics: $(GREEN)http://localhost:2019/metrics$(NC)\n\n"
+	@printf "Full metrics: $(GREEN)$(CADDY_ADMIN_URL)/metrics$(NC)\n\n"
 
 ## Show API metrics
 monitor-api-metrics:
 	@printf "$(BOLD)$(CYAN)API Metrics$(NC)\n\n"
-	@curl -s http://localhost:8080/metrics | grep "^go_" | head -20
+	@curl -s $(API_URL)/metrics | grep "^go_" | head -20
 	@printf "\n$(YELLOW)... (showing first 20 metrics)$(NC)\n"
-	@printf "Full metrics: $(GREEN)http://localhost:8080/metrics$(NC)\n\n"
+	@printf "Full metrics: $(GREEN)$(API_URL)/metrics$(NC)\n\n"
 
 ## Show PostgreSQL metrics
 monitor-db-metrics:
 	@printf "$(BOLD)$(CYAN)PostgreSQL Metrics$(NC)\n\n"
-	@docker exec oullin_prometheus_local curl -s http://postgres_exporter_local:9187/metrics | grep "^pg_" | head -20
+	@docker exec oullin_prometheus_local curl -s $(PG_EXPORTER_URL)/metrics | grep "^pg_" | head -20
 	@printf "\n$(YELLOW)... (showing first 20 metrics)$(NC)\n\n"
 
 ## Show all metrics endpoints
 monitor-metrics:
 	@printf "$(BOLD)$(CYAN)Available Metrics Endpoints$(NC)\n\n"
-	@printf "  $(GREEN)Caddy:$(NC)      http://localhost:2019/metrics\n"
-	@printf "  $(GREEN)API:$(NC)        http://localhost:8080/metrics\n"
-	@printf "  $(GREEN)PostgreSQL:$(NC) http://postgres_exporter_local:9187/metrics (internal)\n"
-	@printf "  $(GREEN)Prometheus:$(NC) http://localhost:9090/metrics\n\n"
+	@printf "  $(GREEN)Caddy:$(NC)      $(CADDY_ADMIN_URL)/metrics\n"
+	@printf "  $(GREEN)API:$(NC)        $(API_URL)/metrics\n"
+	@printf "  $(GREEN)PostgreSQL:$(NC) $(PG_EXPORTER_URL)/metrics (internal)\n"
+	@printf "  $(GREEN)Prometheus:$(NC) $(PROMETHEUS_URL)/metrics\n\n"
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Traffic Generation & Testing
@@ -241,18 +279,18 @@ monitor-traffic:
 	@printf "$(BOLD)$(CYAN)Generating test traffic (local)...$(NC)\n"
 	@printf "Making 100 requests to /ping endpoint...\n"
 	@for i in $$(seq 1 100); do \
-		curl -s http://localhost:8080/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
+		curl -s $(API_URL)/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
 		sleep 0.1; \
 	done
 	@printf "\n$(BOLD)$(GREEN)✓ Test traffic generated$(NC)\n"
-	@printf "\nCheck dashboards at: $(GREEN)http://localhost:3000$(NC)\n\n"
+	@printf "\nCheck dashboards at: $(GREEN)$(GRAFANA_URL)$(NC)\n\n"
 
 ## Generate heavy test traffic (local profile)
 monitor-traffic-heavy:
 	@printf "$(BOLD)$(CYAN)Generating heavy test traffic (local)...$(NC)\n"
 	@printf "Making 500 requests with 5 concurrent connections...\n"
 	@for i in $$(seq 1 100); do \
-		(for j in $$(seq 1 5); do curl -s http://localhost:8080/ping > /dev/null & done; wait); \
+		(for j in $$(seq 1 5); do curl -s $(API_URL)/ping > /dev/null & done; wait); \
 		printf "."; \
 		sleep 0.05; \
 	done
@@ -263,7 +301,7 @@ monitor-traffic-prod:
 	@printf "$(BOLD)$(CYAN)Generating test traffic (production)...$(NC)\n"
 	@printf "Making 100 requests to /api/ping endpoint...\n"
 	@for i in $$(seq 1 100); do \
-		curl -s http://localhost/api/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
+		curl -s $(API_PROD_URL)/api/ping > /dev/null && printf "." || printf "$(RED)✗$(NC)"; \
 		sleep 0.1; \
 	done
 	@printf "\n$(BOLD)$(GREEN)✓ Test traffic generated$(NC)\n"
@@ -275,7 +313,7 @@ monitor-traffic-heavy-prod:
 	@printf "$(BOLD)$(CYAN)Generating heavy test traffic (production)...$(NC)\n"
 	@printf "Making 500 requests with 5 concurrent connections...\n"
 	@for i in $$(seq 1 100); do \
-		(for j in $$(seq 1 5); do curl -s http://localhost/api/ping > /dev/null & done; wait); \
+		(for j in $$(seq 1 5); do curl -s $(API_PROD_URL)/api/ping > /dev/null & done; wait); \
 		printf "."; \
 		sleep 0.05; \
 	done
@@ -308,19 +346,19 @@ monitor-stats:
 ## Backup Prometheus data (with automatic rotation)
 monitor-backup:
 	@printf "$(BOLD)$(CYAN)Backing up Prometheus data...$(NC)\n"
-	@mkdir -p ./backups
+	@mkdir -p $(BACKUPS_DIR)
 	@docker run --rm -v prometheus_data:/data -v $(PWD)/backups:/backup alpine \
 		tar czf /backup/prometheus-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
-	@printf "$(BOLD)$(GREEN)✓ Backup created in ./backups/$(NC)\n"
+	@printf "$(BOLD)$(GREEN)✓ Backup created in $(BACKUPS_DIR)/$(NC)\n"
 	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
-	@for f in $$(ls -t ./backups/prometheus-backup-*.tar.gz 2>/dev/null | tail -n +6); do rm -f "$$f"; done || true
-	@BACKUP_COUNT=$$(ls -1 ./backups/prometheus-backup-*.tar.gz 2>/dev/null | wc -l); \
+	@for f in $$(ls -t $(BACKUPS_DIR)/prometheus-backup-*.tar.gz 2>/dev/null | tail -n +6); do rm -f "$$f"; done || true
+	@BACKUP_COUNT=$$(ls -1 $(BACKUPS_DIR)/prometheus-backup-*.tar.gz 2>/dev/null | wc -l); \
 		printf "$(BOLD)$(GREEN)✓ Backup rotation complete ($${BACKUP_COUNT} backups kept)$(NC)\n\n"
 
 ## Export Grafana dashboards to JSON files
 monitor-export-dashboards:
 	@printf "$(BOLD)$(CYAN)Exporting Grafana dashboards...$(NC)\n"
-	@./monitoring/grafana/scripts/export-dashboards.sh
+	@$(MONITORING_DIR)/grafana/scripts/export-dashboards.sh
 
 ## Show monitoring help
 monitor-help:

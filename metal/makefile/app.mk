@@ -1,11 +1,43 @@
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal
+# -------------------------------------------------------------------------------------------------------------------- #
+# Application Management Targets
+# -------------------------------------------------------------------------------------------------------------------- #
 
-DB_SECRET_USERNAME ?= ./database/infra/secrets/pg_username
-DB_SECRET_PASSWORD ?= ./database/infra/secrets/pg_password
-DB_SECRET_DBNAME   ?= ./database/infra/secrets/pg_dbname
+# -------------------------------------------------------------------------------------------------------------------- #
+# Configuration Variables
+# -------------------------------------------------------------------------------------------------------------------- #
+
+ROOT_PATH           := $(shell pwd)
+DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
+
+DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
+DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
+DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# PHONY Targets
+# -------------------------------------------------------------------------------------------------------------------- #
+
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal install-air
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# Code Quality Commands
+# -------------------------------------------------------------------------------------------------------------------- #
 
 format:
 	gofmt -w -s .
+
+audit:
+	$(call external_deps,'.')
+	$(call external_deps,'./app/...')
+	$(call external_deps,'./database/...')
+	$(call external_deps,'./docs/...')
+
+test-all:
+	go test ./...
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# Docker Management Commands
+# -------------------------------------------------------------------------------------------------------------------- #
 
 fresh:
 	docker compose down --volumes --rmi all --remove-orphans
@@ -22,11 +54,9 @@ destroy:
 	docker ps -aq | xargs --no-run-if-empty docker rm && \
 	docker ps
 
-audit:
-	$(call external_deps,'.')
-	$(call external_deps,'./app/...')
-	$(call external_deps,'./database/...')
-	$(call external_deps,'./docs/...')
+# -------------------------------------------------------------------------------------------------------------------- #
+# Development Tools
+# -------------------------------------------------------------------------------------------------------------------- #
 
 watch:
 	# --- Works with (air).
@@ -38,6 +68,10 @@ install-air:
 	#     https://github.com/air-verse/air
 	@echo "Installing air ..."
 	@go install github.com/air-verse/air@latest
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# CLI Commands
+# -------------------------------------------------------------------------------------------------------------------- #
 
 run-cli:
 	@missing_values=""; \
@@ -115,11 +149,9 @@ run-cli:
 		printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \
 		exit $$status; \
 	fi
+
 run-cli-docker:
 	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
-
-test-all:
-	go test ./...
 
 run-metal:
 	go run metal/cli/main.go
