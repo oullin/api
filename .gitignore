@@ -10,8 +10,8 @@ storage/seo/*.*
 !storage/seo/.gitkeep
 
 # --- [Caddy]: mtls
-caddy/mtls/*.*
-!caddy/mtls/.gitkeep
+infra/caddy/mtls/*.*
+!infra/caddy/mtls/.gitkeep
 
 # --- [API]: Bin
 bin/*
