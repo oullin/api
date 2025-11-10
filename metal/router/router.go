@@ -93,8 +93,11 @@ func (r *Router) KeepAliveDB() {
 }
 
 func (r *Router) Metrics() {
-	metricsHandler := handler.NewMetricsHandler()
-	r.Mux.Handle("GET /metrics", metricsHandler)
+	abstract := handler.NewMetricsHandler()
+
+	apiHandler := r.PipelineFor(abstract.Handle)
+
+	r.Mux.HandleFunc("POST /metrics", apiHandler)
 }
 
 func (r *Router) Profile() {
