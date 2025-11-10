@@ -2,6 +2,17 @@
 # Monitoring Stack Targets
 # -------------------------------------------------------------------------------------------------------------------- #
 
+.PHONY: monitor-up monitor-up-prod monitor-down monitor-down-prod monitor-restart \
+	monitor-up-full monitor-up-full-prod monitor-up-logs monitor-down-remove \
+	monitor-pull monitor-docker-config monitor-docker-exec-prometheus \
+	monitor-docker-exec-grafana monitor-docker-ps monitor-docker-inspect \
+	monitor-docker-logs-prometheus monitor-docker-logs-grafana monitor-docker-logs-db \
+	monitor-status monitor-logs monitor-logs-prometheus monitor-logs-grafana monitor-logs-db \
+	monitor-test monitor-targets monitor-config monitor-grafana monitor-prometheus \
+	monitor-caddy-metrics monitor-api-metrics monitor-db-metrics monitor-metrics \
+	monitor-traffic monitor-traffic-heavy monitor-traffic-prod monitor-traffic-heavy-prod \
+	monitor-clean monitor-stats monitor-backup monitor-export-dashboards monitor-help
+
 # -------------------------------------------------------------------------------------------------------------------- #
 # Start/Stop Commands
 # -------------------------------------------------------------------------------------------------------------------- #
