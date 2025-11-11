@@ -12,9 +12,13 @@ volumes:
     caddy_config:
     go_mod_cache:
         driver: local
-    prometheus_data:
+    prometheus_data_prod:
         driver: local
-    grafana_data:
+    prometheus_data_local:
+        driver: local
+    grafana_data_prod:
+        driver: local
+    grafana_data_local:
         driver: local
 
     # --- DB: Define a named volume at the top level.
@@ -114,7 +118,7 @@ services:
                 - "127.0.0.1:9090:9090"
             volumes:
                 - ./infra/metrics/prometheus/provisioning/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-                - prometheus_data:/prometheus
+                - prometheus_data_prod:/prometheus
             networks:
                 - caddy_net
                 - oullin_net
@@ -153,7 +157,7 @@ services:
                 - "9090:9090"
             volumes:
                 - ./infra/metrics/prometheus/provisioning/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
-                - prometheus_data:/prometheus
+                - prometheus_data_local:/prometheus
             networks:
                 - caddy_net
                 - oullin_net
@@ -247,7 +251,7 @@ services:
                 - GF_INSTALL_PLUGINS=
                 - GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus:9090
             volumes:
-                - grafana_data:/var/lib/grafana
+                - grafana_data_prod:/var/lib/grafana
                 - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
                 - ./infra/metrics/grafana/dashboards:/var/lib/grafana/dashboards:ro
             networks:
@@ -286,7 +290,7 @@ services:
                 - GF_INSTALL_PLUGINS=
                 - GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus_local:9090
             volumes:
-                - grafana_data:/var/lib/grafana
+                - grafana_data_local:/var/lib/grafana
                 - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
                 - ./infra/metrics/grafana/dashboards:/var/lib/grafana/dashboards:ro
             networks:

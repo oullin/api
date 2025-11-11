@@ -21,7 +21,7 @@ consider contributing to the project by making improvements or fixing issues by 
 To keep dashboard changes reproducible and under version control:
 
 1. **Start monitoring stack**: `make monitor-up`
-2. **Make changes in Grafana UI**: Navigate to http://localhost:3000 and edit dashboards
+2. **Make changes in Grafana UI**: Navigate to <http://localhost:3000> and edit dashboards
 3. **Export your changes**: Run `./infra/metrics/grafana/scripts/export-dashboards.sh`
    - Select specific dashboard or `all` to export all dashboards
    - Exports are saved to `infra/metrics/grafana/dashboards/`
