@@ -7,10 +7,10 @@ global:
     environment: 'local'
 
 scrape_configs:
-  # Caddy metrics endpoint (local)
+  # Caddy metrics endpoint (dedicated /metrics endpoint, not admin API)
   - job_name: 'caddy'
     static_configs:
-      - targets: ['caddy_local:2019']
+      - targets: ['caddy_local:9180']
         labels:
           service: 'caddy'
           environment: 'local'

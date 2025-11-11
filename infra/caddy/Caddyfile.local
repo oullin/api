@@ -2,9 +2,15 @@
 # This is the most reliable way to ensure Caddy acts as a simple HTTP proxy locally.
 {
 	auto_https off
+
 	# Enable metrics collection for HTTP handlers
-	metrics
-	# Expose admin API for Prometheus scraping
+	servers {
+		metrics
+	}
+
+	# Admin API listens on all interfaces within container for Docker network access
+	# In local mode, it's published to host at 127.0.0.1:2019 for debugging
+	# In production, it's not published, so only Docker network can access it
 	admin 0.0.0.0:2019
 }
 
@@ -43,4 +49,17 @@
 	# 	- The service name 'api' is resolved by Docker's internal DNS to the correct container IP on the 'caddy_net' network.
 	# 	- The API container listens on port 8080 (from the ENV_HTTP_PORT).
 	reverse_proxy api:8080
+}
+
+# INTERNAL metrics endpoint for Prometheus scraping
+# This exposes ONLY /metrics, not the full admin API
+# Listens on all interfaces but not published to host (Docker network only)
+:9180 {
+	handle /metrics {
+		reverse_proxy localhost:2019
+	}
+
+	handle {
+		respond 404
+	}
 }

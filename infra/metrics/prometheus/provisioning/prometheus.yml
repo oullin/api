@@ -6,10 +6,10 @@ global:
     monitor: 'oullin-prod'
 
 scrape_configs:
-  # Caddy metrics endpoint
+  # Caddy metrics endpoint (dedicated /metrics endpoint, not admin API)
   - job_name: 'caddy'
     static_configs:
-      - targets: ['caddy_prod:2019']
+      - targets: ['caddy_prod:9180']
         labels:
           service: 'caddy'
           environment: 'production'

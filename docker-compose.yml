@@ -44,14 +44,21 @@ services:
             restart: unless-stopped
             depends_on:
                 - api
+
+            # --- The 443:443/udp is required for HTTP/3
+            #     NOTES:
+            #           - Admin API (2019) is bound to localhost only.
+            #           - Prometheus scrapes metrics from dedicated endpoint (9180) via Docker internal DNS.
             ports:
                 - "80:80"
                 - "443:443"
                 - "443:443/udp" # Required for HTTP/3
-                # NOTE: Port 2019 (admin API) is NOT exposed to host for security.
-                # Prometheus scrapes metrics via Docker internal DNS (caddy_prod:2019).
+                # NOTE: Admin API (2019) is bound to localhost only.
+                # Prometheus scrapes metrics from dedicated endpoint (9180) via Docker internal DNS.
+
+            # --- Dedicated /metrics endpoint for Prometheus (internal network only)
             expose:
-                - "2019" # Caddy admin API for Prometheus metrics (internal network only)
+                - "9180"
             volumes:
                 - caddy_data:/data
                 - caddy_config:/config
@@ -79,8 +86,11 @@ services:
                 - "18080:80"
                 - "8443:443"
                 - "127.0.0.1:2019:2019" # Admin API - localhost only for debugging
+
+            # --- Dedicated /metrics endpoint for Prometheus (internal network only)
             expose:
-                - "2019" # Caddy admin API for Prometheus metrics (internal network only)
+                - "9180"
+
             volumes:
                 - caddy_data:/data
                 - caddy_config:/config
