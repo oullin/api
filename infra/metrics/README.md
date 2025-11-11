@@ -87,7 +87,7 @@ The following configurations are **identical** across both environments:
 2. **Prometheus Core Settings:**
    - Same Prometheus version (`prom/prometheus:v3.0.1`)
    - Identical scrape interval (15s) and evaluation interval (15s)
-   - Same job configurations (caddy, postgresql, api, prometheus)
+   - Same job structure (caddy, postgresql, api, prometheus) with per-environment targets
    - Same metrics endpoints and paths
 
 3. **Postgres Exporter:**
@@ -107,6 +107,7 @@ These settings **differ intentionally** based on environment:
 | **Prometheus Port** | `9090:9090` | `127.0.0.1:9090:9090` | Security (prod localhost-only) |
 | **Data Retention** | 7 days | 30 days | Storage/cost optimization |
 | **Caddy Target** | `caddy_local:9180` | `caddy_prod:9180` | Service dependencies |
+| **PostgreSQL Exporter Target** | `oullin_postgres_exporter_local:9187` | `oullin_postgres_exporter:9187` | Service dependencies |
 | **External Labels** | `monitor: 'oullin-local'`<br>`environment: 'local'` | `monitor: 'oullin-prod'`<br>`environment: 'production'` | Metric identification |
 | **Admin API** | `127.0.0.1:2019:2019` | Not exposed | Debugging access |
 
@@ -153,7 +154,9 @@ Set via Docker Compose:
 
 **Prerequisites:**
 - Docker and Docker Compose installed
-- `.env` file with `GRAFANA_ADMIN_PASSWORD` set (required - no default)
+- `.env` file in the repository root with `GRAFANA_ADMIN_PASSWORD` set (required - no default)
+  - Use `make env:init` to copy `.env.example` if you need a starting point
+  - If `.env` already exists, edit it in place instead of appending duplicates
 - Database secrets in `database/infra/secrets/`
 
 **Setup:**
@@ -161,6 +164,7 @@ Set via Docker Compose:
 ```bash
 # 1. Set Grafana admin password in .env file
 echo "GRAFANA_ADMIN_PASSWORD=$(openssl rand -base64 32)" >> .env
+# (Add or update the key manually if the file already defines it.)
 
 # 2. Start the local monitoring stack
 make monitor-up
@@ -206,7 +210,8 @@ make monitor-grafana
 2. **Caddy Admin API**
    - Exposes powerful administrative endpoints (`/load`, `/config`, `/stop`)
    - **NO authentication** by default
-   - Production: Only accessible within Docker network
+   - Production: Only accessible within Docker network; restrict further via firewalls/security groups when possible
+   - If you must expose it, configure Caddy's admin access controls (`admin.identity`, `admin.authorize`, or reverse-proxy ACLs) to require authentication
    - Never expose to public internet
 
 3. **Service Exposure**
@@ -604,8 +609,8 @@ sudo fail2ban-client status sshd
 
 ### Accessing Dashboards
 
-**Local:** http://localhost:3000
-**Production:** SSH tunnel then http://localhost:3000
+**Local:** <http://localhost:3000>
+**Production:** SSH tunnel then <http://localhost:3000>
 
 ### Dashboard Files
 
@@ -667,7 +672,7 @@ make monitor-export-dashboards
 
 ### Method 2: Use Community Dashboards
 
-Grafana has thousands of pre-built dashboards at https://grafana.com/grafana/dashboards/
+Grafana has thousands of pre-built dashboards at <https://grafana.com/grafana/dashboards/>
 
 **Popular for our stack:**
 - [9628](https://grafana.com/grafana/dashboards/9628) - PostgreSQL Database
@@ -881,10 +886,12 @@ docker run --rm -v grafana_data:/data -v $(pwd)/backups:/backup alpine \
 make monitor-down
 
 # Restore Prometheus data
+# WARNING: This will DELETE all existing Prometheus data. Validate backups and consider restoring in a test environment first.
 docker run --rm -v prometheus_data:/data -v $(pwd)/backups:/backup alpine \
   sh -c "rm -rf /data/* && tar xzf /backup/prometheus-backup-YYYYMMDD-HHMMSS.tar.gz -C /"
 
 # Restore Grafana data
+# WARNING: This will DELETE all existing Grafana data. Keep a secondary backup if unsure.
 docker run --rm -v grafana_data:/data -v $(pwd)/backups:/backup alpine \
   sh -c "rm -rf /data/* && tar xzf /backup/grafana-backup-YYYYMMDD-HHMMSS.tar.gz -C /"
 
