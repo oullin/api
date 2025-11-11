@@ -4,6 +4,7 @@ global:
   evaluation_interval: 15s
   external_labels:
     monitor: 'oullin-prod'
+    environment: 'production'
 
 scrape_configs:
   # Caddy metrics endpoint (dedicated /metrics endpoint, not admin API)

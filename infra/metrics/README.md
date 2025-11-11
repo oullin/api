@@ -70,6 +70,81 @@ infra/metrics/
         └── postgres-exporter-entrypoint.sh
 ```
 
+### Configuration Consistency
+
+The monitoring stack is designed to maintain configuration consistency across local and production environments while respecting environment-specific differences.
+
+#### Shared Configuration Elements
+
+The following configurations are **identical** across both environments:
+
+1. **Grafana Settings:**
+   - Same Grafana version (`grafana/grafana:11.4.0`)
+   - Identical security settings (admin user, sign-up disabled, anonymous disabled)
+   - Same dashboard and datasource provisioning structure
+   - Same volume mount paths
+
+2. **Prometheus Core Settings:**
+   - Same Prometheus version (`prom/prometheus:v3.0.1`)
+   - Identical scrape interval (15s) and evaluation interval (15s)
+   - Same job configurations (caddy, postgresql, api, prometheus)
+   - Same metrics endpoints and paths
+
+3. **Postgres Exporter:**
+   - Same exporter version (`prometheuscommunity/postgres-exporter:v0.15.0`)
+   - Identical port exposure (9187)
+   - Same entrypoint script and secrets handling
+
+#### Environment-Specific Variables
+
+These settings **differ intentionally** based on environment:
+
+| Configuration | Local | Production | Reason |
+|--------------|-------|------------|--------|
+| **Container Names** | `oullin_*_local` | `oullin_*` | Distinguish environments |
+| **Prometheus URL** | `oullin_prometheus_local:9090` | `oullin_prometheus:9090` | Network addressing |
+| **Grafana Port** | `3000:3000` | `127.0.0.1:3000:3000` | Security (prod localhost-only) |
+| **Prometheus Port** | `9090:9090` | `127.0.0.1:9090:9090` | Security (prod localhost-only) |
+| **Data Retention** | 7 days | 30 days | Storage/cost optimization |
+| **Caddy Target** | `caddy_local:9180` | `caddy_prod:9180` | Service dependencies |
+| **External Labels** | `monitor: 'oullin-local'`<br>`environment: 'local'` | `monitor: 'oullin-prod'`<br>`environment: 'production'` | Metric identification |
+| **Admin API** | `127.0.0.1:2019:2019` | Not exposed | Debugging access |
+
+#### Environment Variable Usage
+
+The configuration uses environment variables to maintain consistency while adapting to each environment:
+
+**Grafana Datasource** (`grafana/provisioning/datasources/prometheus.yml`):
+```yaml
+url: ${GF_DATASOURCE_PROMETHEUS_URL}
+```
+
+Set via Docker Compose:
+- **Local:** `GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus_local:9090`
+- **Production:** `GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus:9090`
+
+**Required Environment Variables:**
+- `GRAFANA_ADMIN_PASSWORD` - **Required**, no default (set in `.env`)
+- `GF_DATASOURCE_PROMETHEUS_URL` - Set automatically by Docker Compose profile
+
+#### Configuration Files by Environment
+
+**Local Environment:**
+- Prometheus: `prometheus/provisioning/prometheus.local.yml`
+- Profile: `--profile local`
+- Services: `prometheus_local`, `grafana_local`, `caddy_local`, `postgres_exporter_local`
+
+**Production Environment:**
+- Prometheus: `prometheus/provisioning/prometheus.yml`
+- Profile: `--profile prod`
+- Services: `prometheus`, `grafana`, `caddy_prod`, `postgres_exporter`
+
+**Shared Across All Environments:**
+- Grafana datasources: `grafana/provisioning/datasources/prometheus.yml`
+- Grafana dashboards: `grafana/provisioning/dashboards/default.yml`
+- Dashboard JSONs: `grafana/dashboards/*.json`
+- Postgres exporter script: `prometheus/scripts/postgres-exporter-entrypoint.sh`
+
 ---
 
 ## Quick Start

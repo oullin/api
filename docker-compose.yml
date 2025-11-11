@@ -201,6 +201,7 @@ services:
                 - GF_USERS_ALLOW_SIGN_UP=false
                 - GF_AUTH_ANONYMOUS_ENABLED=false
                 - GF_INSTALL_PLUGINS=
+                - GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus:9090
             volumes:
                 - grafana_data:/var/lib/grafana
                 - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -224,6 +225,7 @@ services:
                 - GF_USERS_ALLOW_SIGN_UP=false
                 - GF_AUTH_ANONYMOUS_ENABLED=false
                 - GF_INSTALL_PLUGINS=
+                - GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus_local:9090
             volumes:
                 - grafana_data:/var/lib/grafana
                 - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
