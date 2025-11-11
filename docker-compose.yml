@@ -119,8 +119,24 @@ services:
                 - caddy_net
                 - oullin_net
             depends_on:
-                - caddy_prod
-                - postgres_exporter
+                caddy_prod:
+                    condition: service_started
+                postgres_exporter:
+                    condition: service_healthy
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
+            deploy:
+                resources:
+                    limits:
+                        cpus: '1.0'
+                        memory: 1G
+                    reservations:
+                        cpus: '0.25'
+                        memory: 256M
 
         prometheus_local:
             image: prom/prometheus:v3.0.1
@@ -142,8 +158,16 @@ services:
                 - caddy_net
                 - oullin_net
             depends_on:
-                - caddy_local
-                - postgres_exporter_local
+                caddy_local:
+                    condition: service_started
+                postgres_exporter_local:
+                    condition: service_healthy
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
 
         postgres_exporter:
             image: prometheuscommunity/postgres-exporter:v0.15.0
@@ -165,6 +189,20 @@ services:
                     condition: service_healthy
             expose:
                 - "9187"
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9187/"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
+            deploy:
+                resources:
+                    limits:
+                        cpus: '0.25'
+                        memory: 128M
+                    reservations:
+                        cpus: '0.05'
+                        memory: 32M
 
         postgres_exporter_local:
             image: prometheuscommunity/postgres-exporter:v0.15.0
@@ -186,6 +224,12 @@ services:
                     condition: service_healthy
             expose:
                 - "9187"
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9187/"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
 
         grafana:
             image: grafana/grafana:11.4.0
@@ -209,7 +253,22 @@ services:
             networks:
                 - caddy_net
             depends_on:
-                - prometheus
+                prometheus:
+                    condition: service_healthy
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 30s
+            deploy:
+                resources:
+                    limits:
+                        cpus: '0.5'
+                        memory: 512M
+                    reservations:
+                        cpus: '0.1'
+                        memory: 128M
 
         grafana_local:
             image: grafana/grafana:11.4.0
@@ -233,7 +292,14 @@ services:
             networks:
                 - caddy_net
             depends_on:
-                - prometheus_local
+                prometheus_local:
+                    condition: service_healthy
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 30s
 
         # A dedicated service for running one-off Go commands
         api-runner:
