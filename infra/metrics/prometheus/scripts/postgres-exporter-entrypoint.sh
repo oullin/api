@@ -4,8 +4,8 @@ set -e
 # URL-encode function using od and tr (POSIX-compliant)
 # Required for credentials containing special characters (@, :, /, ?, =)
 urlencode() {
-  local string="$1"
-  echo -n "$string" | od -An -tx1 | tr ' ' % | tr -d '\n'
+  string="$1"
+  printf '%s' "$string" | od -An -tx1 | tr ' ' % | tr -d '\n'
 }
 
 # Read Docker secrets separately for better error diagnostics
