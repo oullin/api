@@ -93,12 +93,14 @@ func (r *Router) KeepAliveDB() {
 }
 
 func (r *Router) Metrics() {
-	abstract := handler.NewMetricsHandler()
+	metricsHandler := handler.NewMetricsHandler()
 
-	// Metrics endpoint bypasses middleware - it's for Prometheus/monitoring tools
-	apiHandler := endpoint.NewApiHandler(abstract.Handle)
-
-	r.Mux.HandleFunc("GET /metrics", apiHandler)
+	// Metrics endpoint protected by Docker network isolation
+	// Only accessible from within caddy_net and oullin_net networks
+	// Prometheus scrapes via internal DNS (api:8080)
+	r.Mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, req *http.Request) {
+		_ = metricsHandler.Handle(w, req)
+	})
 }
 
 func (r *Router) Profile() {

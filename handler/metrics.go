@@ -13,7 +13,9 @@ func NewMetricsHandler() MetricsHandler {
 	return MetricsHandler{}
 }
 
-// Handle returns the Prometheus metrics handler (public endpoint for Prometheus scraping)
+// Handle returns the Prometheus metrics handler
+// Protected by Docker network isolation - only accessible from containers
+// within caddy_net and oullin_net networks (not exposed to host)
 func (h MetricsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
 	// Serve Prometheus metrics using the standard promhttp handler
 	promhttp.Handler().ServeHTTP(w, r)
