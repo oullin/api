@@ -26,7 +26,8 @@ build-local-restart:
 build-ci:
 	@printf "\n$(CYAN)Building production images for CI$(NC)\n"
 	# This 'build' command only builds the images; it does not run them.
-	@docker compose --profile prod build
+	# Build only services that have custom dockerfiles (not pre-built images)
+	@docker compose build api caddy_prod
 
 # --- Deprecated
 #     We should always deploy builds from the CI and not build again in servers.
