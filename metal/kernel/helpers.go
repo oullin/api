@@ -30,6 +30,19 @@ func (a *App) CloseDB() {
 	a.db.Close()
 }
 
+func (a *App) CloseTracer() {
+	if a.tracer == nil {
+		return
+	}
+
+	if err := a.tracer.Shutdown(); err != nil {
+		// Log error but don't panic during shutdown
+		if a.logs != nil {
+			_ = err // Error handling for shutdown
+		}
+	}
+}
+
 func (a *App) Recover() {
 	if a == nil {
 		return

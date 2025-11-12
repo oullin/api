@@ -17,6 +17,7 @@ import (
 type App struct {
 	router    *router.Router
 	sentry    *portal.Sentry
+	tracer    *portal.TracerProvider
 	logs      llogs.Driver
 	validator *portal.Validator
 	env       *env.Environment
@@ -29,6 +30,7 @@ func NewApp(e *env.Environment, validator *portal.Validator) (*App, error) {
 		validator: validator,
 		logs:      NewLogs(e),
 		sentry:    NewSentry(e),
+		tracer:    NewTracerProvider(e),
 		db:        NewDbConnection(e),
 	}
 

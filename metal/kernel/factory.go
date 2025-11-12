@@ -63,6 +63,16 @@ func NewLogs(env *env.Environment) llogs.Driver {
 	return lDriver
 }
 
+func NewTracerProvider(env *env.Environment) *portal.TracerProvider {
+	tracerProvider, err := portal.NewTracerProvider(env)
+
+	if err != nil {
+		panic("tracer: error initializing tracer provider: " + err.Error())
+	}
+
+	return tracerProvider
+}
+
 func NewEnv(validate *portal.Validator) *env.Environment {
 	errorSuffix := "Environment: "
 
@@ -117,6 +127,8 @@ func NewEnv(validate *portal.Validator) *env.Environment {
 		SpaImagesDir: env.GetEnvVar("ENV_SPA_IMAGES_DIR"),
 	}
 
+	tracingEnv := env.NewTracingEnvironment()
+
 	if _, err := validate.Rejects(app); err != nil {
 		panic(errorSuffix + "invalid [APP] model: " + validate.GetErrorsAsJson())
 	}
@@ -145,6 +157,10 @@ func NewEnv(validate *portal.Validator) *env.Environment {
 		panic(errorSuffix + "invalid [seo] model: " + validate.GetErrorsAsJson())
 	}
 
+	if _, err := validate.Rejects(tracingEnv); err != nil {
+		panic(errorSuffix + "invalid [tracing] model: " + validate.GetErrorsAsJson())
+	}
+
 	blog := &env.Environment{
 		App:     app,
 		DB:      db,
@@ -153,6 +169,7 @@ func NewEnv(validate *portal.Validator) *env.Environment {
 		Sentry:  sentryEnv,
 		Ping:    pingEnv,
 		Seo:     seoEnv,
+		Tracing: *tracingEnv,
 	}
 
 	if _, err := validate.Rejects(blog); err != nil {
