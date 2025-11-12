@@ -152,22 +152,33 @@ EOF
 
 ## Set Up Docker Secrets
 
-Create Docker secrets:
+Avoid piping credentials through `echo` because the literal values end up in your shell history. Use one of the safer patterns below.
+
+### Option 1: Read secrets from secure input
 
 ```bash
-# Create secrets directory
-mkdir -p secrets
+# Prompt won't echo characters and won't touch shell history
+read -s -p "Enter database password: " DB_PASSWORD && echo
 
-# PostgreSQL credentials
-echo "your_db_user" | docker secret create pg_username - 2>/dev/null || \
-  echo "your_db_user" > secrets/pg_username
+echo "$DB_PASSWORD" | docker secret create pg_password - 2>/dev/null || \
+  printf "%s" "$DB_PASSWORD" > secrets/pg_password
 
-echo "your_strong_db_password" | docker secret create pg_password - 2>/dev/null || \
-  echo "your_strong_db_password" > secrets/pg_password
-
-echo "your_database_name" | docker secret create pg_dbname - 2>/dev/null || \
-  echo "your_database_name" > secrets/pg_dbname
+unset DB_PASSWORD
 ```
+
+Repeat the same pattern for usernames or other sensitive values you do not want stored on disk.
+
+### Option 2: Write files directly
+
+```bash
+mkdir -p secrets
+printf "your_db_user" > secrets/pg_username
+printf "your_strong_db_password" > secrets/pg_password
+printf "your_database_name" > secrets/pg_dbname
+chmod 600 secrets/*
+```
+
+Store these files somewhere secure (e.g., `pass`, `1Password CLI`, `sops`) and only copy them onto the server when needed.
 
 ---
 
@@ -257,6 +268,7 @@ crontab -e
 
 Add:
 
+# NOTE: Update /home/deployer/your-repo to your actual repository path
 ```cron
 # Run daily at 2 AM
 0 2 * * * cd /home/deployer/your-repo && make monitor-backup-prod >> /var/log/prometheus-backup.log 2>&1
@@ -305,7 +317,7 @@ your-domain.com {
 }
 
 # Admin API (internal only)
-:2019 {
+127.0.0.1:2019 {
     admin {
         metrics
     }
@@ -361,7 +373,7 @@ docker exec oullin_prometheus nslookup oullin_proxy_prod
 docker exec oullin_prometheus nslookup oullin_postgres_exporter
 
 # Verify network
-docker network inspect your-repo_default
+docker network inspect caddy_net oullin_net
 ```
 
 ### Out of disk space
