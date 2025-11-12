@@ -13,6 +13,7 @@ import (
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func main() {
@@ -42,6 +43,7 @@ func run() error {
 
 	defer app.CloseDB()
 	defer app.CloseLogs()
+	defer app.CloseTracer()
 	defer app.Recover()
 
 	app.Boot()
@@ -67,6 +69,15 @@ func run() error {
 		DevHost:      addr,
 		Wrap:         wrap,
 	})
+
+	// Wrap handler with OpenTelemetry instrumentation if tracing is enabled
+	if env.Tracing.Enabled {
+		handler = otelhttp.NewHandler(handler, "http.server",
+			otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+				return fmt.Sprintf("%s %s", r.Method, r.URL.Path)
+			}),
+		)
+	}
 
 	server := &http.Server{
 		Addr:              addr,

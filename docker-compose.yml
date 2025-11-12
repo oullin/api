@@ -513,6 +513,8 @@ services:
                 #     containers (like Caddy), not just from within itself.
                 ENV_DB_HOST: api-db
                 ENV_HTTP_HOST: 0.0.0.0
+                ENV_TRACING_ENABLED: ${ENV_TRACING_ENABLED:-true}
+                ENV_TRACING_OTLP_ENDPOINT: ${ENV_TRACING_OTLP_ENDPOINT:-http://oullin_tempo:4318}
             build:
                 context: .
                 dockerfile: ./infra/docker/dockerfile-api
