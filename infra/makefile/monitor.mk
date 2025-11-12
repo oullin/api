@@ -430,7 +430,7 @@ monitor-stats-prod:
 monitor-backup:
 	@printf "$(BOLD)$(CYAN)Backing up Prometheus data (local)...$(NC)\n"
 	@mkdir -p $(BACKUPS_DIR)
-	@docker run --rm -v prometheus_data:/data -v $(PWD)/backups:/backup alpine \
+	@docker run --rm -v prometheus_data:/data -v $(BACKUPS_DIR):/backup alpine \
 		tar czf /backup/prometheus-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
 	@printf "$(BOLD)$(GREEN)✓ Backup created in $(BACKUPS_DIR)/$(NC)\n"
 	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
@@ -442,7 +442,7 @@ monitor-backup:
 monitor-backup-prod:
 	@printf "$(BOLD)$(CYAN)Backing up Prometheus data (production)...$(NC)\n"
 	@mkdir -p $(BACKUPS_DIR)
-	@docker run --rm -v prometheus_prod_data:/data -v $(PWD)/backups:/backup alpine \
+	@docker run --rm -v prometheus_prod_data:/data -v $(BACKUPS_DIR):/backup alpine \
 		tar czf /backup/prometheus-prod-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
 	@printf "$(BOLD)$(GREEN)✓ Backup created in $(BACKUPS_DIR)/$(NC)\n"
 	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
