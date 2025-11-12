@@ -43,10 +43,14 @@ caddy-gen-certs:
 	  openssl genrsa -out "$(CADDY_MTLS_DIR)/server.key" 4096; \
 	  printf "$(WHITE)📜 Creating Server signing request...$(NC)\n"; \
 	  openssl req -new -key "$(CADDY_MTLS_DIR)/server.key" -subj "/CN=oullin_proxy_prod" -out "$(CADDY_MTLS_DIR)/server.csr"; \
-	  printf "$(NC)🖊️ Signing Server certificate with CA...$(NC)\n"; \
+	  printf "$(WHITE)📝 Creating SAN extension file...$(NC)\n"; \
+	  EXTFILE="$$(mktemp)"; trap 'rm -f "$$EXTFILE"' EXIT; \
+	  printf "subjectAltName=DNS:oullin_proxy_prod,DNS:localhost,IP:127.0.0.1\nextendedKeyUsage=serverAuth\n" > "$$EXTFILE"; \
+	  printf "$(NC)🖊️ Signing Server certificate with CA (including SANs)...$(NC)\n"; \
 	  openssl x509 -req -in "$(CADDY_MTLS_DIR)/server.csr" \
 	    -CA "$(CADDY_MTLS_DIR)/ca.pem" -CAkey "$(CADDY_MTLS_DIR)/ca.key" -CAserial "$(CADDY_MTLS_DIR)/ca.srl" \
-	    -out "$(CADDY_MTLS_DIR)/server.pem" -days 1095 -sha256; \
+	    -out "$(CADDY_MTLS_DIR)/server.pem" -days 1095 -sha256 -extfile "$$EXTFILE"; \
+	  rm -f "$$EXTFILE"; \
 	  chmod 600 "$(CADDY_MTLS_DIR)/server.key"; \
 	  chmod 644 "$(CADDY_MTLS_DIR)/server.pem"; \
 	  rm "$(CADDY_MTLS_DIR)/server.csr"; \
