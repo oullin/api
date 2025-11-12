@@ -641,6 +641,21 @@ This will:
 4. Save to `infra/metrics/grafana/dashboards/`
 5. Restart Grafana: `make monitor-restart`
 
+### Updating Dashboards Safely
+
+To keep dashboard changes reproducible and under version control:
+
+1. **Start monitoring stack**: `make monitor-up`
+2. **Make changes in Grafana UI**: Navigate to <http://localhost:3000> and edit dashboards
+3. **Export your changes**: Run `./infra/metrics/grafana/scripts/export-dashboards.sh`
+   - Select specific dashboard or `all` to export all dashboards
+   - Exports are saved to `infra/metrics/grafana/dashboards/`
+4. **Review the diff**: `git diff infra/metrics/grafana/dashboards/`
+5. **Commit changes**: Add and commit the exported JSON files
+6. **Verify**: `make monitor-restart` to ensure dashboards reload correctly
+
+**Warning:** Always export after making UI changes—manual edits to JSON files can work but are error-prone.
+
 ---
 
 ## Creating Custom Dashboards

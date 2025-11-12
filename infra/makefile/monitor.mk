@@ -43,16 +43,16 @@ PG_EXPORTER_URL     := http://$(PG_EXPORTER_HOST):$(PG_EXPORTER_PORT)
 # PHONY Targets
 # -------------------------------------------------------------------------------------------------------------------- #
 
-.PHONY: monitor-up monitor-up-prod monitor-down monitor-down-prod monitor-restart \
-	monitor-up-full monitor-up-full-prod monitor-up-logs monitor-down-remove \
-	monitor-pull monitor-docker-config monitor-docker-exec-prometheus \
-	monitor-docker-exec-grafana monitor-docker-ps monitor-docker-inspect \
-	monitor-docker-logs-prometheus monitor-docker-logs-grafana monitor-docker-logs-db \
-	monitor-status monitor-logs monitor-logs-prometheus monitor-logs-grafana monitor-logs-db \
-	monitor-test monitor-targets monitor-config monitor-grafana monitor-prometheus \
-	monitor-caddy-metrics monitor-api-metrics monitor-db-metrics monitor-metrics \
+.PHONY: monitor-up monitor-up-prod monitor-down monitor-down-prod monitor-restart monitor-restart-prod \
+	monitor-up-full monitor-up-full-prod monitor-up-logs monitor-up-logs-prod monitor-down-remove monitor-down-remove-prod \
+	monitor-pull monitor-pull-prod monitor-docker-config monitor-docker-config-prod monitor-docker-exec-prometheus monitor-docker-exec-prometheus-prod \
+	monitor-docker-exec-grafana monitor-docker-exec-grafana-prod monitor-docker-ps monitor-docker-inspect monitor-docker-inspect-prod \
+	monitor-docker-logs-prometheus monitor-docker-logs-prometheus-prod monitor-docker-logs-grafana monitor-docker-logs-grafana-prod monitor-docker-logs-db monitor-docker-logs-db-prod \
+	monitor-status monitor-logs monitor-logs-prod monitor-logs-prometheus monitor-logs-prometheus-prod monitor-logs-grafana monitor-logs-grafana-prod monitor-logs-db monitor-logs-db-prod \
+	monitor-test monitor-targets monitor-config monitor-config-prod monitor-grafana monitor-prometheus \
+	monitor-caddy-metrics monitor-api-metrics monitor-db-metrics monitor-db-metrics-prod monitor-metrics \
 	monitor-traffic monitor-traffic-heavy monitor-traffic-prod monitor-traffic-heavy-prod \
-	monitor-clean monitor-stats monitor-backup monitor-export-dashboards monitor-help
+	monitor-clean monitor-clean-prod monitor-stats monitor-stats-prod monitor-backup monitor-backup-prod monitor-export-dashboards monitor-help
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Start/Stop Commands
@@ -94,8 +94,14 @@ monitor-down-prod:
 
 ## Restart monitoring stack (local)
 monitor-restart:
-	@printf "$(BOLD)$(CYAN)Restarting monitoring stack...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Restarting monitoring stack (local)...$(NC)\n"
 	@docker compose --profile local restart prometheus_local grafana_local postgres_exporter_local
+	@printf "$(BOLD)$(GREEN)✓ Monitoring stack restarted$(NC)\n\n"
+
+## Restart monitoring stack (production)
+monitor-restart-prod:
+	@printf "$(BOLD)$(CYAN)Restarting monitoring stack (production)...$(NC)\n"
+	@docker compose --profile prod restart prometheus grafana postgres_exporter
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack restarted$(NC)\n\n"
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -121,32 +127,64 @@ monitor-up-logs:
 	@printf "$(BOLD)$(CYAN)Starting monitoring stack with logs (local)...$(NC)\n"
 	@docker compose --profile local up prometheus_local grafana_local postgres_exporter_local
 
+## Start monitoring stack with logs (foreground) - production
+monitor-up-logs-prod:
+	@printf "$(BOLD)$(CYAN)Starting monitoring stack with logs (production)...$(NC)\n"
+	@docker compose --profile prod up prometheus grafana postgres_exporter
+
 ## Stop and remove monitoring containers - local
 monitor-down-remove:
-	@printf "$(BOLD)$(CYAN)Stopping and removing monitoring containers...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Stopping and removing monitoring containers (local)...$(NC)\n"
 	@docker compose --profile local down prometheus_local grafana_local postgres_exporter_local
 	@printf "$(BOLD)$(GREEN)✓ Containers stopped and removed$(NC)\n\n"
 
-## Pull latest monitoring images
+## Stop and remove monitoring containers - production
+monitor-down-remove-prod:
+	@printf "$(BOLD)$(CYAN)Stopping and removing monitoring containers (production)...$(NC)\n"
+	@docker compose --profile prod down prometheus grafana postgres_exporter
+	@printf "$(BOLD)$(GREEN)✓ Containers stopped and removed$(NC)\n\n"
+
+## Pull latest monitoring images (local)
 monitor-pull:
-	@printf "$(BOLD)$(CYAN)Pulling latest monitoring images...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Pulling latest monitoring images (local)...$(NC)\n"
 	@docker compose pull prometheus_local grafana_local postgres_exporter_local
 	@printf "$(BOLD)$(GREEN)✓ Images pulled$(NC)\n\n"
 
-## Show docker compose config for monitoring services
+## Pull latest monitoring images (production)
+monitor-pull-prod:
+	@printf "$(BOLD)$(CYAN)Pulling latest monitoring images (production)...$(NC)\n"
+	@docker compose pull prometheus grafana postgres_exporter
+	@printf "$(BOLD)$(GREEN)✓ Images pulled$(NC)\n\n"
+
+## Show docker compose config for monitoring services (local)
 monitor-docker-config:
-	@printf "$(BOLD)$(CYAN)Docker Compose Configuration (monitoring)$(NC)\n\n"
+	@printf "$(BOLD)$(CYAN)Docker Compose Configuration (monitoring - local)$(NC)\n\n"
 	@docker compose config --profile local | grep -A 20 "prometheus_local\|grafana_local\|postgres_exporter_local" || docker compose config --profile local
 
-## Execute command in Prometheus container
+## Show docker compose config for monitoring services (production)
+monitor-docker-config-prod:
+	@printf "$(BOLD)$(CYAN)Docker Compose Configuration (monitoring - production)$(NC)\n\n"
+	@docker compose config --profile prod | grep -A 20 "prometheus\|grafana\|postgres_exporter" || docker compose config --profile prod
+
+## Execute command in Prometheus container (local)
 monitor-docker-exec-prometheus:
-	@printf "$(BOLD)$(CYAN)Executing shell in Prometheus container...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Executing shell in Prometheus container (local)...$(NC)\n"
 	@docker exec -it oullin_prometheus_local /bin/sh
 
-## Execute command in Grafana container
+## Execute command in Prometheus container (production)
+monitor-docker-exec-prometheus-prod:
+	@printf "$(BOLD)$(CYAN)Executing shell in Prometheus container (production)...$(NC)\n"
+	@docker exec -it oullin_prometheus /bin/sh
+
+## Execute command in Grafana container (local)
 monitor-docker-exec-grafana:
-	@printf "$(BOLD)$(CYAN)Executing shell in Grafana container...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Executing shell in Grafana container (local)...$(NC)\n"
 	@docker exec -it oullin_grafana_local /bin/sh
+
+## Execute command in Grafana container (production)
+monitor-docker-exec-grafana-prod:
+	@printf "$(BOLD)$(CYAN)Executing shell in Grafana container (production)...$(NC)\n"
+	@docker exec -it oullin_grafana /bin/sh
 
 ## Show docker ps for monitoring containers
 monitor-docker-ps:
@@ -154,12 +192,17 @@ monitor-docker-ps:
 	@docker ps --filter "name=prometheus" --filter "name=grafana" --filter "name=exporter" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"
 	@printf "\n"
 
-## Show docker inspect for monitoring containers
+## Show docker inspect for monitoring containers (local)
 monitor-docker-inspect:
-	@printf "$(BOLD)$(CYAN)Inspecting Monitoring Containers$(NC)\n\n"
+	@printf "$(BOLD)$(CYAN)Inspecting Monitoring Containers (local)$(NC)\n\n"
 	@docker inspect oullin_prometheus_local oullin_grafana_local oullin_postgres_exporter_local 2>/dev/null | jq '.[].Name, .[].State, .[].NetworkSettings.Networks' || echo "$(RED)Containers not running$(NC)"
 
-## View monitoring container logs (docker logs)
+## Show docker inspect for monitoring containers (production)
+monitor-docker-inspect-prod:
+	@printf "$(BOLD)$(CYAN)Inspecting Monitoring Containers (production)$(NC)\n\n"
+	@docker inspect oullin_prometheus oullin_grafana oullin_postgres_exporter 2>/dev/null | jq '.[].Name, .[].State, .[].NetworkSettings.Networks' || echo "$(RED)Containers not running$(NC)"
+
+## View monitoring container logs (docker logs - local)
 monitor-docker-logs-prometheus:
 	@docker logs -f oullin_prometheus_local
 
@@ -168,6 +211,16 @@ monitor-docker-logs-grafana:
 
 monitor-docker-logs-db:
 	@docker logs -f oullin_postgres_exporter_local
+
+## View monitoring container logs (docker logs - production)
+monitor-docker-logs-prometheus-prod:
+	@docker logs -f oullin_prometheus
+
+monitor-docker-logs-grafana-prod:
+	@docker logs -f oullin_grafana
+
+monitor-docker-logs-db-prod:
+	@docker logs -f oullin_postgres_exporter
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Status & Information Commands
@@ -179,22 +232,39 @@ monitor-status:
 	@docker ps --filter "name=prometheus" --filter "name=grafana" --filter "name=exporter" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 	@printf "\n"
 
-## Show logs from all monitoring services
+## Show logs from all monitoring services (local)
 monitor-logs:
-	@printf "$(BOLD)$(CYAN)Monitoring Stack Logs$(NC)\n\n"
+	@printf "$(BOLD)$(CYAN)Monitoring Stack Logs (local)$(NC)\n\n"
 	@docker compose logs -f prometheus_local grafana_local postgres_exporter_local
 
-## Show Prometheus logs
+## Show logs from all monitoring services (production)
+monitor-logs-prod:
+	@printf "$(BOLD)$(CYAN)Monitoring Stack Logs (production)$(NC)\n\n"
+	@docker compose logs -f prometheus grafana postgres_exporter
+
+## Show Prometheus logs (local)
 monitor-logs-prometheus:
 	@docker logs -f oullin_prometheus_local
 
-## Show Grafana logs
+## Show Prometheus logs (production)
+monitor-logs-prometheus-prod:
+	@docker logs -f oullin_prometheus
+
+## Show Grafana logs (local)
 monitor-logs-grafana:
 	@docker logs -f oullin_grafana_local
 
-## Show PostgreSQL exporter logs
+## Show Grafana logs (production)
+monitor-logs-grafana-prod:
+	@docker logs -f oullin_grafana
+
+## Show PostgreSQL exporter logs (local)
 monitor-logs-db:
 	@docker logs -f oullin_postgres_exporter_local
+
+## Show PostgreSQL exporter logs (production)
+monitor-logs-db-prod:
+	@docker logs -f oullin_postgres_exporter
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Testing & Verification Commands
@@ -223,10 +293,15 @@ monitor-targets:
 	@curl -s $(PROMETHEUS_URL)/api/v1/targets | jq -r '.data.activeTargets[] | "[\(.health | ascii_upcase)] \(.labels.job) - \(.scrapeUrl)"' || echo "$(RED)Failed to fetch targets. Is Prometheus running?$(NC)"
 	@printf "\n"
 
-## Check Prometheus configuration
+## Check Prometheus configuration (local)
 monitor-config:
-	@printf "$(BOLD)$(CYAN)Prometheus Configuration$(NC)\n\n"
+	@printf "$(BOLD)$(CYAN)Prometheus Configuration (local)$(NC)\n\n"
 	@docker exec oullin_prometheus_local cat /etc/prometheus/prometheus.yml
+
+## Check Prometheus configuration (production)
+monitor-config-prod:
+	@printf "$(BOLD)$(CYAN)Prometheus Configuration (production)$(NC)\n\n"
+	@docker exec oullin_prometheus cat /etc/prometheus/prometheus.yml
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Metrics Access Commands
@@ -259,10 +334,16 @@ monitor-api-metrics:
 	@printf "\n$(YELLOW)... (showing first 20 metrics)$(NC)\n"
 	@printf "Full metrics: $(GREEN)$(API_URL)/metrics$(NC)\n\n"
 
-## Show PostgreSQL metrics
+## Show PostgreSQL metrics (local)
 monitor-db-metrics:
-	@printf "$(BOLD)$(CYAN)PostgreSQL Metrics$(NC)\n\n"
+	@printf "$(BOLD)$(CYAN)PostgreSQL Metrics (local)$(NC)\n\n"
 	@docker exec oullin_prometheus_local curl -s $(PG_EXPORTER_URL)/metrics | grep "^pg_" | head -20
+	@printf "\n$(YELLOW)... (showing first 20 metrics)$(NC)\n\n"
+
+## Show PostgreSQL metrics (production)
+monitor-db-metrics-prod:
+	@printf "$(BOLD)$(CYAN)PostgreSQL Metrics (production)$(NC)\n\n"
+	@docker exec oullin_prometheus curl -s http://postgres_exporter:9187/metrics | grep "^pg_" | head -20
 	@printf "\n$(YELLOW)... (showing first 20 metrics)$(NC)\n\n"
 
 ## Show all metrics endpoints
@@ -331,9 +412,9 @@ monitor-traffic-heavy-prod:
 # Utility Commands
 # -------------------------------------------------------------------------------------------------------------------- #
 
-## Clean monitoring data (removes all metrics/dashboard data)
+## Clean monitoring data (removes all metrics/dashboard data) - local
 monitor-clean:
-	@printf "$(BOLD)$(RED)WARNING: This will delete all monitoring data!$(NC)\n"
+	@printf "$(BOLD)$(RED)WARNING: This will delete all monitoring data (local)!$(NC)\n"
 	@printf "Press Ctrl+C to cancel, or Enter to continue..."
 	@read
 	@printf "$(BOLD)$(CYAN)Stopping monitoring stack...$(NC)\n"
@@ -342,17 +423,36 @@ monitor-clean:
 	@docker volume rm -f prometheus_data grafana_data || true
 	@printf "$(BOLD)$(GREEN)✓ Monitoring data cleaned$(NC)\n\n"
 
-## Show monitoring stack resource usage
+## Clean monitoring data (removes all metrics/dashboard data) - production
+monitor-clean-prod:
+	@printf "$(BOLD)$(RED)WARNING: This will delete all monitoring data (production)!$(NC)\n"
+	@printf "Press Ctrl+C to cancel, or Enter to continue..."
+	@read
+	@printf "$(BOLD)$(CYAN)Stopping monitoring stack...$(NC)\n"
+	@docker compose --profile prod down prometheus grafana
+	@printf "$(BOLD)$(CYAN)Removing volumes...$(NC)\n"
+	@docker volume rm -f prometheus_prod_data grafana_prod_data || true
+	@printf "$(BOLD)$(GREEN)✓ Monitoring data cleaned$(NC)\n\n"
+
+## Show monitoring stack resource usage (local)
 monitor-stats:
-	@printf "$(BOLD)$(CYAN)Monitoring Stack Resource Usage$(NC)\n\n"
+	@printf "$(BOLD)$(CYAN)Monitoring Stack Resource Usage (local)$(NC)\n\n"
 	@docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}" \
 		oullin_prometheus_local oullin_grafana_local oullin_postgres_exporter_local 2>/dev/null || \
 		echo "$(RED)No monitoring containers running$(NC)"
 	@printf "\n"
 
-## Backup Prometheus data (with automatic rotation)
+## Show monitoring stack resource usage (production)
+monitor-stats-prod:
+	@printf "$(BOLD)$(CYAN)Monitoring Stack Resource Usage (production)$(NC)\n\n"
+	@docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}" \
+		oullin_prometheus oullin_grafana oullin_postgres_exporter 2>/dev/null || \
+		echo "$(RED)No monitoring containers running$(NC)"
+	@printf "\n"
+
+## Backup Prometheus data (with automatic rotation) - local
 monitor-backup:
-	@printf "$(BOLD)$(CYAN)Backing up Prometheus data...$(NC)\n"
+	@printf "$(BOLD)$(CYAN)Backing up Prometheus data (local)...$(NC)\n"
 	@mkdir -p $(BACKUPS_DIR)
 	@docker run --rm -v prometheus_data:/data -v $(PWD)/backups:/backup alpine \
 		tar czf /backup/prometheus-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
@@ -360,6 +460,18 @@ monitor-backup:
 	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
 	@for f in $$(ls -t $(BACKUPS_DIR)/prometheus-backup-*.tar.gz 2>/dev/null | tail -n +6); do rm -f "$$f"; done || true
 	@BACKUP_COUNT=$$(ls -1 $(BACKUPS_DIR)/prometheus-backup-*.tar.gz 2>/dev/null | wc -l); \
+		printf "$(BOLD)$(GREEN)✓ Backup rotation complete ($${BACKUP_COUNT} backups kept)$(NC)\n\n"
+
+## Backup Prometheus data (with automatic rotation) - production
+monitor-backup-prod:
+	@printf "$(BOLD)$(CYAN)Backing up Prometheus data (production)...$(NC)\n"
+	@mkdir -p $(BACKUPS_DIR)
+	@docker run --rm -v prometheus_prod_data:/data -v $(PWD)/backups:/backup alpine \
+		tar czf /backup/prometheus-prod-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
+	@printf "$(BOLD)$(GREEN)✓ Backup created in $(BACKUPS_DIR)/$(NC)\n"
+	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
+	@for f in $$(ls -t $(BACKUPS_DIR)/prometheus-prod-backup-*.tar.gz 2>/dev/null | tail -n +6); do rm -f "$$f"; done || true
+	@BACKUP_COUNT=$$(ls -1 $(BACKUPS_DIR)/prometheus-prod-backup-*.tar.gz 2>/dev/null | wc -l); \
 		printf "$(BOLD)$(GREEN)✓ Backup rotation complete ($${BACKUP_COUNT} backups kept)$(NC)\n\n"
 
 ## Export Grafana dashboards to JSON files
@@ -371,51 +483,71 @@ monitor-export-dashboards:
 monitor-help:
 	@printf "\n$(BOLD)$(CYAN)Monitoring Stack Commands$(NC)\n\n"
 	@printf "$(BOLD)$(BLUE)Start/Stop:$(NC)\n"
-	@printf "  $(GREEN)monitor-up$(NC)                    - Start monitoring stack (local)\n"
-	@printf "  $(GREEN)monitor-up-prod$(NC)               - Start monitoring stack (production)\n"
-	@printf "  $(GREEN)monitor-up-full$(NC)               - Start full stack with monitoring (local)\n"
-	@printf "  $(GREEN)monitor-up-full-prod$(NC)          - Start full stack with monitoring (prod)\n"
-	@printf "  $(GREEN)monitor-up-logs$(NC)               - Start with logs in foreground\n"
-	@printf "  $(GREEN)monitor-down$(NC)                  - Stop monitoring stack (local)\n"
-	@printf "  $(GREEN)monitor-down-prod$(NC)             - Stop monitoring stack (production)\n"
-	@printf "  $(GREEN)monitor-down-remove$(NC)           - Stop and remove containers\n"
-	@printf "  $(GREEN)monitor-restart$(NC)               - Restart monitoring stack\n\n"
+	@printf "  $(GREEN)monitor-up$(NC)                         - Start monitoring stack (local)\n"
+	@printf "  $(GREEN)monitor-up-prod$(NC)                    - Start monitoring stack (production)\n"
+	@printf "  $(GREEN)monitor-up-full$(NC)                    - Start full stack with monitoring (local)\n"
+	@printf "  $(GREEN)monitor-up-full-prod$(NC)               - Start full stack with monitoring (prod)\n"
+	@printf "  $(GREEN)monitor-up-logs$(NC)                    - Start with logs in foreground (local)\n"
+	@printf "  $(GREEN)monitor-up-logs-prod$(NC)               - Start with logs in foreground (prod)\n"
+	@printf "  $(GREEN)monitor-down$(NC)                       - Stop monitoring stack (local)\n"
+	@printf "  $(GREEN)monitor-down-prod$(NC)                  - Stop monitoring stack (production)\n"
+	@printf "  $(GREEN)monitor-down-remove$(NC)                - Stop and remove containers (local)\n"
+	@printf "  $(GREEN)monitor-down-remove-prod$(NC)           - Stop and remove containers (prod)\n"
+	@printf "  $(GREEN)monitor-restart$(NC)                    - Restart monitoring stack (local)\n"
+	@printf "  $(GREEN)monitor-restart-prod$(NC)               - Restart monitoring stack (prod)\n\n"
 	@printf "$(BOLD)$(BLUE)Docker Commands:$(NC)\n"
-	@printf "  $(GREEN)monitor-docker-ps$(NC)             - Show running monitoring containers\n"
-	@printf "  $(GREEN)monitor-docker-config$(NC)         - Show docker compose config\n"
-	@printf "  $(GREEN)monitor-docker-inspect$(NC)        - Inspect monitoring containers\n"
-	@printf "  $(GREEN)monitor-docker-exec-prometheus$(NC) - Shell into Prometheus container\n"
-	@printf "  $(GREEN)monitor-docker-exec-grafana$(NC)   - Shell into Grafana container\n"
-	@printf "  $(GREEN)monitor-docker-logs-prometheus$(NC)- Docker logs for Prometheus\n"
-	@printf "  $(GREEN)monitor-docker-logs-grafana$(NC)   - Docker logs for Grafana\n"
-	@printf "  $(GREEN)monitor-docker-logs-db$(NC)        - Docker logs for DB exporter\n"
-	@printf "  $(GREEN)monitor-pull$(NC)                  - Pull latest monitoring images\n\n"
+	@printf "  $(GREEN)monitor-docker-ps$(NC)                  - Show running monitoring containers\n"
+	@printf "  $(GREEN)monitor-docker-config$(NC)              - Show docker compose config (local)\n"
+	@printf "  $(GREEN)monitor-docker-config-prod$(NC)         - Show docker compose config (prod)\n"
+	@printf "  $(GREEN)monitor-docker-inspect$(NC)             - Inspect monitoring containers (local)\n"
+	@printf "  $(GREEN)monitor-docker-inspect-prod$(NC)        - Inspect monitoring containers (prod)\n"
+	@printf "  $(GREEN)monitor-docker-exec-prometheus$(NC)     - Shell into Prometheus container (local)\n"
+	@printf "  $(GREEN)monitor-docker-exec-prometheus-prod$(NC)- Shell into Prometheus container (prod)\n"
+	@printf "  $(GREEN)monitor-docker-exec-grafana$(NC)        - Shell into Grafana container (local)\n"
+	@printf "  $(GREEN)monitor-docker-exec-grafana-prod$(NC)   - Shell into Grafana container (prod)\n"
+	@printf "  $(GREEN)monitor-docker-logs-prometheus$(NC)     - Docker logs for Prometheus (local)\n"
+	@printf "  $(GREEN)monitor-docker-logs-prometheus-prod$(NC)- Docker logs for Prometheus (prod)\n"
+	@printf "  $(GREEN)monitor-docker-logs-grafana$(NC)        - Docker logs for Grafana (local)\n"
+	@printf "  $(GREEN)monitor-docker-logs-grafana-prod$(NC)   - Docker logs for Grafana (prod)\n"
+	@printf "  $(GREEN)monitor-docker-logs-db$(NC)             - Docker logs for DB exporter (local)\n"
+	@printf "  $(GREEN)monitor-docker-logs-db-prod$(NC)        - Docker logs for DB exporter (prod)\n"
+	@printf "  $(GREEN)monitor-pull$(NC)                       - Pull latest monitoring images (local)\n"
+	@printf "  $(GREEN)monitor-pull-prod$(NC)                  - Pull latest monitoring images (prod)\n\n"
 	@printf "$(BOLD)$(BLUE)Status & Logs:$(NC)\n"
-	@printf "  $(GREEN)monitor-status$(NC)                - Show status of monitoring services\n"
-	@printf "  $(GREEN)monitor-logs$(NC)                  - Show logs from all services\n"
-	@printf "  $(GREEN)monitor-logs-prometheus$(NC)       - Show Prometheus logs\n"
-	@printf "  $(GREEN)monitor-logs-grafana$(NC)          - Show Grafana logs\n"
-	@printf "  $(GREEN)monitor-logs-db$(NC)               - Show PostgreSQL exporter logs\n\n"
+	@printf "  $(GREEN)monitor-status$(NC)                     - Show status of monitoring services\n"
+	@printf "  $(GREEN)monitor-logs$(NC)                       - Show logs from all services (local)\n"
+	@printf "  $(GREEN)monitor-logs-prod$(NC)                  - Show logs from all services (prod)\n"
+	@printf "  $(GREEN)monitor-logs-prometheus$(NC)            - Show Prometheus logs (local)\n"
+	@printf "  $(GREEN)monitor-logs-prometheus-prod$(NC)       - Show Prometheus logs (prod)\n"
+	@printf "  $(GREEN)monitor-logs-grafana$(NC)               - Show Grafana logs (local)\n"
+	@printf "  $(GREEN)monitor-logs-grafana-prod$(NC)          - Show Grafana logs (prod)\n"
+	@printf "  $(GREEN)monitor-logs-db$(NC)                    - Show PostgreSQL exporter logs (local)\n"
+	@printf "  $(GREEN)monitor-logs-db-prod$(NC)               - Show PostgreSQL exporter logs (prod)\n\n"
 	@printf "$(BOLD)$(BLUE)Testing:$(NC)\n"
-	@printf "  $(GREEN)monitor-test$(NC)                  - Run full test suite (local only)\n"
-	@printf "  $(GREEN)monitor-targets$(NC)               - Show Prometheus targets status\n"
-	@printf "  $(GREEN)monitor-traffic$(NC)               - Generate test traffic (local)\n"
-	@printf "  $(GREEN)monitor-traffic-heavy$(NC)         - Generate heavy test traffic (local)\n"
-	@printf "  $(GREEN)monitor-traffic-prod$(NC)          - Generate test traffic (production)\n"
-	@printf "  $(GREEN)monitor-traffic-heavy-prod$(NC)    - Generate heavy test traffic (prod)\n\n"
+	@printf "  $(GREEN)monitor-test$(NC)                       - Run full test suite (local only)\n"
+	@printf "  $(GREEN)monitor-targets$(NC)                    - Show Prometheus targets status\n"
+	@printf "  $(GREEN)monitor-traffic$(NC)                    - Generate test traffic (local)\n"
+	@printf "  $(GREEN)monitor-traffic-heavy$(NC)              - Generate heavy test traffic (local)\n"
+	@printf "  $(GREEN)monitor-traffic-prod$(NC)               - Generate test traffic (production)\n"
+	@printf "  $(GREEN)monitor-traffic-heavy-prod$(NC)         - Generate heavy test traffic (prod)\n\n"
 	@printf "$(BOLD)$(BLUE)Access:$(NC)\n"
-	@printf "  $(GREEN)monitor-grafana$(NC)               - Open Grafana in browser\n"
-	@printf "  $(GREEN)monitor-prometheus$(NC)            - Open Prometheus in browser\n"
-	@printf "  $(GREEN)monitor-metrics$(NC)               - Show all metrics endpoints\n"
-	@printf "  $(GREEN)monitor-caddy-metrics$(NC)         - Show Caddy metrics\n"
-	@printf "  $(GREEN)monitor-api-metrics$(NC)           - Show API metrics\n"
-	@printf "  $(GREEN)monitor-db-metrics$(NC)            - Show PostgreSQL metrics\n\n"
+	@printf "  $(GREEN)monitor-grafana$(NC)                    - Open Grafana in browser\n"
+	@printf "  $(GREEN)monitor-prometheus$(NC)                 - Open Prometheus in browser\n"
+	@printf "  $(GREEN)monitor-metrics$(NC)                    - Show all metrics endpoints\n"
+	@printf "  $(GREEN)monitor-caddy-metrics$(NC)              - Show Caddy metrics\n"
+	@printf "  $(GREEN)monitor-api-metrics$(NC)                - Show API metrics\n"
+	@printf "  $(GREEN)monitor-db-metrics$(NC)                 - Show PostgreSQL metrics (local)\n"
+	@printf "  $(GREEN)monitor-db-metrics-prod$(NC)            - Show PostgreSQL metrics (prod)\n\n"
 	@printf "$(BOLD)$(BLUE)Utilities:$(NC)\n"
-	@printf "  $(GREEN)monitor-stats$(NC)                 - Show resource usage\n"
-	@printf "  $(GREEN)monitor-config$(NC)                - Show Prometheus config\n"
-	@printf "  $(GREEN)monitor-backup$(NC)                - Backup Prometheus data\n"
-	@printf "  $(GREEN)monitor-export-dashboards$(NC)     - Export Grafana dashboards to JSON\n"
-	@printf "  $(GREEN)monitor-clean$(NC)                 - Clean all monitoring data\n\n"
+	@printf "  $(GREEN)monitor-stats$(NC)                      - Show resource usage (local)\n"
+	@printf "  $(GREEN)monitor-stats-prod$(NC)                 - Show resource usage (prod)\n"
+	@printf "  $(GREEN)monitor-config$(NC)                     - Show Prometheus config (local)\n"
+	@printf "  $(GREEN)monitor-config-prod$(NC)                - Show Prometheus config (prod)\n"
+	@printf "  $(GREEN)monitor-backup$(NC)                     - Backup Prometheus data (local)\n"
+	@printf "  $(GREEN)monitor-backup-prod$(NC)                - Backup Prometheus data (prod)\n"
+	@printf "  $(GREEN)monitor-export-dashboards$(NC)          - Export Grafana dashboards to JSON\n"
+	@printf "  $(GREEN)monitor-clean$(NC)                      - Clean all monitoring data (local)\n"
+	@printf "  $(GREEN)monitor-clean-prod$(NC)                 - Clean all monitoring data (prod)\n\n"
 	@printf "$(BOLD)Quick Start:$(NC)\n"
 	@printf "  1. $(YELLOW)make monitor-up$(NC)           - Start the stack\n"
 	@printf "  2. $(YELLOW)make monitor-test$(NC)         - Verify everything works\n"
