@@ -7,13 +7,14 @@ import (
 )
 
 type Environment struct {
-	App     AppEnvironment    `validate:"required"`
-	DB      DBEnvironment     `validate:"required"`
-	Logs    LogsEnvironment   `validate:"required"`
-	Network NetEnvironment    `validate:"required"`
-	Sentry  SentryEnvironment `validate:"required"`
-	Ping    PingEnvironment   `validate:"required"`
-	Seo     SeoEnvironment    `validate:"required"`
+	App     AppEnvironment     `validate:"required"`
+	DB      DBEnvironment      `validate:"required"`
+	Logs    LogsEnvironment    `validate:"required"`
+	Network NetEnvironment     `validate:"required"`
+	Sentry  SentryEnvironment  `validate:"required"`
+	Ping    PingEnvironment    `validate:"required"`
+	Seo     SeoEnvironment     `validate:"required"`
+	Tracing TracingEnvironment `validate:"required"`
 }
 
 // SecretsDir defines where secret files are read from. It can be overridden in
