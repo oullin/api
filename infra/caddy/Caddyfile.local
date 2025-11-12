@@ -8,10 +8,9 @@
 		metrics
 	}
 
-	# Admin API listens on all interfaces within container for Docker network access
-	# In local mode, it's published to host at 127.0.0.1:2019 for debugging
-	# In production, it's not published, so only Docker network can access it
-	admin 0.0.0.0:2019
+	# Admin API listens only on localhost within container for security
+	# Prometheus accesses /metrics via the dedicated :9180 listener, not the admin API
+	admin 127.0.0.1:2019
 }
 
 # It tells Caddy to listen on its internal port 80 for any incoming hostname.
