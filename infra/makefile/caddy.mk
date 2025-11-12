@@ -1,8 +1,8 @@
 .PHONY: caddy-gen-certs caddy-del-certs caddy-validate caddy-fresh caddy-restart
 
-CADDY_MTLS_DIR = $(ROOT_PATH)/caddy/mtls
-APP_CADDY_CONFIG_PROD_FILE ?= caddy/Caddyfile.prod
-APP_CADDY_CONFIG_LOCAL_FILE ?= caddy/Caddyfile.local
+CADDY_MTLS_DIR = $(ROOT_PATH)/infra/caddy/mtls
+APP_CADDY_CONFIG_PROD_FILE ?= infra/caddy/Caddyfile.prod
+APP_CADDY_CONFIG_LOCAL_FILE ?= infra/caddy/Caddyfile.local
 
 caddy-restart:
 	docker compose up -d --force-recreate caddy_prod
@@ -66,6 +66,6 @@ caddy-del-certs:
 
 caddy-validate:
 	@docker run --rm \
-	  -v "$(ROOT_PATH)/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro" \
-	  -v "$(ROOT_PATH)/caddy/mtls:/etc/caddy/mtls:ro" \
+	  -v "$(ROOT_PATH)/infra/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro" \
+	  -v "$(ROOT_PATH)/infra/caddy/mtls:/etc/caddy/mtls:ro" \
 	  caddy:2.10.0 caddy validate --config /etc/caddy/Caddyfile

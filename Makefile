@@ -34,14 +34,15 @@ CGO_ENABLED           := 1
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
 
-include ./metal/makefile/helpers.mk
-include ./metal/makefile/env.mk
-include ./metal/makefile/db.mk
-include ./metal/makefile/app.mk
-include ./metal/makefile/logs.mk
-include ./metal/makefile/build.mk
-include ./metal/makefile/infra.mk
-include ./metal/makefile/caddy.mk
+include ./infra/makefile/helpers.mk
+include ./infra/makefile/env.mk
+include ./infra/makefile/db.mk
+include ./infra/makefile/app.mk
+include ./infra/makefile/logs.mk
+include ./infra/makefile/build.mk
+include ./infra/makefile/infra.mk
+include ./infra/makefile/caddy.mk
+include ./infra/makefile/monitor.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -104,6 +105,14 @@ help:
 	@printf "$(BOLD)$(BLUE)Caddy Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)caddy-gen-cert$(NC)   : Generate the caddy's mtls certificates.\n"
 	@printf "  $(BOLD)$(GREEN)caddy-del-cert$(NC)   : Remove the caddy's mtls certificates.\n"
-	@printf "  $(BOLD)$(GREEN)caddy-validate$(NC)   : Validates caddy's files syntax.\n"
+	@printf "  $(BOLD)$(GREEN)caddy-validate$(NC)   : Validates caddy's files syntax.\n\n"
+
+	@printf "$(BOLD)$(BLUE)Monitoring Commands:$(NC)\n"
+	@printf "  $(BOLD)$(GREEN)monitor-up$(NC)       : Start the monitoring stack (Prometheus, Grafana).\n"
+	@printf "  $(BOLD)$(GREEN)monitor-down$(NC)     : Stop the monitoring stack.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-status$(NC)   : Show status of monitoring services.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-test$(NC)     : Run monitoring stack test suite.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-grafana$(NC)  : Open Grafana dashboards in browser.\n"
+	@printf "  $(BOLD)$(GREEN)monitor-help$(NC)     : Show detailed monitoring commands.\n"
 
 	@printf "$(NC)\n"

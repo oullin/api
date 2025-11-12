@@ -1,3 +1,15 @@
+# Global options: Enable the admin API and metrics
+{
+	# Enable metrics collection for HTTP handlers
+	servers {
+		metrics
+	}
+
+	# Admin API listens only on localhost within container for security
+	# Prometheus accesses /metrics via the dedicated :9180 listener, not the admin API
+	admin 127.0.0.1:2019
+}
+
 # Caddy will automatically provision a Let's Encrypt certificate.
 gocanto.dev, www.gocanto.dev {
 	log {
@@ -29,8 +41,8 @@ oullin.io {
 		format json
 	}
 
-	# --- Public listener: block protected path
-	@protected_public path /api/generate-signature*
+	# --- Public listener: block protected paths
+	@protected_public path /api/generate-signature* /api/metrics
 	handle @protected_public {
 		respond 403
 	}
@@ -115,5 +127,18 @@ oullin.io {
 
 	handle {
 		respond 403
+	}
+}
+
+# INTERNAL metrics endpoint for Prometheus scraping
+# This exposes ONLY /metrics, not the full admin API
+# Listens on all interfaces but not published to host (Docker network only)
+:9180 {
+	handle /metrics {
+		reverse_proxy localhost:2019
+	}
+
+	handle {
+		respond 404
 	}
 }

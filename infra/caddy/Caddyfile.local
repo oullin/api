@@ -2,6 +2,15 @@
 # This is the most reliable way to ensure Caddy acts as a simple HTTP proxy locally.
 {
 	auto_https off
+
+	# Enable metrics collection for HTTP handlers
+	servers {
+		metrics
+	}
+
+	# Admin API listens only on localhost within container for security
+	# Prometheus accesses /metrics via the dedicated :9180 listener, not the admin API
+	admin 127.0.0.1:2019
 }
 
 # It tells Caddy to listen on its internal port 80 for any incoming hostname.
@@ -35,8 +44,27 @@
 		respond 204
 	}
 
+	# Block protected paths
+	@protected path /metrics /generate-signature*
+	handle @protected {
+		respond 403
+	}
+
 	# Reverse proxy all incoming requests to the 'api' service.
 	# 	- The service name 'api' is resolved by Docker's internal DNS to the correct container IP on the 'caddy_net' network.
 	# 	- The API container listens on port 8080 (from the ENV_HTTP_PORT).
 	reverse_proxy api:8080
+}
+
+# INTERNAL metrics endpoint for Prometheus scraping
+# This exposes ONLY /metrics, not the full admin API
+# Listens on all interfaces but not published to host (Docker network only)
+:9180 {
+	handle /metrics {
+		reverse_proxy localhost:2019
+	}
+
+	handle {
+		respond 404
+	}
 }

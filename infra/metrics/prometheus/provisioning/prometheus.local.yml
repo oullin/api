@@ -1,0 +1,41 @@
+# Prometheus configuration for local development/testing
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'oullin-local'
+    environment: 'local'
+
+scrape_configs:
+  # Caddy metrics endpoint (dedicated /metrics endpoint, not admin API)
+  - job_name: 'caddy'
+    static_configs:
+      - targets: ['caddy_local:9180']
+        labels:
+          service: 'caddy'
+          environment: 'local'
+
+  # PostgreSQL database metrics via postgres_exporter (local)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['oullin_postgres_exporter_local:9187']
+        labels:
+          service: 'postgresql'
+          environment: 'local'
+
+  # API metrics endpoint (local)
+  - job_name: 'api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['api:8080']
+        labels:
+          service: 'api'
+          environment: 'local'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          environment: 'local'
