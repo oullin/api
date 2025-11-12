@@ -52,7 +52,8 @@ PG_EXPORTER_URL     := http://$(PG_EXPORTER_HOST):$(PG_EXPORTER_PORT)
 	monitor-test monitor-targets monitor-config monitor-config-prod monitor-grafana monitor-prometheus \
 	monitor-caddy-metrics monitor-api-metrics monitor-db-metrics monitor-db-metrics-prod monitor-metrics \
 	monitor-traffic monitor-traffic-heavy monitor-traffic-prod monitor-traffic-heavy-prod \
-	monitor-clean monitor-clean-prod monitor-stats monitor-stats-prod monitor-backup monitor-backup-prod monitor-export-dashboards monitor-help
+	monitor-clean monitor-clean-prod monitor-stats monitor-stats-prod monitor-backup monitor-backup-prod monitor-export-dashboards monitor-help \
+	monitor-prod-launch monitor-prod-restart monitor-prod-remove
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Start/Stop Commands
@@ -103,6 +104,22 @@ monitor-restart-prod:
 	@printf "$(BOLD)$(CYAN)Restarting monitoring stack (production)...$(NC)\n"
 	@docker compose --profile prod restart prometheus grafana postgres_exporter
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack restarted$(NC)\n\n"
+
+# -------------------------------------------------------------------------------------------------------------------- #
+# Production Monitoring Quick Commands
+# -------------------------------------------------------------------------------------------------------------------- #
+
+## Launch all production monitoring services
+monitor-prod-launch:
+	@$(MAKE) monitor-up-prod
+
+## Restart all production monitoring services
+monitor-prod-restart:
+	@$(MAKE) monitor-restart-prod
+
+## Stop and remove all production monitoring services
+monitor-prod-remove:
+	@$(MAKE) monitor-down-remove-prod
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Docker Compose Commands
@@ -482,6 +499,10 @@ monitor-export-dashboards:
 ## Show monitoring help
 monitor-help:
 	@printf "\n$(BOLD)$(CYAN)Monitoring Stack Commands$(NC)\n\n"
+	@printf "$(BOLD)$(BLUE)Production Quick Commands:$(NC)\n"
+	@printf "  $(GREEN)monitor-prod-launch$(NC)                - Launch all production monitors\n"
+	@printf "  $(GREEN)monitor-prod-restart$(NC)               - Restart all production monitors\n"
+	@printf "  $(GREEN)monitor-prod-remove$(NC)                - Stop and remove all production monitors\n\n"
 	@printf "$(BOLD)$(BLUE)Start/Stop:$(NC)\n"
 	@printf "  $(GREEN)monitor-up$(NC)                         - Start monitoring stack (local)\n"
 	@printf "  $(GREEN)monitor-up-prod$(NC)                    - Start monitoring stack (production)\n"
