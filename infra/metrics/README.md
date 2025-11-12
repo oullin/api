@@ -125,8 +125,8 @@ Set via Docker Compose:
 - **Local:** `GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus_local:9090`
 - **Production:** `GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus:9090`
 
-**Required Environment Variables:**
-- `GRAFANA_ADMIN_PASSWORD` - **Required**, no default (set in `.env`)
+**Environment Variables:**
+- `GRAFANA_ADMIN_PASSWORD` - Optional (defaults to "admin" if not set). Strongly recommended to set a secure password for production.
 - `GF_DATASOURCE_PROMETHEUS_URL` - Set automatically by Docker Compose profile
 
 #### Configuration Files by Environment
@@ -155,24 +155,23 @@ Set via Docker Compose:
 
 **Prerequisites:**
 - Docker and Docker Compose installed
-- `.env` file in the repository root with `GRAFANA_ADMIN_PASSWORD` set (required - no default)
-  - Use `make env:init` to copy `.env.example` if you need a starting point
-  - If `.env` already exists, edit it in place instead of appending duplicates
+- `.env` file in the repository root (optional - use `make env:init` to copy `.env.example` if needed)
+- Optionally set `GRAFANA_ADMIN_PASSWORD` in `.env` for a secure admin password (defaults to "admin" if not set)
 - Database secrets in `database/infra/secrets/`
 
 **Setup:**
 
 ```bash
-# 1. Set Grafana admin password in .env file
+# 1. (Optional) Set Grafana admin password in .env file for production
+# If not set, defaults to "admin"
 echo "GRAFANA_ADMIN_PASSWORD=$(openssl rand -base64 32)" >> .env
-# (Add or update the key manually if the file already defines it.)
 
 # 2. Start the local monitoring stack
 make monitor-up
 # Or: docker compose --profile local up -d
 
 # 3. Access services
-# Grafana:    http://localhost:3000 (admin / your-password)
+# Grafana:    http://localhost:3000 (admin / admin or your custom password)
 # Prometheus: http://localhost:9090
 # Caddy Admin: http://localhost:2019
 ```
@@ -203,9 +202,8 @@ make monitor-grafana
 ⚠️ **IMPORTANT**: The monitoring stack includes several security considerations:
 
 1. **Grafana Admin Password**
-   - No default password allowed
-   - Must set `GRAFANA_ADMIN_PASSWORD` in `.env`
-   - Docker Compose will fail if not set
+   - Defaults to "admin" if not set
+   - Strongly recommended to set `GRAFANA_ADMIN_PASSWORD` in `.env` for production environments
    - Generate strong password: `openssl rand -base64 32`
 
 2. **Caddy Admin API**
@@ -250,7 +248,7 @@ docker exec -it oullin_proxy_prod curl http://localhost:2019/metrics
 
 ### Security Checklist
 
-- ✅ `GRAFANA_ADMIN_PASSWORD` set with strong password
+- ✅ `GRAFANA_ADMIN_PASSWORD` set with strong password (recommended for production)
 - ✅ Firewall configured (UFW)
 - ✅ Only necessary ports exposed (22, 80, 443)
 - ✅ Monitoring services NOT exposed to internet

@@ -132,7 +132,8 @@ POSTGRES_USER=your_db_user
 POSTGRES_PASSWORD=your_strong_db_password
 POSTGRES_DB=your_database_name
 
-# Grafana Configuration (REQUIRED - no default)
+# Grafana Configuration (optional - defaults to "admin")
+# Strongly recommended to set a secure password for production
 GRAFANA_ADMIN_PASSWORD=your_very_strong_grafana_password
 
 # Production Domain (optional, for SSL)
@@ -145,6 +146,7 @@ EOF
 
 **Security Notes:**
 - Use strong, unique passwords
+- If `GRAFANA_ADMIN_PASSWORD` is not set, it defaults to "admin" - strongly recommended to change for production
 - Never commit `.env` to version control
 - Consider using a password manager
 
@@ -416,7 +418,7 @@ sudo fail2ban-client status sshd
 
 ## Production Checklist
 
-- ✅ `GRAFANA_ADMIN_PASSWORD` set in `.env`
+- ✅ `GRAFANA_ADMIN_PASSWORD` set in `.env` (recommended for production)
 - ✅ Firewall configured (UFW)
 - ✅ Services bound to localhost
 - ✅ SSH tunneling configured
