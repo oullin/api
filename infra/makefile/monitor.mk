@@ -10,6 +10,23 @@ ROOT_PATH           := $(shell pwd)
 MONITORING_DIR      := $(ROOT_PATH)/infra/metrics
 BACKUPS_DIR         := $(ROOT_PATH)/storage/monitoring/backups
 
+# -------------------------------------------------------------------------------------------------------------------- #
+# Volume Labels (defined in docker-compose.yml)
+# -------------------------------------------------------------------------------------------------------------------- #
+
+PROMETHEUS_VOLUME_LOCAL := prometheus_data_local
+PROMETHEUS_VOLUME_PROD  := prometheus_data_prod
+GRAFANA_VOLUME_LOCAL    := grafana_data_local
+GRAFANA_VOLUME_PROD     := grafana_data_prod
+
+# Docker service names (defined in docker-compose.yml)
+PROMETHEUS_SERVICE_LOCAL        := prometheus_local
+PROMETHEUS_SERVICE_PROD         := prometheus
+GRAFANA_SERVICE_LOCAL           := grafana_local
+GRAFANA_SERVICE_PROD            := grafana
+POSTGRES_EXPORTER_SERVICE_LOCAL := postgres_exporter_local
+POSTGRES_EXPORTER_SERVICE_PROD  := postgres_exporter
+
 # Monitoring service URLs and ports
 GRAFANA_HOST        := localhost
 GRAFANA_PORT        := 3000
@@ -52,7 +69,8 @@ PG_EXPORTER_URL     := http://$(PG_EXPORTER_HOST):$(PG_EXPORTER_PORT)
 	monitor-test monitor-targets monitor-config monitor-config-prod monitor-grafana monitor-prometheus \
 	monitor-caddy-metrics monitor-api-metrics monitor-db-metrics monitor-db-metrics-prod monitor-metrics \
 	monitor-traffic monitor-traffic-heavy monitor-traffic-prod monitor-traffic-heavy-prod \
-	monitor-clean monitor-clean-prod monitor-stats monitor-stats-prod monitor-backup monitor-backup-prod monitor-export-dashboards monitor-help
+	monitor-clean monitor-clean-prod monitor-stats monitor-stats-prod monitor-backup monitor-backup-prod monitor-export-dashboards monitor-help \
+	monitor-volumes-local-check monitor-volumes-prod-check
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Start/Stop Commands
@@ -61,7 +79,7 @@ PG_EXPORTER_URL     := http://$(PG_EXPORTER_HOST):$(PG_EXPORTER_PORT)
 ## Start monitoring stack (local development)
 monitor-up:
 	@printf "$(BOLD)$(CYAN)Starting monitoring stack (local)...$(NC)\n"
-	@docker compose --profile local up -d prometheus_local grafana_local postgres_exporter_local
+	@docker compose --profile local up -d $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL) $(POSTGRES_EXPORTER_SERVICE_LOCAL)
 	@sleep 3
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack started$(NC)\n"
 	@printf "\n$(BOLD)Access points:$(NC)\n"
@@ -72,7 +90,7 @@ monitor-up:
 ## Start monitoring stack (production)
 monitor-up-prod:
 	@printf "$(BOLD)$(CYAN)Starting monitoring stack (production)...$(NC)\n"
-	@docker compose --profile prod up -d prometheus grafana postgres_exporter
+	@docker compose --profile prod up -d $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD) $(POSTGRES_EXPORTER_SERVICE_PROD)
 	@sleep 3
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack started$(NC)\n"
 	@printf "\n$(BOLD)Access points (from server):$(NC)\n"
@@ -83,25 +101,25 @@ monitor-up-prod:
 ## Stop monitoring stack (local)
 monitor-down:
 	@printf "$(BOLD)$(CYAN)Stopping monitoring stack (local)...$(NC)\n"
-	@docker compose --profile local stop prometheus_local grafana_local postgres_exporter_local
+	@docker compose --profile local stop $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL) $(POSTGRES_EXPORTER_SERVICE_LOCAL)
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack stopped$(NC)\n\n"
 
 ## Stop monitoring stack (production)
 monitor-down-prod:
 	@printf "$(BOLD)$(CYAN)Stopping monitoring stack (production)...$(NC)\n"
-	@docker compose --profile prod stop prometheus grafana postgres_exporter
+	@docker compose --profile prod stop $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD) $(POSTGRES_EXPORTER_SERVICE_PROD)
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack stopped$(NC)\n\n"
 
 ## Restart monitoring stack (local)
 monitor-restart:
 	@printf "$(BOLD)$(CYAN)Restarting monitoring stack (local)...$(NC)\n"
-	@docker compose --profile local restart prometheus_local grafana_local postgres_exporter_local
+	@docker compose --profile local restart $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL) $(POSTGRES_EXPORTER_SERVICE_LOCAL)
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack restarted$(NC)\n\n"
 
 ## Restart monitoring stack (production)
 monitor-restart-prod:
 	@printf "$(BOLD)$(CYAN)Restarting monitoring stack (production)...$(NC)\n"
-	@docker compose --profile prod restart prometheus grafana postgres_exporter
+	@docker compose --profile prod restart $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD) $(POSTGRES_EXPORTER_SERVICE_PROD)
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack restarted$(NC)\n\n"
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -125,46 +143,46 @@ monitor-up-full-prod:
 ## Start monitoring stack with logs (foreground) - local
 monitor-up-logs:
 	@printf "$(BOLD)$(CYAN)Starting monitoring stack with logs (local)...$(NC)\n"
-	@docker compose --profile local up prometheus_local grafana_local postgres_exporter_local
+	@docker compose --profile local up $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL) $(POSTGRES_EXPORTER_SERVICE_LOCAL)
 
 ## Start monitoring stack with logs (foreground) - production
 monitor-up-logs-prod:
 	@printf "$(BOLD)$(CYAN)Starting monitoring stack with logs (production)...$(NC)\n"
-	@docker compose --profile prod up prometheus grafana postgres_exporter
+	@docker compose --profile prod up $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD) $(POSTGRES_EXPORTER_SERVICE_PROD)
 
 ## Stop and remove monitoring containers - local
 monitor-down-remove:
 	@printf "$(BOLD)$(CYAN)Stopping and removing monitoring containers (local)...$(NC)\n"
-	@docker compose --profile local down prometheus_local grafana_local postgres_exporter_local
+	@docker compose --profile local down $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL) $(POSTGRES_EXPORTER_SERVICE_LOCAL)
 	@printf "$(BOLD)$(GREEN)✓ Containers stopped and removed$(NC)\n\n"
 
 ## Stop and remove monitoring containers - production
 monitor-down-remove-prod:
 	@printf "$(BOLD)$(CYAN)Stopping and removing monitoring containers (production)...$(NC)\n"
-	@docker compose --profile prod down prometheus grafana postgres_exporter
+	@docker compose --profile prod down $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD) $(POSTGRES_EXPORTER_SERVICE_PROD)
 	@printf "$(BOLD)$(GREEN)✓ Containers stopped and removed$(NC)\n\n"
 
 ## Pull latest monitoring images (local)
 monitor-pull:
 	@printf "$(BOLD)$(CYAN)Pulling latest monitoring images (local)...$(NC)\n"
-	@docker compose pull prometheus_local grafana_local postgres_exporter_local
+	@docker compose pull $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL) $(POSTGRES_EXPORTER_SERVICE_LOCAL)
 	@printf "$(BOLD)$(GREEN)✓ Images pulled$(NC)\n\n"
 
 ## Pull latest monitoring images (production)
 monitor-pull-prod:
 	@printf "$(BOLD)$(CYAN)Pulling latest monitoring images (production)...$(NC)\n"
-	@docker compose pull prometheus grafana postgres_exporter
+	@docker compose pull $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD) $(POSTGRES_EXPORTER_SERVICE_PROD)
 	@printf "$(BOLD)$(GREEN)✓ Images pulled$(NC)\n\n"
 
 ## Show docker compose config for monitoring services (local)
 monitor-docker-config:
 	@printf "$(BOLD)$(CYAN)Docker Compose Configuration (monitoring - local)$(NC)\n\n"
-	@docker compose config --profile local | grep -A 20 "prometheus_local\|grafana_local\|postgres_exporter_local" || docker compose config --profile local
+	@docker compose config --profile local | grep -A 20 "$(PROMETHEUS_SERVICE_LOCAL)\|$(GRAFANA_SERVICE_LOCAL)\|$(POSTGRES_EXPORTER_SERVICE_LOCAL)" || docker compose config --profile local
 
 ## Show docker compose config for monitoring services (production)
 monitor-docker-config-prod:
 	@printf "$(BOLD)$(CYAN)Docker Compose Configuration (monitoring - production)$(NC)\n\n"
-	@docker compose config --profile prod | grep -A 20 "prometheus\|grafana\|postgres_exporter" || docker compose config --profile prod
+	@docker compose config --profile prod | grep -A 20 "$(PROMETHEUS_SERVICE_PROD)\|$(GRAFANA_SERVICE_PROD)\|$(POSTGRES_EXPORTER_SERVICE_PROD)" || docker compose config --profile prod
 
 ## Execute command in Prometheus container (local)
 monitor-docker-exec-prometheus:
@@ -235,12 +253,12 @@ monitor-status:
 ## Show logs from all monitoring services (local)
 monitor-logs:
 	@printf "$(BOLD)$(CYAN)Monitoring Stack Logs (local)$(NC)\n\n"
-	@docker compose logs -f prometheus_local grafana_local postgres_exporter_local
+	@docker compose logs -f $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL) $(POSTGRES_EXPORTER_SERVICE_LOCAL)
 
 ## Show logs from all monitoring services (production)
 monitor-logs-prod:
 	@printf "$(BOLD)$(CYAN)Monitoring Stack Logs (production)$(NC)\n\n"
-	@docker compose logs -f prometheus grafana postgres_exporter
+	@docker compose logs -f $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD) $(POSTGRES_EXPORTER_SERVICE_PROD)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Testing & Verification Commands
@@ -252,7 +270,7 @@ monitor-test:
 	@printf "$(YELLOW)Note: This target is for local development only.$(NC)\n"
 	@printf "$(YELLOW)For production, verify monitoring from the server directly.$(NC)\n\n"
 	@printf "$(BOLD)1. Checking services are running...$(NC)\n"
-	@docker ps --filter "name=prometheus_local" --filter "name=grafana_local" --filter "name=postgres_exporter_local" --format "  ✓ {{.Names}}: {{.Status}}" || echo "  $(RED)✗ Services not running$(NC)"
+	@docker ps --filter "name=$(PROMETHEUS_SERVICE_LOCAL)" --filter "name=$(GRAFANA_SERVICE_LOCAL)" --filter "name=$(POSTGRES_EXPORTER_SERVICE_LOCAL)" --format "  ✓ {{.Names}}: {{.Status}}" || echo "  $(RED)✗ Services not running$(NC)"
 	@printf "\n$(BOLD)2. Testing Prometheus targets...$(NC)\n"
 	@curl -s $(PROMETHEUS_URL)/api/v1/targets | grep -q '"health":"up"' && echo "  $(GREEN)✓ Prometheus targets are UP$(NC)" || echo "  $(RED)✗ Some targets are DOWN$(NC)"
 	@printf "\n$(BOLD)3. Testing Caddy metrics endpoint...$(NC)\n"
@@ -389,25 +407,25 @@ monitor-traffic-heavy-prod:
 # -------------------------------------------------------------------------------------------------------------------- #
 
 ## Clean monitoring data (removes all metrics/dashboard data) - local
-monitor-clean:
+monitor-clean: monitor-volumes-local-check
 	@printf "$(BOLD)$(RED)WARNING: This will delete all monitoring data (local)!$(NC)\n"
 	@printf "Press Ctrl+C to cancel, or Enter to continue..."
 	@read
 	@printf "$(BOLD)$(CYAN)Stopping monitoring stack...$(NC)\n"
-	@docker compose --profile local down prometheus_local grafana_local
+	@docker compose --profile local down $(PROMETHEUS_SERVICE_LOCAL) $(GRAFANA_SERVICE_LOCAL)
 	@printf "$(BOLD)$(CYAN)Removing volumes...$(NC)\n"
-	@docker volume rm -f prometheus_data grafana_data || true
+	@docker volume rm -f $(PROMETHEUS_VOLUME_LOCAL) $(GRAFANA_VOLUME_LOCAL) || true
 	@printf "$(BOLD)$(GREEN)✓ Monitoring data cleaned$(NC)\n\n"
 
 ## Clean monitoring data (removes all metrics/dashboard data) - production
-monitor-clean-prod:
+monitor-clean-prod: monitor-volumes-prod-check
 	@printf "$(BOLD)$(RED)WARNING: This will delete all monitoring data (production)!$(NC)\n"
 	@printf "Press Ctrl+C to cancel, or Enter to continue..."
 	@read
 	@printf "$(BOLD)$(CYAN)Stopping monitoring stack...$(NC)\n"
-	@docker compose --profile prod down prometheus grafana
+	@docker compose --profile prod down $(PROMETHEUS_SERVICE_PROD) $(GRAFANA_SERVICE_PROD)
 	@printf "$(BOLD)$(CYAN)Removing volumes...$(NC)\n"
-	@docker volume rm -f prometheus_prod_data grafana_prod_data || true
+	@docker volume rm -f $(PROMETHEUS_VOLUME_PROD) $(GRAFANA_VOLUME_PROD) || true
 	@printf "$(BOLD)$(GREEN)✓ Monitoring data cleaned$(NC)\n\n"
 
 ## Show monitoring stack resource usage (local)
@@ -427,10 +445,10 @@ monitor-stats-prod:
 	@printf "\n"
 
 ## Backup Prometheus data (with automatic rotation) - local
-monitor-backup:
+monitor-backup: monitor-volumes-local-check
 	@printf "$(BOLD)$(CYAN)Backing up Prometheus data (local)...$(NC)\n"
 	@mkdir -p $(BACKUPS_DIR)
-	@docker run --rm -v prometheus_data:/data -v $(BACKUPS_DIR):/backup alpine \
+	@docker run --rm -v $(PROMETHEUS_VOLUME_LOCAL):/data -v $(BACKUPS_DIR):/backup alpine \
 		tar czf /backup/prometheus-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
 	@printf "$(BOLD)$(GREEN)✓ Backup created in $(BACKUPS_DIR)/$(NC)\n"
 	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
@@ -438,17 +456,25 @@ monitor-backup:
 	@BACKUP_COUNT=$$(ls -1 $(BACKUPS_DIR)/prometheus-backup-*.tar.gz 2>/dev/null | wc -l); \
 		printf "$(BOLD)$(GREEN)✓ Backup rotation complete ($${BACKUP_COUNT} backups kept)$(NC)\n\n"
 
+monitor-volumes-local-check:
+	@[ -n "$(PROMETHEUS_VOLUME_LOCAL)" ] && [ -n "$(GRAFANA_VOLUME_LOCAL)" ] || \
+		{ printf "$(RED)Unable to resolve monitoring volumes from docker compose config (local profile).$(NC)\n"; exit 1; }
+
 ## Backup Prometheus data (with automatic rotation) - production
-monitor-backup-prod:
+monitor-backup-prod: monitor-volumes-prod-check
 	@printf "$(BOLD)$(CYAN)Backing up Prometheus data (production)...$(NC)\n"
 	@mkdir -p $(BACKUPS_DIR)
-	@docker run --rm -v prometheus_prod_data:/data -v $(BACKUPS_DIR):/backup alpine \
+	@docker run --rm -v $(PROMETHEUS_VOLUME_PROD):/data -v $(BACKUPS_DIR):/backup alpine \
 		tar czf /backup/prometheus-prod-backup-$$(date +%Y%m%d-%H%M%S).tar.gz /data
 	@printf "$(BOLD)$(GREEN)✓ Backup created in $(BACKUPS_DIR)/$(NC)\n"
 	@printf "$(YELLOW)Rotating backups (keeping last 5)...$(NC)\n"
 	@for f in $$(ls -t $(BACKUPS_DIR)/prometheus-prod-backup-*.tar.gz 2>/dev/null | tail -n +6); do rm -f "$$f"; done || true
 	@BACKUP_COUNT=$$(ls -1 $(BACKUPS_DIR)/prometheus-prod-backup-*.tar.gz 2>/dev/null | wc -l); \
 		printf "$(BOLD)$(GREEN)✓ Backup rotation complete ($${BACKUP_COUNT} backups kept)$(NC)\n\n"
+
+monitor-volumes-prod-check:
+	@[ -n "$(PROMETHEUS_VOLUME_PROD)" ] && [ -n "$(GRAFANA_VOLUME_PROD)" ] || \
+		{ printf "$(RED)Unable to resolve monitoring volumes from docker compose config (production profile).$(NC)\n"; exit 1; }
 
 ## Export Grafana dashboards to JSON files
 monitor-export-dashboards:

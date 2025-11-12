@@ -523,8 +523,10 @@ docker stats
 ```bash
 # Ensure volumes are configured
 docker volume ls
-docker volume inspect prometheus_data
-docker volume inspect grafana_data
+docker volume inspect prometheus_data_local   # Local
+docker volume inspect prometheus_data_prod    # Production
+docker volume inspect grafana_data_local      # Local
+docker volume inspect grafana_data_prod       # Production
 ```
 
 ---
@@ -549,12 +551,14 @@ Backups saved to:
 
 ```bash
 # Backup Prometheus data
-docker run --rm -v prometheus_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v prometheus_data_local:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/prometheus-backup-$(date +%Y%m%d-%H%M%S).tar.gz /data
+# (Use prometheus_data_prod on production hosts)
 
 # Backup Grafana data
-docker run --rm -v grafana_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v grafana_data_local:/data -v $(pwd)/backups:/backup alpine \
   tar czf /backup/grafana-backup-$(date +%Y%m%d-%H%M%S).tar.gz /data
+# (Use grafana_data_prod on production hosts)
 ```
 
 ### Restoring from Backup
@@ -565,13 +569,15 @@ make monitor-down
 
 # Restore Prometheus data
 # WARNING: This will DELETE all existing Prometheus data. Validate backups and consider restoring in a test environment first.
-docker run --rm -v prometheus_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v prometheus_data_local:/data -v $(pwd)/backups:/backup alpine \
   sh -c "rm -rf /data/* && tar xzf /backup/prometheus-backup-YYYYMMDD-HHMMSS.tar.gz -C /"
+# (Use prometheus_data_prod on production hosts)
 
 # Restore Grafana data
 # WARNING: This will DELETE all existing Grafana data. Keep a secondary backup if unsure.
-docker run --rm -v grafana_data:/data -v $(pwd)/backups:/backup alpine \
+docker run --rm -v grafana_data_local:/data -v $(pwd)/backups:/backup alpine \
   sh -c "rm -rf /data/* && tar xzf /backup/grafana-backup-YYYYMMDD-HHMMSS.tar.gz -C /"
+# (Use grafana_data_prod on production hosts)
 
 # Restart services
 make monitor-up
@@ -623,7 +629,8 @@ Manual cleanup:
 docker compose stop prometheus_local
 
 # Clean data
-docker run --rm -v prometheus_data:/data alpine rm -rf /data/*
+docker run --rm -v prometheus_data_local:/data alpine rm -rf /data/*
+# (Use prometheus_data_prod on production hosts)
 
 # Restart
 docker compose --profile local up -d prometheus_local
