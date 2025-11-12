@@ -42,8 +42,8 @@ oullin.io {
 		format json
 	}
 
-	# --- Public listener: block protected path
-	@protected_public path /api/generate-signature*
+	# --- Public listener: block protected paths
+	@protected_public path /api/generate-signature* /api/metrics
 	handle @protected_public {
 		respond 403
 	}

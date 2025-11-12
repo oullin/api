@@ -35,16 +35,17 @@ To keep dashboard changes reproducible and under version control:
 
 ### Metrics Endpoint Security
 
-The `/metrics` endpoint uses **network isolation**, not authentication (commit `3b5d07e`).
+The `/metrics` endpoint uses **Caddy path blocking**, not authentication.
 
 **Security Model:**
-- Port `9180` uses `expose:` in `docker-compose.yml` (NOT `ports:`)—only accessible via Docker internal network
-- Caddyfile serves `/metrics` on `:9180` server block (internal only)
-- Public domains (`oullin.io`, etc.) have **no** `/metrics` routes
+- API metrics endpoint (`api:8080/metrics`) is blocked from public access via Caddy's `@protected` matcher
+- Caddy returns `403 Forbidden` for `/metrics` and `/api/metrics` on public listeners
+- Prometheus scrapes metrics directly from `api:8080/metrics` via internal Docker network (bypassing Caddy)
+- Caddy's own metrics are served on `:9180` (internal only, not published to host)
 
 **Regression Prevention:**
+- Never remove `/metrics` from the `@protected` matcher in Caddyfile
 - Never publish port `9180` to the host (no `ports: - "9180:9180"`)
-- Never add `/metrics` handlers to public-facing Caddy server blocks
-- Network isolation is the industry standard (Google, Netflix, Uber)
+- Test public access: `curl http://localhost:18080/metrics` should return `403`
 
 :lock: **Do not revert to auth-based metrics**—Prometheus cannot generate dynamic signatures for scraping.

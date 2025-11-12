@@ -95,9 +95,9 @@ func (r *Router) KeepAliveDB() {
 func (r *Router) Metrics() {
 	metricsHandler := handler.NewMetricsHandler()
 
-	// Metrics endpoint protected by Docker network isolation
-	// Only accessible from within caddy_net and oullin_net networks
-	// Prometheus scrapes via internal DNS (api:8080)
+	// Metrics endpoint blocked from public access by Caddy (see @protected matcher in Caddyfile)
+	// Only accessible internally via direct container access (api:8080/metrics)
+	// Prometheus scrapes via internal DNS without going through Caddy's public listener
 	r.Mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, req *http.Request) {
 		_ = metricsHandler.Handle(w, req)
 	})

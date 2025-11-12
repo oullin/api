@@ -45,6 +45,12 @@
 		respond 204
 	}
 
+	# Block protected paths
+	@protected path /metrics /generate-signature*
+	handle @protected {
+		respond 403
+	}
+
 	# Reverse proxy all incoming requests to the 'api' service.
 	# 	- The service name 'api' is resolved by Docker's internal DNS to the correct container IP on the 'caddy_net' network.
 	# 	- The API container listens on port 8080 (from the ENV_HTTP_PORT).
