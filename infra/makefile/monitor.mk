@@ -48,12 +48,11 @@ PG_EXPORTER_URL     := http://$(PG_EXPORTER_HOST):$(PG_EXPORTER_PORT)
 	monitor-pull monitor-pull-prod monitor-docker-config monitor-docker-config-prod monitor-docker-exec-prometheus monitor-docker-exec-prometheus-prod \
 	monitor-docker-exec-grafana monitor-docker-exec-grafana-prod monitor-docker-ps monitor-docker-inspect monitor-docker-inspect-prod \
 	monitor-docker-logs-prometheus monitor-docker-logs-prometheus-prod monitor-docker-logs-grafana monitor-docker-logs-grafana-prod monitor-docker-logs-db monitor-docker-logs-db-prod \
-	monitor-status monitor-logs monitor-logs-prod monitor-logs-prometheus monitor-logs-prometheus-prod monitor-logs-grafana monitor-logs-grafana-prod monitor-logs-db monitor-logs-db-prod \
+	monitor-status monitor-logs monitor-logs-prod \
 	monitor-test monitor-targets monitor-config monitor-config-prod monitor-grafana monitor-prometheus \
 	monitor-caddy-metrics monitor-api-metrics monitor-db-metrics monitor-db-metrics-prod monitor-metrics \
 	monitor-traffic monitor-traffic-heavy monitor-traffic-prod monitor-traffic-heavy-prod \
-	monitor-clean monitor-clean-prod monitor-stats monitor-stats-prod monitor-backup monitor-backup-prod monitor-export-dashboards monitor-help \
-	monitor-prod-launch monitor-prod-restart monitor-prod-remove
+	monitor-clean monitor-clean-prod monitor-stats monitor-stats-prod monitor-backup monitor-backup-prod monitor-export-dashboards monitor-help
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Start/Stop Commands
@@ -104,22 +103,6 @@ monitor-restart-prod:
 	@printf "$(BOLD)$(CYAN)Restarting monitoring stack (production)...$(NC)\n"
 	@docker compose --profile prod restart prometheus grafana postgres_exporter
 	@printf "$(BOLD)$(GREEN)✓ Monitoring stack restarted$(NC)\n\n"
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# Production Monitoring Quick Commands
-# -------------------------------------------------------------------------------------------------------------------- #
-
-## Launch all production monitoring services
-monitor-prod-launch:
-	@$(MAKE) monitor-up-prod
-
-## Restart all production monitoring services
-monitor-prod-restart:
-	@$(MAKE) monitor-restart-prod
-
-## Stop and remove all production monitoring services
-monitor-prod-remove:
-	@$(MAKE) monitor-down-remove-prod
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Docker Compose Commands
@@ -258,30 +241,6 @@ monitor-logs:
 monitor-logs-prod:
 	@printf "$(BOLD)$(CYAN)Monitoring Stack Logs (production)$(NC)\n\n"
 	@docker compose logs -f prometheus grafana postgres_exporter
-
-## Show Prometheus logs (local)
-monitor-logs-prometheus:
-	@docker logs -f oullin_prometheus_local
-
-## Show Prometheus logs (production)
-monitor-logs-prometheus-prod:
-	@docker logs -f oullin_prometheus
-
-## Show Grafana logs (local)
-monitor-logs-grafana:
-	@docker logs -f oullin_grafana_local
-
-## Show Grafana logs (production)
-monitor-logs-grafana-prod:
-	@docker logs -f oullin_grafana
-
-## Show PostgreSQL exporter logs (local)
-monitor-logs-db:
-	@docker logs -f oullin_postgres_exporter_local
-
-## Show PostgreSQL exporter logs (production)
-monitor-logs-db-prod:
-	@docker logs -f oullin_postgres_exporter
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Testing & Verification Commands
@@ -499,10 +458,6 @@ monitor-export-dashboards:
 ## Show monitoring help
 monitor-help:
 	@printf "\n$(BOLD)$(CYAN)Monitoring Stack Commands$(NC)\n\n"
-	@printf "$(BOLD)$(BLUE)Production Quick Commands:$(NC)\n"
-	@printf "  $(GREEN)monitor-prod-launch$(NC)                - Launch all production monitors\n"
-	@printf "  $(GREEN)monitor-prod-restart$(NC)               - Restart all production monitors\n"
-	@printf "  $(GREEN)monitor-prod-remove$(NC)                - Stop and remove all production monitors\n\n"
 	@printf "$(BOLD)$(BLUE)Start/Stop:$(NC)\n"
 	@printf "  $(GREEN)monitor-up$(NC)                         - Start monitoring stack (local)\n"
 	@printf "  $(GREEN)monitor-up-prod$(NC)                    - Start monitoring stack (production)\n"
@@ -537,13 +492,7 @@ monitor-help:
 	@printf "$(BOLD)$(BLUE)Status & Logs:$(NC)\n"
 	@printf "  $(GREEN)monitor-status$(NC)                     - Show status of monitoring services\n"
 	@printf "  $(GREEN)monitor-logs$(NC)                       - Show logs from all services (local)\n"
-	@printf "  $(GREEN)monitor-logs-prod$(NC)                  - Show logs from all services (prod)\n"
-	@printf "  $(GREEN)monitor-logs-prometheus$(NC)            - Show Prometheus logs (local)\n"
-	@printf "  $(GREEN)monitor-logs-prometheus-prod$(NC)       - Show Prometheus logs (prod)\n"
-	@printf "  $(GREEN)monitor-logs-grafana$(NC)               - Show Grafana logs (local)\n"
-	@printf "  $(GREEN)monitor-logs-grafana-prod$(NC)          - Show Grafana logs (prod)\n"
-	@printf "  $(GREEN)monitor-logs-db$(NC)                    - Show PostgreSQL exporter logs (local)\n"
-	@printf "  $(GREEN)monitor-logs-db-prod$(NC)               - Show PostgreSQL exporter logs (prod)\n\n"
+	@printf "  $(GREEN)monitor-logs-prod$(NC)                  - Show logs from all services (prod)\n\n"
 	@printf "$(BOLD)$(BLUE)Testing:$(NC)\n"
 	@printf "  $(GREEN)monitor-test$(NC)                       - Run full test suite (local only)\n"
 	@printf "  $(GREEN)monitor-targets$(NC)                    - Show Prometheus targets status\n"

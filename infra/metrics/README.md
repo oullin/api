@@ -477,7 +477,8 @@ crontab -e
 Add:
 
 ```cron
-0 2 * * * cd /home/deployer/your-repo && make monitor-backup >> /var/log/prometheus-backup.log 2>&1
+# Run daily at 2 AM
+0 2 * * * cd /home/deployer/your-repo && make monitor-backup-prod >> /var/log/prometheus-backup.log 2>&1
 ```
 
 #### Monitor Disk Space
@@ -545,8 +546,15 @@ Wait a few minutes for data to appear in Grafana.
 #### Services won't start
 
 ```bash
-make monitor-logs-grafana
-make monitor-logs-prometheus
+# View logs from monitoring services
+make monitor-logs         # Local: all services
+make monitor-logs-prod    # Production: all services
+
+# Or view individual container logs
+docker logs oullin_grafana
+docker logs oullin_prometheus
+
+# Check Docker daemon
 sudo systemctl status docker
 ```
 
@@ -795,8 +803,12 @@ rate(caddy_http_response_size_bytes_sum[5m])
 jq . < infra/metrics/grafana/dashboards/my-dashboard.json
 
 # Check Grafana logs
-docker logs oullin_grafana
-make monitor-logs-grafana
+docker logs oullin_grafana_local  # Local
+docker logs oullin_grafana        # Production
+
+# Or view all monitoring logs
+make monitor-logs      # Local
+make monitor-logs-prod # Production
 
 # Verify Prometheus connection
 # Grafana UI → Settings → Data Sources → Prometheus → "Save & Test"
@@ -877,10 +889,13 @@ docker volume inspect grafana_data
 
 ```bash
 # Runs daily via cron, keeps last 5 backups
-make monitor-backup
+make monitor-backup       # Local environment
+make monitor-backup-prod  # Production environment
 ```
 
-Backups saved to: `storage/monitoring/backups/prometheus-backup-YYYYMMDD-HHMMSS.tar.gz`
+Backups saved to:
+- **Local**: `storage/monitoring/backups/prometheus-backup-YYYYMMDD-HHMMSS.tar.gz`
+- **Production**: `storage/monitoring/backups/prometheus-prod-backup-YYYYMMDD-HHMMSS.tar.gz`
 
 **Manual backup:**
 
@@ -916,12 +931,23 @@ make monitor-up
 
 ### Updating the Stack
 
+**Local environment:**
 ```bash
 # Pull latest images
 docker compose pull
 
 # Restart with new images
 make monitor-restart
+# Or: docker compose --profile local up -d
+```
+
+**Production environment:**
+```bash
+# Pull latest images
+docker compose pull
+
+# Restart with new images
+make monitor-restart-prod
 # Or: docker compose --profile prod up -d
 ```
 
@@ -989,17 +1015,26 @@ make monitor-traffic         # Local
 make monitor-traffic-prod    # Production
 
 # View logs
-make monitor-logs-grafana
-make monitor-logs-prometheus
+make monitor-logs            # All services (local)
+make monitor-logs-prod       # All services (production)
+
+# Individual container logs
+docker logs oullin_grafana_local     # Grafana (local)
+docker logs oullin_prometheus_local  # Prometheus (local)
+docker logs oullin_grafana           # Grafana (production)
+docker logs oullin_prometheus        # Prometheus (production)
 
 # Maintenance
 make monitor-backup          # Backup Prometheus data
-make monitor-restart         # Restart services
+make monitor-restart         # Restart services (local)
+make monitor-restart-prod    # Restart services (production)
 make monitor-export-dashboards
 
 # Cleanup
-make monitor-down            # Stop services
-make monitor-clean           # Clean up data
+make monitor-down            # Stop services (local)
+make monitor-down-prod       # Stop services (production)
+make monitor-clean           # Clean up data (local)
+make monitor-clean-prod      # Clean up data (production)
 ```
 
 ### Production Checklist
