@@ -54,10 +54,12 @@ caddy-gen-certs:
 	  chmod 600 "$(CADDY_MTLS_DIR)/server.key"; \
 	  chmod 644 "$(CADDY_MTLS_DIR)/server.pem"; \
 	  rm "$(CADDY_MTLS_DIR)/server.csr"; \
-	  printf "$(GREEN)✅ Server certificate written to %s$(NC)\n" "$(CADDY_MTLS_DIR)"; \
+	  printf "\n$(GREEN)✅ Server certificate written to %s$(NC)\n" "$(CADDY_MTLS_DIR)"; \
 	fi; \
-	printf "$(NC)🔎 Verifying server cert against CA...$(NC)\n"; \
-	openssl verify -CAfile "$(CADDY_MTLS_DIR)/ca.pem" "$(CADDY_MTLS_DIR)/server.pem"
+	printf "\n$(CYAN)🔎 Verifying server cert against CA ...$(NC)\n"; \
+	openssl verify -CAfile "$(CADDY_MTLS_DIR)/ca.pem" "$(CADDY_MTLS_DIR)/server.pem"; \
+	printf "\n$(BLUE)🏗️ Verifying SAN ...$(NC)\n"; \
+	openssl x509 -in infra/caddy/mtls/server.pem -text -noout | grep -A 2 "Subject Alternative Name"
 
 caddy-del-certs:
 	@set -eu; \
