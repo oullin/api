@@ -6,7 +6,7 @@ name: VPS
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
