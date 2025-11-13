@@ -10,9 +10,7 @@ permissions:
 
 jobs:
   gofmt:
-    if: >
-      github.event_name == 'pull_request' &&
-      !contains(github.event.pull_request.labels.*.name, 'no-fmt')
+    if: "!contains(github.event.pull_request.labels.*.name, 'no-fmt')"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,9 +33,7 @@ jobs:
         run: git ls-files '*.go' | xargs gofmt -w -s
 
       - name: Commit Formatting Changes
-        if: >
-          github.event.pull_request.head.repo.full_name == github.repository &&
-          !contains(github.event.pull_request.labels.*.name, 'no-fmt')
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: stefanzweifel/git-auto-commit-action@v6.0.1
         with:
           commit_message: apply coding style fixes
