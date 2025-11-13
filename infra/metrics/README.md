@@ -14,7 +14,8 @@ Complete guide for managing and monitoring the Oullin application stack with Pro
 8. [Maintenance & Backup](#maintenance--backup)
 9. [Resources](#resources)
 
-**For VPS deployment instructions, see [VPS_DEPLOYMENT.md](./VPS_DEPLOYMENT.md)**
+>- **For VPS deployment instructions, see [VPS_DEPLOYMENT.md](docs/VPS_DEPLOYMENT.md)**
+>- **For VPS Grafana troubleshoot, see [GRAFANA_DIAGNOSTICS.md](docs/GRAFANA_DIAGNOSTICS.md)**
 
 ---
 
@@ -692,7 +693,7 @@ make monitor-clean-prod      # Clean up data (production)
 
 ### Production Deployment
 
-For complete VPS deployment instructions including firewall setup, SSL configuration, and production best practices, see [VPS_DEPLOYMENT.md](./VPS_DEPLOYMENT.md).
+For complete VPS deployment instructions including firewall setup, SSL configuration, and production best practices, see [VPS_DEPLOYMENT.md](docs/VPS_DEPLOYMENT.md).
 
 ---
 

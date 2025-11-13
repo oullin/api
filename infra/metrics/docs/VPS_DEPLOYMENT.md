@@ -435,4 +435,4 @@ sudo fail2ban-client status sshd
 
 ## Additional Resources
 
-For monitoring-specific documentation, see [README.md](./README.md).
+For monitoring-specific documentation, see [README.md](../README.md).
