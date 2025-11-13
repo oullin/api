@@ -7,6 +7,6 @@ func TestExperienceHandler(t *testing.T) {
 		make:     func(f string) fileHandler { return NewExperienceHandler(f) },
 		endpoint: "/experience",
 		fixture:  "../storage/fixture/experience.json",
-		assert:   assertFirstUUID("c17a68bc-8832-4d44-b2ed-f9587cf14cd1"),
+		assert:   assertFirstUUID("73c68950-5a10-43bc-a5b2-e45544e140e6"),
 	})
 }
