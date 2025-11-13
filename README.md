@@ -1,4 +1,4 @@
-### Ollin's API
+### 🚀 Ollin's API
 
 :sparkles: Every time you visit my site, behind the scenes, an API written in Go is hard at work delivering content,
 handling requests, and powering dynamic features.
@@ -13,3 +13,7 @@ every user action into data operations and returns precisely what the frontend n
 consider contributing to the project by making improvements or fixing issues by sending a pull request.
 
 > This is where the mindful movement of “Ollin” truly comes alive, one request at a time.
+
+### 🗄️ Documentation
+
+- [Metrics](infra/metrics/README.md)
