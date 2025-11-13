@@ -2,7 +2,7 @@ name: Go Fmt
 
 on:
   pull_request:
-    types: [labeled]
+    types: [opened, reopened, synchronize, labeled, unlabeled]
   push:
     branches:
       - main
@@ -16,8 +16,7 @@ jobs:
     if: >
       github.event_name == 'push' ||
       (github.event_name == 'pull_request' &&
-       github.event.action == 'labeled' &&
-       github.event.label.name == 'style')
+       !contains(github.event.pull_request.labels.*.name, 'no-fmt'))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,7 +47,7 @@ jobs:
         if: >
           github.event.pull_request.draft &&
           github.event.pull_request.head.repo.full_name == github.repository &&
-          contains(github.event.pull_request.labels.*.name, 'style')
+          !contains(github.event.pull_request.labels.*.name, 'no-fmt')
         uses: stefanzweifel/git-auto-commit-action@v6.0.1
         with:
           commit_message: apply coding style fixes
