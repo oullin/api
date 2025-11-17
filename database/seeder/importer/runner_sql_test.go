@@ -109,9 +109,13 @@ func TestExecuteCopyInsertsRows(t *testing.T) {
 	defer sqlDB.Close()
 
 	mock.ExpectBegin()
+	mock.ExpectExec("SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
 	insert := regexp.QuoteMeta("INSERT INTO public.widgets (id, name) VALUES ($1, $2)")
 	mock.ExpectExec(insert).WithArgs("1", "foo").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("RELEASE SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec("SAVEPOINT importer_copy_row_2").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(insert).WithArgs("2", "bar").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("RELEASE SAVEPOINT importer_copy_row_2").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectRollback()
 
 	tx, err := sqlDB.Begin()
@@ -150,7 +154,9 @@ func TestExecuteCopyResolvesColumns(t *testing.T) {
 		WithArgs("public", "widgets").
 		WillReturnRows(sqlmock.NewRows([]string{"column_name"}).AddRow("id").AddRow("name"))
 	insert := regexp.QuoteMeta("INSERT INTO public.widgets (id, name) VALUES ($1, $2)")
+	mock.ExpectExec("SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(insert).WithArgs("1", "foo").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("RELEASE SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectRollback()
 
 	tx, err := sqlDB.Begin()
@@ -187,9 +193,11 @@ func TestExecuteCopyHandlesLargeRows(t *testing.T) {
 	mock.ExpectBegin()
 	largePayload := strings.Repeat("a", 70_000)
 	insert := regexp.QuoteMeta("INSERT INTO public.widgets (id, payload) VALUES ($1, $2)")
+	mock.ExpectExec("SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(insert).
 		WithArgs("1", largePayload).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("RELEASE SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectRollback()
 
 	tx, err := sqlDB.Begin()
@@ -201,6 +209,53 @@ func TestExecuteCopyHandlesLargeRows(t *testing.T) {
 		sql:      "COPY public.widgets (id, payload) FROM stdin",
 		copyData: []byte("1\t" + largePayload),
 		isCopy:   true,
+	}
+
+	if err := executeCopy(context.Background(), tx, stmt); err != nil {
+		t.Fatalf("executeCopy unexpected error: %v", err)
+	}
+
+	if err := tx.Rollback(); err != nil {
+		t.Fatalf("rollback: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestExecuteCopySkipsDuplicateCopyRows(t *testing.T) {
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock: %v", err)
+	}
+	defer sqlDB.Close()
+
+	mock.ExpectBegin()
+	insert := regexp.QuoteMeta("INSERT INTO public.schema_migrations (version, dirty) VALUES ($1, $2)")
+	mock.ExpectExec("SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(insert).WithArgs("41", "t").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("RELEASE SAVEPOINT importer_copy_row_1").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec("SAVEPOINT importer_copy_row_2").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec(insert).
+		WithArgs("41", "t").
+		WillReturnError(errors.New(`ERROR: duplicate key value violates unique constraint "schema_migrations_pkey" (SQLSTATE 23505)`))
+	mock.ExpectExec("ROLLBACK TO SAVEPOINT importer_copy_row_2").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectExec("RELEASE SAVEPOINT importer_copy_row_2").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectRollback()
+
+	tx, err := sqlDB.Begin()
+	if err != nil {
+		t.Fatalf("begin: %v", err)
+	}
+
+	stmt := statement{
+		sql: "COPY public.schema_migrations (version, dirty) FROM stdin",
+		copyData: []byte(strings.Join([]string{
+			"41\tt",
+			"41\tt",
+		}, "\n")),
+		isCopy: true,
 	}
 
 	if err := executeCopy(context.Background(), tx, stmt); err != nil {

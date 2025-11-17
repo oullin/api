@@ -643,9 +643,37 @@ func executeCopy(ctx context.Context, tx *sql.Tx, stmt statement) error {
 
 	insertSQL := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, strings.Join(columns, ", "), strings.Join(placeholder, ", "))
 
-	for _, row := range rows {
+	for idx, row := range rows {
+		rowNumber := idx + 1
+		rowSavepoint := fmt.Sprintf("importer_copy_row_%d", rowNumber)
+		if _, err := tx.ExecContext(ctx, "SAVEPOINT "+rowSavepoint); err != nil {
+			return fmt.Errorf("importer: begin savepoint for COPY row %d of %s failed: %w", rowNumber, table, err)
+		}
+
 		if _, err := tx.ExecContext(ctx, insertSQL, row...); err != nil {
+			if skip, reason := shouldSkipCopyInsertError(table, err); skip {
+				if rbErr := rollbackToSavepoint(ctx, tx, rowSavepoint); rbErr != nil {
+					return errors.Join(fmt.Errorf("importer: skipped COPY row for %s: %s", table, reason), rbErr)
+				}
+
+				fmt.Fprintf(os.Stderr, "importer: skipped COPY row for %s: %s\n", table, reason)
+
+				if _, err := tx.ExecContext(ctx, "RELEASE SAVEPOINT "+rowSavepoint); err != nil {
+					return fmt.Errorf("importer: release copy savepoint %s failed: %w", rowSavepoint, err)
+				}
+
+				continue
+			}
+
+			if rbErr := rollbackToSavepoint(ctx, tx, rowSavepoint); rbErr != nil {
+				return errors.Join(fmt.Errorf("importer: insert from COPY failed: %w", err), rbErr)
+			}
+
 			return fmt.Errorf("importer: insert from COPY failed: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, "RELEASE SAVEPOINT "+rowSavepoint); err != nil {
+			return fmt.Errorf("importer: release copy savepoint %s failed: %w", rowSavepoint, err)
 		}
 	}
 
@@ -683,10 +711,8 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 	case "23505":
 		if strings.HasPrefix(upper, "INSERT INTO ") {
 			target, _ := statementTarget(stmt.sql)
-			normalized := normalizeQualifiedIdentifier(target)
-			switch normalized {
-			case "schema_migrations", "public.schema_migrations":
-				return true, fmt.Sprintf("duplicate migration row skipped (%s)", message)
+			if skip, reason := shouldSkipDuplicateSchemaMigrationInsert(target, message); skip {
+				return true, reason
 			}
 		}
 	case "42704":
@@ -697,6 +723,29 @@ func shouldSkipExecError(stmt statement, err error) (bool, string) {
 		if strings.HasPrefix(upper, "ALTER TABLE") || strings.HasPrefix(upper, "DROP ") {
 			return true, fmt.Sprintf("relation skipped (%s)", message)
 		}
+	}
+
+	return false, ""
+}
+
+func shouldSkipCopyInsertError(table string, err error) (bool, string) {
+	code, message := sqlStateFromError(err)
+	if code == "" {
+		return false, ""
+	}
+
+	if code != "23505" {
+		return false, ""
+	}
+
+	return shouldSkipDuplicateSchemaMigrationInsert(table, message)
+}
+
+func shouldSkipDuplicateSchemaMigrationInsert(target, message string) (bool, string) {
+	normalized := normalizeQualifiedIdentifier(target)
+	switch normalized {
+	case "schema_migrations", "public.schema_migrations":
+		return true, fmt.Sprintf("duplicate migration row skipped (%s)", message)
 	}
 
 	return false, ""
