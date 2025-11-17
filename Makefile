@@ -103,8 +103,8 @@ help:
 	@printf "  $(BOLD)$(GREEN)supv:api:logs-err$(NC): Show the the API service supervisor error logs.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Caddy Commands:$(NC)\n"
-	@printf "  $(BOLD)$(GREEN)caddy-gen-cert$(NC)   : Generate the caddy's mtls certificates.\n"
-	@printf "  $(BOLD)$(GREEN)caddy-del-cert$(NC)   : Remove the caddy's mtls certificates.\n"
+	@printf "  $(BOLD)$(GREEN)caddy-gen-certs$(NC)   : Generate the caddy's mtls certificates.\n"
+	@printf "  $(BOLD)$(GREEN)caddy-del-certs$(NC)   : Remove the caddy's mtls certificates.\n"
 	@printf "  $(BOLD)$(GREEN)caddy-validate$(NC)   : Validates caddy's files syntax.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Monitoring Commands:$(NC)\n"
