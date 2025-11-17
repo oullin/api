@@ -395,12 +395,9 @@ services:
                 api-db:
                     condition: service_healthy
             expose:
+                # local: use Caddy on port 18080 (handles /api prefix like production)
+                # prod : Caddy handles all traffic (no direct API access)
                 - ${ENV_HTTP_PORT}
-            # For local development: use Caddy on port 18080 (handles /api prefix like production)
-            # For production: Caddy handles all traffic (no direct API access)
-            # Uncomment below only if you need direct API debugging (bypasses Caddy):
-            # ports:
-            #     - "127.0.0.1:${ENV_HTTP_PORT:-8080}:${ENV_HTTP_PORT:-8080}"
             networks:
                 oullin_net: {}
                 caddy_net:

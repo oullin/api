@@ -90,9 +90,6 @@ func NewServerHandler(cfg ServerHandlerConfig) http.Handler {
 
 	handler := cfg.Mux
 
-	// CORS is handled by Caddy - no middleware needed here
-	// This prevents duplicate Access-Control-* headers
-
 	if cfg.Wrap != nil {
 		handler = cfg.Wrap(handler)
 	}
