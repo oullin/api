@@ -45,7 +45,7 @@
 	# API handler - strips /api prefix before forwarding
 	handle_path /api/* {
 		# Block protected paths (after /api prefix is stripped)
-		@protected path /generate-signature* /metrics
+		@protected path /metrics
 		handle @protected {
 			respond 403
 		}
