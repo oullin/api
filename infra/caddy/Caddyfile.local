@@ -4,7 +4,9 @@
 	auto_https off
 
 	# Enable metrics collection for HTTP handlers
-	metrics
+	servers {
+		metrics
+	}
 
 	# Admin API listens only on localhost within container for security
 	# Prometheus accesses /metrics via the dedicated :9180 listener, not the admin API
