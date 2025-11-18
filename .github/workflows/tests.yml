@@ -3,14 +3,11 @@ name: Tests
 on:
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize, labeled]
-  push:
-    branches: [main]
 
 jobs:
   test:
-    if: (github.event_name == 'push') ||
-      (github.event_name == 'pull_request' && (github.event.pull_request.draft == false ||
-      (github.event.action == 'labeled' && contains(github.event.pull_request.labels.*.name, 'testing'))))
+    if: github.event_name == 'pull_request' && (github.event.pull_request.draft == false ||
+      (github.event.action == 'labeled' && contains(github.event.pull_request.labels.*.name, 'testing')))
     runs-on: ubuntu-latest
     strategy:
       matrix:
