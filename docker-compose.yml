@@ -88,7 +88,6 @@ services:
                 - api
             ports:
                 - "18080:80"
-                - "8443:443"
                 - "127.0.0.1:2019:2019" # Admin API - localhost only for debugging
 
             # --- Dedicated /metrics endpoint for Prometheus (internal network only)
@@ -396,6 +395,8 @@ services:
                 api-db:
                     condition: service_healthy
             expose:
+                # local: use Caddy on port 18080 (handles /api prefix like production)
+                # prod : Caddy handles all traffic (no direct API access)
                 - ${ENV_HTTP_PORT}
             networks:
                 oullin_net: {}

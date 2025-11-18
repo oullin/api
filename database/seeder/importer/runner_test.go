@@ -406,6 +406,40 @@ func TestSeedFromFileSkipsDuplicateSchemaMigrationsInserts(t *testing.T) {
 	}
 }
 
+func TestSeedFromFileSkipsDuplicateSchemaMigrationsCopy(t *testing.T) {
+	conn, environment, cleanup := setupPostgresConnection(t)
+	t.Cleanup(cleanup)
+
+	contents := strings.Join([]string{
+		"CREATE TABLE IF NOT EXISTS public.schema_migrations (version BIGINT PRIMARY KEY, dirty BOOLEAN NOT NULL);",
+		"COPY public.schema_migrations (version, dirty) FROM stdin;",
+		"42\tf",
+		"42\tf",
+		"\\.",
+		"",
+	}, "\n")
+
+	fileName := writeStorageFile(t, withSuffix(t, ".sql"), contents)
+
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("seed from file: %v", err)
+	}
+
+	// Run the seed a second time to ensure COPY duplicate handling stays idempotent.
+	if err := importer.SeedFromFile(conn, environment, fileName); err != nil {
+		t.Fatalf("second seed from file: %v", err)
+	}
+
+	var migrationCount int64
+	if err := conn.Sql().Table("schema_migrations").Where("version = ?", 42).Count(&migrationCount).Error; err != nil {
+		t.Fatalf("count schema_migrations: %v", err)
+	}
+
+	if migrationCount != 1 {
+		t.Fatalf("expected 1 schema_migrations row for version 42, got %d", migrationCount)
+	}
+}
+
 func TestSeedFromFileSkipsDuplicateCreates(t *testing.T) {
 	conn, environment, cleanup := setupPostgresConnection(t)
 	t.Cleanup(cleanup)
