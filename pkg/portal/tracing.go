@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 // TracerProvider wraps the OpenTelemetry tracer provider
@@ -33,12 +33,18 @@ func NewTracerProvider(environment *env.Environment) (*TracerProvider, error) {
 
 	ctx := context.Background()
 
-	// Create OTLP HTTP exporter
-	exporter, err := otlptracehttp.New(
-		ctx,
+	// Create OTLP HTTP exporter with environment-appropriate security settings
+	opts := []otlptracehttp.Option{
 		otlptracehttp.WithEndpoint(getEndpointHost(environment.Tracing.Endpoint)),
-		otlptracehttp.WithInsecure(), // Use insecure for local development
-	)
+	}
+
+	// Only use insecure connections for local and staging environments
+	if environment.App.IsLocal() || environment.App.IsStaging() {
+		opts = append(opts, otlptracehttp.WithInsecure())
+		log.Printf("Using insecure OTLP connection for %s environment", environment.App.Type)
+	}
+
+	exporter, err := otlptracehttp.New(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OTLP exporter: %w", err)
 	}

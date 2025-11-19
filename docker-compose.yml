@@ -415,7 +415,7 @@ services:
             command: ["-config.file=/etc/tempo.yaml"]
             volumes:
                 - tempo_data_prod:/tmp/tempo
-                - ./infra/metrics/tempo/tempo-config.yaml:/etc/tempo.yaml:ro
+                - ./infra/metrics/tempo/tempo-config.prod.yaml:/etc/tempo.yaml:ro
             networks:
                 - caddy_net
                 - oullin_net
@@ -446,7 +446,7 @@ services:
             command: ["-config.file=/etc/tempo.yaml"]
             volumes:
                 - tempo_data_local:/tmp/tempo
-                - ./infra/metrics/tempo/tempo-config.yaml:/etc/tempo.yaml:ro
+                - ./infra/metrics/tempo/tempo-config.local.yaml:/etc/tempo.yaml:ro
             networks:
                 - caddy_net
                 - oullin_net
