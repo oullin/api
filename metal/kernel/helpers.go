@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
@@ -37,9 +38,7 @@ func (a *App) CloseTracer() {
 
 	if err := a.tracer.Shutdown(); err != nil {
 		// Log error but don't panic during shutdown
-		if a.logs != nil {
-			_ = err // Error handling for shutdown
-		}
+		slog.Error("failed to shutdown tracer provider", "error", err)
 	}
 }
 

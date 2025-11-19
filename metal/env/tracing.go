@@ -8,7 +8,7 @@ import (
 // TracingEnvironment holds configuration for OpenTelemetry tracing
 type TracingEnvironment struct {
 	Enabled  bool   `validate:"required"`
-	Endpoint string `validate:"required_if=Enabled true,omitempty,url"`
+	Endpoint string `validate:"required_if=Enabled True,omitempty,url"`
 }
 
 // NewTracingEnvironment loads tracing configuration from environment variables
