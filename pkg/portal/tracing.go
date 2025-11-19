@@ -33,15 +33,24 @@ func NewTracerProvider(environment *env.Environment) (*TracerProvider, error) {
 
 	ctx := context.Background()
 
-	// Create OTLP HTTP exporter with environment-appropriate security settings
+	// Create OTLP HTTP exporter with scheme-based security settings
+	// Use insecure (plain HTTP) for http:// endpoints, TLS for https:// endpoints
+	endpoint := environment.Tracing.Endpoint
 	opts := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(getEndpointHost(environment.Tracing.Endpoint)),
+		otlptracehttp.WithEndpoint(getEndpointHost(endpoint)),
 	}
 
-	// Only use insecure connections for local and staging environments
-	if environment.App.IsLocal() || environment.App.IsStaging() {
+	// Determine security based on URL scheme, not environment type
+	// This allows production to use plain HTTP if TLS termination happens elsewhere
+	if len(endpoint) > 7 && endpoint[:7] == "http://" {
 		opts = append(opts, otlptracehttp.WithInsecure())
-		log.Printf("Using insecure OTLP connection for %s environment", environment.App.Type)
+		log.Printf("Using insecure OTLP connection (HTTP) to %s", endpoint)
+	} else if len(endpoint) > 8 && endpoint[:8] == "https://" {
+		log.Printf("Using secure OTLP connection (HTTPS) to %s", endpoint)
+	} else {
+		// No scheme specified - default to insecure for backward compatibility
+		opts = append(opts, otlptracehttp.WithInsecure())
+		log.Printf("No scheme specified for OTLP endpoint %s, defaulting to insecure (HTTP)", endpoint)
 	}
 
 	exporter, err := otlptracehttp.New(ctx, opts...)
