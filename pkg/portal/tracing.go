@@ -8,11 +8,11 @@ import (
 
 	"github.com/oullin/metal/env"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 )
 
 // TracerProvider wraps the OpenTelemetry tracer provider
@@ -53,9 +53,9 @@ func NewTracerProvider(environment *env.Environment) (*TracerProvider, error) {
 	res, err := resource.New(
 		ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(environment.App.Name),
-			semconv.ServiceVersionKey.String("1.0.0"),
-			semconv.DeploymentEnvironmentKey.String(environment.App.Type),
+			attribute.String("service.name", environment.App.Name),
+			attribute.String("service.version", "1.0.0"),
+			attribute.String("deployment.environment", environment.App.Type),
 		),
 	)
 	if err != nil {
