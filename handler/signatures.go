@@ -49,7 +49,7 @@ func (s *SignaturesHandler) Generate(w http.ResponseWriter, r *http.Request) *en
 
 	serverTime := time.Now()
 	receivedAt := time.Unix(req.Timestamp, 0)
-	req.Origin = portal.NormalizeOrigin(r.Header.Get(portal.IntendedOriginHeader))
+	req.Origin = portal.NormalizeOriginWithPath(r.Header.Get(portal.IntendedOriginHeader))
 
 	var keySignature *database.APIKeySignatures
 	if keySignature, err = s.CreateSignature(req, serverTime); err != nil {
