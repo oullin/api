@@ -41,7 +41,7 @@ func NewTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.Api
 		TokenHandler:    tokenHandler,
 		clockSkew:       10 * time.Minute,
 		failWindow:      5 * time.Minute,
-		nonceTTL:        10 * time.Minute,
+		nonceTTL:        25 * time.Minute,
 		nonceCache:      cache.NewTTLCache(),
 		rateLimiter:     limiter.NewMemoryLimiter(5*time.Minute, 50),
 	}
