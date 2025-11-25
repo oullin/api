@@ -208,7 +208,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.NotFound("error decoding signature string", "")
+		return mwguards.UnauthenticatedError("Invalid signature format", "error decoding signature string: "+err.Error(), map[string]any{})
 	}
 
 	entity := repoentity.FindSignatureFrom{
@@ -223,7 +223,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if signature == nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.NotFound("signature not found", "")
+		return mwguards.UnauthenticatedError("Invalid signature", "signature not found", map[string]any{})
 	}
 
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {

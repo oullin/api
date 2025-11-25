@@ -36,6 +36,11 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 		return
 	}
 
+	// Don't capture expected authentication/authorization errors to reduce Sentry noise
+	if shouldSkipSentryCapture(apiErr.Status) {
+		return
+	}
+
 	errToCapture := error(apiErr)
 	if apiErr.Err != nil {
 		errToCapture = apiErr.Err
@@ -57,4 +62,21 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 	}
 
 	notify(sentry.CurrentHub())
+}
+
+func shouldSkipSentryCapture(status int) bool {
+	// Skip client errors that are expected during normal operation:
+	// - 401 Unauthorized: Invalid credentials/tokens
+	// - 403 Forbidden: Insufficient permissions
+	// - 404 Not Found: Resource doesn't exist
+	// - 429 Too Many Requests: Rate limiting
+	switch status {
+	case http.StatusUnauthorized,
+		http.StatusForbidden,
+		http.StatusNotFound,
+		http.StatusTooManyRequests:
+		return true
+	default:
+		return false
+	}
 }
