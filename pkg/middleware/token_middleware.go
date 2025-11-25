@@ -118,7 +118,7 @@ func (t TokenCheckMiddleware) GuardDependencies() *endpoint.ApiError {
 }
 
 func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId string) (AuthTokenHeaders, *endpoint.ApiError) {
-	intendedOriginURL := portal.NormalizeOrigin(r.Header.Get(portal.IntendedOriginHeader))
+	intendedOriginURL := portal.NormalizeOriginWithPath(r.Header.Get(portal.IntendedOriginHeader))
 	accountName := strings.TrimSpace(r.Header.Get(portal.UsernameHeader))
 	signature := strings.TrimSpace(r.Header.Get(portal.SignatureHeader))
 	publicToken := strings.TrimSpace(r.Header.Get(portal.TokenHeader))

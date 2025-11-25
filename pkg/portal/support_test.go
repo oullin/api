@@ -55,6 +55,38 @@ func TestSanitiseURL(t *testing.T) {
 	}
 }
 
+func TestNormalizeOriginWithPath(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "keeps path from URL", input: "https://example.com/api/social", want: "https://example.com/api/social"},
+		{name: "strips query params", input: "https://example.com/path?foo=bar", want: "https://example.com/path"},
+		{name: "strips fragment", input: "https://example.com/page#section", want: "https://example.com/page"},
+		{name: "strips query and fragment", input: "https://example.com:8080/api/v1?key=val#top", want: "https://example.com:8080/api/v1"},
+		{name: "preserves port with path", input: "https://example.com:3000/api/endpoint", want: "https://example.com:3000/api/endpoint"},
+		{name: "handles localhost with path", input: "http://localhost:8080/api/endpoint", want: "http://localhost:8080/api/endpoint"},
+		{name: "adds slash for base URL", input: "https://example.com", want: "https://example.com/"},
+		{name: "keeps root path", input: "https://example.com/", want: "https://example.com/"},
+		{name: "handles nested paths", input: "https://example.com/api/v1/resource", want: "https://example.com/api/v1/resource"},
+		{name: "empty input", input: "", want: ""},
+		{name: "whitespace input", input: "   ", want: ""},
+		{name: "invalid URL", input: "not-a-valid-url", want: ""},
+		{name: "missing scheme", input: "example.com/path", want: ""},
+		{name: "missing host", input: "https://", want: ""},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			if got := NormalizeOriginWithPath(tc.input); got != tc.want {
+				t.Errorf("NormalizeOriginWithPath(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNormalizeOrigin(t *testing.T) {
 	testCases := []struct {
 		name  string
