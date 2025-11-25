@@ -186,6 +186,30 @@ func ParseClientIP(r *http.Request) string {
 	return strings.TrimSpace(r.RemoteAddr)
 }
 
+// NormalizeOrigin extracts the base origin (scheme + host) from a URL string,
+// stripping any path, query parameters, or fragments. This ensures consistent
+// origin matching for authentication regardless of the specific endpoint path.
+// Returns empty string if the URL is invalid or empty.
+func NormalizeOrigin(rawURL string) string {
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+
+	// Must have a scheme and host
+	if parsed.Scheme == "" || parsed.Host == "" {
+		return ""
+	}
+
+	// Return just scheme://host
+	return fmt.Sprintf("%s://%s", parsed.Scheme, parsed.Host)
+}
+
 // ReadWithSizeLimit reads from an io.Reader with a size limit to prevent DoS attacks.
 // It returns the read bytes and any error encountered.
 // The default size limit is 5MB.

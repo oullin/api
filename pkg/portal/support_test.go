@@ -55,6 +55,36 @@ func TestSanitiseURL(t *testing.T) {
 	}
 }
 
+func TestNormalizeOrigin(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "strips path from URL", input: "https://example.com/api/social", want: "https://example.com"},
+		{name: "strips query params", input: "https://example.com/path?foo=bar", want: "https://example.com"},
+		{name: "strips fragment", input: "https://example.com/page#section", want: "https://example.com"},
+		{name: "strips everything except origin", input: "https://example.com:8080/api/v1?key=val#top", want: "https://example.com:8080"},
+		{name: "preserves port", input: "https://example.com:3000", want: "https://example.com:3000"},
+		{name: "handles localhost", input: "http://localhost:8080/api/endpoint", want: "http://localhost:8080"},
+		{name: "keeps base URL unchanged", input: "https://example.com", want: "https://example.com"},
+		{name: "empty input", input: "", want: ""},
+		{name: "whitespace input", input: "   ", want: ""},
+		{name: "invalid URL", input: "not-a-valid-url", want: ""},
+		{name: "missing scheme", input: "example.com/path", want: ""},
+		{name: "missing host", input: "https://", want: ""},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			if got := NormalizeOrigin(tc.input); got != tc.want {
+				t.Errorf("NormalizeOrigin(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestBuildCanonical(t *testing.T) {
 	u, _ := url.Parse("https://x.test/api/v1/resource?z=9&a=1&a=0")
 	bodyHash := "abc123"
