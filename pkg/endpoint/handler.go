@@ -47,12 +47,6 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 
 			scopeApiError.Enrich()
 
-			// Set appropriate severity level based on status code
-			// Authentication/authorization errors are logged as info for monitoring
-			// without triggering alerts, while actual errors remain at error level
-			level := getSentryLevel(apiErr.Status)
-			scope.SetLevel(level)
-
 			hub.CaptureException(errToCapture)
 		})
 	}
@@ -63,21 +57,4 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 	}
 
 	notify(sentry.CurrentHub())
-}
-
-func getSentryLevel(status int) sentry.Level {
-	// Expected client errors are logged as info for visibility without noise:
-	// - 401 Unauthorized: Invalid credentials/tokens
-	// - 403 Forbidden: Insufficient permissions
-	// - 404 Not Found: Resource doesn't exist
-	// - 429 Too Many Requests: Rate limiting
-	switch status {
-	case http.StatusUnauthorized,
-		http.StatusForbidden,
-		http.StatusNotFound,
-		http.StatusTooManyRequests:
-		return sentry.LevelInfo
-	default:
-		return sentry.LevelError
-	}
 }
