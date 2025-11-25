@@ -188,7 +188,7 @@ func seedSignature(t *testing.T, repo *repository.ApiKeys, key *database.APIKey,
 	_, err = repo.CreateSignatureFor(repoentity.APIKeyCreateSignatureFor{
 		Key:       key,
 		Seed:      sigBytes,
-		Origin:    portal.NormalizeOriginWithPath(req.Header.Get("X-API-Intended-Origin")),
+		Origin:    portal.NormalizeOrigin(req.Header.Get("X-API-Intended-Origin")),
 		ExpiresAt: expiresAt,
 	})
 	if err != nil {
