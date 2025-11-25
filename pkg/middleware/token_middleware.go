@@ -34,16 +34,16 @@ type TokenCheckMiddleware struct {
 
 func NewTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
 	return TokenCheckMiddleware{
-		maxFailPerScope: 50,
+		maxFailPerScope: 10,
 		disallowFuture:  true,
 		ApiKeys:         apiKeys,
 		now:             time.Now,
 		TokenHandler:    tokenHandler,
 		clockSkew:       10 * time.Minute,
-		failWindow:      5 * time.Minute,
-		nonceTTL:        25 * time.Minute,
+		failWindow:      1 * time.Minute,
+		nonceTTL:        10 * time.Minute,
 		nonceCache:      cache.NewTTLCache(),
-		rateLimiter:     limiter.NewMemoryLimiter(5*time.Minute, 50),
+		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
 	}
 }
 
@@ -200,22 +200,6 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*datab
 	return guard.ApiKey, nil
 }
 
-func (t TokenCheckMiddleware) buildAuthErrorContext(headers AuthTokenHeaders, includeNonce bool) map[string]any {
-	ctx := map[string]any{
-		"account_name": headers.AccountName,
-		"client_ip":    headers.ClientIP,
-		"origin":       headers.IntendedOriginURL,
-		"request_id":   headers.RequestID,
-		"timestamp":    headers.Timestamp,
-	}
-
-	if includeNonce && len(headers.Nonce) > 8 {
-		ctx["nonce"] = headers.Nonce[:8] + "..." // First 8 chars for security
-	}
-
-	return ctx
-}
-
 func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *endpoint.ApiError {
 	var err error
 	var byteSignature []byte
@@ -224,11 +208,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.UnauthenticatedError(
-			"Invalid signature format",
-			"error decoding signature string: "+err.Error(),
-			t.buildAuthErrorContext(headers, false),
-		)
+		return mwguards.NotFound("error decoding signature string", "")
 	}
 
 	entity := repoentity.FindSignatureFrom{
@@ -243,11 +223,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if signature == nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.UnauthenticatedError(
-			"Invalid signature",
-			"signature not found",
-			t.buildAuthErrorContext(headers, true),
-		)
+		return mwguards.NotFound("signature not found", "")
 	}
 
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {

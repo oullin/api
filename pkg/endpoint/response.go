@@ -18,16 +18,12 @@ type Response struct {
 }
 
 func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Request) *Response {
-	return NewResponseWithCache(salt, writer, request, 3600)
-}
-
-func NewResponseWithCache(salt string, writer http.ResponseWriter, request *http.Request, maxAge int) *Response {
 	etag := fmt.Sprintf(
 		`"%s"`,
 		strings.TrimSpace(salt),
 	)
 
-	cacheControl := fmt.Sprintf("public, max-age=%d", maxAge)
+	cacheControl := "public, max-age=3600"
 
 	return &Response{
 		writer:       writer,

@@ -90,9 +90,7 @@ func (s *SignaturesHandler) CreateSignature(request payload.SignatureRequest, se
 		return nil, fmt.Errorf("unable to generate the signature seed. Please try again")
 	}
 
-	// Signature expires in 5 minutes to align with rate limiter window
-	// and allow for network latency and client processing time
-	expiresAt := serverTime.Add(time.Minute * 5)
+	expiresAt := serverTime.Add(time.Second * 30)
 	hash := auth.CreateSignature(seed, token.SecretKey)
 
 	entity := repoentity.APIKeyCreateSignatureFor{

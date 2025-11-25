@@ -134,8 +134,8 @@ func TestTokenMiddleware_SignatureMismatch(t *testing.T) {
 	sigBytes[0] ^= 0xFF
 	req.Header.Set("X-API-Signature", hex.EncodeToString(sigBytes))
 	rec := httptest.NewRecorder()
-	if err := handler(rec, req); err == nil || err.Status != http.StatusUnauthorized {
-		t.Fatalf("expected unauthorized for signature mismatch, got %#v", err)
+	if err := handler(rec, req); err == nil || err.Status != http.StatusNotFound {
+		t.Fatalf("expected not found for signature mismatch, got %#v", err)
 	}
 }
 
