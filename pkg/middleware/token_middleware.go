@@ -200,6 +200,22 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*datab
 	return guard.ApiKey, nil
 }
 
+func (t TokenCheckMiddleware) buildAuthErrorContext(headers AuthTokenHeaders, includeNonce bool) map[string]any {
+	ctx := map[string]any{
+		"account_name": headers.AccountName,
+		"client_ip":    headers.ClientIP,
+		"origin":       headers.IntendedOriginURL,
+		"request_id":   headers.RequestID,
+		"timestamp":    headers.Timestamp,
+	}
+
+	if includeNonce && len(headers.Nonce) > 8 {
+		ctx["nonce"] = headers.Nonce[:8] + "..." // First 8 chars for security
+	}
+
+	return ctx
+}
+
 func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *endpoint.ApiError {
 	var err error
 	var byteSignature []byte
@@ -208,13 +224,11 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.UnauthenticatedError("Invalid signature format", "error decoding signature string: "+err.Error(), map[string]any{
-			"account_name": headers.AccountName,
-			"client_ip":    headers.ClientIP,
-			"origin":       headers.IntendedOriginURL,
-			"request_id":   headers.RequestID,
-			"timestamp":    headers.Timestamp,
-		})
+		return mwguards.UnauthenticatedError(
+			"Invalid signature format",
+			"error decoding signature string: "+err.Error(),
+			t.buildAuthErrorContext(headers, false),
+		)
 	}
 
 	entity := repoentity.FindSignatureFrom{
@@ -229,14 +243,11 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if signature == nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.UnauthenticatedError("Invalid signature", "signature not found", map[string]any{
-			"account_name": headers.AccountName,
-			"client_ip":    headers.ClientIP,
-			"origin":       headers.IntendedOriginURL,
-			"request_id":   headers.RequestID,
-			"timestamp":    headers.Timestamp,
-			"nonce":        headers.Nonce[:8] + "...", // First 8 chars for security
-		})
+		return mwguards.UnauthenticatedError(
+			"Invalid signature",
+			"signature not found",
+			t.buildAuthErrorContext(headers, true),
+		)
 	}
 
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {
