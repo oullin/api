@@ -36,11 +36,6 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 		return
 	}
 
-	// Don't capture expected authentication/authorization errors to reduce Sentry noise
-	if shouldSkipSentryCapture(apiErr.Status) {
-		return
-	}
-
 	errToCapture := error(apiErr)
 	if apiErr.Err != nil {
 		errToCapture = apiErr.Err
@@ -51,6 +46,12 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 			scopeApiError := NewScopeApiError(scope, r, apiErr)
 
 			scopeApiError.Enrich()
+
+			// Set appropriate severity level based on status code
+			// Authentication/authorization errors are logged as info for monitoring
+			// without triggering alerts, while actual errors remain at error level
+			level := getSentryLevel(apiErr.Status)
+			scope.SetLevel(level)
 
 			hub.CaptureException(errToCapture)
 		})
@@ -64,8 +65,8 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 	notify(sentry.CurrentHub())
 }
 
-func shouldSkipSentryCapture(status int) bool {
-	// Skip client errors that are expected during normal operation:
+func getSentryLevel(status int) sentry.Level {
+	// Expected client errors are logged as info for visibility without noise:
 	// - 401 Unauthorized: Invalid credentials/tokens
 	// - 403 Forbidden: Insufficient permissions
 	// - 404 Not Found: Resource doesn't exist
@@ -75,8 +76,8 @@ func shouldSkipSentryCapture(status int) bool {
 		http.StatusForbidden,
 		http.StatusNotFound,
 		http.StatusTooManyRequests:
-		return true
+		return sentry.LevelInfo
 	default:
-		return false
+		return sentry.LevelError
 	}
 }
