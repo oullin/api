@@ -34,16 +34,16 @@ type TokenCheckMiddleware struct {
 
 func NewTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
 	return TokenCheckMiddleware{
-		maxFailPerScope: 10,
+		maxFailPerScope: 50,
 		disallowFuture:  true,
 		ApiKeys:         apiKeys,
 		now:             time.Now,
 		TokenHandler:    tokenHandler,
 		clockSkew:       10 * time.Minute,
-		failWindow:      1 * time.Minute,
+		failWindow:      5 * time.Minute,
 		nonceTTL:        10 * time.Minute,
 		nonceCache:      cache.NewTTLCache(),
-		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
+		rateLimiter:     limiter.NewMemoryLimiter(5*time.Minute, 50),
 	}
 }
 
