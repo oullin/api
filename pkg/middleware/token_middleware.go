@@ -126,10 +126,42 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId s
 	nonce := strings.TrimSpace(r.Header.Get(portal.NonceHeader))
 	ip := portal.ParseClientIP(r)
 
-	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" || ip == "" || intendedOriginURL == "" {
+	missing := []string{}
+	if accountName == "" {
+		missing = append(missing, portal.UsernameHeader)
+	}
+
+	if publicToken == "" {
+		missing = append(missing, portal.TokenHeader)
+	}
+
+	if signature == "" {
+		missing = append(missing, portal.SignatureHeader)
+	}
+
+	if ts == "" {
+		missing = append(missing, portal.TimestampHeader)
+	}
+
+	if nonce == "" {
+		missing = append(missing, portal.NonceHeader)
+	}
+
+	if ip == "" {
+		missing = append(missing, "client_ip")
+	}
+
+	if intendedOriginURL == "" {
+		missing = append(missing, "intended_origin")
+	}
+
+	if len(missing) > 0 {
+		message := "Invalid authentication headers: missing " + strings.Join(missing, ", ")
+
 		return AuthTokenHeaders{}, mwguards.InvalidRequestError(
-			"Invalid authentication headers / or missing headers",
-			"",
+			message,
+			message,
+			map[string]any{"missing": missing, "request_id": requestId},
 		)
 	}
 
