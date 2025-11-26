@@ -126,7 +126,7 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId s
 	nonce := strings.TrimSpace(r.Header.Get(portal.NonceHeader))
 	ip := portal.ParseClientIP(r)
 
-	missing := []string{}
+	var missing []string
 	if accountName == "" {
 		missing = append(missing, portal.UsernameHeader)
 	}
@@ -242,7 +242,7 @@ func (t TokenCheckMiddleware) buildAuthErrorContext(headers AuthTokenHeaders, in
 	}
 
 	if includeNonce && headers.Nonce != "" {
-		// Include first 8 chars of nonce for debugging (safe for logs)
+		// Include the first 8 chars of nonce for debugging (safe for logs)
 		// If nonce is shorter, include what we have
 		nonceLen := len(headers.Nonce)
 		if nonceLen > 8 {
@@ -264,7 +264,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 		t.rateLimiter.Fail(limiterKey)
 
 		return mwguards.UnauthenticatedError(
-			"Invalid signature format",
+			"HasInvalidSignature",
 			"error decoding signature string: "+err.Error(),
 			t.buildAuthErrorContext(headers, false),
 		)
@@ -283,7 +283,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 		t.rateLimiter.Fail(limiterKey)
 
 		return mwguards.UnauthenticatedError(
-			"Invalid signature",
+			"HasInvalidSignature",
 			"signature not found",
 			t.buildAuthErrorContext(headers, true),
 		)
@@ -292,7 +292,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.InvalidRequestError("could not increase signature tries", err.Error())
+		return mwguards.InvalidRequestError("HasInvalidSignature", err.Error())
 	}
 
 	return nil
