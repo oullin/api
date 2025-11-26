@@ -188,6 +188,16 @@ func TestIntendedOriginFromHeader(t *testing.T) {
 		}
 	})
 
+	t.Run("treats whitespace-only intended origin as empty", func(t *testing.T) {
+		headers := http.Header{}
+		headers.Set(IntendedOriginHeader, "   \t  ")
+		headers.Set("Origin", "https://fallback.test")
+
+		if got := IntendedOriginFromHeader(headers); got != "https://fallback.test" {
+			t.Fatalf("expected origin fallback when intended header is blank, got %q", got)
+		}
+	})
+
 	t.Run("uses referer when others missing", func(t *testing.T) {
 		headers := http.Header{
 			"Referer": []string{"https://referer.test/resource"},
