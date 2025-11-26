@@ -186,6 +186,32 @@ func ParseClientIP(r *http.Request) string {
 	return strings.TrimSpace(r.RemoteAddr)
 }
 
+// headerValue returns the trimmed value for the provided header key, being
+// tolerant of non-canonicalized map keys (e.g. raw map literals in tests).
+func headerValue(headers http.Header, key string) string {
+	if headers == nil {
+		return ""
+	}
+
+	value := strings.TrimSpace(headers.Get(key))
+	if value != "" {
+		return value
+	}
+
+	canonicalKey := http.CanonicalHeaderKey(key)
+	for k, values := range headers {
+		if len(values) == 0 {
+			continue
+		}
+
+		if strings.EqualFold(k, canonicalKey) || strings.EqualFold(k, key) {
+			return strings.TrimSpace(values[0])
+		}
+	}
+
+	return ""
+}
+
 // IntendedOriginFromHeader extracts the intended origin value from request headers.
 //
 // Precedence:
@@ -195,17 +221,13 @@ func ParseClientIP(r *http.Request) string {
 //
 // Values are trimmed to avoid mismatches caused by stray whitespace.
 func IntendedOriginFromHeader(headers http.Header) string {
-	if headers == nil {
-		return ""
-	}
-
-	intended := strings.TrimSpace(headers.Get(IntendedOriginHeader))
+	intended := headerValue(headers, IntendedOriginHeader)
 	if intended != "" {
 		return intended
 	}
 
-	origin := strings.TrimSpace(headers.Get("Origin"))
-	referer := strings.TrimSpace(headers.Get("Referer"))
+	origin := headerValue(headers, "Origin")
+	referer := headerValue(headers, "Referer")
 
 	if origin == "" {
 		return referer
