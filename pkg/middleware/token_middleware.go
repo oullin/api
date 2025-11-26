@@ -156,17 +156,19 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId s
 	}
 
 	if len(missing) > 0 {
-		message := "Invalid authentication headers: missing " + strings.Join(missing, ", ")
-
 		return AuthTokenHeaders{}, mwguards.InvalidRequestError(
-			message,
-			message,
+			"Invalid authentication headers",
+			"Errors: "+strings.Join(missing, ", "),
 			map[string]any{"missing": missing, "request_id": requestId},
 		)
 	}
 
 	if err := auth.ValidateTokenFormat(publicToken); err != nil {
-		return AuthTokenHeaders{}, mwguards.InvalidTokenFormatError(err.Error(), "", map[string]any{})
+		return AuthTokenHeaders{}, mwguards.InvalidTokenFormatError(
+			"Invalid token format",
+			err.Error(),
+			map[string]any{"missing": missing, "request_id": requestId},
+		)
 	}
 
 	return AuthTokenHeaders{
@@ -263,9 +265,9 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.UnauthenticatedError(
-			"HasInvalidSignature",
-			"error decoding signature string: "+err.Error(),
+		return mwguards.InvalidRequestError(
+			"Error decoding signature string",
+			err.Error(),
 			t.buildAuthErrorContext(headers, false),
 		)
 	}
@@ -283,8 +285,8 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 		t.rateLimiter.Fail(limiterKey)
 
 		return mwguards.UnauthenticatedError(
-			"HasInvalidSignature",
-			"signature not found",
+			"Signature not found",
+			"Rate limited: signature not found",
 			t.buildAuthErrorContext(headers, true),
 		)
 	}
@@ -292,7 +294,11 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.InvalidRequestError("HasInvalidSignature", err.Error())
+		return mwguards.InvalidRequestError(
+			"Tries limit reached",
+			"The given headers are invalid: tries limit reached.",
+			t.buildAuthErrorContext(headers, true),
+		)
 	}
 
 	return nil
