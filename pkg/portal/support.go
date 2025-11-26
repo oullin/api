@@ -186,6 +186,71 @@ func ParseClientIP(r *http.Request) string {
 	return strings.TrimSpace(r.RemoteAddr)
 }
 
+// headerValue returns the trimmed value for the provided header key, being
+// tolerant of non-canonical map keys (e.g. raw map literals in tests).
+func headerValue(headers http.Header, key string) string {
+	if headers == nil {
+		return ""
+	}
+
+	value := strings.TrimSpace(headers.Get(key))
+	if value != "" {
+		return value
+	}
+
+	canonicalKey := http.CanonicalHeaderKey(key)
+	for k, values := range headers {
+		if len(values) == 0 {
+			continue
+		}
+
+		if strings.EqualFold(k, canonicalKey) || strings.EqualFold(k, key) {
+			return strings.TrimSpace(values[0])
+		}
+	}
+
+	return ""
+}
+
+// IntendedOriginFromHeader extracts the intended origin value from request headers.
+//
+// Precedence:
+// 1. X-API-Intended-Origin (custom header used for signing)
+//  2. Origin (standard browser header)
+//     - but if a Referer is present with the same scheme/host and a non-empty
+//     path, prefer the Referer to bind to the specific resource path
+//  3. Referer (fallback when Origin is absent)
+//
+// Values are trimmed to avoid mismatches caused by stray whitespace.
+func IntendedOriginFromHeader(headers http.Header) string {
+	intended := headerValue(headers, IntendedOriginHeader)
+	if intended != "" {
+		return intended
+	}
+
+	origin := headerValue(headers, "Origin")
+	referer := headerValue(headers, "Referer")
+
+	if origin == "" {
+		return referer
+	}
+
+	// Browsers typically send host-only Origin headers. If a Referer is present with the
+	// same scheme/host, prefer the referer so signature validation binds to the specific
+	// path instead of relaxing to host-level.
+	if referer != "" {
+		if originURL, err := url.Parse(origin); err == nil {
+			if refererURL, err := url.Parse(referer); err == nil {
+				if originURL.Scheme == refererURL.Scheme && originURL.Host == refererURL.Host && refererURL.Path != "" {
+					return referer
+				}
+			}
+		}
+	}
+
+	return origin
+}
+
 // ReadWithSizeLimit reads from an io.Reader with a size limit to prevent DoS attacks.
 // It returns the read bytes and any error encountered.
 // The default size limit is 5MB.
@@ -216,7 +281,7 @@ func ReadWithSizeLimit(reader io.Reader, maxSize ...int64) ([]byte, error) {
 // but strips query parameters and fragments. This ensures consistent origin
 // matching for signature validation while maintaining per-resource isolation.
 //
-// Normalization follows RFC 3986:
+// Normalisation follows RFC 3986:
 //   - Scheme and host are lowercased
 //   - Query parameters and fragments are removed
 //   - Trailing slashes on paths are preserved (path semantics matter)
@@ -237,10 +302,10 @@ func NormalizeOriginWithPath(origin string) string {
 		return origin
 	}
 
-	// Normalize scheme to lowercase (RFC 3986 Section 6.2.2.1)
+	// Normalise a scheme to lowercase (RFC 3986 Section 6.2.2.1)
 	parsed.Scheme = strings.ToLower(parsed.Scheme)
 
-	// Normalize host to lowercase (RFC 3986 Section 6.2.2.1)
+	// Normalise host to lowercase (RFC 3986 Section 6.2.2.1)
 	parsed.Host = strings.ToLower(parsed.Host)
 
 	// Clear query parameters and fragments

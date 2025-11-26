@@ -3,6 +3,7 @@ package portal
 import (
 	"errors"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -162,6 +163,65 @@ type ErrorReader struct {
 
 func (r *ErrorReader) Read(p []byte) (n int, err error) {
 	return 0, r.Err
+}
+
+func TestIntendedOriginFromHeader(t *testing.T) {
+	testCases := []struct {
+		name    string
+		headers http.Header
+		want    string
+	}{
+		{
+			name: "prefers intended origin header over others",
+			headers: http.Header{
+				IntendedOriginHeader: []string{" https://api.test.local/path "},
+				"Origin":             []string{"https://fallback.test"},
+				"Referer":            []string{"https://another.fallback"},
+			},
+			want: "https://api.test.local/path",
+		},
+		{
+			name: "falls back to origin header over referer",
+			headers: http.Header{
+				"Origin":  []string{" https://fallback.test/path?a=1 "},
+				"Referer": []string{"https://another.fallback"},
+			},
+			want: "https://fallback.test/path?a=1",
+		},
+		{
+			name: "uses referer when others missing",
+			headers: http.Header{
+				"Referer": []string{" https://referer.test/resource "},
+			},
+			want: "https://referer.test/resource",
+		},
+		{
+			name:    "handles empty http.Header",
+			headers: http.Header{},
+			want:    "",
+		},
+		{
+			name:    "handles nil headers",
+			headers: nil,
+			want:    "",
+		},
+		{
+			name: "returns empty when no relevant headers are present",
+			headers: http.Header{
+				"X-Some-Other-Header": []string{"value"},
+			},
+			want: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := IntendedOriginFromHeader(tc.headers)
+			if got != tc.want {
+				t.Errorf("IntendedOriginFromHeader() = %q, want %q", got, tc.want)
+			}
+		})
+	}
 }
 
 func TestNormalizeOriginWithPath(t *testing.T) {
