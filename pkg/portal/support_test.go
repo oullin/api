@@ -220,6 +220,46 @@ func TestNormalizeOriginWithPath(t *testing.T) {
 			input: "http://localhost:8080/api/test?debug=true",
 			want:  "http://localhost:8080/api/test",
 		},
+		{
+			name:  "normalizes uppercase scheme to lowercase (RFC 3986)",
+			input: "HTTPS://example.com/api/social",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "normalizes uppercase host to lowercase (RFC 3986)",
+			input: "https://EXAMPLE.COM/api/social",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "normalizes mixed case scheme and host",
+			input: "HTTPS://Example.COM/api/Social?foo=bar",
+			want:  "https://example.com/api/Social",
+		},
+		{
+			name:  "preserves path case sensitivity",
+			input: "https://example.com/API/Social",
+			want:  "https://example.com/API/Social",
+		},
+		{
+			name:  "preserves trailing slash",
+			input: "https://example.com/api/social/",
+			want:  "https://example.com/api/social/",
+		},
+		{
+			name:  "normalizes with port number",
+			input: "https://Example.COM:8080/api/social?test=1",
+			want:  "https://example.com:8080/api/social",
+		},
+		{
+			name:  "handles percent-encoded characters",
+			input: "https://example.com/api/social%20media?foo=bar",
+			want:  "https://example.com/api/social%20media",
+		},
+		{
+			name:  "handles invalid URL gracefully",
+			input: "not a valid URL at all",
+			want:  "not a valid URL at all",
+		},
 	}
 
 	for _, tc := range testCases {

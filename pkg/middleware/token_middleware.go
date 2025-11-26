@@ -209,8 +209,15 @@ func (t TokenCheckMiddleware) buildAuthErrorContext(headers AuthTokenHeaders, in
 		"timestamp":    headers.Timestamp,
 	}
 
-	if includeNonce && len(headers.Nonce) > 8 {
-		ctx["nonce"] = headers.Nonce[:8] + "..." // First 8 chars for security
+	if includeNonce && headers.Nonce != "" {
+		// Include first 8 chars of nonce for debugging (safe for logs)
+		// If nonce is shorter, include what we have
+		nonceLen := len(headers.Nonce)
+		if nonceLen > 8 {
+			ctx["nonce"] = headers.Nonce[:8] + "..."
+		} else {
+			ctx["nonce"] = headers.Nonce
+		}
 	}
 
 	return ctx

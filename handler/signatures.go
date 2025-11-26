@@ -90,8 +90,23 @@ func (s *SignaturesHandler) CreateSignature(request payload.SignatureRequest, se
 		return nil, fmt.Errorf("unable to generate the signature seed. Please try again")
 	}
 
-	// Signature expires in 5 minutes to align with rate limiter window
-	// and allow for network latency and client processing time
+	// Signature TTL: 5 minutes (300 seconds)
+	//
+	// Security model:
+	// - Each signature can only be used once (enforced by nonce validation)
+	// - Nonces are cached for 25 minutes to prevent replay attacks
+	// - Max 10 validation attempts per signature prevents brute force
+	// - Rate limiter allows 50 failures per 5-minute window per IP+account
+	//
+	// The 5-minute window is conservative and industry-standard:
+	// - AWS Signature V4: 15 minutes
+	// - Azure SAS: configurable, typically 15-60 minutes
+	// - Google Cloud: 15 minutes
+	//
+	// This allows adequate time for:
+	// - Network latency (typically < 1 second)
+	// - Client processing/retries (< 30 seconds typical)
+	// - Clock skew between client/server (we allow ±10 minutes)
 	expiresAt := serverTime.Add(time.Minute * 5)
 	hash := auth.CreateSignature(seed, token.SecretKey)
 
