@@ -78,7 +78,7 @@ func (s *ScopeApiError) Enrich() {
 		s.scope.SetExtra("api_username_header", username)
 	}
 
-	if origin := s.headerValue(portal.IntendedOriginHeader); origin != "" {
+	if origin := portal.IntendedOriginFromHeader(s.request.Header); origin != "" {
 		s.scope.SetExtra("api_intended_origin", origin)
 	}
 

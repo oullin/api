@@ -186,6 +186,31 @@ func ParseClientIP(r *http.Request) string {
 	return strings.TrimSpace(r.RemoteAddr)
 }
 
+// IntendedOriginFromHeader extracts the intended origin value from request headers.
+//
+// Precedence:
+//  1. X-API-Intended-Origin (custom header used for signing)
+//  2. Origin (standard browser header)
+//  3. Referer (fallback when Origin is absent)
+//
+// Values are trimmed to avoid mismatches caused by stray whitespace.
+func IntendedOriginFromHeader(headers http.Header) string {
+	if headers == nil {
+		return ""
+	}
+
+	intended := strings.TrimSpace(headers.Get(IntendedOriginHeader))
+	if intended != "" {
+		return intended
+	}
+
+	if origin := strings.TrimSpace(headers.Get("Origin")); origin != "" {
+		return origin
+	}
+
+	return strings.TrimSpace(headers.Get("Referer"))
+}
+
 // ReadWithSizeLimit reads from an io.Reader with a size limit to prevent DoS attacks.
 // It returns the read bytes and any error encountered.
 // The default size limit is 5MB.

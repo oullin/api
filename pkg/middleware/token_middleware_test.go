@@ -70,6 +70,28 @@ func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
 	}
 }
 
+func TestValidateAndGetHeaders_FallbackOriginHeader(t *testing.T) {
+	tm := NewTokenMiddleware(nil, nil)
+	req := httptest.NewRequest("GET", "https://api.example.com/resource", nil)
+
+	req.Header.Set("X-API-Username", "alice")
+	req.Header.Set("X-API-Key", "pk_validtoken_1234")
+	req.Header.Set("X-API-Signature", "sig")
+	req.Header.Set("X-API-Timestamp", "1700000000")
+	req.Header.Set("X-API-Nonce", "nonce-1")
+	req.Header.Set("Origin", "https://app.example.com/dashboard")
+	req.Header.Set("X-Forwarded-For", "1.1.1.1")
+
+	headers, apiErr := tm.ValidateAndGetHeaders(req, "req-2")
+	if apiErr != nil {
+		t.Fatalf("expected headers without error, got %#v", apiErr)
+	}
+
+	if headers.IntendedOriginURL != "https://app.example.com/dashboard" {
+		t.Fatalf("expected fallback origin header, got %q", headers.IntendedOriginURL)
+	}
+}
+
 func TestAttachContext(t *testing.T) {
 	tm := NewTokenMiddleware(nil, nil)
 	req := httptest.NewRequest("GET", "/", nil)

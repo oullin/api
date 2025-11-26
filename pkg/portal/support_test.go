@@ -3,6 +3,7 @@ package portal
 import (
 	"errors"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -162,6 +163,47 @@ type ErrorReader struct {
 
 func (r *ErrorReader) Read(p []byte) (n int, err error) {
 	return 0, r.Err
+}
+
+func TestIntendedOriginFromHeader(t *testing.T) {
+	t.Run("prefers intended origin header", func(t *testing.T) {
+		headers := http.Header{}
+		headers.Set(IntendedOriginHeader, " https://api.test.local/path ")
+		headers.Set("Origin", "https://fallback.test")
+
+		got := IntendedOriginFromHeader(headers)
+		if got != "https://api.test.local/path" {
+			t.Fatalf("expected explicit intended origin, got %q", got)
+		}
+	})
+
+	t.Run("falls back to origin header", func(t *testing.T) {
+		headers := http.Header{
+			"Origin": []string{"https://fallback.test/path?a=1"},
+		}
+
+		got := IntendedOriginFromHeader(headers)
+		if got != "https://fallback.test/path?a=1" {
+			t.Fatalf("expected origin header value, got %q", got)
+		}
+	})
+
+	t.Run("uses referer when others missing", func(t *testing.T) {
+		headers := http.Header{
+			"Referer": []string{"https://referer.test/resource"},
+		}
+
+		got := IntendedOriginFromHeader(headers)
+		if got != "https://referer.test/resource" {
+			t.Fatalf("expected referer value, got %q", got)
+		}
+	})
+
+	t.Run("handles empty headers", func(t *testing.T) {
+		if got := IntendedOriginFromHeader(nil); got != "" {
+			t.Fatalf("expected empty string for nil headers, got %q", got)
+		}
+	})
 }
 
 func TestNormalizeOriginWithPath(t *testing.T) {
