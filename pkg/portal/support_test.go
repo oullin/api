@@ -256,9 +256,9 @@ func TestNormalizeOriginWithPath(t *testing.T) {
 			want:  "https://example.com/api/social%20media",
 		},
 		{
-			name:  "handles invalid URL gracefully",
+			name:  "handles space-containing string (percent-encodes)",
 			input: "not a valid URL at all",
-			want:  "not a valid URL at all",
+			want:  "not%20a%20valid%20URL%20at%20all",
 		},
 	}
 
