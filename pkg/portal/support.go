@@ -204,11 +204,27 @@ func IntendedOriginFromHeader(headers http.Header) string {
 		return intended
 	}
 
-	if origin := strings.TrimSpace(headers.Get("Origin")); origin != "" {
-		return origin
+	origin := strings.TrimSpace(headers.Get("Origin"))
+	referer := strings.TrimSpace(headers.Get("Referer"))
+
+	if origin == "" {
+		return referer
 	}
 
-	return strings.TrimSpace(headers.Get("Referer"))
+	// Browsers typically send host-only Origin headers. If a Referer is present with the
+	// same scheme/host, prefer the referer so signature validation binds to the specific
+	// path instead of relaxing to host-level.
+	if referer != "" {
+		if originURL, err := url.Parse(origin); err == nil {
+			if refererURL, err := url.Parse(referer); err == nil {
+				if originURL.Scheme == refererURL.Scheme && originURL.Host == refererURL.Host && refererURL.Path != "" {
+					return referer
+				}
+			}
+		}
+	}
+
+	return origin
 }
 
 // ReadWithSizeLimit reads from an io.Reader with a size limit to prevent DoS attacks.

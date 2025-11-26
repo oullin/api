@@ -188,6 +188,26 @@ func TestIntendedOriginFromHeader(t *testing.T) {
 		}
 	})
 
+	t.Run("prefers referer path when origin is host-only", func(t *testing.T) {
+		headers := http.Header{}
+		headers.Set("Origin", "https://fallback.test")
+		headers.Set("Referer", "https://fallback.test/signed/resource")
+
+		if got := IntendedOriginFromHeader(headers); got != "https://fallback.test/signed/resource" {
+			t.Fatalf("expected referer path when origin is host-only, got %q", got)
+		}
+	})
+
+	t.Run("keeps origin when referer host differs", func(t *testing.T) {
+		headers := http.Header{}
+		headers.Set("Origin", "https://fallback.test")
+		headers.Set("Referer", "https://other.test/signed/resource")
+
+		if got := IntendedOriginFromHeader(headers); got != "https://fallback.test" {
+			t.Fatalf("expected origin when referer host differs, got %q", got)
+		}
+	})
+
 	t.Run("treats whitespace-only intended origin as empty", func(t *testing.T) {
 		headers := http.Header{}
 		headers.Set(IntendedOriginHeader, "   \t  ")
