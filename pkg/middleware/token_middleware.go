@@ -167,7 +167,7 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId s
 		return AuthTokenHeaders{}, mwguards.InvalidTokenFormatError(
 			"Invalid token format",
 			err.Error(),
-			map[string]any{"missing": missing, "request_id": requestId},
+			map[string]any{"request_id": requestId},
 		)
 	}
 
@@ -286,7 +286,7 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 
 		return mwguards.UnauthenticatedError(
 			"Signature not found",
-			"Rate limited: signature not found",
+			"Rate limit: Signature not found for account",
 			t.buildAuthErrorContext(headers, true),
 		)
 	}
