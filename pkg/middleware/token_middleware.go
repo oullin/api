@@ -151,7 +151,7 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId s
 
 func (t TokenCheckMiddleware) AttachContext(r *http.Request, headers AuthTokenHeaders) *http.Request {
 	ctx := context.WithValue(r.Context(), portal.AuthAccountNameKey, headers.AccountName)
-	ctx = context.WithValue(r.Context(), portal.RequestIDKey, headers.RequestID)
+	ctx = context.WithValue(ctx, portal.RequestIDKey, headers.RequestID)
 
 	return r.WithContext(ctx)
 }
