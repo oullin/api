@@ -108,6 +108,15 @@ func TestValidateAndGetHeaders_FallbackOriginHeader(t *testing.T) {
 			},
 			expectError: true,
 		},
+		{
+			name: "handles host‑only Origin vs path‑specific Referer",
+			setupHeaders: func(h http.Header) {
+				h.Set(portal.IntendedOriginHeader, "")
+				h.Set("Origin", "https://api.example.com")
+				h.Set("Referer", "https://api.example.com/path/resource")
+			},
+			expectedOrigin: "https://api.example.com/path/resource",
+		},
 	}
 
 	for _, tc := range testCases {

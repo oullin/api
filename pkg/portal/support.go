@@ -187,7 +187,7 @@ func ParseClientIP(r *http.Request) string {
 }
 
 // headerValue returns the trimmed value for the provided header key, being
-// tolerant of non-canonicalized map keys (e.g. raw map literals in tests).
+// tolerant of non-canonical map keys (e.g. raw map literals in tests).
 func headerValue(headers http.Header, key string) string {
 	if headers == nil {
 		return ""
@@ -215,8 +215,10 @@ func headerValue(headers http.Header, key string) string {
 // IntendedOriginFromHeader extracts the intended origin value from request headers.
 //
 // Precedence:
-//  1. X-API-Intended-Origin (custom header used for signing)
+// 1. X-API-Intended-Origin (custom header used for signing)
 //  2. Origin (standard browser header)
+//     - but if a Referer is present with the same scheme/host and a non-empty
+//     path, prefer the Referer to bind to the specific resource path
 //  3. Referer (fallback when Origin is absent)
 //
 // Values are trimmed to avoid mismatches caused by stray whitespace.
@@ -279,7 +281,7 @@ func ReadWithSizeLimit(reader io.Reader, maxSize ...int64) ([]byte, error) {
 // but strips query parameters and fragments. This ensures consistent origin
 // matching for signature validation while maintaining per-resource isolation.
 //
-// Normalization follows RFC 3986:
+// Normalisation follows RFC 3986:
 //   - Scheme and host are lowercased
 //   - Query parameters and fragments are removed
 //   - Trailing slashes on paths are preserved (path semantics matter)
@@ -300,10 +302,10 @@ func NormalizeOriginWithPath(origin string) string {
 		return origin
 	}
 
-	// Normalize scheme to lowercase (RFC 3986 Section 6.2.2.1)
+	// Normalise a scheme to lowercase (RFC 3986 Section 6.2.2.1)
 	parsed.Scheme = strings.ToLower(parsed.Scheme)
 
-	// Normalize host to lowercase (RFC 3986 Section 6.2.2.1)
+	// Normalise host to lowercase (RFC 3986 Section 6.2.2.1)
 	parsed.Host = strings.ToLower(parsed.Host)
 
 	// Clear query parameters and fragments
