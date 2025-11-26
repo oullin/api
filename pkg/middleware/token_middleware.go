@@ -34,16 +34,16 @@ type TokenCheckMiddleware struct {
 
 func NewTokenMiddleware(tokenHandler *auth.TokenHandler, apiKeys *repository.ApiKeys) TokenCheckMiddleware {
 	return TokenCheckMiddleware{
-		maxFailPerScope: 10,
+		maxFailPerScope: 50,
 		disallowFuture:  true,
 		ApiKeys:         apiKeys,
 		now:             time.Now,
 		TokenHandler:    tokenHandler,
 		clockSkew:       10 * time.Minute,
-		failWindow:      1 * time.Minute,
-		nonceTTL:        10 * time.Minute,
+		failWindow:      5 * time.Minute,
+		nonceTTL:        25 * time.Minute,
 		nonceCache:      cache.NewTTLCache(),
-		rateLimiter:     limiter.NewMemoryLimiter(1*time.Minute, 10),
+		rateLimiter:     limiter.NewMemoryLimiter(5*time.Minute, 50),
 	}
 }
 
@@ -151,7 +151,7 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId s
 
 func (t TokenCheckMiddleware) AttachContext(r *http.Request, headers AuthTokenHeaders) *http.Request {
 	ctx := context.WithValue(r.Context(), portal.AuthAccountNameKey, headers.AccountName)
-	ctx = context.WithValue(r.Context(), portal.RequestIDKey, headers.RequestID)
+	ctx = context.WithValue(ctx, portal.RequestIDKey, headers.RequestID)
 
 	return r.WithContext(ctx)
 }
@@ -200,6 +200,29 @@ func (t TokenCheckMiddleware) HasInvalidFormat(headers AuthTokenHeaders) (*datab
 	return guard.ApiKey, nil
 }
 
+func (t TokenCheckMiddleware) buildAuthErrorContext(headers AuthTokenHeaders, includeNonce bool) map[string]any {
+	ctx := map[string]any{
+		"account_name": headers.AccountName,
+		"client_ip":    headers.ClientIP,
+		"origin":       headers.IntendedOriginURL,
+		"request_id":   headers.RequestID,
+		"timestamp":    headers.Timestamp,
+	}
+
+	if includeNonce && headers.Nonce != "" {
+		// Include first 8 chars of nonce for debugging (safe for logs)
+		// If nonce is shorter, include what we have
+		nonceLen := len(headers.Nonce)
+		if nonceLen > 8 {
+			ctx["nonce"] = headers.Nonce[:8] + "..."
+		} else {
+			ctx["nonce"] = headers.Nonce
+		}
+	}
+
+	return ctx
+}
+
 func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiKey *database.APIKey) *endpoint.ApiError {
 	var err error
 	var byteSignature []byte
@@ -208,13 +231,17 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.NotFound("error decoding signature string", "")
+		return mwguards.UnauthenticatedError(
+			"Invalid signature format",
+			"error decoding signature string: "+err.Error(),
+			t.buildAuthErrorContext(headers, false),
+		)
 	}
 
 	entity := repoentity.FindSignatureFrom{
 		Key:        apiKey,
 		Signature:  byteSignature,
-		Origin:     headers.IntendedOriginURL,
+		Origin:     portal.NormalizeOriginWithPath(headers.IntendedOriginURL),
 		ServerTime: t.now(),
 	}
 
@@ -223,7 +250,11 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if signature == nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.NotFound("signature not found", "")
+		return mwguards.UnauthenticatedError(
+			"Invalid signature",
+			"signature not found",
+			t.buildAuthErrorContext(headers, true),
+		)
 	}
 
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {

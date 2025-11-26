@@ -31,6 +31,17 @@ func NewApiHandler(fn ApiHandler) http.HandlerFunc {
 	}
 }
 
+func getSentryLevel(status int) sentry.Level {
+	// Auth errors (401, 403, 404, 429) are expected client errors,
+	// not server issues, so log as info to reduce noise
+	switch status {
+	case http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusTooManyRequests:
+		return sentry.LevelInfo
+	default:
+		return sentry.LevelError
+	}
+}
+
 func captureApiError(r *http.Request, apiErr *ApiError) {
 	if apiErr == nil {
 		return
@@ -46,6 +57,8 @@ func captureApiError(r *http.Request, apiErr *ApiError) {
 			scopeApiError := NewScopeApiError(scope, r, apiErr)
 
 			scopeApiError.Enrich()
+
+			scope.SetLevel(getSentryLevel(apiErr.Status))
 
 			hub.CaptureException(errToCapture)
 		})

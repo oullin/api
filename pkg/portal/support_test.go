@@ -163,3 +163,112 @@ type ErrorReader struct {
 func (r *ErrorReader) Read(p []byte) (n int, err error) {
 	return 0, r.Err
 }
+
+func TestNormalizeOriginWithPath(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "strips query parameters",
+			input: "https://example.com/api/social?foo=bar&baz=qux",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "strips fragment",
+			input: "https://example.com/api/profile#section",
+			want:  "https://example.com/api/profile",
+		},
+		{
+			name:  "strips both query and fragment",
+			input: "https://example.com/api/social?foo=bar#section",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "preserves path without query or fragment",
+			input: "https://example.com/api/social",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "handles root path",
+			input: "https://example.com/",
+			want:  "https://example.com/",
+		},
+		{
+			name:  "handles relative URL with query",
+			input: "/api/social?foo=bar",
+			want:  "/api/social",
+		},
+		{
+			name:  "handles relative URL without query",
+			input: "/api/social",
+			want:  "/api/social",
+		},
+		{
+			name:  "handles empty string",
+			input: "",
+			want:  "",
+		},
+		{
+			name:  "preserves different paths",
+			input: "https://example.com/api/profile?param=value",
+			want:  "https://example.com/api/profile",
+		},
+		{
+			name:  "handles localhost",
+			input: "http://localhost:8080/api/test?debug=true",
+			want:  "http://localhost:8080/api/test",
+		},
+		{
+			name:  "normalizes uppercase scheme to lowercase (RFC 3986)",
+			input: "HTTPS://example.com/api/social",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "normalizes uppercase host to lowercase (RFC 3986)",
+			input: "https://EXAMPLE.COM/api/social",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "normalizes mixed case scheme and host",
+			input: "HTTPS://Example.COM/api/Social?foo=bar",
+			want:  "https://example.com/api/Social",
+		},
+		{
+			name:  "preserves path case sensitivity",
+			input: "https://example.com/API/Social",
+			want:  "https://example.com/API/Social",
+		},
+		{
+			name:  "preserves trailing slash",
+			input: "https://example.com/api/social/",
+			want:  "https://example.com/api/social/",
+		},
+		{
+			name:  "normalizes with port number",
+			input: "https://Example.COM:8080/api/social?test=1",
+			want:  "https://example.com:8080/api/social",
+		},
+		{
+			name:  "handles percent-encoded characters",
+			input: "https://example.com/api/social%20media?foo=bar",
+			want:  "https://example.com/api/social%20media",
+		},
+		{
+			name:  "handles space-containing string (percent-encodes)",
+			input: "not a valid URL at all",
+			want:  "not%20a%20valid%20URL%20at%20all",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got := NormalizeOriginWithPath(tc.input)
+			if got != tc.want {
+				t.Errorf("NormalizeOriginWithPath(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}

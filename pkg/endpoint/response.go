@@ -17,13 +17,18 @@ type Response struct {
 	headers      func(w http.ResponseWriter)
 }
 
-func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Request) *Response {
+func NewResponseWithCache(salt string, maxAgeSeconds int, writer http.ResponseWriter, request *http.Request) *Response {
+	// Ensure non-negative cache duration
+	if maxAgeSeconds < 0 {
+		maxAgeSeconds = 0
+	}
+
 	etag := fmt.Sprintf(
 		`"%s"`,
 		strings.TrimSpace(salt),
 	)
 
-	cacheControl := "public, max-age=3600"
+	cacheControl := fmt.Sprintf("public, max-age=%d", maxAgeSeconds)
 
 	return &Response{
 		writer:       writer,
@@ -37,6 +42,10 @@ func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Requ
 			w.Header().Set("ETag", etag)
 		},
 	}
+}
+
+func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Request) *Response {
+	return NewResponseWithCache(salt, 3600, writer, request)
 }
 
 func NewNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {

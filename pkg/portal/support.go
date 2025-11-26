@@ -211,3 +211,44 @@ func ReadWithSizeLimit(reader io.Reader, maxSize ...int64) ([]byte, error) {
 
 	return data, nil
 }
+
+// NormalizeOriginWithPath normalizes a URL to include scheme, host, and path,
+// but strips query parameters and fragments. This ensures consistent origin
+// matching for signature validation while maintaining per-resource isolation.
+//
+// Normalization follows RFC 3986:
+//   - Scheme and host are lowercased
+//   - Query parameters and fragments are removed
+//   - Trailing slashes on paths are preserved (path semantics matter)
+//   - Percent-encoding is preserved as-is
+//
+// Examples:
+//   - https://example.com/api/social?foo=bar#hash → https://example.com/api/social
+//   - HTTPS://Example.COM/api/profile → https://example.com/api/profile
+//   - /api/social → /api/social (relative URLs are preserved)
+func NormalizeOriginWithPath(origin string) string {
+	if origin == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(origin)
+	if err != nil {
+		// Invalid URL - return as-is to fail validation downstream
+		return origin
+	}
+
+	// Normalize scheme to lowercase (RFC 3986 Section 6.2.2.1)
+	parsed.Scheme = strings.ToLower(parsed.Scheme)
+
+	// Normalize host to lowercase (RFC 3986 Section 6.2.2.1)
+	parsed.Host = strings.ToLower(parsed.Host)
+
+	// Clear query parameters and fragments
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+
+	// Note: We preserve trailing slashes because they have semantic meaning
+	// in REST APIs (/api/users/ vs /api/users may be different resources)
+
+	return parsed.String()
+}
