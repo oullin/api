@@ -71,24 +71,81 @@ func TestValidateAndGetHeaders_MissingAndInvalidFormat(t *testing.T) {
 }
 
 func TestValidateAndGetHeaders_FallbackOriginHeader(t *testing.T) {
-	tm := NewTokenMiddleware(nil, nil)
-	req := httptest.NewRequest("GET", "https://api.example.com/resource", nil)
-
-	req.Header.Set("X-API-Username", "alice")
-	req.Header.Set("X-API-Key", "pk_validtoken_1234")
-	req.Header.Set("X-API-Signature", "sig")
-	req.Header.Set("X-API-Timestamp", "1700000000")
-	req.Header.Set("X-API-Nonce", "nonce-1")
-	req.Header.Set("Origin", "https://app.example.com/dashboard")
-	req.Header.Set("X-Forwarded-For", "1.1.1.1")
-
-	headers, apiErr := tm.ValidateAndGetHeaders(req, "req-2")
-	if apiErr != nil {
-		t.Fatalf("expected headers without error, got %#v", apiErr)
+	testCases := []struct {
+		name           string
+		setupHeaders   func(h http.Header)
+		expectedOrigin string
+		expectError    bool
+	}{
+		{
+			name: "prefers intended origin header",
+			setupHeaders: func(h http.Header) {
+				h.Set(portal.IntendedOriginHeader, "https://intended.origin")
+				h.Set("Origin", "https://origin.fallback")
+				h.Set("Referer", "https://referer.fallback")
+			},
+			expectedOrigin: "https://intended.origin",
+		},
+		{
+			name: "falls back to origin header",
+			setupHeaders: func(h http.Header) {
+				h.Set("Origin", "https://origin.fallback")
+				h.Set("Referer", "https://referer.fallback")
+			},
+			expectedOrigin: "https://origin.fallback",
+		},
+		{
+			name: "falls back to referer header",
+			setupHeaders: func(h http.Header) {
+				h.Set("Referer", "https://referer.fallback")
+			},
+			expectedOrigin: "https://referer.fallback",
+		},
+		{
+			name: "handles no origin headers",
+			setupHeaders: func(h http.Header) {
+				// No origin headers set
+			},
+			expectError: true,
+		},
 	}
 
-	if headers.IntendedOriginURL != "https://app.example.com/dashboard" {
-		t.Fatalf("expected fallback origin header, got %q", headers.IntendedOriginURL)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tm := NewTokenMiddleware(nil, nil)
+			req := httptest.NewRequest("GET", "https://api.example.com/resource", nil)
+
+			// Set common headers
+			req.Header.Set("X-API-Username", "alice")
+			req.Header.Set("X-API-Key", "pk_validtoken_1234")
+			req.Header.Set("X-API-Signature", "sig")
+			req.Header.Set("X-API-Timestamp", "1700000000")
+			req.Header.Set("X-API-Nonce", "nonce-1")
+			req.Header.Set("X-Forwarded-For", "1.1.1.1")
+
+			// Set origin-related headers for this test case
+			tc.setupHeaders(req.Header)
+
+			headers, apiErr := tm.ValidateAndGetHeaders(req, "req-2")
+
+			if tc.expectError {
+				if apiErr == nil {
+					t.Fatalf("expected error but got none")
+				}
+				if apiErr.Status != http.StatusUnauthorized {
+					t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, apiErr.Status)
+				}
+				return
+			}
+
+			if apiErr != nil {
+				t.Fatalf("expected headers without error, got %#v", apiErr)
+			}
+
+			if headers.IntendedOriginURL != tc.expectedOrigin {
+				t.Fatalf("expected origin %q, got %q", tc.expectedOrigin, headers.IntendedOriginURL)
+			}
+		})
 	}
 }
 

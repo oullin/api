@@ -166,74 +166,62 @@ func (r *ErrorReader) Read(p []byte) (n int, err error) {
 }
 
 func TestIntendedOriginFromHeader(t *testing.T) {
-	t.Run("prefers intended origin header", func(t *testing.T) {
-		headers := http.Header{}
-		headers.Set(IntendedOriginHeader, " https://api.test.local/path ")
-		headers.Set("Origin", "https://fallback.test")
+	testCases := []struct {
+		name    string
+		headers http.Header
+		want    string
+	}{
+		{
+			name: "prefers intended origin header over others",
+			headers: http.Header{
+				IntendedOriginHeader: []string{" https://api.test.local/path "},
+				"Origin":             []string{"https://fallback.test"},
+				"Referer":            []string{"https://another.fallback"},
+			},
+			want: "https://api.test.local/path",
+		},
+		{
+			name: "falls back to origin header over referer",
+			headers: http.Header{
+				"Origin":  []string{" https://fallback.test/path?a=1 "},
+				"Referer": []string{"https://another.fallback"},
+			},
+			want: "https://fallback.test/path?a=1",
+		},
+		{
+			name: "uses referer when others missing",
+			headers: http.Header{
+				"Referer": []string{" https://referer.test/resource "},
+			},
+			want: "https://referer.test/resource",
+		},
+		{
+			name:    "handles empty http.Header",
+			headers: http.Header{},
+			want:    "",
+		},
+		{
+			name:    "handles nil headers",
+			headers: nil,
+			want:    "",
+		},
+		{
+			name: "returns empty when no relevant headers are present",
+			headers: http.Header{
+				"X-Some-Other-Header": []string{"value"},
+			},
+			want: "",
+		},
+	}
 
-		got := IntendedOriginFromHeader(headers)
-		if got != "https://api.test.local/path" {
-			t.Fatalf("expected explicit intended origin, got %q", got)
-		}
-	})
-
-	t.Run("falls back to origin header", func(t *testing.T) {
-		headers := http.Header{
-			"Origin": []string{"https://fallback.test/path?a=1"},
-		}
-
-		got := IntendedOriginFromHeader(headers)
-		if got != "https://fallback.test/path?a=1" {
-			t.Fatalf("expected origin header value, got %q", got)
-		}
-	})
-
-	t.Run("prefers referer path when origin is host-only", func(t *testing.T) {
-		headers := http.Header{}
-		headers.Set("Origin", "https://fallback.test")
-		headers.Set("Referer", "https://fallback.test/signed/resource")
-
-		if got := IntendedOriginFromHeader(headers); got != "https://fallback.test/signed/resource" {
-			t.Fatalf("expected referer path when origin is host-only, got %q", got)
-		}
-	})
-
-	t.Run("keeps origin when referer host differs", func(t *testing.T) {
-		headers := http.Header{}
-		headers.Set("Origin", "https://fallback.test")
-		headers.Set("Referer", "https://other.test/signed/resource")
-
-		if got := IntendedOriginFromHeader(headers); got != "https://fallback.test" {
-			t.Fatalf("expected origin when referer host differs, got %q", got)
-		}
-	})
-
-	t.Run("treats whitespace-only intended origin as empty", func(t *testing.T) {
-		headers := http.Header{}
-		headers.Set(IntendedOriginHeader, "   \t  ")
-		headers.Set("Origin", "https://fallback.test")
-
-		if got := IntendedOriginFromHeader(headers); got != "https://fallback.test" {
-			t.Fatalf("expected origin fallback when intended header is blank, got %q", got)
-		}
-	})
-
-	t.Run("uses referer when others missing", func(t *testing.T) {
-		headers := http.Header{
-			"Referer": []string{"https://referer.test/resource"},
-		}
-
-		got := IntendedOriginFromHeader(headers)
-		if got != "https://referer.test/resource" {
-			t.Fatalf("expected referer value, got %q", got)
-		}
-	})
-
-	t.Run("handles empty headers", func(t *testing.T) {
-		if got := IntendedOriginFromHeader(nil); got != "" {
-			t.Fatalf("expected empty string for nil headers, got %q", got)
-		}
-	})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := IntendedOriginFromHeader(tc.headers)
+			if got != tc.want {
+				t.Errorf("IntendedOriginFromHeader() = %q, want %q", got, tc.want)
+			}
+		})
+	}
 }
 
 func TestNormalizeOriginWithPath(t *testing.T) {
