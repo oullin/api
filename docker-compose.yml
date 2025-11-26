@@ -20,6 +20,14 @@ volumes:
         driver: local
     grafana_data_local:
         driver: local
+    loki_data_prod:
+        driver: local
+    loki_data_local:
+        driver: local
+    tempo_data_prod:
+        driver: local
+    tempo_data_local:
+        driver: local
 
     # --- DB: Define a named volume at the top level.
     #     Docker will manage its lifecycle.
@@ -265,6 +273,8 @@ services:
                 - GF_AUTH_ANONYMOUS_ENABLED=false
                 - GF_INSTALL_PLUGINS=
                 - GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus:9090
+                - GF_DATASOURCE_LOKI_URL=http://oullin_loki:3100
+                - GF_DATASOURCE_TEMPO_URL=http://oullin_tempo:3200
             volumes:
                 - grafana_data_prod:/var/lib/grafana
                 - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -273,6 +283,10 @@ services:
                 - caddy_net
             depends_on:
                 prometheus:
+                    condition: service_healthy
+                loki:
+                    condition: service_healthy
+                tempo:
                     condition: service_healthy
             healthcheck:
                 test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
@@ -304,6 +318,8 @@ services:
                 - GF_AUTH_ANONYMOUS_ENABLED=false
                 - GF_INSTALL_PLUGINS=
                 - GF_DATASOURCE_PROMETHEUS_URL=http://oullin_prometheus_local:9090
+                - GF_DATASOURCE_LOKI_URL=http://oullin_loki_local:3100
+                - GF_DATASOURCE_TEMPO_URL=http://oullin_tempo_local:3200
             volumes:
                 - grafana_data_local:/var/lib/grafana
                 - ./infra/metrics/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -313,12 +329,132 @@ services:
             depends_on:
                 prometheus_local:
                     condition: service_healthy
+                loki_local:
+                    condition: service_healthy
+                tempo_local:
+                    condition: service_healthy
             healthcheck:
                 test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
                 start_period: 30s
+            deploy:
+                resources:
+                    limits:
+                        cpus: '0.5'
+                        memory: 512M
+                    reservations:
+                        cpus: '0.1'
+                        memory: 128M
+
+        loki:
+            image: grafana/loki:3.3.2
+            profiles: ["prod"]
+            container_name: oullin_loki
+            restart: unless-stopped
+            ports:
+                - "127.0.0.1:3100:3100"
+            command: -config.file=/etc/loki/local-config.yaml
+            volumes:
+                - loki_data_prod:/loki
+            networks:
+                - caddy_net
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
+            deploy:
+                resources:
+                    limits:
+                        cpus: '0.5'
+                        memory: 512M
+                    reservations:
+                        cpus: '0.1'
+                        memory: 128M
+
+        loki_local:
+            image: grafana/loki:3.3.2
+            profiles: ["local"]
+            container_name: oullin_loki_local
+            restart: unless-stopped
+            ports:
+                - "3100:3100"
+            command: -config.file=/etc/loki/local-config.yaml
+            volumes:
+                - loki_data_local:/loki
+            networks:
+                - caddy_net
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
+            deploy:
+                resources:
+                    limits:
+                        cpus: '0.5'
+                        memory: 512M
+                    reservations:
+                        cpus: '0.1'
+                        memory: 128M
+
+        tempo:
+            image: grafana/tempo:2.7.2
+            profiles: ["prod"]
+            container_name: oullin_tempo
+            restart: unless-stopped
+            ports:
+                - "127.0.0.1:3200:3200"   # tempo
+                - "127.0.0.1:4317:4317"   # otlp grpc
+                - "127.0.0.1:4318:4318"   # otlp http
+            command: ["-config.file=/etc/tempo.yaml"]
+            volumes:
+                - tempo_data_prod:/tmp/tempo
+                - ./infra/metrics/tempo/tempo-config.prod.yaml:/etc/tempo.yaml:ro
+            networks:
+                - caddy_net
+                - oullin_net
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3200/ready"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
+            deploy:
+                resources:
+                    limits:
+                        cpus: '0.5'
+                        memory: 512M
+                    reservations:
+                        cpus: '0.1'
+                        memory: 128M
+
+        tempo_local:
+            image: grafana/tempo:2.7.2
+            profiles: ["local"]
+            container_name: oullin_tempo_local
+            restart: unless-stopped
+            ports:
+                - "3200:3200"   # tempo
+                - "4317:4317"   # otlp grpc
+                - "4318:4318"   # otlp http
+            command: ["-config.file=/etc/tempo.yaml"]
+            volumes:
+                - tempo_data_local:/tmp/tempo
+                - ./infra/metrics/tempo/tempo-config.local.yaml:/etc/tempo.yaml:ro
+            networks:
+                - caddy_net
+                - oullin_net
+            healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3200/ready"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 10s
             deploy:
                 resources:
                     limits:
@@ -376,6 +512,8 @@ services:
                 #     containers (like Caddy), not just from within itself.
                 ENV_DB_HOST: api-db
                 ENV_HTTP_HOST: 0.0.0.0
+                ENV_TRACING_ENABLED: ${ENV_TRACING_ENABLED:-true}
+                ENV_TRACING_OTLP_ENDPOINT: ${ENV_TRACING_OTLP_ENDPOINT:-http://oullin_tempo:4318}
             build:
                 context: .
                 dockerfile: ./infra/docker/dockerfile-api
