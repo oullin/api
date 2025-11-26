@@ -126,15 +126,49 @@ func (t TokenCheckMiddleware) ValidateAndGetHeaders(r *http.Request, requestId s
 	nonce := strings.TrimSpace(r.Header.Get(portal.NonceHeader))
 	ip := portal.ParseClientIP(r)
 
-	if accountName == "" || publicToken == "" || signature == "" || ts == "" || nonce == "" || ip == "" || intendedOriginURL == "" {
+	var missing []string
+	if accountName == "" {
+		missing = append(missing, portal.UsernameHeader)
+	}
+
+	if publicToken == "" {
+		missing = append(missing, portal.TokenHeader)
+	}
+
+	if signature == "" {
+		missing = append(missing, portal.SignatureHeader)
+	}
+
+	if ts == "" {
+		missing = append(missing, portal.TimestampHeader)
+	}
+
+	if nonce == "" {
+		missing = append(missing, portal.NonceHeader)
+	}
+
+	if ip == "" {
+		missing = append(missing, "client_ip")
+	}
+
+	if intendedOriginURL == "" {
+		missing = append(missing, "intended_origin")
+	}
+
+	if len(missing) > 0 {
 		return AuthTokenHeaders{}, mwguards.InvalidRequestError(
-			"Invalid authentication headers / or missing headers",
-			"",
+			"Invalid authentication headers",
+			"Errors: "+strings.Join(missing, ", "),
+			map[string]any{"missing": missing, "request_id": requestId},
 		)
 	}
 
 	if err := auth.ValidateTokenFormat(publicToken); err != nil {
-		return AuthTokenHeaders{}, mwguards.InvalidTokenFormatError(err.Error(), "", map[string]any{})
+		return AuthTokenHeaders{}, mwguards.InvalidTokenFormatError(
+			"Invalid token format",
+			err.Error(),
+			map[string]any{"request_id": requestId},
+		)
 	}
 
 	return AuthTokenHeaders{
@@ -210,7 +244,7 @@ func (t TokenCheckMiddleware) buildAuthErrorContext(headers AuthTokenHeaders, in
 	}
 
 	if includeNonce && headers.Nonce != "" {
-		// Include first 8 chars of nonce for debugging (safe for logs)
+		// Include the first 8 chars of nonce for debugging (safe for logs)
 		// If nonce is shorter, include what we have
 		nonceLen := len(headers.Nonce)
 		if nonceLen > 8 {
@@ -231,9 +265,9 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if byteSignature, err = hex.DecodeString(headers.Signature); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.UnauthenticatedError(
-			"Invalid signature format",
-			"error decoding signature string: "+err.Error(),
+		return mwguards.InvalidRequestError(
+			"Error decoding signature string",
+			err.Error(),
 			t.buildAuthErrorContext(headers, false),
 		)
 	}
@@ -251,8 +285,8 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 		t.rateLimiter.Fail(limiterKey)
 
 		return mwguards.UnauthenticatedError(
-			"Invalid signature",
-			"signature not found",
+			"Signature not found",
+			"Rate limit: Signature not found for account",
 			t.buildAuthErrorContext(headers, true),
 		)
 	}
@@ -260,7 +294,11 @@ func (t TokenCheckMiddleware) HasInvalidSignature(headers AuthTokenHeaders, apiK
 	if err = t.ApiKeys.IncreaseSignatureTries(signature.UUID, signature.CurrentTries+1); err != nil {
 		t.rateLimiter.Fail(limiterKey)
 
-		return mwguards.InvalidRequestError("could not increase signature tries", err.Error())
+		return mwguards.InvalidRequestError(
+			"Tries limit reached",
+			"The given headers are invalid: tries limit reached.",
+			t.buildAuthErrorContext(headers, true),
+		)
 	}
 
 	return nil

@@ -66,7 +66,7 @@ func UnauthenticatedError(message, logMessage string, data ...map[string]any) *e
 	slog.Error(logMessage, "data", d)
 
 	return &endpoint.ApiError{
-		Message: "2- Invalid credentials: " + logMessage,
+		Message: message,
 		Status:  http.StatusUnauthorized,
 		Data:    d,
 	}
