@@ -39,6 +39,28 @@ func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Requ
 	}
 }
 
+func NewResponseWithCache(salt string, maxAgeSeconds int, writer http.ResponseWriter, request *http.Request) *Response {
+	etag := fmt.Sprintf(
+		`"%s"`,
+		strings.TrimSpace(salt),
+	)
+
+	cacheControl := fmt.Sprintf("public, max-age=%d", maxAgeSeconds)
+
+	return &Response{
+		writer:       writer,
+		request:      request,
+		etag:         strings.TrimSpace(etag),
+		cacheControl: cacheControl,
+		headers: func(w http.ResponseWriter) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("Cache-Control", cacheControl)
+			w.Header().Set("ETag", etag)
+		},
+	}
+}
+
 func NewNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {
 	cacheControl := "no-store"
 

@@ -211,3 +211,28 @@ func ReadWithSizeLimit(reader io.Reader, maxSize ...int64) ([]byte, error) {
 
 	return data, nil
 }
+
+// NormalizeOriginWithPath normalizes a URL to include scheme, host, and path,
+// but strips query parameters and fragments. This ensures consistent origin
+// matching for signature validation while maintaining per-resource isolation.
+//
+// Examples:
+//   - https://example.com/api/social?foo=bar#hash → https://example.com/api/social
+//   - https://example.com/api/profile → https://example.com/api/profile
+//   - /api/social → /api/social (relative URLs are preserved)
+func NormalizeOriginWithPath(origin string) string {
+	if origin == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(origin)
+	if err != nil {
+		return origin
+	}
+
+	// Clear query parameters and fragments
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+
+	return parsed.String()
+}

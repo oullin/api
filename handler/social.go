@@ -28,7 +28,8 @@ func (h SocialHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.
 		return endpoint.InternalError("could not read social data")
 	}
 
-	resp := endpoint.NewResponseFrom(data.Version, w, r)
+	// Cache for 1 week (604800 seconds) since social data rarely changes
+	resp := endpoint.NewResponseWithCache(data.Version, 604800, w, r)
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

@@ -90,14 +90,16 @@ func (s *SignaturesHandler) CreateSignature(request payload.SignatureRequest, se
 		return nil, fmt.Errorf("unable to generate the signature seed. Please try again")
 	}
 
-	expiresAt := serverTime.Add(time.Second * 30)
+	// Signature expires in 5 minutes to align with rate limiter window
+	// and allow for network latency and client processing time
+	expiresAt := serverTime.Add(time.Minute * 5)
 	hash := auth.CreateSignature(seed, token.SecretKey)
 
 	entity := repoentity.APIKeyCreateSignatureFor{
 		Key:       token,
 		ExpiresAt: expiresAt,
 		Seed:      hash,
-		Origin:    request.Origin,
+		Origin:    portal.NormalizeOriginWithPath(request.Origin),
 	}
 
 	if keySignature, err = s.ApiKeys.CreateSignatureFor(entity); err != nil {

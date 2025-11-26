@@ -163,3 +163,72 @@ type ErrorReader struct {
 func (r *ErrorReader) Read(p []byte) (n int, err error) {
 	return 0, r.Err
 }
+
+func TestNormalizeOriginWithPath(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "strips query parameters",
+			input: "https://example.com/api/social?foo=bar&baz=qux",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "strips fragment",
+			input: "https://example.com/api/profile#section",
+			want:  "https://example.com/api/profile",
+		},
+		{
+			name:  "strips both query and fragment",
+			input: "https://example.com/api/social?foo=bar#section",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "preserves path without query or fragment",
+			input: "https://example.com/api/social",
+			want:  "https://example.com/api/social",
+		},
+		{
+			name:  "handles root path",
+			input: "https://example.com/",
+			want:  "https://example.com/",
+		},
+		{
+			name:  "handles relative URL with query",
+			input: "/api/social?foo=bar",
+			want:  "/api/social",
+		},
+		{
+			name:  "handles relative URL without query",
+			input: "/api/social",
+			want:  "/api/social",
+		},
+		{
+			name:  "handles empty string",
+			input: "",
+			want:  "",
+		},
+		{
+			name:  "preserves different paths",
+			input: "https://example.com/api/profile?param=value",
+			want:  "https://example.com/api/profile",
+		},
+		{
+			name:  "handles localhost",
+			input: "http://localhost:8080/api/test?debug=true",
+			want:  "http://localhost:8080/api/test",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got := NormalizeOriginWithPath(tc.input)
+			if got != tc.want {
+				t.Errorf("NormalizeOriginWithPath(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
