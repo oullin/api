@@ -20,7 +20,7 @@ require (
 	golang.org/x/image v0.34.0
 	golang.org/x/term v0.38.0
 	golang.org/x/text v0.32.0
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v3 v3.0.1 // Application code uses v3; Prometheus uses v2 (go.yaml.in/yaml/v2) internally - both versions coexist safely
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )
@@ -89,7 +89,7 @@ require (
 	go.opentelemetry.io/otel v1.39.0 // indirect
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.3 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect - Required by prometheus/client_golang; no type conflicts with our gopkg.in/yaml.v3 usage
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
