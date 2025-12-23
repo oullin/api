@@ -1,5 +1,8 @@
 ### 🚀 Ollin's API
 
+<details>
+<summary><strong>About the Project</strong></summary>
+
 :sparkles: Every time you visit my site, behind the scenes, an API written in Go is hard at work delivering content,
 handling requests, and powering dynamic features.
 
@@ -14,6 +17,35 @@ consider contributing to the project by making improvements or fixing issues by 
 
 > This is where the mindful movement of “Ollin” truly comes alive, one request at a time.
 
+</details>
+
+### ⚡ Quick Start
+
+1.  **Configure**: `cp .env.example .env`
+2.  **Run**: `make fresh` (Builds and runs the app)
+
+For more details, check the [Setup Guide](docs/SETUP.md).
+
 ### 🗄️ Documentation
 
-- [Metrics](infra/metrics/README.md)
+
+
+**Get Started**
+
+- [Setup & Development](docs/SETUP.md)
+
+- [API Reference](docs/API.md)
+
+
+
+**Infrastructure & Ops**
+
+- [Metrics & Monitoring](infra/metrics/README.md)
+
+    - [Grafana Diagnostics](infra/metrics/docs/GRAFANA_DIAGNOSTICS.md)
+
+    - [VPS Deployment](infra/metrics/docs/VPS_DEPLOYMENT.md)
+
+- [Caddy Server](infra/caddy/readme.md)
+
+- [Database SSL](database/infra/ssl/readme.md)

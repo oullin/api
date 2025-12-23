@@ -1,6 +1,6 @@
 module github.com/oullin
 
-go 1.25.3
+go 1.25.5
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -89,7 +89,7 @@ require (
 	go.opentelemetry.io/otel v1.39.0 // indirect
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.3 // indirect - Required by prometheus/client_golang; no type conflicts with our gopkg.in/yaml.v3 usage
+	go.yaml.in/yaml/v2 v2.4.3 // indirect; Required by prometheus/client_golang; no type conflicts with our gopkg.in/yaml.v3 usage
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/time v0.12.0 // indirect

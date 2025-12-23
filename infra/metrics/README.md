@@ -81,7 +81,7 @@ The monitoring stack is designed to maintain configuration consistency across lo
 The following configurations are **identical** across both environments:
 
 1. **Grafana Settings:**
-   - Same Grafana version (`grafana/grafana:11.4.0`)
+   - Same Grafana version (`grafana/grafana:12.3.1`)
    - Identical security settings (admin user, sign-up disabled, anonymous disabled)
    - Same dashboard and datasource provisioning structure
    - Same volume mount paths
@@ -93,9 +93,10 @@ The following configurations are **identical** across both environments:
    - Same metrics endpoints and paths
 
 3. **Postgres Exporter:**
-   - Same exporter version (`prometheuscommunity/postgres-exporter:v0.15.0`)
+   - Same exporter version (`prometheuscommunity/postgres-exporter:v0.16.0`)
    - Identical port exposure (9187)
    - Same entrypoint script and secrets handling
+   - **Note:** v0.16.0 uses log/slog (stdlib) with new logging format
 
 #### Environment-Specific Variables
 

@@ -50,7 +50,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "sum(rate(caddy_http_request_duration_seconds_count[5m]))",
@@ -111,7 +111,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "pg_stat_database_numbackends{datname=~\".*\"}",
@@ -196,7 +196,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "sum by(code) (rate(caddy_http_request_duration_seconds_count[5m]))",
@@ -281,7 +281,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "go_memstats_alloc_bytes{job=\"api\"}",
@@ -366,7 +366,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "go_goroutines{job=\"api\"}",
