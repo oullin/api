@@ -50,7 +50,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "sum(rate(caddy_http_request_duration_seconds_count[5m]))",
@@ -103,7 +103,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "histogram_quantile(0.95, rate(caddy_http_request_duration_seconds_bucket[5m]))",
@@ -188,7 +188,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "sum by(code) (rate(caddy_http_request_duration_seconds_count[5m]))",
@@ -273,7 +273,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(caddy_http_request_duration_seconds_bucket[5m]))",
@@ -368,7 +368,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "rate(caddy_http_response_size_bytes_sum[5m])",
@@ -453,7 +453,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "expr": "sum(rate(caddy_http_request_errors_total[5m])) or vector(0)",

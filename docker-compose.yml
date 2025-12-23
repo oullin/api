@@ -438,7 +438,7 @@ services:
             # Ensure the database always restarts on server reboot or crash.
             restart: always
 
-            image: postgres:17.6-alpine3.22@sha256:ef257d85f76e48da1c64832459b59fcaba1a4dac97bf5d7450c77753542eee94
+            image: postgres:17.6-alpine3.22@sha256:747d5ed1fdeeb124b880fbe3d7c6557d2c4064ae41d6b6297d417882effce4be
             container_name: oullin_db
 
             env_file:

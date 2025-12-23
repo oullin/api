@@ -81,7 +81,7 @@ The monitoring stack is designed to maintain configuration consistency across lo
 The following configurations are **identical** across both environments:
 
 1. **Grafana Settings:**
-   - Same Grafana version (`grafana/grafana:11.4.0`)
+   - Same Grafana version (`grafana/grafana:12.3.1`)
    - Identical security settings (admin user, sign-up disabled, anonymous disabled)
    - Same dashboard and datasource provisioning structure
    - Same volume mount paths
