@@ -93,9 +93,10 @@ The following configurations are **identical** across both environments:
    - Same metrics endpoints and paths
 
 3. **Postgres Exporter:**
-   - Same exporter version (`prometheuscommunity/postgres-exporter:v0.15.0`)
+   - Same exporter version (`prometheuscommunity/postgres-exporter:v0.16.0`)
    - Identical port exposure (9187)
    - Same entrypoint script and secrets handling
+   - **Note:** v0.16.0 uses log/slog (stdlib) with new logging format
 
 #### Environment-Specific Variables
 
