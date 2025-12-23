@@ -103,7 +103,7 @@ services:
                 - caddy_net
 
         prometheus:
-            image: prom/prometheus:v3.0.1
+            image: prom/prometheus:v3.8.1
             profiles: ["prod"]
             container_name: oullin_prometheus
             restart: unless-stopped
@@ -142,7 +142,7 @@ services:
                         memory: 256M
 
         prometheus_local:
-            image: prom/prometheus:v3.0.1
+            image: prom/prometheus:v3.8.1
             profiles: ["local"]
             container_name: oullin_prometheus_local
             restart: unless-stopped
@@ -181,7 +181,7 @@ services:
                         memory: 256M
 
         postgres_exporter:
-            image: prometheuscommunity/postgres-exporter:v0.15.0
+            image: prometheuscommunity/postgres-exporter:v0.16.0
             profiles: ["prod"]
             container_name: oullin_postgres_exporter
             restart: unless-stopped
@@ -216,7 +216,7 @@ services:
                         memory: 32M
 
         postgres_exporter_local:
-            image: prometheuscommunity/postgres-exporter:v0.15.0
+            image: prometheuscommunity/postgres-exporter:v0.16.0
             profiles: ["local"]
             container_name: oullin_postgres_exporter_local
             restart: unless-stopped
@@ -251,7 +251,7 @@ services:
                         memory: 32M
 
         grafana:
-            image: grafana/grafana:11.4.0
+            image: grafana/grafana:12.3.1
             profiles: ["prod"]
             container_name: oullin_grafana
             restart: unless-stopped
@@ -290,7 +290,7 @@ services:
                         memory: 128M
 
         grafana_local:
-            image: grafana/grafana:11.4.0
+            image: grafana/grafana:12.3.1
             profiles: ["local"]
             container_name: oullin_grafana_local
             restart: unless-stopped
@@ -405,7 +405,7 @@ services:
                       - api
 
         api-db-migrate:
-            image: migrate/migrate:v4.19.0
+            image: migrate/migrate:v4.19.1
             container_name: oullin_db_migrate
             networks:
                 - oullin_net
@@ -438,7 +438,7 @@ services:
             # Ensure the database always restarts on server reboot or crash.
             restart: always
 
-            image: postgres:17.6-alpine3.22
+            image: postgres:17-alpine
             container_name: oullin_db
 
             env_file:
