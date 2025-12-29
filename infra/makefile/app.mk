@@ -26,7 +26,9 @@ DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
 # -------------------------------------------------------------------------------------------------------------------- #
 
 format:
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) gofmt -w -s .
+	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION)
+	gofmt -w -s .
+	go run golang.org/x/tools/cmd/goimports -w -local github.com/oullin .
 
 audit:
 	$(call external_deps,'.')

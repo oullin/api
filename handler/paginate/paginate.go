@@ -1,10 +1,11 @@
 package paginate
 
 import (
-	"github.com/oullin/database/repository/pagination"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/oullin/database/repository/pagination"
 )
 
 func NewFrom(url *url.URL, pageSize int) pagination.Paginate {

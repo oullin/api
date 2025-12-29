@@ -2,6 +2,7 @@ package seeds
 
 import (
 	"fmt"
+
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/model"
 )

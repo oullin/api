@@ -2,11 +2,12 @@ package posts
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/markdown"
-	"strings"
-	"time"
 )
 
 func (h Handler) HandlePost(payload *markdown.Post) error {

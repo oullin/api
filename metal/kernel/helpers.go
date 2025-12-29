@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"

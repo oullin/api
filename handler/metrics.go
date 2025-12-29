@@ -3,8 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/oullin/pkg/endpoint"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/oullin/pkg/endpoint"
 )
 
 type MetricsHandler struct{}

@@ -2,10 +2,12 @@ package seeds
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
+
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/model"
-	"strings"
 )
 
 type CategoriesSeed struct {

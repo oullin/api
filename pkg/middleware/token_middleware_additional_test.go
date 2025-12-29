@@ -10,16 +10,17 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/testcontainers/testcontainers-go"
+	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/limiter"
-	"github.com/testcontainers/testcontainers-go"
-	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 // makeRepo creates a temporary postgres repo with a seeded API key

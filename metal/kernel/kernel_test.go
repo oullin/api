@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/metal/env"

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/oullin/database/seeder/importer"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/kernel"

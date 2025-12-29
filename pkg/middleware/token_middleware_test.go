@@ -14,14 +14,15 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func TestTokenMiddlewareHandle_RequiresRequestID(t *testing.T) {

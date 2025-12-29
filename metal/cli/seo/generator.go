@@ -14,13 +14,14 @@ import (
 
 	_ "runtime/cgo"
 
+	"gorm.io/gorm"
+
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
-	"gorm.io/gorm"
 )
 
 //go:embed stub.html

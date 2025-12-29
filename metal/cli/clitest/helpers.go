@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/oullin/database"
-	"github.com/oullin/metal/env"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+
+	"github.com/oullin/database"
+	"github.com/oullin/metal/env"
 )
 
 func NewTestConnection(t *testing.T, models ...interface{}) *database.Connection {

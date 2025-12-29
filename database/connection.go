@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/oullin/metal/env"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/oullin/metal/env"
 )
 
 type Connection struct {

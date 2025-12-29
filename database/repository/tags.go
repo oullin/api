@@ -2,12 +2,14 @@ package repository
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
-	"github.com/oullin/database"
-	"github.com/oullin/pkg/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"strings"
+
+	"github.com/oullin/database"
+	"github.com/oullin/pkg/model"
 )
 
 type Tags struct {

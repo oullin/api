@@ -9,11 +9,12 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/term"
+
 	"github.com/oullin/metal/cli/posts"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cli"
 	"github.com/oullin/pkg/portal"
-	"golang.org/x/term"
 )
 
 type Menu struct {

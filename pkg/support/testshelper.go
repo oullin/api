@@ -11,8 +11,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/oullin/database"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+
+	"github.com/oullin/database"
 
 	"github.com/oullin/metal/env"
 )

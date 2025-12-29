@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/oullin/pkg/portal"
 )
 

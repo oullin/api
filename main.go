@@ -10,6 +10,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	_ "github.com/lib/pq"
+
 	"github.com/oullin/metal/kernel"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"

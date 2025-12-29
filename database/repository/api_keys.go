@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/repoentity"
 	"github.com/oullin/pkg/model"
 	"github.com/oullin/pkg/portal"
-	"gorm.io/gorm"
 )
 
 type ApiKeys struct {
