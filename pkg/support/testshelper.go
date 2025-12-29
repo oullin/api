@@ -275,7 +275,7 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 	t.Cleanup(cancel)
 
 	pg, err := postgres.Run(ctx,
-		"postgres:16-alpine",
+		"postgres:18-alpine",
 		postgres.WithUsername(username),
 		postgres.WithPassword(password),
 		postgres.WithDatabase(dbname),

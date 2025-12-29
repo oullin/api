@@ -30,7 +30,7 @@ func NewTestDB(t *testing.T) (*database.Connection, database.User) {
 	defer cancel()
 
 	pg, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+		testcontainers.WithImage("postgres:18-alpine"),
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),

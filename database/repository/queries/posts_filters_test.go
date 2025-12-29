@@ -1,9 +1,13 @@
-package queries
+package queries_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/oullin/database/repository/queries"
+)
 
 func TestPostFiltersSanitise(t *testing.T) {
-	f := PostFilters{
+	f := queries.PostFilters{
 		Text:     "  Hello  ",
 		Title:    "  MyTitle  ",
 		Author:   "  ME  ",
@@ -12,22 +16,22 @@ func TestPostFiltersSanitise(t *testing.T) {
 	}
 
 	if f.GetText() != "hello" {
-		t.Fatalf("got %s", f.GetText())
+		t.Fatalf("expected GetText to return 'hello', got %s", f.GetText())
 	}
 
 	if f.GetTitle() != "mytitle" {
-		t.Fatalf("got %s", f.GetTitle())
+		t.Fatalf("expected GetTitle to return 'mytitle', got %s", f.GetTitle())
 	}
 
 	if f.GetAuthor() != "me" {
-		t.Fatalf("got %s", f.GetAuthor())
+		t.Fatalf("expected GetAuthor to return 'me', got %s", f.GetAuthor())
 	}
 
 	if f.GetCategory() != "tech" {
-		t.Fatalf("got %s", f.GetCategory())
+		t.Fatalf("expected GetCategory to return 'tech', got %s", f.GetCategory())
 	}
 
 	if f.GetTag() != "tag" {
-		t.Fatalf("got %s", f.GetTag())
+		t.Fatalf("expected GetTag to return 'tag', got %s", f.GetTag())
 	}
 }

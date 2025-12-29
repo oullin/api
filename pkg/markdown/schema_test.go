@@ -1,6 +1,8 @@
-package markdown
+package markdown_test
 
 import (
+	"github.com/oullin/pkg/markdown"
+
 	"testing"
 )
 
@@ -12,7 +14,7 @@ published_at: 2024-06-09
 ![alt](url)
 content`
 
-	post, err := Parse(md)
+	post, err := markdown.Parse(md)
 
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -38,7 +40,7 @@ published_at: 2024-06-09
 ---
 content`
 
-	post, err := Parse(md)
+	post, err := markdown.Parse(md)
 
 	if err != nil {
 		t.Fatalf("err: %v", err)
@@ -50,11 +52,11 @@ content`
 }
 
 func TestParseErrors(t *testing.T) {
-	if _, err := Parse("invalid"); err == nil {
+	if _, err := markdown.Parse("invalid"); err == nil {
 		t.Fatalf("expected error")
 	}
 
-	if _, err := Parse(`---\nbad`); err == nil {
+	if _, err := markdown.Parse(`---\nbad`); err == nil {
 		t.Fatalf("expected bad yaml error")
 	}
 
@@ -63,7 +65,7 @@ slug: a
 published_at: "bad"
 ---
 content`
-	post, err := Parse(md)
+	post, err := markdown.Parse(md)
 
 	if err != nil {
 		t.Fatalf("parse: %v", err)

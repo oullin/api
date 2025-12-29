@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
@@ -13,12 +13,13 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
 	handlertests "github.com/oullin/handler/tests"
 )
 
 func TestPostsHandlerIndex_ParseError(t *testing.T) {
-	h := PostsHandler{
+	h := handler.PostsHandler{
 		Posts: &repository.Posts{},
 	}
 
@@ -31,7 +32,7 @@ func TestPostsHandlerIndex_ParseError(t *testing.T) {
 }
 
 func TestPostsHandlerShow_MissingSlug(t *testing.T) {
-	h := PostsHandler{
+	h := handler.PostsHandler{
 		Posts: &repository.Posts{},
 	}
 
@@ -60,7 +61,7 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("create post: %v", err)
 	}
 
-	h := NewPostsHandler(&repository.Posts{
+	h := handler.NewPostsHandler(&repository.Posts{
 		DB: conn,
 	})
 
@@ -117,7 +118,7 @@ func TestPostsHandlerShow_Success(t *testing.T) {
 		t.Fatalf("create post tag: %v", err)
 	}
 
-	h := NewPostsHandler(&repository.Posts{
+	h := handler.NewPostsHandler(&repository.Posts{
 		DB: conn,
 	})
 

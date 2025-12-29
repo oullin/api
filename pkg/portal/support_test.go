@@ -1,4 +1,4 @@
-package portal
+package portal_test
 
 import (
 	"errors"
@@ -7,22 +7,24 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/oullin/pkg/portal"
 )
 
 func TestSortedQuery(t *testing.T) {
 	u, _ := url.Parse("https://x.test/api?b=2&a=1&a=0")
-	got := SortedQuery(u)
+	got := portal.SortedQuery(u)
 	expected := "a=0&a=1&b=2"
 	if got != expected {
 		t.Fatalf("expected sorted query %q, got %q", expected, got)
 	}
 
 	// Empty / nil cases
-	if SortedQuery(nil) != "" {
+	if portal.SortedQuery(nil) != "" {
 		t.Fatalf("expected empty for nil URL")
 	}
 	u2, _ := url.Parse("https://x.test/api")
-	if SortedQuery(u2) != "" {
+	if portal.SortedQuery(u2) != "" {
 		t.Fatalf("expected empty for no query params")
 	}
 }
@@ -49,8 +51,8 @@ func TestSanitiseURL(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			if got := SanitiseURL(tc.input); got != tc.want {
-				t.Errorf("SanitiseURL(%q) = %q, want %q", tc.input, got, tc.want)
+			if got := portal.SanitiseURL(tc.input); got != tc.want {
+				t.Errorf("portal.SanitiseURL(%q) = %q, want %q", tc.input, got, tc.want)
 			}
 		})
 	}
@@ -59,14 +61,14 @@ func TestSanitiseURL(t *testing.T) {
 func TestBuildCanonical(t *testing.T) {
 	u, _ := url.Parse("https://x.test/api/v1/resource?z=9&a=1&a=0")
 	bodyHash := "abc123"
-	got := BuildCanonical("post", u, "Alice", "pk_123", "1700000000", "nonce-1", bodyHash)
+	got := portal.BuildCanonical("post", u, "Alice", "pk_123", "1700000000", "nonce-1", bodyHash)
 	expected := "POST\n/api/v1/resource\na=0&a=1&z=9\nAlice\npk_123\n1700000000\nnonce-1\nabc123"
 	if got != expected {
 		t.Fatalf("unexpected canonical string:\nexpected: %q\n     got: %q", expected, got)
 	}
 
 	// Default path handling when URL is nil or empty
-	got = BuildCanonical("GET", nil, "u", "p", "1", "n", "h")
+	got = portal.BuildCanonical("GET", nil, "u", "p", "1", "n", "h")
 	if got != "GET\n/\n\nu\np\n1\nn\nh" {
 		t.Fatalf("unexpected canonical for nil URL: %q", got)
 	}
@@ -74,7 +76,7 @@ func TestBuildCanonical(t *testing.T) {
 
 // TestReadWithSizeLimit_NilReader tests that ReadWithSizeLimit returns an error when given a nil reader
 func TestReadWithSizeLimit_NilReader(t *testing.T) {
-	data, err := ReadWithSizeLimit(nil)
+	data, err := portal.ReadWithSizeLimit(nil)
 
 	if data != nil {
 		t.Errorf("expected nil data for nil reader, got %v", data)
@@ -91,7 +93,7 @@ func TestReadWithSizeLimit_DefaultLimit(t *testing.T) {
 	smallData := strings.Repeat("a", 1024) // 1KB of data
 	reader := strings.NewReader(smallData)
 
-	data, err := ReadWithSizeLimit(reader)
+	data, err := portal.ReadWithSizeLimit(reader)
 
 	if err != nil {
 		t.Errorf("unexpected error for small data: %v", err)
@@ -114,7 +116,7 @@ func TestReadWithSizeLimit_CustomLimit(t *testing.T) {
 	smallData := strings.Repeat("a", 50)
 	reader := strings.NewReader(smallData)
 
-	data, err := ReadWithSizeLimit(reader, customLimit)
+	data, err := portal.ReadWithSizeLimit(reader, customLimit)
 
 	if err != nil {
 		t.Errorf("unexpected error for data within custom limit: %v", err)
@@ -128,7 +130,7 @@ func TestReadWithSizeLimit_CustomLimit(t *testing.T) {
 	largeData := strings.Repeat("b", 200) // Exceeds our 100 byte limit
 	reader = strings.NewReader(largeData)
 
-	data, err = ReadWithSizeLimit(reader, customLimit)
+	data, err = portal.ReadWithSizeLimit(reader, customLimit)
 
 	if err == nil {
 		t.Error("expected error for data exceeding custom limit, got nil")
@@ -145,7 +147,7 @@ func TestReadWithSizeLimit_ErrorPropagation(t *testing.T) {
 	expectedErr := errors.New("read error")
 	errorReader := &ErrorReader{Err: expectedErr}
 
-	data, err := ReadWithSizeLimit(errorReader)
+	data, err := portal.ReadWithSizeLimit(errorReader)
 
 	if data != nil {
 		t.Errorf("expected nil data for error reader, got %v", data)
@@ -174,9 +176,9 @@ func TestIntendedOriginFromHeader(t *testing.T) {
 		{
 			name: "prefers intended origin header over others",
 			headers: http.Header{
-				IntendedOriginHeader: []string{" https://api.test.local/path "},
-				"Origin":             []string{"https://fallback.test"},
-				"Referer":            []string{"https://another.fallback"},
+				portal.IntendedOriginHeader: []string{" https://api.test.local/path "},
+				"Origin":                    []string{"https://fallback.test"},
+				"Referer":                   []string{"https://another.fallback"},
 			},
 			want: "https://api.test.local/path",
 		},
@@ -216,9 +218,9 @@ func TestIntendedOriginFromHeader(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := IntendedOriginFromHeader(tc.headers)
+			got := portal.IntendedOriginFromHeader(tc.headers)
 			if got != tc.want {
-				t.Errorf("IntendedOriginFromHeader() = %q, want %q", got, tc.want)
+				t.Errorf("portal.IntendedOriginFromHeader() = %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -325,9 +327,9 @@ func TestNormalizeOriginWithPath(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got := NormalizeOriginWithPath(tc.input)
+			got := portal.NormalizeOriginWithPath(tc.input)
 			if got != tc.want {
-				t.Errorf("NormalizeOriginWithPath(%q) = %q, want %q", tc.input, got, tc.want)
+				t.Errorf("portal.NormalizeOriginWithPath(%q) = %q, want %q", tc.input, got, tc.want)
 			}
 		})
 	}

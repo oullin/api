@@ -1,13 +1,15 @@
-package payload
+package payload_test
 
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/oullin/handler/payload"
 )
 
 func TestProfileResponseJSON(t *testing.T) {
 	body := []byte(`{"version":"v1","data":{"nickname":"n","handle":"h","name":"nm","email":"e","profession":"p","skills":[{"uuid":"u","percentage":1,"item":"i","description":"d"}]}}`)
-	var res ProfileResponse
+	var res payload.ProfileResponse
 
 	if err := json.Unmarshal(body, &res); err != nil {
 		t.Fatalf("unmarshal: %v", err)

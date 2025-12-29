@@ -1,4 +1,4 @@
-package middleware
+package middleware_test
 
 import (
 	"net/http"
@@ -6,11 +6,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/oullin/pkg/middleware"
+
 	"github.com/oullin/pkg/endpoint"
 )
 
 func TestPipelineChainOrder(t *testing.T) {
-	p := Pipeline{}
+	p := middleware.Pipeline{}
 
 	order := []string{}
 

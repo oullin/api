@@ -1,4 +1,4 @@
-package seo
+package seo_test
 
 import (
 	"html/template"
@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/metal/cli/seo"
 )
 
 func TestSectionsRenderersEscapeContent(t *testing.T) {
-	sections := NewSections()
+	sections := seo.NewSections()
 
 	profile := &payload.ProfileResponse{
 		Data: payload.ProfileDataResponse{
@@ -174,7 +175,7 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 }
 
 func TestSectionsGuardNilInputs(t *testing.T) {
-	sections := NewSections()
+	sections := seo.NewSections()
 
 	if html := sections.Profile(nil); html != template.HTML("") {
 		t.Fatalf("expected empty html for nil profile, got %q", html)

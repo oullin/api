@@ -1,6 +1,8 @@
-package markdown
+package markdown_test
 
 import (
+	"github.com/oullin/pkg/markdown"
+
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +14,7 @@ func TestParserFetch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := Parser{Url: server.URL}
+	p := markdown.Parser{Url: server.URL}
 
 	content, err := p.Fetch()
 
@@ -27,7 +29,7 @@ func TestParserFetchError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := Parser{Url: server.URL}
+	p := markdown.Parser{Url: server.URL}
 
 	if _, err := p.Fetch(); err == nil {
 		t.Fatalf("expected error")

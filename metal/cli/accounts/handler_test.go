@@ -1,15 +1,16 @@
-package accounts
+package accounts_test
 
 import (
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/metal/cli/accounts"
 	"github.com/oullin/metal/cli/clitest"
 )
 
-func setupAccountHandler(t *testing.T) *Handler {
+func setupAccountHandler(t *testing.T) *accounts.Handler {
 	conn := clitest.NewTestConnection(t, &database.APIKey{})
-	h, err := NewHandler(conn, clitest.NewTestEnv())
+	h, err := accounts.NewHandler(conn, clitest.NewTestEnv())
 
 	if err != nil {
 		t.Fatalf("new handler: %v", err)

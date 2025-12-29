@@ -1,15 +1,17 @@
-package portal
+package portal_test
 
 import (
 	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/oullin/pkg/portal"
 )
 
 func TestClientTransportAndGet(t *testing.T) {
-	tr := GetDefaultTransport()
-	c := NewDefaultClient(tr)
+	tr := portal.GetDefaultTransport()
+	c := portal.NewDefaultClient(tr)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("hello"))
@@ -24,7 +26,7 @@ func TestClientTransportAndGet(t *testing.T) {
 }
 
 func TestClientGetNil(t *testing.T) {
-	var c *Client
+	var c *portal.Client
 
 	_, err := c.Get(context.Background(), "https://example.com")
 
@@ -34,7 +36,7 @@ func TestClientGetNil(t *testing.T) {
 }
 
 func TestClientOnHeadersAndAbort(t *testing.T) {
-	c := NewDefaultClient(nil)
+	c := portal.NewDefaultClient(nil)
 	called := false
 	c.OnHeaders = func(req *http.Request) {
 		req.Header.Set("X-Test", "ok")

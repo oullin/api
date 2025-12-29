@@ -1,8 +1,10 @@
-package portal
+package portal_test
 
 import (
 	"os"
 	"testing"
+
+	"github.com/oullin/pkg/portal"
 )
 
 type jsonSample struct {
@@ -19,7 +21,7 @@ func TestParseJsonFile(t *testing.T) {
 		t.Fatalf("write: %v", err)
 	}
 
-	v, err := ParseJsonFile[jsonSample](file)
+	v, err := portal.ParseJsonFile[jsonSample](file)
 
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -31,7 +33,7 @@ func TestParseJsonFile(t *testing.T) {
 }
 
 func TestParseJsonFileError(t *testing.T) {
-	_, err := ParseJsonFile[jsonSample]("nonexistent.json")
+	_, err := portal.ParseJsonFile[jsonSample]("nonexistent.json")
 
 	if err == nil {
 		t.Fatalf("expected error")

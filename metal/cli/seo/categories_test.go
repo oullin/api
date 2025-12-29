@@ -1,10 +1,11 @@
-package seo
+package seo_test
 
 import (
 	"slices"
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/metal/cli/seo"
 	"github.com/oullin/pkg/support"
 )
 
@@ -16,7 +17,7 @@ func TestCategoriesGenerateReturnsLowercaseNames(t *testing.T) {
 
 	conn := h.Conn()
 
-	categories, err := NewCategories(conn).Generate()
+	categories, err := seo.NewCategories(conn).Generate()
 	if err != nil {
 		t.Fatalf("generate err: %v", err)
 	}

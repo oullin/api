@@ -1,9 +1,10 @@
-package payload
+package payload_test
 
 import (
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/handler/payload"
 )
 
 func TestGetCategoriesResponse(t *testing.T) {
@@ -17,7 +18,7 @@ func TestGetCategoriesResponse(t *testing.T) {
 		},
 	}
 
-	r := GetCategoriesResponse(cats)
+	r := payload.GetCategoriesResponse(cats)
 
 	if len(r) != 1 || r[0].Slug != "s" || r[0].Sort != 2 {
 		t.Fatalf("unexpected %#v", r)

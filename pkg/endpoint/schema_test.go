@@ -1,31 +1,33 @@
-package endpoint
+package endpoint_test
 
 import (
 	"errors"
 	"testing"
+
+	"github.com/oullin/pkg/endpoint"
 )
 
 func TestApiErrorError(t *testing.T) {
-	e := &ApiError{
+	e := &endpoint.ApiError{
 		Message: "boom",
 		Status:  500,
 		Err:     errors.New("boom"),
 	}
 
 	if e.Error() != "boom" {
-		t.Fatalf("got %s", e.Error())
+		t.Fatalf("expected error message 'boom', got %q", e.Error())
 	}
 
-	var nilErr *ApiError
+	var nilErr *endpoint.ApiError
 
 	if nilErr.Error() != "Internal Server Error" {
-		t.Fatalf("nil error wrong")
+		t.Fatalf("expected nil error to return 'Internal Server Error', got %q", nilErr.Error())
 	}
 }
 
 func TestApiErrorUnwrap(t *testing.T) {
 	cause := errors.New("root cause")
-	e := &ApiError{
+	e := &endpoint.ApiError{
 		Message: "boom",
 		Status:  500,
 		Err:     cause,
@@ -39,8 +41,8 @@ func TestApiErrorUnwrap(t *testing.T) {
 		t.Fatalf("expected unwrap to return the cause")
 	}
 
-	var nilErr *ApiError
+	var nilErr *endpoint.ApiError
 	if nilErr.Unwrap() != nil {
-		t.Fatalf("expected nil unwrap to be nil")
+		t.Fatalf("expected nil error unwrap to return nil")
 	}
 }

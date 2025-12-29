@@ -711,7 +711,7 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environme
 	t.Cleanup(cancel)
 
 	pg, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+		testcontainers.WithImage("postgres:18-alpine"),
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),

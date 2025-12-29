@@ -1,6 +1,10 @@
-package portal
+package portal_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/oullin/pkg/portal"
+)
 
 type user struct {
 	Email string `validate:"required,email"`
@@ -9,7 +13,7 @@ type user struct {
 }
 
 func TestValidator_PassesAndRejects(t *testing.T) {
-	v := GetDefaultValidator()
+	v := portal.GetDefaultValidator()
 
 	ok, err := v.Passes(&user{
 		Email: "a@b.com",
@@ -43,7 +47,7 @@ func TestValidator_PassesAndRejects(t *testing.T) {
 }
 
 func TestValidator_Rejects(t *testing.T) {
-	v := GetDefaultValidator()
+	v := portal.GetDefaultValidator()
 	u := &user{
 		Email: "",
 		Name:  "",

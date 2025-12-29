@@ -1,9 +1,11 @@
-package cli
+package cli_test
 
 import (
 	"io"
 	"os"
 	"testing"
+
+	"github.com/oullin/pkg/cli"
 )
 
 func captureOutput(f func()) string {
@@ -20,59 +22,59 @@ func captureOutput(f func()) string {
 }
 
 func TestMessageFunctions(t *testing.T) {
-	if captureOutput(func() { Error("err") }) == "" {
-		t.Fatalf("no output for Error")
+	if captureOutput(func() { cli.Error("err") }) == "" {
+		t.Fatalf("expected Error to produce output")
 	}
 
-	if captureOutput(func() { Success("ok") }) == "" {
-		t.Fatalf("no output for Success")
+	if captureOutput(func() { cli.Success("ok") }) == "" {
+		t.Fatalf("expected Success to produce output")
 	}
 
-	if captureOutput(func() { Warning("warn") }) == "" {
-		t.Fatalf("no output for Warning")
+	if captureOutput(func() { cli.Warning("warn") }) == "" {
+		t.Fatalf("expected Warning to produce output")
 	}
 
-	if captureOutput(func() { Errorln("err") }) == "" {
-		t.Fatalf("no output for Errorln")
+	if captureOutput(func() { cli.Errorln("err") }) == "" {
+		t.Fatalf("expected Errorln to produce output")
 	}
 
-	if captureOutput(func() { Successln("ok") }) == "" {
-		t.Fatalf("no output for Successln")
+	if captureOutput(func() { cli.Successln("ok") }) == "" {
+		t.Fatalf("expected Successln to produce output")
 	}
 
-	if captureOutput(func() { Warningln("warn") }) == "" {
-		t.Fatalf("no output for Warningln")
+	if captureOutput(func() { cli.Warningln("warn") }) == "" {
+		t.Fatalf("expected Warningln to produce output")
 	}
 
-	if captureOutput(func() { Magenta("m") }) == "" {
-		t.Fatalf("no output for Magenta")
+	if captureOutput(func() { cli.Magenta("m") }) == "" {
+		t.Fatalf("expected Magenta to produce output")
 	}
 
-	if captureOutput(func() { Magentaln("m") }) == "" {
-		t.Fatalf("no output for Magentaln")
+	if captureOutput(func() { cli.Magentaln("m") }) == "" {
+		t.Fatalf("expected Magentaln to produce output")
 	}
 
-	if captureOutput(func() { Blue("b") }) == "" {
-		t.Fatalf("no output for Blue")
+	if captureOutput(func() { cli.Blue("b") }) == "" {
+		t.Fatalf("expected Blue to produce output")
 	}
 
-	if captureOutput(func() { Blueln("b") }) == "" {
-		t.Fatalf("no output for Blueln")
+	if captureOutput(func() { cli.Blueln("b") }) == "" {
+		t.Fatalf("expected Blueln to produce output")
 	}
 
-	if captureOutput(func() { Cyan("c") }) == "" {
-		t.Fatalf("no output for Cyan")
+	if captureOutput(func() { cli.Cyan("c") }) == "" {
+		t.Fatalf("expected Cyan to produce output")
 	}
 
-	if captureOutput(func() { Cyanln("c") }) == "" {
-		t.Fatalf("no output for Cyanln")
+	if captureOutput(func() { cli.Cyanln("c") }) == "" {
+		t.Fatalf("expected Cyanln to produce output")
 	}
 
-	if captureOutput(func() { Gray("g") }) == "" {
-		t.Fatalf("no output for Gray")
+	if captureOutput(func() { cli.Gray("g") }) == "" {
+		t.Fatalf("expected Gray to produce output")
 	}
 
-	if captureOutput(func() { Grayln("g") }) == "" {
-		t.Fatalf("no output for Grayln")
+	if captureOutput(func() { cli.Grayln("g") }) == "" {
+		t.Fatalf("expected Grayln to produce output")
 	}
 }

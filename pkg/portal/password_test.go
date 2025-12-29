@@ -1,9 +1,13 @@
-package portal
+package portal_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/oullin/pkg/portal"
+)
 
 func TestPassword_NewAndValidate(t *testing.T) {
-	pw, err := NewPassword("secret")
+	pw, err := portal.NewPassword("secret")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
