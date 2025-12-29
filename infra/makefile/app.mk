@@ -63,7 +63,7 @@ destroy:
 watch:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
-	cd $(APP_PATH) && @GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) air -d
+	cd $(APP_PATH) && GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) air -d
 
 install-air:
 	# --- Works with (air).
