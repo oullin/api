@@ -2,15 +2,14 @@ package seeds
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/oullin/database"
 	"github.com/oullin/pkg/model"
 	"github.com/oullin/pkg/portal"
-
-	"strings"
-	"time"
 )
 
 type UsersSeed struct {

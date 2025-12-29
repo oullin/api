@@ -67,7 +67,11 @@ func NewTestDB(t *testing.T) (*database.Connection, database.User) {
 	if err != nil {
 		t.Fatalf("new connection: %v", err)
 	}
-	t.Cleanup(func() { conn.Close() })
+	t.Cleanup(func() {
+		if err := conn.Ping(); err == nil {
+			conn.Close()
+		}
+	})
 
 	if err := conn.Sql().AutoMigrate(&database.User{}, &database.Post{}, &database.Category{}, &database.Tag{}, &database.PostCategory{}, &database.PostTag{}); err != nil {
 		t.Fatalf("migrate: %v", err)

@@ -183,7 +183,7 @@ func setupDB(t *testing.T) *database.Connection {
 	t.Cleanup(cancel)
 
 	pgC, err := postgrescontainer.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+		testcontainers.WithImage("postgres:18-alpine"),
 		postgrescontainer.WithDatabase("testdb"),
 		postgrescontainer.WithUsername("test"),
 		postgrescontainer.WithPassword("secret"),
@@ -207,7 +207,7 @@ func setupDB(t *testing.T) *database.Connection {
 		if err == nil {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(time.Duration(i*i) * 10 * time.Millisecond)
 	}
 	if err != nil {
 		t.Skipf("gorm open: %v", err)

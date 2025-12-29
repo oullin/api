@@ -41,6 +41,7 @@ func NewTestsHelper(t *testing.T, models ...interface{}) *TestsHelper {
 
 // NewTestsHelperSimple creates a lightweight test helper without database connection.
 // Use this when you only need utility methods like ChangeRepoRoot.
+// Note: Conn() and Env() will return nil when using this helper.
 func NewTestsHelperSimple(t *testing.T) *TestsHelper {
 	t.Helper()
 
@@ -59,7 +60,20 @@ func (h *TestsHelper) ChangeRepoRoot() {
 		h.t.Fatalf("get working directory: %v", err)
 	}
 
-	root := filepath.Clean(filepath.Join(cwd, "..", "..", ".."))
+	// Walk up directories until we find go.mod
+	root := cwd
+	for {
+		if _, err := os.Stat(filepath.Join(root, "go.mod")); err == nil {
+			break
+		}
+
+		parent := filepath.Dir(root)
+
+		if parent == root {
+			h.t.Fatalf("could not find repository root (go.mod not found)")
+		}
+		root = parent
+	}
 
 	if err := os.Chdir(root); err != nil {
 		h.t.Fatalf("change to repo root: %v", err)
@@ -71,11 +85,13 @@ func (h *TestsHelper) ChangeRepoRoot() {
 }
 
 // Conn returns the database connection.
+// It returns nil if the helper was created with NewTestsHelperSimple.
 func (h *TestsHelper) Conn() *database.Connection {
 	return h.conn
 }
 
 // Env returns the environment configuration.
+// It returns nil if the helper was created with NewTestsHelperSimple.
 func (h *TestsHelper) Env() *env.Environment {
 	return h.env
 }
@@ -284,7 +300,7 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 
 	e := &env.Environment{
 		App: env.AppEnvironment{
-			Name:      "Test App",
+			Name:      "SEO Test Suite Application",
 			URL:       "https://test.example.test",
 			Type:      "local",
 			MasterKey: strings.Repeat("m", 32),
