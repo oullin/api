@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/pkg/support"
 )
 
 func TestCategoriesGenerateReturnsLowercaseNames(t *testing.T) {
-	conn, _ := newPostgresConnection(t, &database.Category{})
+	h := support.NewTestsHelper(t, &database.Category{})
 
-	seedCategory(t, conn, "go", "GoLang")
-	seedCategory(t, conn, "cli", "CLI Tools")
+	h.SeedCategory("go", "GoLang", 1)
+	h.SeedCategory("cli", "CLI Tools", 2)
+
+	conn := h.Conn()
 
 	categories, err := NewCategories(conn).Generate()
 	if err != nil {

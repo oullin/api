@@ -5,12 +5,15 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/pkg/support"
 )
 
 func TestUsersFindBy(t *testing.T) {
-	conn := newPostgresConnection(t, &database.User{})
+	h := support.NewTestsHelper(t, &database.User{})
 
-	user := seedUser(t, conn, "John", "Doe", "jdoe")
+	user := h.SeedUser("John", "Doe", "jdoe")
+
+	conn := h.Conn()
 
 	repo := repository.Users{DB: conn}
 
@@ -22,7 +25,9 @@ func TestUsersFindBy(t *testing.T) {
 }
 
 func TestTagsFindOrCreate(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Tag{})
+	h := support.NewTestsHelper(t, &database.Tag{})
+
+	conn := h.Conn()
 
 	repo := repository.Tags{DB: conn}
 
@@ -44,9 +49,11 @@ func TestTagsFindOrCreate(t *testing.T) {
 }
 
 func TestCategoriesFindBy(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Category{})
+	h := support.NewTestsHelper(t, &database.Category{})
 
-	category := seedCategory(t, conn, "news", "News", 1)
+	category := h.SeedCategory("news", "News", 1)
+
+	conn := h.Conn()
 
 	repo := repository.Categories{DB: conn}
 
@@ -58,7 +65,7 @@ func TestCategoriesFindBy(t *testing.T) {
 }
 
 func TestPostsCreateAndFind(t *testing.T) {
-	conn := newPostgresConnection(t,
+	h := support.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -67,9 +74,11 @@ func TestPostsCreateAndFind(t *testing.T) {
 		&database.PostTag{},
 	)
 
-	user := seedUser(t, conn, "Jane", "Doe", "jane")
-	category := seedCategory(t, conn, "tech", "Tech", 1)
-	tag := seedTag(t, conn, "go", "Go")
+	user := h.SeedUser("Jane", "Doe", "jane")
+	category := h.SeedCategory("tech", "Tech", 1)
+	tag := h.SeedTag("go", "Go")
+
+	conn := h.Conn()
 
 	postsRepo := repository.Posts{
 		DB:         conn,
