@@ -9,6 +9,8 @@
 ROOT_PATH           := $(shell pwd)
 DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 
+GOTOOLCHAIN_VERSION ?= go1.25.5
+
 DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
 DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
 DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
@@ -24,7 +26,7 @@ DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
 # -------------------------------------------------------------------------------------------------------------------- #
 
 format:
-	GOTOOLCHAIN=go1.25.5 gofmt -w -s .
+	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) gofmt -w -s .
 
 audit:
 	$(call external_deps,'.')
@@ -33,7 +35,7 @@ audit:
 	$(call external_deps,'./docs/...')
 
 test-all:
-	GOTOOLCHAIN=go1.25.5 go test ./...
+	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go test ./...
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Docker Management Commands
@@ -61,13 +63,13 @@ destroy:
 watch:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
-	cd $(APP_PATH) && air -d
+	cd $(APP_PATH) && @GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) air -d
 
 install-air:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
 	@echo "Installing air ..."
-	@GOTOOLCHAIN=go1.25.5 go install github.com/air-verse/air@latest
+	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go install github.com/air-verse/air@latest
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # CLI Commands
@@ -154,4 +156,4 @@ run-cli-docker:
 	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
 
 run-metal:
-	GOTOOLCHAIN=go1.25.5 go run metal/cli/main.go
+	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go run metal/cli/main.go

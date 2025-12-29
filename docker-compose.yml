@@ -346,7 +346,7 @@ services:
           working_dir: /app
           environment:
               CGO_ENABLED: 1
-              GOTOOLCHAIN: go1.25.5
+              GOTOOLCHAIN: ${GOTOOLCHAIN_VERSION:-go1.25.5}
               ENV_DB_HOST: api-db
               ENV_SPA_DIR: ${ENV_SPA_DIR}
               ENV_DB_PORT: ${ENV_DB_PORT:-5432}
@@ -373,6 +373,7 @@ services:
               - ./.env:/app/.env:ro
             environment:
                 CGO_ENABLED: 1
+                GOTOOLCHAIN: ${GOTOOLCHAIN_VERSION:-go1.25.5}
                 # --- This ensures the Go web server listens for connections from other
                 #     containers (like Caddy), not just from within itself.
                 ENV_DB_HOST: api-db
