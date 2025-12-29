@@ -36,6 +36,7 @@ func newPostgresConnection(t *testing.T, models ...interface{}) *database.Connec
 		postgres.WithPassword("secret"),
 		postgres.BasicWaitStrategies(),
 	)
+
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
 	}
@@ -172,6 +173,7 @@ func seedPost(t *testing.T, conn *database.Connection, author database.User, cat
 			Name: tag.Name,
 		}},
 	})
+
 	if err != nil {
 		t.Fatalf("create post: %v", err)
 	}
