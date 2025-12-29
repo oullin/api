@@ -127,8 +127,6 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 }
 
 func TestGeneratorGenerateAllPages(t *testing.T) {
-	support.WithRepoRoot(t)
-
 	h := support.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
@@ -137,6 +135,7 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		&database.Tag{},
 		&database.PostTag{},
 	)
+	h.ChangeRepoRoot()
 
 	goCategory := h.SeedCategory("golang", "GoLang", 1)
 	_ = h.SeedCategory("cli", "CLI Tools", 2)
@@ -242,7 +241,8 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 }
 
 func TestGeneratorPreparePostImage(t *testing.T) {
-	support.WithRepoRoot(t)
+	h := support.NewTestsHelperSimple(t)
+	h.ChangeRepoRoot()
 
 	outputDir := t.TempDir()
 	srcDir := t.TempDir()
@@ -331,7 +331,8 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 }
 
 func TestGeneratorPreparePostImageRemote(t *testing.T) {
-	support.WithRepoRoot(t)
+	h := support.NewTestsHelperSimple(t)
+	h.ChangeRepoRoot()
 
 	outputDir := t.TempDir()
 

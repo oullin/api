@@ -54,7 +54,8 @@ func TestFetchReturnsJSONDecodeError(t *testing.T) {
 }
 
 func TestClientLoadsFixtures(t *testing.T) {
-	support.WithRepoRoot(t)
+	h := support.NewTestsHelperSimple(t)
+	h.ChangeRepoRoot()
 
 	spaDir := t.TempDir()
 	imagesDir := filepath.Join(spaDir, "posts", "images")

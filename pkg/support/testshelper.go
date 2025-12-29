@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/oullin/database"
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/metal/env"
@@ -37,6 +36,37 @@ func NewTestsHelper(t *testing.T, models ...interface{}) *TestsHelper {
 		conn: conn,
 		env:  e,
 	}
+}
+
+// NewTestsHelperSimple creates a lightweight test helper without database connection.
+// Use this when you only need utility methods like ChangeRepoRoot.
+func NewTestsHelperSimple(t *testing.T) *TestsHelper {
+	t.Helper()
+
+	return &TestsHelper{
+		t: t,
+	}
+}
+
+// ChangeRepoRoot changes the working directory to the repository root for the duration of the test.
+// This is useful for tests that need to access files relative to the repo root.
+func (h *TestsHelper) ChangeRepoRoot() {
+	h.t.Helper()
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		h.t.Fatalf("get working directory: %v", err)
+	}
+
+	root := filepath.Clean(filepath.Join(cwd, "..", "..", ".."))
+
+	if err := os.Chdir(root); err != nil {
+		h.t.Fatalf("change to repo root: %v", err)
+	}
+
+	h.t.Cleanup(func() {
+		_ = os.Chdir(cwd)
+	})
 }
 
 // Conn returns the database connection.
@@ -144,28 +174,7 @@ func (h *TestsHelper) SeedPost(author database.User, category database.Category,
 		h.t.Fatalf("create post: %v", err)
 	}
 
-	// Create category association
-	postCategory := database.PostCategory{
-		PostID:     post.ID,
-		CategoryID: category.ID,
-	}
-	if err := h.conn.Sql().Create(&postCategory).Error; err != nil {
-		h.t.Fatalf("create post category: %v", err)
-	}
-
-	// Create tag association
-	postTag := database.PostTag{
-		PostID: post.ID,
-		TagID:  tag.ID,
-	}
-	if err := h.conn.Sql().Create(&postTag).Error; err != nil {
-		h.t.Fatalf("create post tag: %v", err)
-	}
-
-	// Load associations
-	if err := h.conn.Sql().Preload("Categories").Preload("Tags").Preload("Author").First(&post, post.ID).Error; err != nil {
-		h.t.Fatalf("load post associations: %v", err)
-	}
+	h.seedPostAssociations(&post, category, tag)
 
 	return post
 }
@@ -192,30 +201,39 @@ func (h *TestsHelper) SeedPostWithContent(author database.User, category databas
 		h.t.Fatalf("create post: %v", err)
 	}
 
-	// Create category association
+	h.seedPostAssociations(&post, category, tag)
+
+	return post
+}
+
+// seedPostAssociations creates category and tag associations for a post and loads all associations.
+func (h *TestsHelper) seedPostAssociations(post *database.Post, category database.Category, tag database.Tag) {
+	h.t.Helper()
+
+	// Create a category association
 	postCategory := database.PostCategory{
 		PostID:     post.ID,
 		CategoryID: category.ID,
 	}
+
 	if err := h.conn.Sql().Create(&postCategory).Error; err != nil {
 		h.t.Fatalf("create post category: %v", err)
 	}
 
-	// Create tag association
+	// Create a tag association
 	postTag := database.PostTag{
 		PostID: post.ID,
 		TagID:  tag.ID,
 	}
+
 	if err := h.conn.Sql().Create(&postTag).Error; err != nil {
 		h.t.Fatalf("create post tag: %v", err)
 	}
 
 	// Load associations
-	if err := h.conn.Sql().Preload("Categories").Preload("Tags").Preload("Author").First(&post, post.ID).Error; err != nil {
+	if err := h.conn.Sql().Preload("Categories").Preload("Tags").Preload("Author").First(post, post.ID).Error; err != nil {
 		h.t.Fatalf("load post associations: %v", err)
 	}
-
-	return post
 }
 
 // newPostgresConnection creates a new Postgres test container and database connection.
@@ -239,13 +257,14 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	t.Cleanup(cancel)
 
-	pg, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+	pg, err := postgres.Run(ctx,
+		"postgres:16-alpine",
 		postgres.WithUsername(username),
 		postgres.WithPassword(password),
 		postgres.WithDatabase(dbname),
 		postgres.BasicWaitStrategies(),
 	)
+
 	if err != nil {
 		t.Fatalf("container run err: %v", err)
 	}
@@ -322,25 +341,4 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 	})
 
 	return conn, e
-}
-
-// WithRepoRoot changes the working directory to the repository root for the duration of the test.
-// This is useful for tests that need to access files relative to the repo root.
-func WithRepoRoot(t *testing.T) {
-	t.Helper()
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("get working directory: %v", err)
-	}
-
-	root := filepath.Clean(filepath.Join(cwd, "..", "..", ".."))
-
-	if err := os.Chdir(root); err != nil {
-		t.Fatalf("change to repo root: %v", err)
-	}
-
-	t.Cleanup(func() {
-		_ = os.Chdir(cwd)
-	})
 }
