@@ -12,7 +12,7 @@ func TestPostFiltersSanitise(t *testing.T) {
 		Title:    "  MyTitle  ",
 		Author:   "  ME  ",
 		Category: "  Tech  ",
-		Tag:      "Tag  ",
+		Tag:      "  Tag  ",
 	}
 
 	if f.GetText() != "hello" {

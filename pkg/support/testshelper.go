@@ -269,13 +269,16 @@ func newPostgresConnection(t *testing.T, models ...interface{}) (*database.Conne
 		username = "testaccount"
 		password = "secretpassw"
 		dbname   = "testdb"
+		timeout  = 45 * time.Second
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 
+	// Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
 	pg, err := postgres.Run(ctx,
-		"postgres:18-alpine",
+		"postgres:18.1-alpine",
 		postgres.WithUsername(username),
 		postgres.WithPassword(password),
 		postgres.WithDatabase(dbname),

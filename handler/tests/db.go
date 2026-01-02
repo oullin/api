@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/database"
@@ -29,8 +28,10 @@ func NewTestDB(t *testing.T) (*database.Connection, database.User) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	pg, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:18-alpine"),
+	// Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
+	pg, err := postgres.Run(ctx,
+		"postgres:18.1-alpine",
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),

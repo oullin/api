@@ -18,8 +18,9 @@ func TestSafeDisplay(t *testing.T) {
 
 func TestSafeDisplayShort(t *testing.T) {
 	tok := "pk_short"
+	d := auth.SafeDisplay(tok)
 
-	if auth.SafeDisplay(tok) != tok {
-		t.Fatalf("expected short token to be displayed unchanged, got different value")
+	if d != tok {
+		t.Fatalf("expected short token to be displayed unchanged, got %q", d)
 	}
 }
