@@ -42,8 +42,14 @@ build-deploy:
 	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
 	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)"
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/postgres-entrypoint.sh" && \
-	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/run-migration.sh" && \
-	make db:migrate && \
+	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/run-migration.sh"
+	@echo "Starting database service..."
+	docker compose --env-file ./.env up api-db -d
+	@echo "Waiting for database to be healthy..."
+	@timeout 60 sh -c 'until docker inspect --format="{{.State.Health.Status}}" oullin_db 2>/dev/null | grep -q "healthy"; do sleep 2; done' || (echo "Database failed to become healthy" && exit 1)
+	@echo "Running migrations..."
+	make db:migrate
+	@echo "Starting remaining services..."
 	docker compose --env-file ./.env --profile prod up -d
 
 build-release:
