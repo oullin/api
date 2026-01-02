@@ -73,13 +73,8 @@ oullin.io {
 		}
 
 		reverse_proxy api:8080 {
-			# preserve original host to the app
+			# preserve original host/proto/client ip to the app
 			header_up Host {host}
-
-			# explicitly set X-Forwarded headers for client IP, protocol, and host detection
-			header_up X-Forwarded-For {http.request.header.X-Forwarded-For}
-			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
-			header_up X-Forwarded-Host {http.request.header.X-Forwarded-Host}
 
 			# pass through app-specific headers
 			header_up X-API-Username {http.request.header.X-API-Username}
@@ -104,11 +99,6 @@ oullin.io {
 	handle {
 		reverse_proxy web:80 {
 			header_up Host {host}
-
-			# explicitly set X-Forwarded headers for client IP, protocol, and host detection
-			header_up X-Forwarded-For {http.request.header.X-Forwarded-For}
-			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
-			header_up X-Forwarded-Host {http.request.header.X-Forwarded-Host}
 		}
 	}
 }

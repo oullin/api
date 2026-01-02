@@ -34,8 +34,8 @@ log_error() {
 }
 
 require_arg() {
-    if [[ -z "${2-}" ]]; then
-        log_error "Missing value for ${1}"
+    if [[ -z "${2-}" || "${2-}" == -* ]]; then
+        log_error "Missing or invalid value for ${1}"
         show_usage
         exit 1
     fi

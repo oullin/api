@@ -40,6 +40,14 @@ log_warn() {
     echo -e "${YELLOW}[WARN]${NC} $*"
 }
 
+require_arg() {
+    if [[ -z "${2-}" || "${2-}" == -* ]]; then
+        log_error "Missing or invalid value for ${1}"
+        show_usage
+        exit 1
+    fi
+}
+
 stat_epoch() {
     if stat -c %Y "$1" >/dev/null 2>&1; then
         stat -c %Y "$1"
@@ -71,9 +79,11 @@ COMMANDS:
 OPTIONS:
     -h, --help              Show this help message
     -f, --file FILE         Backup file to restore (required for restore)
-    -c, --compress          Compress backup with gzip (default: enabled)
+    -c, --compress BOOL     Compress backup with gzip (default: true)
     -r, --retention DAYS    Number of days to keep backups (default: ${RETENTION_DAYS})
     -d, --dir DIR           Backup directory (default: ${BACKUP_DIR})
+
+    Note: Options support both '--option value' and '--option=value' syntax.
 
 EXAMPLES:
     # Create a backup
@@ -81,11 +91,13 @@ EXAMPLES:
 
     # Create an uncompressed backup
     $(basename "$0") --compress=false backup
+    $(basename "$0") --compress false backup
 
     # List all backups
     $(basename "$0") list
 
-    # Restore from a specific backup
+    # Restore from a specific backup (both syntaxes work)
+    $(basename "$0") restore --file=storage/backups/oullin_db_20260102_153045.sql.gz
     $(basename "$0") restore --file storage/backups/oullin_db_20260102_153045.sql.gz
 
     # Clean up old backups (keeps last ${RETENTION_DAYS} days)
@@ -178,6 +190,17 @@ create_backup() {
     fi
 }
 
+print_backup_entry() {
+    local file=$1
+    local filename
+    filename=$(basename "$file")
+    local human_size
+    human_size=$(du -h "$file" | cut -f1)
+    local date
+    date=$(stat_date "$file")
+    printf "%-50s %-10s %-20s\n" "$filename" "$human_size" "$date"
+}
+
 restore_backup() {
     local backup_file="$1"
 
@@ -258,31 +281,11 @@ list_backups() {
 
     if sort -z </dev/null >/dev/null 2>&1; then
         printf '%s\0' "${entries[@]}" | sort -z -nr -k1,1 | while IFS=$'\t' read -r -d '' _epoch file; do
-            local filename
-            filename=$(basename "$file")
-
-            # Convert size to human readable
-            local human_size
-            human_size=$(du -h "$file" | cut -f1)
-
-            local date
-            date=$(stat_date "$file")
-
-            printf "%-50s %-10s %-20s\n" "$filename" "$human_size" "$date"
+            print_backup_entry "$file"
         done
     else
         printf '%s\n' "${entries[@]}" | sort -nr -k1,1 | while IFS=$'\t' read -r _epoch file; do
-            local filename
-            filename=$(basename "$file")
-
-            # Convert size to human readable
-            local human_size
-            human_size=$(du -h "$file" | cut -f1)
-
-            local date
-            date=$(stat_date "$file")
-
-            printf "%-50s %-10s %-20s\n" "$filename" "$human_size" "$date"
+            print_backup_entry "$file"
         done
     fi
 
@@ -332,41 +335,57 @@ main() {
                 show_usage
                 exit 0
                 ;;
-            -f|--file)
-                if [[ $# -lt 2 || "$2" == -* ]]; then
-                    log_error "Option $1 requires a value"
-                    exit 1
+            -f|--file|-f=*|--file=*)
+                if [[ "$1" == *=* ]]; then
+                    backup_file="${1#*=}"
+                    shift
+                else
+                    require_arg "$1" "${2-}"
+                    backup_file="$2"
+                    shift 2
                 fi
-                backup_file="$2"
-                shift 2
                 ;;
-            -c|--compress)
-                if [[ $# -lt 2 || "$2" == -* ]]; then
-                    log_error "Option $1 requires a value"
+            -c|--compress|-c=*|--compress=*)
+                local value
+                if [[ "$1" == *=* ]]; then
+                    value="${1#*=}"
+                    shift
+                else
+                    require_arg "$1" "${2-}"
+                    value="$2"
+                    shift 2
+                fi
+                if [[ "$value" != "true" && "$value" != "false" ]]; then
+                    log_error "Invalid compress value: $value (must be 'true' or 'false')"
                     exit 1
                 fi
-                compress="$2"
-                shift 2
+                compress="$value"
                 ;;
-            -r|--retention)
-                if [[ $# -lt 2 || "$2" == -* ]]; then
-                    log_error "Option $1 requires a value"
+            -r|--retention|-r=*|--retention=*)
+                local value
+                if [[ "$1" == *=* ]]; then
+                    value="${1#*=}"
+                    shift
+                else
+                    require_arg "$1" "${2-}"
+                    value="$2"
+                    shift 2
+                fi
+                if [[ ! "$value" =~ ^[0-9]+$ ]]; then
+                    log_error "Invalid retention days: $value"
                     exit 1
                 fi
-                if [[ ! "$2" =~ ^[0-9]+$ ]]; then
-                    log_error "Invalid retention days: $2"
-                    exit 1
-                fi
-                RETENTION_DAYS="$2"
-                shift 2
+                RETENTION_DAYS="$value"
                 ;;
-            -d|--dir)
-                if [[ $# -lt 2 || "$2" == -* ]]; then
-                    log_error "Option $1 requires a value"
-                    exit 1
+            -d|--dir|-d=*|--dir=*)
+                if [[ "$1" == *=* ]]; then
+                    BACKUP_DIR="${1#*=}"
+                    shift
+                else
+                    require_arg "$1" "${2-}"
+                    BACKUP_DIR="$2"
+                    shift 2
                 fi
-                BACKUP_DIR="$2"
-                shift 2
                 ;;
             backup|restore|list|cleanup)
                 command="$1"
