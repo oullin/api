@@ -5,11 +5,9 @@ set -euo pipefail
 # Supports backup, restore, and automatic cleanup operations
 
 # --- Configuration
-SCRIPT_DIR=""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 
-PROJECT_ROOT=""
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 readonly PROJECT_ROOT
 
@@ -17,7 +15,6 @@ BACKUP_DIR="${BACKUP_DIR:-${PROJECT_ROOT}/storage/backups}"
 readonly CONTAINER_NAME="${DB_CONTAINER_NAME:-oullin_db}"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
 
-TIMESTAMP=""
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 readonly TIMESTAMP
 
@@ -121,9 +118,7 @@ check_container() {
 
 get_db_credentials() {
     # Read credentials from Docker secrets inside the container
-    DB_USER=""
     DB_USER=$(docker exec "${CONTAINER_NAME}" cat /run/secrets/pg_username 2>/dev/null || echo "")
-    DB_NAME=""
     DB_NAME=$(docker exec "${CONTAINER_NAME}" cat /run/secrets/pg_dbname 2>/dev/null || echo "")
 
     if [[ -z "${DB_USER}" || -z "${DB_NAME}" ]]; then
@@ -290,9 +285,7 @@ list_backups() {
     fi
 
     echo
-    local total
-    total=$(find "${BACKUP_DIR}" -maxdepth 1 -type f \( -name "*.sql" -o -name "*.sql.gz" \) | wc -l | tr -d ' ')
-    log_info "Total backups: ${total}"
+    log_info "Total backups: ${#entries[@]}"
 }
 
 cleanup_old_backups() {

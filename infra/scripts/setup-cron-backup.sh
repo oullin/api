@@ -4,11 +4,9 @@ set -euo pipefail
 # Setup script for automated database backups via cron
 # This script helps configure cron jobs for regular database backups
 
-SCRIPT_DIR=""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 
-PROJECT_ROOT=""
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 readonly PROJECT_ROOT
 
