@@ -5,7 +5,7 @@
 DB_API_RUNNER_SERVICE := api-runner
 DB_DOCKER_SERVICE_NAME := api-db
 DB_DOCKER_CONTAINER_NAME := oullin_db
-DB_MIGRATE_SERVICE_NAME := api-db-migrate
+DB_MIGRATE_SERVICE_NAME := $(DB_DOCKER_SERVICE_NAME)-migrate
 
 # --- Paths
 #     Define root paths for clarity. Assumes ROOT_PATH is exported or defined.

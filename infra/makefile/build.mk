@@ -44,9 +44,21 @@ build-deploy:
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/postgres-entrypoint.sh" && \
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/run-migration.sh"
 	@echo "Starting database service..."
-	docker compose --env-file ./.env up api-db -d
+	docker compose --env-file ./.env up $(DB_DOCKER_SERVICE_NAME) -d
 	@echo "Waiting for database to be healthy..."
-	@timeout 60 sh -c 'until docker inspect --format="{{.State.Health.Status}}" oullin_db 2>/dev/null | grep -q "healthy"; do sleep 2; done' || (echo "Database failed to become healthy" && exit 1)
+	@attempt=0; max_attempts=30; \
+	while [ $$attempt -lt $$max_attempts ]; do \
+		if docker inspect --format="{{.State.Health.Status}}" $(DB_DOCKER_CONTAINER_NAME) 2>/dev/null | grep -q "healthy"; then \
+			echo "Database is healthy"; \
+			break; \
+		fi; \
+		attempt=$$((attempt + 1)); \
+		if [ $$attempt -eq $$max_attempts ]; then \
+			echo "Database failed to become healthy after 60 seconds" >&2; \
+			exit 1; \
+		fi; \
+		sleep 2; \
+	done
 	@echo "Running migrations..."
 	make db:migrate
 	@echo "Starting remaining services..."

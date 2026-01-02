@@ -22,7 +22,6 @@ YELLOW := \033[1;33m
 # -------------------------------------------------------------------------------------------------------------------- #
 
 ROOT_NETWORK          := oullin_net
-DATABASE              := "api-db"
 SOURCE                := go_bindata
 ROOT_PATH             := $(shell pwd)
 APP_PATH              := $(ROOT_PATH)/
