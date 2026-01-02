@@ -28,24 +28,17 @@ For more details, check the [Setup Guide](docs/SETUP.md).
 
 ### 🗄️ Documentation
 
-
-
 **Get Started**
 
 - [Setup & Development](docs/SETUP.md)
-
 - [API Reference](docs/API.md)
-
 
 
 **Infrastructure & Ops**
 
 - [Metrics & Monitoring](infra/metrics/README.md)
-
     - [Grafana Diagnostics](infra/metrics/docs/GRAFANA_DIAGNOSTICS.md)
-
     - [VPS Deployment](infra/metrics/docs/VPS_DEPLOYMENT.md)
 
 - [Caddy Server](infra/caddy/readme.md)
-
 - [Database SSL](database/infra/ssl/readme.md)
