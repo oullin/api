@@ -42,6 +42,7 @@ include ./infra/makefile/build.mk
 include ./infra/makefile/infra.mk
 include ./infra/makefile/caddy.mk
 include ./infra/makefile/monitor.mk
+include ./infra/makefile/backup.mk
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -83,6 +84,16 @@ help:
 	@printf "  $(BOLD)$(GREEN)db:rollback$(NC)      : Rollback database migrations (usually the last batch).\n"
 	@printf "  $(BOLD)$(GREEN)db:migrate:create$(NC): Create a new database migration file.\n"
 	@printf "  $(BOLD)$(GREEN)db:migrate:force$(NC) : Force database migrations to run.\n\n"
+
+	@printf "$(BOLD)$(BLUE)Backup Commands:$(NC)\n"
+	@printf "  $(BOLD)$(GREEN)backup:create$(NC)        : Create a new database backup.\n"
+	@printf "  $(BOLD)$(GREEN)backup:restore$(NC)       : Restore database from a backup file.\n"
+	@printf "  $(BOLD)$(GREEN)backup:list$(NC)          : List all available backups.\n"
+	@printf "  $(BOLD)$(GREEN)backup:cleanup$(NC)       : Remove backups older than retention period.\n"
+	@printf "  $(BOLD)$(GREEN)backup:cron:setup$(NC)    : Setup automated weekly backups (Sundays at 2 AM).\n"
+	@printf "  $(BOLD)$(GREEN)backup:cron:remove$(NC)   : Remove automated backup cron jobs.\n"
+	@printf "  $(BOLD)$(GREEN)backup:cron:show$(NC)     : Show current backup cron jobs.\n"
+	@printf "  $(BOLD)$(GREEN)backup:help$(NC)          : Show detailed backup commands and examples.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Environment Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)env:check$(NC)        : Verify environment configuration.\n"

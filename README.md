@@ -22,7 +22,8 @@ consider contributing to the project by making improvements or fixing issues by 
 ### ⚡ Quick Start
 
 1.  **Configure**: `cp .env.example .env`
-2.  **Run**: `make fresh` (Builds and runs the app)
+2.  **DB Volume**: `docker volume create api_oullin_db_data` (one-time)
+3.  **Run**: `make fresh` (Builds and runs the app)
 
 For more details, check the [Setup Guide](docs/SETUP.md).
 
@@ -32,6 +33,7 @@ For more details, check the [Setup Guide](docs/SETUP.md).
 
 - [Setup & Development](docs/SETUP.md)
 - [API Reference](docs/API.md)
+- [Database backups](docs/DB_BACKUPS.md)
 
 
 **Infrastructure & Ops**
@@ -39,6 +41,5 @@ For more details, check the [Setup Guide](docs/SETUP.md).
 - [Metrics & Monitoring](infra/metrics/README.md)
     - [Grafana Diagnostics](infra/metrics/docs/GRAFANA_DIAGNOSTICS.md)
     - [VPS Deployment](infra/metrics/docs/VPS_DEPLOYMENT.md)
-
 - [Caddy Server](infra/caddy/readme.md)
 - [Database SSL](database/infra/ssl/readme.md)

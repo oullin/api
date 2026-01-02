@@ -3,14 +3,12 @@
 	http_port 80
 	https_port 443
 
-	# Enable metrics collection for HTTP handlers
-	servers {
-		metrics
-	}
-
 	# Admin API listens only on localhost within container for security
 	# Prometheus accesses /metrics via the dedicated :9180 listener, not the admin API
 	admin 127.0.0.1:2019
+
+	# Enable metrics collection for HTTP handlers
+	metrics
 }
 
 # Caddy will automatically provision a Let's Encrypt certificate.
@@ -77,9 +75,6 @@ oullin.io {
 		reverse_proxy api:8080 {
 			# preserve original host/proto/client ip to the app
 			header_up Host {host}
-			header_up X-Forwarded-Host {host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-For {remote}
 
 			# pass through app-specific headers
 			header_up X-API-Username {http.request.header.X-API-Username}
@@ -104,9 +99,6 @@ oullin.io {
 	handle {
 		reverse_proxy web:80 {
 			header_up Host {host}
-			header_up X-Forwarded-Host {host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-For {remote}
 		}
 	}
 }
