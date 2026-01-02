@@ -209,7 +209,7 @@ func setupDB(t *testing.T) *database.Connection {
 		if err == nil {
 			break
 		}
-		time.Sleep(time.Duration(i*i) * 10 * time.Millisecond)
+		time.Sleep(time.Duration(i*i) * 100 * time.Millisecond)
 	}
 	if err != nil {
 		t.Skipf("gorm open: %v", err)
