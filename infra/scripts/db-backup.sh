@@ -245,7 +245,7 @@ list_backups() {
     while IFS= read -r -d '' file; do
         local epoch
         epoch=$(stat_epoch "$file")
-        entries+=("${epoch}\t${file}")
+        entries+=("${epoch}"$'\t'"${file}")
     done < <(find "${BACKUP_DIR}" -maxdepth 1 -type f \( -name "*.sql" -o -name "*.sql.gz" \) -print0)
 
     if [[ ${#entries[@]} -eq 0 ]]; then
@@ -333,14 +333,26 @@ main() {
                 exit 0
                 ;;
             -f|--file)
+                if [[ $# -lt 2 || "$2" == -* ]]; then
+                    log_error "Option $1 requires a value"
+                    exit 1
+                fi
                 backup_file="$2"
                 shift 2
                 ;;
             -c|--compress)
+                if [[ $# -lt 2 || "$2" == -* ]]; then
+                    log_error "Option $1 requires a value"
+                    exit 1
+                fi
                 compress="$2"
                 shift 2
                 ;;
             -r|--retention)
+                if [[ $# -lt 2 || "$2" == -* ]]; then
+                    log_error "Option $1 requires a value"
+                    exit 1
+                fi
                 if [[ ! "$2" =~ ^[0-9]+$ ]]; then
                     log_error "Invalid retention days: $2"
                     exit 1
@@ -349,6 +361,10 @@ main() {
                 shift 2
                 ;;
             -d|--dir)
+                if [[ $# -lt 2 || "$2" == -* ]]; then
+                    log_error "Option $1 requires a value"
+                    exit 1
+                fi
                 BACKUP_DIR="$2"
                 shift 2
                 ;;
