@@ -1,12 +1,16 @@
-package handler
+package handler_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/oullin/handler"
+)
 
 func TestProfileHandler(t *testing.T) {
-	runFileHandlerTest(t, fileHandlerTestCase{
-		make:     func(f string) fileHandler { return NewProfileHandler(f) },
-		endpoint: "/profile",
-		fixture:  "../storage/fixture/profile.json",
-		assert:   assertNickname("gus"),
+	handler.RunFileHandlerTest(t, handler.FileHandlerTestCase{
+		Make:     func(f string) handler.FileHandler { return handler.NewProfileHandler(f) },
+		Endpoint: "/profile",
+		Fixture:  "../storage/fixture/profile.json",
+		Assert:   handler.AssertNickname("gus"),
 	})
 }

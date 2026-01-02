@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"encoding/json"
@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
+	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
 	handlertests "github.com/oullin/handler/tests"
 )
@@ -76,7 +78,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 		t.Fatalf("create alpha link: %v", err)
 	}
 
-	h := NewCategoriesHandler(&repository.Categories{
+	h := handler.NewCategoriesHandler(&repository.Categories{
 		DB: conn,
 	})
 
@@ -160,7 +162,7 @@ func TestCategoriesHandlerIndex_SortOrdering(t *testing.T) {
 		}
 	}
 
-	h := NewCategoriesHandler(&repository.Categories{DB: conn})
+	h := handler.NewCategoriesHandler(&repository.Categories{DB: conn})
 	req := httptest.NewRequest("GET", "/categories", nil)
 	rec := httptest.NewRecorder()
 

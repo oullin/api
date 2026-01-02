@@ -2,6 +2,7 @@ package portal
 
 import (
 	sentryhttp "github.com/getsentry/sentry-go/http"
+
 	"github.com/oullin/metal/env"
 )
 

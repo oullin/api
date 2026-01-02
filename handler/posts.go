@@ -3,6 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"net/http"
 
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
@@ -10,9 +12,6 @@ import (
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
-
-	"log/slog"
-	"net/http"
 )
 
 type PostsHandler struct {

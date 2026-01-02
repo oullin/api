@@ -1,4 +1,4 @@
-package router
+package router_test
 
 import (
 	"fmt"
@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/middleware"
 	"github.com/oullin/pkg/portal"
 )
 
 func TestSignatureRoute_PublicMiddleware(t *testing.T) {
-	r := Router{
+	r := router.Router{
 		Mux: http.NewServeMux(),
 		Pipeline: middleware.Pipeline{
 			PublicMiddleware: middleware.NewPublicMiddleware("", false),

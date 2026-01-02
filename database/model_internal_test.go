@@ -10,14 +10,14 @@ func TestIsValidTable(t *testing.T) {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			if !isValidTable(name) {
-				t.Errorf("expected table %q to be valid", name)
+				t.Fatalf("expected table %q to be valid", name)
 			}
 		})
 	}
 
 	t.Run("nonexistent table", func(t *testing.T) {
 		if isValidTable("unknown") {
-			t.Error(`expected table "unknown" to be invalid`)
+			t.Fatalf(`expected table "unknown" to be invalid`)
 		}
 	})
 }
@@ -38,7 +38,7 @@ func TestIsValidTableNonexistentTables(t *testing.T) {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			if isValidTable(name) {
-				t.Errorf("%q should be invalid", name)
+				t.Fatalf("%q should be invalid", name)
 			}
 		})
 	}

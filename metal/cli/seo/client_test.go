@@ -10,6 +10,7 @@ import (
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/endpoint"
+	"github.com/oullin/pkg/support"
 )
 
 type failingRoute struct{ err *endpoint.ApiError }
@@ -53,7 +54,8 @@ func TestFetchReturnsJSONDecodeError(t *testing.T) {
 }
 
 func TestClientLoadsFixtures(t *testing.T) {
-	withRepoRoot(t)
+	h := support.NewTestsHelperSimple(t)
+	h.ChangeRepoRoot()
 
 	spaDir := t.TempDir()
 	imagesDir := filepath.Join(spaDir, "posts", "images")

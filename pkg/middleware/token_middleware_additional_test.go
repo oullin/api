@@ -10,16 +10,17 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/testcontainers/testcontainers-go"
+	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
 	"github.com/oullin/pkg/auth"
 	"github.com/oullin/pkg/cache"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/limiter"
-	"github.com/testcontainers/testcontainers-go"
-	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 // makeRepo creates a temporary postgres repo with a seeded API key
@@ -28,8 +29,11 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	testcontainers.SkipIfProviderIsNotHealthy(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	pgC, err := postgrescontainer.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+
+	// Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
+	pgC, err := postgrescontainer.Run(ctx,
+		"postgres:18.1-alpine",
 		postgrescontainer.WithDatabase("testdb"),
 		postgrescontainer.WithUsername("test"),
 		postgrescontainer.WithPassword("test"),
@@ -52,7 +56,7 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 		if err == nil {
 			break
 		}
-		time.Sleep(time.Second)
+		time.Sleep(time.Duration(i*i) * 100 * time.Millisecond)
 	}
 	if err != nil {
 		t.Skipf("gorm open: %v", err)

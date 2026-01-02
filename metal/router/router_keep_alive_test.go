@@ -1,4 +1,4 @@
-package router
+package router_test
 
 import (
 	"net/http"
@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	"github.com/oullin/metal/env"
+	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/middleware"
 )
 
 func TestKeepAliveRoute(t *testing.T) {
-	r := Router{
+	r := router.Router{
 		Env:      &env.Environment{Ping: env.PingEnvironment{Username: "user", Password: "pass"}},
 		Mux:      http.NewServeMux(),
 		Pipeline: middleware.Pipeline{PublicMiddleware: middleware.NewPublicMiddleware("", false)},

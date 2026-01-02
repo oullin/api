@@ -2,8 +2,9 @@ package model
 
 import (
 	"errors"
-	stdgorm "gorm.io/gorm"
 	"testing"
+
+	stdgorm "gorm.io/gorm"
 )
 
 func TestIsNotFound(t *testing.T) {

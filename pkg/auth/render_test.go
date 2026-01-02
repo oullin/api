@@ -1,21 +1,26 @@
-package auth
+package auth_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/oullin/pkg/auth"
+)
 
 func TestSafeDisplay(t *testing.T) {
 	tok := "sk_1234567890123456abcd"
-	d := SafeDisplay(tok)
+	d := auth.SafeDisplay(tok)
 	expected := "sk_1234567890..."
 
 	if d != expected {
-		t.Fatalf("expected %s got %s", expected, d)
+		t.Fatalf("expected %q, got %q", expected, d)
 	}
 }
 
 func TestSafeDisplayShort(t *testing.T) {
 	tok := "pk_short"
+	d := auth.SafeDisplay(tok)
 
-	if SafeDisplay(tok) != tok {
-		t.Fatalf("expected same")
+	if d != tok {
+		t.Fatalf("expected short token to be displayed unchanged, got %q", d)
 	}
 }

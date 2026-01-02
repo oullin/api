@@ -1,13 +1,15 @@
-package seo
+package seo_test
 
 import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/oullin/metal/cli/seo"
 )
 
 func TestJsonIDRenderProducesGraph(t *testing.T) {
-	id := &JsonID{
+	id := &seo.JsonID{
 		SiteURL:     "https://example.test",
 		OrgName:     "Example",
 		LogoURL:     "https://example.test/logo.png",

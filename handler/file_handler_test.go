@@ -11,20 +11,20 @@ import (
 	"github.com/oullin/pkg/endpoint"
 )
 
-type fileHandler interface {
+type FileHandler interface {
 	Handle(http.ResponseWriter, *http.Request) *endpoint.ApiError
 }
 
-type fileHandlerTestCase struct {
-	make     func(string) fileHandler
-	endpoint string
-	fixture  string
+type FileHandlerTestCase struct {
+	Make     func(string) FileHandler
+	Endpoint string
+	Fixture  string
 
-	assert func(*testing.T, any)
+	Assert func(*testing.T, any)
 }
 
-func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
-	f, err := os.Open(tc.fixture)
+func RunFileHandlerTest(t *testing.T, tc FileHandlerTestCase) {
+	f, err := os.Open(tc.Fixture)
 	if err != nil {
 		t.Fatalf("open fixture: %v", err)
 	}
@@ -36,8 +36,8 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 		t.Fatalf("decode fixture: %v", err)
 	}
 
-	h := tc.make(tc.fixture)
-	req := httptest.NewRequest("GET", tc.endpoint, nil)
+	h := tc.Make(tc.Fixture)
+	req := httptest.NewRequest("GET", tc.Endpoint, nil)
 	rec := httptest.NewRecorder()
 
 	if err := h.Handle(rec, req); err != nil {
@@ -58,9 +58,9 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 		t.Fatalf("version %s", resp.Version)
 	}
 
-	tc.assert(t, resp.Data)
+	tc.Assert(t, resp.Data)
 
-	req2 := httptest.NewRequest("GET", tc.endpoint, nil)
+	req2 := httptest.NewRequest("GET", tc.Endpoint, nil)
 	req2.Header.Set("If-None-Match", "\""+expected.Version+"\"")
 	rec2 := httptest.NewRecorder()
 
@@ -77,16 +77,16 @@ func runFileHandlerTest(t *testing.T, tc fileHandlerTestCase) {
 	badF.Close()
 	defer os.Remove(badF.Name())
 
-	bad := tc.make(badF.Name())
+	bad := tc.Make(badF.Name())
 	rec3 := httptest.NewRecorder()
-	req3 := httptest.NewRequest("GET", tc.endpoint, nil)
+	req3 := httptest.NewRequest("GET", tc.Endpoint, nil)
 
 	if bad.Handle(rec3, req3) == nil {
 		t.Fatalf("expected error")
 	}
 }
 
-func assertFirstUUID(expected string) func(*testing.T, any) {
+func AssertFirstUUID(expected string) func(*testing.T, any) {
 	return func(t *testing.T, data any) {
 		arr, ok := data.([]interface{})
 
@@ -102,7 +102,7 @@ func assertFirstUUID(expected string) func(*testing.T, any) {
 	}
 }
 
-func assertNickname(expected string) func(*testing.T, any) {
+func AssertNickname(expected string) func(*testing.T, any) {
 	return func(t *testing.T, data any) {
 		obj, ok := data.(map[string]interface{})
 

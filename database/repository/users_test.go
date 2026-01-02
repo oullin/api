@@ -5,12 +5,15 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/pkg/support"
 )
 
 func TestUsersFindByPostgres(t *testing.T) {
-	conn := newPostgresConnection(t, &database.User{})
+	h := support.NewTestsHelper(t, &database.User{})
 
-	user := seedUser(t, conn, "Jane", "Doe", "janedoe")
+	user := h.SeedUser("Jane", "Doe", "janedoe")
+
+	conn := h.Conn()
 
 	repo := repository.Users{DB: conn}
 

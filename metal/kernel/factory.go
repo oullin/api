@@ -7,6 +7,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
+
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/llogs"

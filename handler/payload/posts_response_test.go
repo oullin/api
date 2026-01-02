@@ -1,10 +1,11 @@
-package payload
+package payload_test
 
 import (
 	"testing"
 	"time"
 
 	"github.com/oullin/database"
+	"github.com/oullin/handler/payload"
 )
 
 func TestGetPostsResponse(t *testing.T) {
@@ -49,7 +50,7 @@ func TestGetPostsResponse(t *testing.T) {
 		},
 	}
 
-	r := GetPostsResponse(p)
+	r := payload.GetPostsResponse(p)
 
 	if r.UUID != "1" || r.Author.UUID != "u1" || len(r.Categories) != 1 || len(r.Tags) != 1 || r.Categories[0].Sort != 3 {
 		t.Fatalf("unexpected response: %+v", r)

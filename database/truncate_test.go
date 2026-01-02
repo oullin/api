@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/oullin/metal/env"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/oullin/metal/env"
 )
 
 func TestTruncateExecuteSkipsMissingTables(t *testing.T) {

@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -35,8 +34,10 @@ func setupPostgresConnection(t *testing.T, models ...interface{}) (*database.Con
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 
-	pg, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+	// Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
+	pg, err := postgres.Run(ctx,
+		"postgres:18.1-alpine",
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),

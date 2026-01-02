@@ -1,25 +1,27 @@
-package seo
+package seo_test
 
 import (
 	"encoding/json"
 	"html/template"
 	"testing"
 	"time"
+
+	"github.com/oullin/metal/cli/seo"
 )
 
 func TestManifestRenderUsesFavicons(t *testing.T) {
-	tmpl := Page{
+	tmpl := seo.Page{
 		SiteName:   "Example Site",
 		SiteURL:    "https://example.test",
 		Lang:       "en_GB",
 		LogoURL:    "https://example.test/logo.png",
 		SameAsURL:  []string{"https://example.test"},
-		StubPath:   StubPath,
+		StubPath:   seo.StubPath,
 		OutputDir:  t.TempDir(),
 		Categories: []string{"go"},
 	}
 
-	data := TemplateData{
+	data := seo.TemplateData{
 		Lang:        "en_GB",
 		Title:       "Example Site",
 		Description: "Example Site description",
@@ -27,7 +29,7 @@ func TestManifestRenderUsesFavicons(t *testing.T) {
 		Robots:      "index,follow",
 		ThemeColor:  "#fff",
 		JsonLD:      template.JS("{}"),
-		OGTagOg: TagOgData{
+		OGTagOg: seo.TagOgData{
 			Type:        "website",
 			Image:       "https://example.test/logo.png",
 			ImageAlt:    "Example Site",
@@ -36,13 +38,13 @@ func TestManifestRenderUsesFavicons(t *testing.T) {
 			SiteName:    "Example Site",
 			Locale:      "en_GB",
 		},
-		Twitter: TwitterData{
+		Twitter: seo.TwitterData{
 			Card:     "summary_large_image",
 			Image:    "https://example.test/logo.png",
 			ImageAlt: "Example Site",
 		},
-		HrefLang: []HrefLangData{{Lang: "en_GB", Href: "https://example.test"}},
-		Favicons: []FaviconData{{
+		HrefLang: []seo.HrefLangData{{Lang: "en_GB", Href: "https://example.test"}},
+		Favicons: []seo.FaviconData{{
 			Rel:   "icon",
 			Href:  "https://example.test/favicon.ico",
 			Type:  "image/x-icon",
@@ -55,7 +57,7 @@ func TestManifestRenderUsesFavicons(t *testing.T) {
 		Body:           []template.HTML{"<p>body</p>"},
 	}
 
-	manifest := NewManifest(tmpl, data, NewWeb())
+	manifest := seo.NewManifest(tmpl, data, seo.NewWeb())
 	manifest.Now = func() time.Time { return time.Unix(0, 0).UTC() }
 
 	rendered := manifest.Render()
@@ -81,18 +83,18 @@ func TestManifestRenderUsesFavicons(t *testing.T) {
 }
 
 func TestManifestRenderFallsBackToLogo(t *testing.T) {
-	tmpl := Page{
+	tmpl := seo.Page{
 		SiteName:   "Fallback",
 		SiteURL:    "https://fallback.test",
 		Lang:       "en_GB",
 		LogoURL:    "https://fallback.test/logo.png",
 		SameAsURL:  []string{"https://fallback.test"},
-		StubPath:   StubPath,
+		StubPath:   seo.StubPath,
 		OutputDir:  t.TempDir(),
 		Categories: []string{"go"},
 	}
 
-	data := TemplateData{
+	data := seo.TemplateData{
 		Lang:        "en_GB",
 		Title:       "Fallback",
 		Description: "Fallback description",
@@ -100,7 +102,7 @@ func TestManifestRenderFallsBackToLogo(t *testing.T) {
 		Robots:      "index,follow",
 		ThemeColor:  "#fff",
 		JsonLD:      template.JS("{}"),
-		OGTagOg: TagOgData{
+		OGTagOg: seo.TagOgData{
 			Type:        "website",
 			Image:       "https://fallback.test/logo.png",
 			ImageAlt:    "Fallback",
@@ -109,12 +111,12 @@ func TestManifestRenderFallsBackToLogo(t *testing.T) {
 			SiteName:    "Fallback",
 			Locale:      "en_GB",
 		},
-		Twitter: TwitterData{
+		Twitter: seo.TwitterData{
 			Card:     "summary_large_image",
 			Image:    "https://fallback.test/logo.png",
 			ImageAlt: "Fallback",
 		},
-		HrefLang:       []HrefLangData{{Lang: "en_GB", Href: "https://fallback.test"}},
+		HrefLang:       []seo.HrefLangData{{Lang: "en_GB", Href: "https://fallback.test"}},
 		Favicons:       nil,
 		Manifest:       template.JS("{}"),
 		AppleTouchIcon: "https://fallback.test/apple.png",
@@ -123,7 +125,7 @@ func TestManifestRenderFallsBackToLogo(t *testing.T) {
 		Body:           []template.HTML{"<p>body</p>"},
 	}
 
-	manifest := NewManifest(tmpl, data, NewWeb())
+	manifest := seo.NewManifest(tmpl, data, seo.NewWeb())
 	rendered := manifest.Render()
 
 	var got map[string]any

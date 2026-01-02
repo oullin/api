@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/seeder/seeds"
 	"github.com/oullin/metal/kernel"

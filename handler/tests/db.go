@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
 // NewTestDB starts a PostgreSQL test container, runs migrations, and seeds a default user.
@@ -28,8 +28,10 @@ func NewTestDB(t *testing.T) (*database.Connection, database.User) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	pg, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+	// Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
+	pg, err := postgres.Run(ctx,
+		"postgres:18.1-alpine",
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),
@@ -66,7 +68,11 @@ func NewTestDB(t *testing.T) (*database.Connection, database.User) {
 	if err != nil {
 		t.Fatalf("new connection: %v", err)
 	}
-	t.Cleanup(func() { conn.Close() })
+	t.Cleanup(func() {
+		if err := conn.Ping(); err == nil {
+			conn.Close()
+		}
+	})
 
 	if err := conn.Sql().AutoMigrate(&database.User{}, &database.Post{}, &database.Category{}, &database.Tag{}, &database.PostCategory{}, &database.PostTag{}); err != nil {
 		t.Fatalf("migrate: %v", err)

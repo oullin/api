@@ -1,10 +1,11 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/oullin/database"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/model"
-	"strings"
 )
 
 type Users struct {

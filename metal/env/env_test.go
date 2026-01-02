@@ -1,29 +1,31 @@
-package env
+package env_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/oullin/metal/env"
 )
 
 func TestGetEnvVar(t *testing.T) {
 	t.Setenv("FOO", " bar ")
 
-	if val := GetEnvVar("FOO"); val != "bar" {
+	if val := env.GetEnvVar("FOO"); val != "bar" {
 		t.Fatalf("expected bar got %q", val)
 	}
 }
 
 func TestGetSecretOrEnv_File(t *testing.T) {
 	dir := t.TempDir()
-	SecretsDir = dir
+	env.SecretsDir = dir
 	path := filepath.Join(dir, "testsecret")
 	os.WriteFile(path, []byte("secret"), 0644)
 	t.Cleanup(func() { os.Remove(path) })
 
 	t.Setenv("ENV", "env")
 
-	got := GetSecretOrEnv("testsecret", "ENV")
+	got := env.GetSecretOrEnv("testsecret", "ENV")
 
 	if got != "secret" {
 		t.Fatalf("expected secret got %q", got)
@@ -33,7 +35,7 @@ func TestGetSecretOrEnv_File(t *testing.T) {
 func TestGetSecretOrEnv_Env(t *testing.T) {
 	t.Setenv("ENV", "envvalue")
 
-	got := GetSecretOrEnv("missing", "ENV")
+	got := env.GetSecretOrEnv("missing", "ENV")
 
 	if got != "envvalue" {
 		t.Fatalf("expected envvalue got %q", got)
@@ -41,33 +43,33 @@ func TestGetSecretOrEnv_Env(t *testing.T) {
 }
 
 func TestAppEnvironmentChecks(t *testing.T) {
-	env := AppEnvironment{
+	appEnv := env.AppEnvironment{
 		Type: "production",
 	}
 
-	if !env.IsProduction() {
+	if !appEnv.IsProduction() {
 		t.Fatalf("expected production")
 	}
 
-	if env.IsStaging() || env.IsLocal() {
+	if appEnv.IsStaging() || appEnv.IsLocal() {
 		t.Fatalf("unexpected type flags")
 	}
 
-	env.Type = "staging"
+	appEnv.Type = "staging"
 
-	if !env.IsStaging() {
+	if !appEnv.IsStaging() {
 		t.Fatalf("expected staging")
 	}
 
-	env.Type = "local"
+	appEnv.Type = "local"
 
-	if !env.IsLocal() {
+	if !appEnv.IsLocal() {
 		t.Fatalf("expected local")
 	}
 }
 
 func TestDBEnvironment_GetDSN(t *testing.T) {
-	db := DBEnvironment{
+	db := env.DBEnvironment{
 		UserName:     "usernamefoo",
 		UserPassword: "passwordfoo",
 		DatabaseName: "dbnamefoo",
@@ -86,7 +88,7 @@ func TestDBEnvironment_GetDSN(t *testing.T) {
 }
 
 func TestNetEnvironment(t *testing.T) {
-	net := NetEnvironment{
+	net := env.NetEnvironment{
 		HttpHost: "localhost",
 		HttpPort: "8080",
 	}

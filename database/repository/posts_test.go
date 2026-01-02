@@ -8,10 +8,11 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
+	"github.com/oullin/pkg/support"
 )
 
 func TestPostsCreateLinksAssociationsPostgres(t *testing.T) {
-	conn := newPostgresConnection(t,
+	h := support.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -20,9 +21,11 @@ func TestPostsCreateLinksAssociationsPostgres(t *testing.T) {
 		&database.PostTag{},
 	)
 
-	user := seedUser(t, conn, "Alice", "Smith", "alice")
-	category := seedCategory(t, conn, "tech", "Tech", 1)
-	tag := seedTag(t, conn, "go", "Go")
+	user := h.SeedUser("Alice", "Smith", "alice")
+	category := h.SeedCategory("tech", "Tech", 1)
+	tag := h.SeedTag("go", "Go")
+
+	conn := h.Conn()
 
 	postsRepo := repository.Posts{
 		DB:         conn,
@@ -79,7 +82,7 @@ func TestPostsCreateLinksAssociationsPostgres(t *testing.T) {
 }
 
 func TestPostsFindByLoadsAssociationsPostgres(t *testing.T) {
-	conn := newPostgresConnection(t,
+	h := support.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -88,10 +91,12 @@ func TestPostsFindByLoadsAssociationsPostgres(t *testing.T) {
 		&database.PostTag{},
 	)
 
-	user := seedUser(t, conn, "Bob", "Jones", "bobj")
-	category := seedCategory(t, conn, "career", "Career", 1)
-	tag := seedTag(t, conn, "work", "Work")
-	post := seedPost(t, conn, user, category, tag, "career-path", "Career Path", true)
+	user := h.SeedUser("Bob", "Jones", "bobj")
+	category := h.SeedCategory("career", "Career", 1)
+	tag := h.SeedTag("work", "Work")
+	post := h.SeedPost(user, category, tag, "career-path", "Career Path", true)
+
+	conn := h.Conn()
 
 	postsRepo := repository.Posts{
 		DB:         conn,
@@ -126,7 +131,7 @@ func TestPostsFindByLoadsAssociationsPostgres(t *testing.T) {
 }
 
 func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
-	conn := newPostgresConnection(t,
+	h := support.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -135,16 +140,18 @@ func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
 		&database.PostTag{},
 	)
 
-	authorOne := seedUser(t, conn, "Carol", "One", "carol")
-	authorTwo := seedUser(t, conn, "Dave", "Two", "dave")
+	authorOne := h.SeedUser("Carol", "One", "carol")
+	authorTwo := h.SeedUser("Dave", "Two", "dave")
 
-	category := seedCategory(t, conn, "engineering", "Engineering", 1)
-	tag := seedTag(t, conn, "backend", "Backend")
-	otherTag := seedTag(t, conn, "frontend", "Frontend")
+	category := h.SeedCategory("engineering", "Engineering", 1)
+	tag := h.SeedTag("backend", "Backend")
+	otherTag := h.SeedTag("frontend", "Frontend")
 
-	published := seedPost(t, conn, authorOne, category, tag, "backend-guide", "Backend Guide", true)
-	deleted := seedPost(t, conn, authorTwo, category, otherTag, "frontend-guide", "Frontend Guide", true)
-	_ = seedPost(t, conn, authorTwo, category, otherTag, "draft-guide", "Draft Guide", false)
+	published := h.SeedPost(authorOne, category, tag, "backend-guide", "Backend Guide", true)
+	deleted := h.SeedPost(authorTwo, category, otherTag, "frontend-guide", "Frontend Guide", true)
+	_ = h.SeedPost(authorTwo, category, otherTag, "draft-guide", "Draft Guide", false)
+
+	conn := h.Conn()
 
 	if err := conn.Sql().Delete(&database.Post{}, deleted.ID).Error; err != nil {
 		t.Fatalf("soft delete post: %v", err)
@@ -185,7 +192,7 @@ func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
 }
 
 func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
-	conn := newPostgresConnection(t,
+	h := support.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -194,15 +201,17 @@ func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
 		&database.PostTag{},
 	)
 
-	author := seedUser(t, conn, "Eve", "Duplicates", "eve")
+	author := h.SeedUser("Eve", "Duplicates", "eve")
 
-	primaryCategory := seedCategory(t, conn, "engineering", "Engineering", 1)
-	secondaryCategory := seedCategory(t, conn, "engagement", "Engagement", 2)
+	primaryCategory := h.SeedCategory("engineering", "Engineering", 1)
+	secondaryCategory := h.SeedCategory("engagement", "Engagement", 2)
 
-	primaryTag := seedTag(t, conn, "eng-backend", "Eng Backend")
-	secondaryTag := seedTag(t, conn, "eng-frontend", "Eng Frontend")
+	primaryTag := h.SeedTag("eng-backend", "Eng Backend")
+	secondaryTag := h.SeedTag("eng-frontend", "Eng Frontend")
 
-	post := seedPost(t, conn, author, primaryCategory, primaryTag, "dedupe-check", "Dedupe Check", true)
+	post := h.SeedPost(author, primaryCategory, primaryTag, "dedupe-check", "Dedupe Check", true)
+
+	conn := h.Conn()
 
 	extraCategory := database.PostCategory{PostID: post.ID, CategoryID: secondaryCategory.ID}
 	if err := conn.Sql().Create(&extraCategory).Error; err != nil {
@@ -238,9 +247,11 @@ func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
 }
 
 func TestPostsFindCategoryByDelegatesPostgres(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Category{})
+	h := support.NewTestsHelper(t, &database.Category{})
 
-	category := seedCategory(t, conn, "lifestyle", "Lifestyle", 1)
+	category := h.SeedCategory("lifestyle", "Lifestyle", 1)
+
+	conn := h.Conn()
 
 	postsRepo := repository.Posts{
 		DB:         conn,
@@ -253,7 +264,9 @@ func TestPostsFindCategoryByDelegatesPostgres(t *testing.T) {
 }
 
 func TestPostsFindTagByHandlesRepositoryErrorsPostgres(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Tag{})
+	h := support.NewTestsHelper(t, &database.Tag{})
+
+	conn := h.Conn()
 
 	sqlDB, err := conn.Sql().DB()
 	if err != nil {

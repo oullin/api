@@ -1,9 +1,10 @@
-package payload
+package payload_test
 
 import (
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/handler/payload"
 )
 
 func TestGetTagsResponse(t *testing.T) {
@@ -16,7 +17,7 @@ func TestGetTagsResponse(t *testing.T) {
 		},
 	}
 
-	r := GetTagsResponse(tags)
+	r := payload.GetTagsResponse(tags)
 
 	if len(r) != 1 || r[0].Slug != "s" {
 		t.Fatalf("unexpected %#v", r)

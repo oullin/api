@@ -1,4 +1,4 @@
-package router
+package router_test
 
 import (
 	"net/http"
@@ -7,12 +7,13 @@ import (
 
 	handlertests "github.com/oullin/handler/tests"
 	"github.com/oullin/metal/env"
+	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/middleware"
 )
 
 func TestKeepAliveDBRoute(t *testing.T) {
 	db, _ := handlertests.NewTestDB(t)
-	r := Router{
+	r := router.Router{
 		Env:      &env.Environment{Ping: env.PingEnvironment{Username: "user", Password: "pass"}},
 		Db:       db,
 		Mux:      http.NewServeMux(),

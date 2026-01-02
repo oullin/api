@@ -2,11 +2,12 @@ package llogs
 
 import (
 	"fmt"
-	"github.com/oullin/metal/env"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/oullin/metal/env"
 )
 
 type FilesLogs struct {

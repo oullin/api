@@ -1,9 +1,13 @@
-package payload
+package payload_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/oullin/handler/payload"
+)
 
 func TestGetPostsFiltersFrom(t *testing.T) {
-	req := IndexRequestBody{
+	req := payload.IndexRequestBody{
 		Title:    "t",
 		Author:   "a",
 		Category: "c",
@@ -11,7 +15,7 @@ func TestGetPostsFiltersFrom(t *testing.T) {
 		Text:     "x",
 	}
 
-	f := GetPostsFiltersFrom(req)
+	f := payload.GetPostsFiltersFrom(req)
 
 	if f.Title != "t" || f.Author != "a" || f.Category != "c" || f.Tag != "g" || f.Text != "x" {
 		t.Fatalf("unexpected filters: %+v", f)

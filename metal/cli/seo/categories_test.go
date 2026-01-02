@@ -1,19 +1,23 @@
-package seo
+package seo_test
 
 import (
 	"slices"
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/metal/cli/seo"
+	"github.com/oullin/pkg/support"
 )
 
 func TestCategoriesGenerateReturnsLowercaseNames(t *testing.T) {
-	conn, _ := newPostgresConnection(t, &database.Category{})
+	h := support.NewTestsHelper(t, &database.Category{})
 
-	seedCategory(t, conn, "go", "GoLang")
-	seedCategory(t, conn, "cli", "CLI Tools")
+	h.SeedCategory("go", "GoLang", 1)
+	h.SeedCategory("cli", "CLI Tools", 2)
 
-	categories, err := NewCategories(conn).Generate()
+	conn := h.Conn()
+
+	categories, err := seo.NewCategories(conn).Generate()
 	if err != nil {
 		t.Fatalf("generate err: %v", err)
 	}

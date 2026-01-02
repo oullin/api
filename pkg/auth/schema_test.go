@@ -1,8 +1,10 @@
-package auth
+package auth_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/oullin/pkg/auth"
 )
 
 func TestSchemaConstants(t *testing.T) {
@@ -11,11 +13,11 @@ func TestSchemaConstants(t *testing.T) {
 		got  any
 		want any
 	}{
-		{"PublicKeyPrefix", PublicKeyPrefix, "pk_"},
-		{"SecretKeyPrefix", SecretKeyPrefix, "sk_"},
-		{"TokenMinLength", TokenMinLength, 16},
-		{"AccountNameMinLength", AccountNameMinLength, 5},
-		{"EncryptionKeyLength", EncryptionKeyLength, 32},
+		{"PublicKeyPrefix", auth.PublicKeyPrefix, "pk_"},
+		{"SecretKeyPrefix", auth.SecretKeyPrefix, "sk_"},
+		{"TokenMinLength", auth.TokenMinLength, 16},
+		{"AccountNameMinLength", auth.AccountNameMinLength, 5},
+		{"EncryptionKeyLength", auth.EncryptionKeyLength, 32},
 	}
 
 	for _, tt := range tests {

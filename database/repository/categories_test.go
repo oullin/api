@@ -4,14 +4,18 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/pkg/support"
 )
 
 func TestCategoriesFindByPostgres(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Category{})
+	h := support.NewTestsHelper(t, &database.Category{})
 
-	category := seedCategory(t, conn, "news", "News", 1)
+	category := h.SeedCategory("news", "News", 1)
+
+	conn := h.Conn()
 
 	repo := repository.Categories{DB: conn}
 
@@ -25,7 +29,9 @@ func TestCategoriesFindByPostgres(t *testing.T) {
 }
 
 func TestCategoriesGetOrdersBySort(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Category{})
+	h := support.NewTestsHelper(t, &database.Category{})
+
+	conn := h.Conn()
 
 	repo := repository.Categories{DB: conn}
 
@@ -66,7 +72,9 @@ func TestCategoriesGetOrdersBySort(t *testing.T) {
 }
 
 func TestCategoriesGetOrdersBySortAndName(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Category{})
+	h := support.NewTestsHelper(t, &database.Category{})
+
+	conn := h.Conn()
 
 	repo := repository.Categories{DB: conn}
 
@@ -117,7 +125,9 @@ func TestCategoriesExistOrUpdatePreservesSort(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			conn := newPostgresConnection(t, &database.Category{})
+			h := support.NewTestsHelper(t, &database.Category{})
+
+			conn := h.Conn()
 
 			repo := repository.Categories{DB: conn}
 

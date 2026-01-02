@@ -5,10 +5,13 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
+	"github.com/oullin/pkg/support"
 )
 
 func TestTagsFindOrCreatePostgres(t *testing.T) {
-	conn := newPostgresConnection(t, &database.Tag{})
+	h := support.NewTestsHelper(t, &database.Tag{})
+
+	conn := h.Conn()
 
 	repo := repository.Tags{DB: conn}
 

@@ -1,4 +1,4 @@
-package panel
+package panel_test
 
 import (
 	"bufio"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/oullin/metal/cli/panel"
 	"github.com/oullin/pkg/portal"
 )
 
@@ -23,7 +24,7 @@ func captureOutput(fn func()) string {
 }
 
 func TestPrintLineAndGetChoiceNil(t *testing.T) {
-	m := Menu{
+	m := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("\n")),
 	}
 
@@ -35,7 +36,7 @@ func TestPrintLineAndGetChoiceNil(t *testing.T) {
 }
 
 func TestPrint(t *testing.T) {
-	m := Menu{
+	m := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("")),
 	}
 
@@ -43,7 +44,7 @@ func TestPrint(t *testing.T) {
 }
 
 func TestCenterText(t *testing.T) {
-	m := Menu{}
+	m := panel.Menu{}
 
 	if got := m.CenterText("hi", 6); got != "  hi  " {
 		t.Fatalf("unexpected: %q", got)
@@ -55,7 +56,7 @@ func TestCenterText(t *testing.T) {
 }
 
 func TestPrintOption(t *testing.T) {
-	m := Menu{}
+	m := panel.Menu{}
 
 	out := captureOutput(func() { m.PrintOption("x", 5) })
 
@@ -65,7 +66,7 @@ func TestPrintOption(t *testing.T) {
 }
 
 func TestCaptureInput(t *testing.T) {
-	m := Menu{
+	m := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("2\n")),
 	}
 
@@ -77,7 +78,7 @@ func TestCaptureInput(t *testing.T) {
 		t.Fatalf("choice: %d", m.GetChoice())
 	}
 
-	bad := Menu{
+	bad := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("bad\n")),
 	}
 
@@ -87,7 +88,7 @@ func TestCaptureInput(t *testing.T) {
 }
 
 func TestCaptureAccountName(t *testing.T) {
-	m := Menu{
+	m := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("Alice\n")),
 	}
 
@@ -97,7 +98,7 @@ func TestCaptureAccountName(t *testing.T) {
 		t.Fatalf("got %q err %v", name, err)
 	}
 
-	bad := Menu{
+	bad := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("\n")),
 	}
 
@@ -108,7 +109,7 @@ func TestCaptureAccountName(t *testing.T) {
 
 func TestCapturePostURL(t *testing.T) {
 	goodURL := "https://raw.githubusercontent.com/user/repo/file.md"
-	m := Menu{
+	m := panel.Menu{
 		Reader:    bufio.NewReader(strings.NewReader(goodURL + "\n")),
 		Validator: portal.GetDefaultValidator(),
 	}
@@ -119,7 +120,7 @@ func TestCapturePostURL(t *testing.T) {
 		t.Fatalf("got %v err %v", in, err)
 	}
 
-	m2 := Menu{
+	m2 := panel.Menu{
 		Reader:    bufio.NewReader(strings.NewReader("http://example.com\n")),
 		Validator: portal.GetDefaultValidator(),
 	}
@@ -130,7 +131,7 @@ func TestCapturePostURL(t *testing.T) {
 }
 
 func TestCapturePostSlug(t *testing.T) {
-	m := Menu{
+	m := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("valid-slug\n")),
 	}
 
@@ -140,7 +141,7 @@ func TestCapturePostSlug(t *testing.T) {
 		t.Fatalf("got %q err %v", slug, err)
 	}
 
-	bad := Menu{
+	bad := panel.Menu{
 		Reader: bufio.NewReader(strings.NewReader("Invalid Slug\n")),
 	}
 

@@ -18,6 +18,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
+	"github.com/oullin/pkg/support"
+
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/metal/env"
@@ -126,9 +128,7 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 }
 
 func TestGeneratorGenerateAllPages(t *testing.T) {
-	withRepoRoot(t)
-
-	conn, env := newPostgresConnection(t,
+	h := support.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -136,12 +136,21 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		&database.Tag{},
 		&database.PostTag{},
 	)
+	h.ChangeRepoRoot()
 
-	goCategory := seedCategory(t, conn, "golang", "GoLang")
-	_ = seedCategory(t, conn, "cli", "CLI Tools")
-	author := seedUser(t, conn, "Gustavo", "Canto", "gocanto")
-	tag := seedTag(t, conn, "golang", "GoLang")
-	post := seedPost(t, conn, author, goCategory, tag, "building-apis", "Building <APIs>")
+	goCategory := h.SeedCategory("golang", "GoLang", 1)
+	_ = h.SeedCategory("cli", "CLI Tools", 2)
+	author := h.SeedUser("Gustavo", "Canto", "gocanto")
+	tag := h.SeedTag("golang", "GoLang")
+	post := h.SeedPostWithContent(
+		author, goCategory, tag, "building-apis", "Building <APIs>",
+		"Learn <fast>\nwith examples",
+		"Intro paragraph with <tags>\nmore info.\n\nSecond paragraph & details.",
+		"https://seo.example.test/building-apis.png",
+	)
+
+	conn := h.Conn()
+	env := h.Env()
 
 	gen, err := NewGenerator(conn, env, newTestValidator(t))
 	if err != nil {
@@ -233,7 +242,8 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 }
 
 func TestGeneratorPreparePostImage(t *testing.T) {
-	withRepoRoot(t)
+	h := support.NewTestsHelperSimple(t)
+	h.ChangeRepoRoot()
 
 	outputDir := t.TempDir()
 	srcDir := t.TempDir()
@@ -322,7 +332,8 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 }
 
 func TestGeneratorPreparePostImageRemote(t *testing.T) {
-	withRepoRoot(t)
+	h := support.NewTestsHelperSimple(t)
+	h.ChangeRepoRoot()
 
 	outputDir := t.TempDir()
 

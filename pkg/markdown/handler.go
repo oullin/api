@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oullin/pkg/portal"
 	"gopkg.in/yaml.v3"
+
+	"github.com/oullin/pkg/portal"
 )
 
 func (p Parser) Fetch() (string, error) {

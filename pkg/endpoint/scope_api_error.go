@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/oullin/pkg/portal"
 )
 

@@ -1,22 +1,24 @@
-package cache
+package cache_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/oullin/pkg/cache"
 )
 
 func TestTTLCache_UsedAndMark(t *testing.T) {
-	c := NewTTLCache()
+	c := cache.NewTTLCache()
 	key := "acct|nonce1"
 	if c.Used(key) {
-		t.Fatalf("key should not be used initially")
+		t.Fatalf("expected key not to be used initially")
 	}
 	c.Mark(key, 50*time.Millisecond)
 	if !c.Used(key) {
-		t.Fatalf("key should be marked as used within TTL")
+		t.Fatalf("expected key to be marked as used within TTL")
 	}
 	time.Sleep(60 * time.Millisecond)
 	if c.Used(key) {
-		t.Fatalf("key should expire after TTL")
+		t.Fatalf("expected key to expire after TTL")
 	}
 }
