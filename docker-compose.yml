@@ -440,7 +440,10 @@ services:
             # Ensure the database always restarts on server reboot or crash.
             restart: always
 
-            image: postgres:17.6-alpine3.22@sha256:747d5ed1fdeeb124b880fbe3d7c6557d2c4064ae41d6b6297d417882effce4be
+            # Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+            # consistent checksum behaviour (initdb enables checksums by default in PG 18).
+            # This matches the version used in test environments for consistency.
+            image: postgres:18.1-alpine@sha256:6723ec6d445fe51c6d097b9248f8a4b793255853524839fca1b2d69a435b6072
             container_name: oullin_db
 
             env_file:

@@ -2,7 +2,8 @@
 
 set -eux
 
-# Take ownership of the main data directory.
+# Ensure the main data directory exists before taking ownership.
+mkdir -p /var/lib/postgresql/data
 chown -R postgres:postgres /var/lib/postgresql/data
 
 # Decide what to run:
