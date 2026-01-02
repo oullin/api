@@ -22,9 +22,10 @@ volumes:
         driver: local
 
     # --- DB: Define a named volume at the top level.
-    #     Docker will manage its lifecycle.
+    #     Uses an existing external volume that was created outside of Compose.
     oullin_db_data:
-        driver: local
+        name: api_oullin_db_data
+        external: true
 
 networks:
     caddy_net:
