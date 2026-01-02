@@ -24,7 +24,7 @@ backup\:restore:
 		exit 1; \
 	fi
 	@echo -e "$(YELLOW)Restoring database from: $(file)$(NC)"
-	@$(BACKUP_SCRIPT) restore --file $(file)
+	@$(BACKUP_SCRIPT) restore --file "$(file)"
 
 backup\:list:
 	@$(BACKUP_SCRIPT) list

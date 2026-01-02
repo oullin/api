@@ -1,17 +1,14 @@
-# Database Backup Scripts
+# Database Backups
+> db-backup.sh
 
-This directory contains scripts for managing database backups for the Oullin API.
-
-## db-backup.sh
-
-A comprehensive PostgreSQL backup and restore utility that works with the Dockerized database.
+A comprehensive PostgreSQL backup and restore utility that works with Dockerised databases.
 
 ### Features
 
 - **Backup**: Create compressed or uncompressed database backups
-- **Restore**: Restore database from backup files
+- **Restore**: Restore databases from backup files
 - **List**: View all available backups with size and date
-- **Cleanup**: Automatically remove old backups based on retention policy
+- **Clean-up**: Automatically remove old backups based on retention policy
 - **Docker Integration**: Works seamlessly with Docker secrets and containers
 - **Compression**: Automatic gzip compression to save storage space
 - **Safety**: Confirmation prompts for destructive operations
@@ -30,6 +27,40 @@ A comprehensive PostgreSQL backup and restore utility that works with the Docker
 
 # Clean up old backups (keeps last 7 days by default)
 ./infra/scripts/db-backup.sh cleanup
+```
+
+### Makefile Commands (infra/makefile/backup.mk)
+
+You can use the Makefile shortcuts defined in `infra/makefile/backup.mk`:
+
+```bash
+# Create a backup
+make backup:create
+
+# List backups
+make backup:list
+
+# Restore from a backup
+make backup:restore file=storage/backups/oullin_db_20260102_153045.sql.gz
+
+# Cleanup old backups (default retention: 7 days)
+make backup:cleanup
+
+# Cleanup with a custom retention period
+make BACKUP_RETENTION_DAYS=14 backup:cleanup
+
+# Setup cron-based backups (weekly Sundays at 2 AM)
+make backup:cron:setup
+
+# Setup cron-based backups with a custom schedule
+make backup:cron:setup schedule="0 2 * * *"
+
+# Preview cron changes
+make backup:cron:setup:dry-run
+
+# Show or remove cron jobs
+make backup:cron:show
+make backup:cron:remove
 ```
 
 ### Commands
@@ -87,7 +118,7 @@ Remove backups older than the retention period (default: 7 days).
 
 ### Environment Variables
 
-You can customize the script behavior using environment variables:
+You can customise the script behaviour using environment variables:
 
 ```bash
 # Custom backup directory
@@ -119,6 +150,33 @@ crontab -e
 ```
 
 For a more robust setup with proper logging and error handling, see the example in `setup-cron-backup.sh`.
+
+#### VPS setup (servers)
+
+On VPS servers, use the Makefile helper so it wires up logging and cleanup for you:
+
+```bash
+# SSH into the server and move into the repo
+cd /path/to/oullin/api
+
+# Install weekly backups + cleanup (default retention: 7 days)
+make backup:cron:setup
+
+# Or install a daily backup at 2 AM with 14-day retention
+make BACKUP_RETENTION_DAYS=14 backup:cron:setup schedule="0 2 * * *"
+
+# Verify cron entries
+make backup:cron:show
+
+# Check logs
+tail -f storage/logs/db-backup.log
+```
+
+The cron jobs created by `setup-cron-backup.sh` run backups and cleanup from the repo root and log to `storage/logs/db-backup.log`.
+
+Prereqs on VPS:
+- `cron` (or `cronie`) installed and enabled
+- `docker` and the database container running
 
 ### Storage Locations
 
@@ -199,7 +257,13 @@ Ensure the container is running and secrets are properly configured in `docker-c
 ./infra/scripts/db-backup.sh restore --file storage/backups/oullin_db_20260104_020000.sql.gz
 
 # 3. Verify the restoration
-docker exec oullin_db psql -U gus -d oullin_db -c "SELECT COUNT(*) FROM your_table;"
+docker exec oullin_db psql -U <your_username> -d oullin_db -c "SELECT COUNT(*) FROM your_table;"
+```
+
+You can fetch the database username from Docker secrets inside the container:
+
+```bash
+docker exec oullin_db cat /run/secrets/pg_username
 ```
 
 #### Migration to New Server

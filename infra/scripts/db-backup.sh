@@ -13,9 +13,9 @@ PROJECT_ROOT=""
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 readonly PROJECT_ROOT
 
-readonly BACKUP_DIR="${BACKUP_DIR:-${PROJECT_ROOT}/storage/backups}"
+BACKUP_DIR="${BACKUP_DIR:-${PROJECT_ROOT}/storage/backups}"
 readonly CONTAINER_NAME="${DB_CONTAINER_NAME:-oullin_db}"
-readonly RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
+RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
 
 TIMESTAMP=""
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -38,6 +38,22 @@ log_error() {
 
 log_warn() {
     echo -e "${YELLOW}[WARN]${NC} $*"
+}
+
+stat_epoch() {
+    if stat -c %Y "$1" >/dev/null 2>&1; then
+        stat -c %Y "$1"
+    else
+        stat -f %m "$1"
+    fi
+}
+
+stat_date() {
+    if stat -c %y "$1" >/dev/null 2>&1; then
+        stat -c %y "$1" | cut -d'.' -f1
+    else
+        stat -f '%Sm' -t '%Y-%m-%d %H:%M:%S' "$1"
+    fi
 }
 
 show_usage() {
@@ -84,7 +100,7 @@ EOF
 }
 
 check_container() {
-    if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    if ! docker ps --format '{{.Names}}' | grep -Fq "${CONTAINER_NAME}"; then
         log_error "Database container '${CONTAINER_NAME}' is not running"
         log_info "Start it with: docker compose up -d api-db"
         exit 1
@@ -112,6 +128,9 @@ create_backup() {
     check_container
     get_db_credentials
 
+    # Lock down permissions on created backups.
+    umask 077
+
     # Create backup directory if it doesn't exist
     mkdir -p "${BACKUP_DIR}"
 
@@ -127,6 +146,7 @@ create_backup() {
         -d "${DB_NAME}" \
         --verbose \
         --format=plain \
+        --clean \
         --no-owner \
         --no-privileges \
         --no-acl > "${backup_file}"; then
@@ -221,11 +241,14 @@ list_backups() {
     log_info "Available backups in ${BACKUP_DIR}:"
     echo
 
-    # Find all .sql and .sql.gz files, sort by modification time
-    local backups
-    backups=$(find "${BACKUP_DIR}" -maxdepth 1 -type f \( -name "*.sql" -o -name "*.sql.gz" \) -print0 | xargs -0 ls -lt 2>/dev/null)
+    local entries=()
+    while IFS= read -r -d '' file; do
+        local epoch
+        epoch=$(stat_epoch "$file")
+        entries+=("${epoch}\t${file}")
+    done < <(find "${BACKUP_DIR}" -maxdepth 1 -type f \( -name "*.sql" -o -name "*.sql.gz" \) -print0)
 
-    if [[ -z "${backups}" ]]; then
+    if [[ ${#entries[@]} -eq 0 ]]; then
         log_warn "No backups found"
         return 0
     fi
@@ -233,22 +256,35 @@ list_backups() {
     printf "%-50s %-10s %-20s\n" "FILE" "SIZE" "DATE"
     printf "%-50s %-10s %-20s\n" "----" "----" "----"
 
-    echo "${backups}" | while read -r line; do
-        local file
-        file=$(echo "$line" | awk '{print $NF}')
-        local size
-        size=$(echo "$line" | awk '{print $5}')
-        local date
-        date=$(echo "$line" | awk '{print $6, $7, $8}')
-        local filename
-        filename=$(basename "$file")
+    if sort -z </dev/null >/dev/null 2>&1; then
+        printf '%s\0' "${entries[@]}" | sort -z -nr -k1,1 | while IFS=$'\t' read -r -d '' _epoch file; do
+            local filename
+            filename=$(basename "$file")
 
-        # Convert size to human readable
-        local human_size
-        human_size=$(du -h "$file" | cut -f1)
+            # Convert size to human readable
+            local human_size
+            human_size=$(du -h "$file" | cut -f1)
 
-        printf "%-50s %-10s %-20s\n" "$filename" "$human_size" "$date"
-    done
+            local date
+            date=$(stat_date "$file")
+
+            printf "%-50s %-10s %-20s\n" "$filename" "$human_size" "$date"
+        done
+    else
+        printf '%s\n' "${entries[@]}" | sort -nr -k1,1 | while IFS=$'\t' read -r _epoch file; do
+            local filename
+            filename=$(basename "$file")
+
+            # Convert size to human readable
+            local human_size
+            human_size=$(du -h "$file" | cut -f1)
+
+            local date
+            date=$(stat_date "$file")
+
+            printf "%-50s %-10s %-20s\n" "$filename" "$human_size" "$date"
+        done
+    fi
 
     echo
     local total
@@ -260,6 +296,11 @@ cleanup_old_backups() {
     if [[ ! -d "${BACKUP_DIR}" ]]; then
         log_warn "Backup directory does not exist: ${BACKUP_DIR}"
         return 0
+    fi
+
+    if [[ ! "${RETENTION_DAYS}" =~ ^[0-9]+$ ]]; then
+        log_error "Invalid retention days: ${RETENTION_DAYS}"
+        exit 1
     fi
 
     log_info "Cleaning up backups older than ${RETENTION_DAYS} days..."
@@ -300,6 +341,10 @@ main() {
                 shift 2
                 ;;
             -r|--retention)
+                if [[ ! "$2" =~ ^[0-9]+$ ]]; then
+                    log_error "Invalid retention days: $2"
+                    exit 1
+                fi
                 RETENTION_DAYS="$2"
                 shift 2
                 ;;

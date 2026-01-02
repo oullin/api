@@ -33,6 +33,14 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $*" >&2
 }
 
+require_arg() {
+    if [[ -z "${2-}" ]]; then
+        log_error "Missing value for ${1}"
+        show_usage
+        exit 1
+    fi
+}
+
 show_usage() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
@@ -102,10 +110,10 @@ generate_cron_entries() {
 # DO NOT EDIT MANUALLY - Use setup-cron-backup.sh to modify
 
 # Automated database backup
-${backup_schedule} cd ${PROJECT_ROOT} && ${BACKUP_SCRIPT} backup >> ${log_file} 2>&1
+${backup_schedule} cd "${PROJECT_ROOT}" && "${BACKUP_SCRIPT}" backup >> "${log_file}" 2>&1
 
 # Periodic cleanup of old backups (retention: ${retention_days} days)
-${cleanup_schedule} cd ${PROJECT_ROOT} && BACKUP_RETENTION_DAYS=${retention_days} ${BACKUP_SCRIPT} cleanup >> ${log_file} 2>&1
+${cleanup_schedule} cd "${PROJECT_ROOT}" && BACKUP_RETENTION_DAYS=${retention_days} "${BACKUP_SCRIPT}" cleanup >> "${log_file}" 2>&1
 
 EOF
 }
@@ -132,9 +140,10 @@ install_cron_jobs() {
     # Get current crontab, remove old Oullin backup entries, add new ones
     local temp_cron
     temp_cron=$(mktemp)
+    trap 'rm -f "${temp_cron}"' RETURN
 
     # Export current crontab (ignore error if empty)
-    crontab -l 2>/dev/null | grep -v "Oullin API Database Backup" | grep -v "${BACKUP_SCRIPT}" > "${temp_cron}" || true
+    crontab -l 2>/dev/null | grep -Fv "Oullin API Database Backup" | grep -Fv "${BACKUP_SCRIPT}" > "${temp_cron}" || true
 
     # Add new entries
     echo "${new_entries}" >> "${temp_cron}"
@@ -142,10 +151,8 @@ install_cron_jobs() {
     # Install new crontab
     if crontab "${temp_cron}"; then
         log_info "Cron jobs installed successfully"
-        rm -f "${temp_cron}"
     else
         log_error "Failed to install cron jobs"
-        rm -f "${temp_cron}"
         exit 1
     fi
 
@@ -158,7 +165,7 @@ install_cron_jobs() {
 show_current_crontab() {
     log_info "Current crontab entries for database backups:"
     echo
-    if crontab -l 2>/dev/null | grep -A 5 "Oullin API Database Backup"; then
+    if crontab -l 2>/dev/null | grep -A 5 -F "Oullin API Database Backup"; then
         echo
     else
         log_warn "No existing backup cron jobs found"
@@ -181,16 +188,16 @@ remove_cron_jobs() {
 
     local temp_cron
     temp_cron=$(mktemp)
+    trap 'rm -f "${temp_cron}"' RETURN
 
     # Export current crontab and remove Oullin backup entries
-    if crontab -l 2>/dev/null | grep -v "Oullin API Database Backup" | grep -v "${BACKUP_SCRIPT}" > "${temp_cron}"; then
+    if crontab -l 2>/dev/null | grep -Fv "Oullin API Database Backup" | grep -Fv "${BACKUP_SCRIPT}" > "${temp_cron}"; then
         crontab "${temp_cron}"
         log_info "Cron jobs removed successfully"
     else
         log_warn "No cron jobs found to remove"
     fi
 
-    rm -f "${temp_cron}"
 }
 
 main() {
@@ -208,14 +215,17 @@ main() {
                 exit 0
                 ;;
             -s|--schedule)
+                require_arg "$1" "${2-}"
                 backup_schedule="$2"
                 shift 2
                 ;;
             -r|--retention)
+                require_arg "$1" "${2-}"
                 retention_days="$2"
                 shift 2
                 ;;
             --cleanup-schedule)
+                require_arg "$1" "${2-}"
                 cleanup_schedule="$2"
                 shift 2
                 ;;
