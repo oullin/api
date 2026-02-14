@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(GOTOOLCHAIN=go1.26.0 go version:*)",
+      "Bash(GOTOOLCHAIN=go1.26.0 gofmt:*)",
+      "Bash(GOTOOLCHAIN=go1.26.0 go run:*)",
+      "Bash(GOTOOLCHAIN=go1.26.0 go mod download:*)",
+      "Bash(GOTOOLCHAIN=go1.26.0 go mod tidy:*)",
+      "Bash(GOTOOLCHAIN=go1.26.0 go get:*)"
+    ]
+  }
+}

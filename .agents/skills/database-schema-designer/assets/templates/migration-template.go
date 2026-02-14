@@ -17,12 +17,12 @@ import (
 
 // Example model for auto-migration
 type TableName struct {
-	ID        uint           `gorm:"primaryKey;autoIncrement"`
-	ColumnName string        `gorm:"type:varchar(255);not null;index:idx_table_column"`
-	ReferenceID *uint         `gorm:"index"`
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID          uint           `gorm:"primaryKey;autoIncrement"`
+	ColumnName  string         `gorm:"type:varchar(255);not null;index:idx_table_column"`
+	ReferenceID *uint          `gorm:"index"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 
 	// Foreign key relationship
 	Reference *OtherTable `gorm:"foreignKey:ReferenceID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
@@ -185,25 +185,25 @@ func Validate_YYYYMMDDHHMMSS(db *gorm.DB) error {
 
 // MigrationInfo provides metadata about this migration
 type MigrationInfo struct {
-	Version     string
-	Description string
-	Author      string
-	Date        time.Time
-	EstimatedTime string
+	Version          string
+	Description      string
+	Author           string
+	Date             time.Time
+	EstimatedTime    string
 	RequiresDowntime bool
-	RollbackTested bool
+	RollbackTested   bool
 }
 
 // GetInfo returns migration metadata
 func GetInfo_YYYYMMDDHHMMSS() MigrationInfo {
 	return MigrationInfo{
-		Version:     "YYYYMMDDHHMMSS",
-		Description: "[What this migration does]",
-		Author:      "[Your Name]",
-		Date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		EstimatedTime: "[X seconds on Y rows]",
+		Version:          "YYYYMMDDHHMMSS",
+		Description:      "[What this migration does]",
+		Author:           "[Your Name]",
+		Date:             time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		EstimatedTime:    "[X seconds on Y rows]",
 		RequiresDowntime: false,
-		RollbackTested: false,
+		RollbackTested:   false,
 	}
 }
 

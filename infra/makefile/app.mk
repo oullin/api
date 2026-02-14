@@ -9,7 +9,7 @@
 ROOT_PATH           := $(shell pwd)
 DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 
-GOTOOLCHAIN_VERSION ?= go1.25.5
+GOTOOLCHAIN_VERSION ?= go1.26.0
 
 DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
 DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
