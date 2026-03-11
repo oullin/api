@@ -1,0 +1,21 @@
+ARG ALPINE_VERSION=3.23
+ARG ALPINE_IMAGE_DIGEST=sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+
+FROM alpine:${ALPINE_VERSION}@${ALPINE_IMAGE_DIGEST}
+
+# Pin direct package artifact URLs so runtime dependencies do not drift with the
+# Alpine package index.
+ARG TARGETARCH
+ARG APK_BASE_URL=https://dl-cdn.alpinelinux.org/alpine/v3.23/main
+
+RUN case "${TARGETARCH}" in \
+        arm64) apk_arch="aarch64" ;; \
+        amd64) apk_arch="x86_64" ;; \
+        *) echo "Unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    wget -O /tmp/tzdata.apk "${APK_BASE_URL}/${apk_arch}/tzdata-2025c-r0.apk" && \
+    wget -O /tmp/libwebp.apk "${APK_BASE_URL}/${apk_arch}/libwebp-1.6.0-r0.apk" && \
+    apk add --no-cache \
+        /tmp/tzdata.apk \
+        /tmp/libwebp.apk && \
+    rm -f /tmp/tzdata.apk /tmp/libwebp.apk
