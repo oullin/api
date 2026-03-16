@@ -5,7 +5,7 @@ import (
 )
 
 const FixtureTalks = "talks"
-const FixtureSocial = "social"
+const FixtureSocial = "links"
 const FixtureProfile = "profile"
 const FixtureProjects = "projects"
 const FixtureEducation = "education"

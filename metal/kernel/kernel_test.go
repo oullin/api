@@ -270,7 +270,7 @@ func TestAppBootRoutes(t *testing.T) {
 		{"GET", "/profile"},
 		{"GET", "/experience"},
 		{"GET", "/projects"},
-		{"GET", "/social"},
+		{"GET", "/links"},
 		{"GET", "/talks"},
 		{"GET", "/education"},
 		{"GET", "/recommendations"},
