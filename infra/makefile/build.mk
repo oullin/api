@@ -1,7 +1,7 @@
 .PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images build-base-images push-base-images
 
 BUILD_VERSION ?= latest
-BASE_IMAGE_VERSION ?= 1.25.5-alpine3.23-r1
+BASE_IMAGE_VERSION ?= 1.26.1-alpine3.23-r1
 BUILD_CADDY_NET := caddy_net
 BUILD_PACKAGE_OWNER := oullin
 BUILD_BASE_IMAGES_DIR := $(ROOT_PATH)/infra/docker/base-images

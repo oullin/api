@@ -9,7 +9,8 @@
 ROOT_PATH           := $(shell pwd)
 DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 
-GOTOOLCHAIN_VERSION ?= go1.25.5
+GOTOOLCHAIN_VERSION ?= go1.26.1
+GO_LOCAL_TOOLCHAIN  := auto
 
 DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
 DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
@@ -27,8 +28,11 @@ DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
 
 format:
 	@printf "\n  ..... $(CYAN)gofmt & goimports commands have started.$(NC)\n"
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) gofmt -w -s .
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go run golang.org/x/tools/cmd/goimports -w -local github.com/oullin .
+	@files="$$(git ls-files '*.go')"; \
+	if [ -n "$$files" ]; then \
+		printf '%s\n' "$$files" | xargs env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) gofmt -w -s; \
+		printf '%s\n' "$$files" | xargs env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run golang.org/x/tools/cmd/goimports@v0.43.0 -w -local github.com/oullin; \
+	fi
 	@printf "\n  ..... $(GREEN)Formatting finished.$(NC)\n\n"
 
 audit:
@@ -38,7 +42,7 @@ audit:
 	$(call external_deps,'./docs/...')
 
 test-all:
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go test ./...
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go test ./...
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Docker Management Commands
@@ -66,13 +70,13 @@ destroy:
 watch:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
-	cd $(APP_PATH) && GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) air -d
+	cd $(APP_PATH) && GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) air -d
 
 install-air:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
 	@echo "Installing air ..."
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go install github.com/air-verse/air@latest
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go install github.com/air-verse/air@latest
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # CLI Commands
@@ -159,4 +163,4 @@ run-cli-docker:
 	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
 
 run-metal:
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go run metal/cli/main.go
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run metal/cli/main.go
