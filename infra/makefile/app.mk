@@ -9,8 +9,11 @@
 ROOT_PATH           := $(shell pwd)
 DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 
-GOTOOLCHAIN_VERSION ?= go1.26.1
-GO_LOCAL_TOOLCHAIN  := auto
+# "auto" lets the local Go installation download the toolchain required by go.mod,
+# so developers don't need to install the exact Go version manually.
+# Override with a pinned version (e.g., GO_LOCAL_TOOLCHAIN=go1.26.1) for deterministic builds.
+# Note: docker-compose reads GOTOOLCHAIN_VERSION from .env separately.
+GO_LOCAL_TOOLCHAIN  ?= auto
 
 DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
 DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
@@ -28,11 +31,8 @@ DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
 
 format:
 	@printf "\n  ..... $(CYAN)gofmt & goimports commands have started.$(NC)\n"
-	@files="$$(git ls-files '*.go')"; \
-	if [ -n "$$files" ]; then \
-		printf '%s\n' "$$files" | xargs env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) gofmt -w -s; \
-		printf '%s\n' "$$files" | xargs env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run golang.org/x/tools/cmd/goimports@v0.43.0 -w -local github.com/oullin; \
-	fi
+	@git ls-files -z '*.go' | xargs -0 env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) gofmt -w -s
+	@git ls-files -z '*.go' | xargs -0 env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run golang.org/x/tools/cmd/goimports@v0.43.0 -w -local github.com/oullin
 	@printf "\n  ..... $(GREEN)Formatting finished.$(NC)\n\n"
 
 audit:
@@ -160,7 +160,7 @@ run-cli:
 	fi
 
 run-cli-docker:
-	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
+	$(MAKE) run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
 
 run-metal:
 	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run metal/cli/main.go

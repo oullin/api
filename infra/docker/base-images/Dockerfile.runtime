@@ -5,17 +5,22 @@ FROM alpine:${ALPINE_VERSION}@${ALPINE_IMAGE_DIGEST}
 
 # Pin direct package artifact URLs so runtime dependencies do not drift with the
 # Alpine package index.
-ARG TARGETARCH
+# TARGETARCH is auto-set by BuildKit; default to amd64 for legacy builders.
+ARG TARGETARCH=amd64
 ARG APK_BASE_URL=https://dl-cdn.alpinelinux.org/alpine/v3.23/main
 
+# tzdata is installed from the package index rather than a pinned URL because the
+# Alpine CDN advances tzdata versions independently per architecture, making a
+# single pinned version unreliable across amd64/arm64. The digest-pinned base
+# image still bounds the package set to a known Alpine release.
+RUN apk add --no-cache tzdata
+
+# Pin native library URLs so binary dependencies do not drift with the index.
 RUN case "${TARGETARCH}" in \
         arm64) apk_arch="aarch64" ;; \
         amd64) apk_arch="x86_64" ;; \
         *) echo "Unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac && \
-    wget -O /tmp/tzdata.apk "${APK_BASE_URL}/${apk_arch}/tzdata-2025c-r0.apk" && \
-    wget -O /tmp/libwebp.apk "${APK_BASE_URL}/${apk_arch}/libwebp-1.6.0-r0.apk" && \
-    apk add --no-cache \
-        /tmp/tzdata.apk \
-        /tmp/libwebp.apk && \
-    rm -f /tmp/tzdata.apk /tmp/libwebp.apk
+    wget -qO /tmp/libwebp.apk "${APK_BASE_URL}/${apk_arch}/libwebp-1.6.0-r0.apk" && \
+    apk add --no-cache /tmp/libwebp.apk && \
+    rm -f /tmp/libwebp.apk

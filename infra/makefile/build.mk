@@ -1,4 +1,4 @@
-.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images build-base-images push-base-images
+.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images
 
 BUILD_VERSION ?= latest
 BASE_IMAGE_VERSION ?= 1.26.1-alpine3.23-r1
@@ -15,9 +15,15 @@ DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
 ensure-caddy-net:
 	docker network inspect caddy_net >/dev/null 2>&1 || docker network create caddy_net
 
-ensure-base-images:
-	@docker image inspect "$(BUILD_BASE_BUILDER_IMAGE)" >/dev/null 2>&1 || $(MAKE) build-base-images
-	@docker image inspect "$(BUILD_BASE_RUNTIME_IMAGE)" >/dev/null 2>&1 || $(MAKE) build-base-images
+ensure-base-images: ensure-builder-base-image ensure-runtime-base-image
+
+ensure-builder-base-image:
+	@docker image inspect "$(BUILD_BASE_BUILDER_IMAGE)" >/dev/null 2>&1 || \
+		docker build -f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.builder" -t "$(BUILD_BASE_BUILDER_IMAGE)" "$(BUILD_BASE_IMAGES_DIR)"
+
+ensure-runtime-base-image:
+	@docker image inspect "$(BUILD_BASE_RUNTIME_IMAGE)" >/dev/null 2>&1 || \
+		docker build -f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.runtime" -t "$(BUILD_BASE_RUNTIME_IMAGE)" "$(BUILD_BASE_IMAGES_DIR)"
 
 build-base-images:
 	@printf "\n$(CYAN)Building reproducible API base images$(NC)\n"
@@ -43,20 +49,20 @@ push-base-images:
 	@docker image inspect "$(BUILD_BASE_RUNTIME_IMAGE_REMOTE)" --format='runtime={{index .RepoDigests 0}}'
 
 build-fresh:
-	make fresh && \
-	make db:fresh && \
-	make db:migrate && \
-	make db:seed
+	$(MAKE) fresh && \
+	$(MAKE) db:fresh && \
+	$(MAKE) db:migrate && \
+	$(MAKE) db:seed
 
 build-local:
-	make ensure-caddy-net
-	make ensure-db-volume
-	make ensure-base-images
+	$(MAKE) ensure-caddy-net
+	$(MAKE) ensure-db-volume
+	$(MAKE) ensure-base-images
 	docker compose --profile local up --build -d
 
 build-local-restart:
-	make ensure-db-volume && \
-	make ensure-base-images && \
+	$(MAKE) ensure-db-volume && \
+	$(MAKE) ensure-base-images && \
 	docker compose --profile local down && \
 	docker compose --profile local up --build -d
 
@@ -82,6 +88,7 @@ build-deploy:
 	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
 	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)"
 	@$(MAKE) ensure-db-volume
+	@$(MAKE) ensure-base-images
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/postgres-entrypoint.sh" && \
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/run-migration.sh"
 	@echo "Starting database service..."
@@ -101,7 +108,7 @@ build-deploy:
 		sleep 2; \
 	done
 	@echo "Running migrations..."
-	make db:migrate
+	$(MAKE) db:migrate
 	@echo "Starting remaining services..."
 	docker compose --env-file ./.env --profile prod up -d
 
