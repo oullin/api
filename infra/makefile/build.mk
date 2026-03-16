@@ -1,7 +1,14 @@
-.PHONY: build-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images
+.PHONY: build-local watch-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images
 
 BUILD_VERSION ?= latest
-BASE_IMAGE_VERSION ?= 1.26.1-alpine3.23-r1
+BASE_GO_VERSION ?= 1.26.1
+BASE_ALPINE_VERSION ?= 3.23
+BASE_IMAGE_REVISION ?= 2
+BASE_GO_IMAGE_VARIANT ?= alpine$(BASE_ALPINE_VERSION)
+BASE_GO_IMAGE_DIGEST ?= sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039
+BASE_ALPINE_IMAGE_DIGEST ?= sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+BASE_APK_BASE_URL ?= https://dl-cdn.alpinelinux.org/alpine/v$(BASE_ALPINE_VERSION)/main
+BASE_IMAGE_VERSION ?= $(BASE_GO_VERSION)-alpine$(BASE_ALPINE_VERSION)-r$(BASE_IMAGE_REVISION)
 BUILD_CADDY_NET := caddy_net
 BUILD_PACKAGE_OWNER := oullin
 BUILD_BASE_IMAGES_DIR := $(ROOT_PATH)/infra/docker/base-images
@@ -9,8 +16,15 @@ BUILD_BASE_BUILDER_IMAGE := oullin-api-builder-base:$(BASE_IMAGE_VERSION)
 BUILD_BASE_RUNTIME_IMAGE := oullin-api-runtime-base:$(BASE_IMAGE_VERSION)
 BUILD_BASE_BUILDER_IMAGE_REMOTE := ghcr.io/$(BUILD_PACKAGE_OWNER)/oullin-api-builder-base:$(BASE_IMAGE_VERSION)
 BUILD_BASE_RUNTIME_IMAGE_REMOTE := ghcr.io/$(BUILD_PACKAGE_OWNER)/oullin-api-runtime-base:$(BASE_IMAGE_VERSION)
+BUILD_BASE_BUILDER_ARGS := --build-arg GO_VERSION=$(BASE_GO_VERSION) --build-arg GO_IMAGE_VARIANT=$(BASE_GO_IMAGE_VARIANT) --build-arg GO_IMAGE_DIGEST=$(BASE_GO_IMAGE_DIGEST) --build-arg APK_BASE_URL=$(BASE_APK_BASE_URL)
+BUILD_BASE_RUNTIME_ARGS := --build-arg ALPINE_VERSION=$(BASE_ALPINE_VERSION) --build-arg ALPINE_IMAGE_DIGEST=$(BASE_ALPINE_IMAGE_DIGEST) --build-arg APK_BASE_URL=$(BASE_APK_BASE_URL)
 DB_INFRA_ROOT_PATH ?= $(ROOT_PATH)/database/infra
 DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
+
+build-local build-local-restart build-ci build-prod build-deploy run-cli run-cli-docker: export BASE_IMAGE_VERSION := $(BASE_IMAGE_VERSION)
+build-prod build-deploy: export DB_SECRET_USERNAME := $(value DB_SECRET_USERNAME)
+build-prod build-deploy: export DB_SECRET_PASSWORD := $(value DB_SECRET_PASSWORD)
+build-prod build-deploy: export DB_SECRET_DBNAME := $(value DB_SECRET_DBNAME)
 
 ensure-caddy-net:
 	docker network inspect caddy_net >/dev/null 2>&1 || docker network create caddy_net
@@ -19,19 +33,21 @@ ensure-base-images: ensure-builder-base-image ensure-runtime-base-image
 
 ensure-builder-base-image:
 	@docker image inspect "$(BUILD_BASE_BUILDER_IMAGE)" >/dev/null 2>&1 || \
-		docker build -f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.builder" -t "$(BUILD_BASE_BUILDER_IMAGE)" "$(BUILD_BASE_IMAGES_DIR)"
+		docker build $(BUILD_BASE_BUILDER_ARGS) -f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.builder" -t "$(BUILD_BASE_BUILDER_IMAGE)" "$(BUILD_BASE_IMAGES_DIR)"
 
 ensure-runtime-base-image:
 	@docker image inspect "$(BUILD_BASE_RUNTIME_IMAGE)" >/dev/null 2>&1 || \
-		docker build -f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.runtime" -t "$(BUILD_BASE_RUNTIME_IMAGE)" "$(BUILD_BASE_IMAGES_DIR)"
+		docker build $(BUILD_BASE_RUNTIME_ARGS) -f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.runtime" -t "$(BUILD_BASE_RUNTIME_IMAGE)" "$(BUILD_BASE_IMAGES_DIR)"
 
 build-base-images:
 	@printf "\n$(CYAN)Building reproducible API base images$(NC)\n"
 	docker build \
+		$(BUILD_BASE_BUILDER_ARGS) \
 		-f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.builder" \
 		-t "$(BUILD_BASE_BUILDER_IMAGE)" \
 		"$(BUILD_BASE_IMAGES_DIR)"
 	docker build \
+		$(BUILD_BASE_RUNTIME_ARGS) \
 		-f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.runtime" \
 		-t "$(BUILD_BASE_RUNTIME_IMAGE)" \
 		"$(BUILD_BASE_IMAGES_DIR)"
@@ -60,6 +76,12 @@ build-local:
 	$(MAKE) ensure-base-images
 	docker compose --profile local up --build -d
 
+watch-local:
+	$(MAKE) ensure-caddy-net
+	$(MAKE) ensure-db-volume
+	$(MAKE) ensure-base-images
+	docker compose --profile local up
+
 build-local-restart:
 	$(MAKE) ensure-db-volume && \
 	$(MAKE) ensure-base-images && \
@@ -78,15 +100,9 @@ build-ci:
 build-prod:
 	@$(MAKE) ensure-db-volume
 	@$(MAKE) ensure-base-images
-	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" \
-	docker compose --profile prod up --build -d
+	@docker compose --profile prod up --build -d
 
 build-deploy:
-	@DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" \
-	DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" \
-	DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)"
 	@$(MAKE) ensure-db-volume
 	@$(MAKE) ensure-base-images
 	chmod +x "$(DB_INFRA_SCRIPTS_PATH)/postgres-entrypoint.sh" && \

@@ -14,6 +14,9 @@
 # It tells Caddy to listen on its internal port 80 for any incoming hostname.
 # Docker maps our host port (8080) to this container port.
 :80 {
+	@localhost_origin header Origin http://localhost:5179
+	@loopback_origin header Origin http://127.0.0.1:5179
+
 	# Define a logging format for easier debugging.
 	log {
 		output stdout
@@ -21,11 +24,14 @@
 	}
 
 	header {
-		Access-Control-Allow-Origin "http://localhost:5176" # allows the Vue app (running on localhost:5176) to make requests.
 		Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" # Specifies which methods are allowed.
 		Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin" # allows the custom headers needed by the API.
 		Access-Control-Expose-Headers "ETag, X-Request-ID"
+		Vary "Origin"
 	}
+
+	header @localhost_origin Access-Control-Allow-Origin "http://localhost:5179"
+	header @loopback_origin Access-Control-Allow-Origin "http://127.0.0.1:5179"
 
 	# This handles the browser's "preflight" OPTIONS request.
 	@preflight {
@@ -34,8 +40,9 @@
 	}
 
 	handle @preflight {
-		# Reflect the Origin back so it's always allowed
-		header Access-Control-Allow-Origin "{http.request.header.Origin}"
+		# Reflect only approved local origins back so the browser sees a single ACAO value.
+		header @localhost_origin Access-Control-Allow-Origin "http://localhost:5179"
+		header @loopback_origin Access-Control-Allow-Origin "http://127.0.0.1:5179"
 		header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 		header Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
 		header Access-Control-Max-Age "86400"

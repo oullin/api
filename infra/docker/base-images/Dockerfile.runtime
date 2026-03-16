@@ -1,26 +1,38 @@
-ARG ALPINE_VERSION=3.23
-ARG ALPINE_IMAGE_DIGEST=sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+ARG ALPINE_VERSION
+ARG ALPINE_IMAGE_DIGEST
 
 FROM alpine:${ALPINE_VERSION}@${ALPINE_IMAGE_DIGEST}
 
 # Pin direct package artifact URLs so runtime dependencies do not drift with the
 # Alpine package index.
-# TARGETARCH is auto-set by BuildKit; default to amd64 for legacy builders.
-ARG TARGETARCH=amd64
-ARG APK_BASE_URL=https://dl-cdn.alpinelinux.org/alpine/v3.23/main
+# TARGETARCH is auto-set by BuildKit. Fall back to the running Alpine arch when
+# building without BuildKit-provided platform args.
+ARG TARGETARCH
+ARG APK_BASE_URL
 
-# tzdata is installed from the package index rather than a pinned URL because the
-# Alpine CDN advances tzdata versions independently per architecture, making a
-# single pinned version unreliable across amd64/arm64. The digest-pinned base
-# image still bounds the package set to a known Alpine release.
-RUN apk add --no-cache tzdata
-
-# Pin native library URLs so binary dependencies do not drift with the index.
-RUN case "${TARGETARCH}" in \
+RUN target_arch="${TARGETARCH}"; \
+    if [ -z "${target_arch}" ]; then \
+        case "$(apk --print-arch)" in \
+            aarch64) target_arch="arm64" ;; \
+            x86_64) target_arch="amd64" ;; \
+            *) echo "Unsupported Alpine arch: $(apk --print-arch)" >&2; exit 1 ;; \
+        esac; \
+    fi && \
+    case "${target_arch}" in \
         arm64) apk_arch="aarch64" ;; \
         amd64) apk_arch="x86_64" ;; \
         *) echo "Unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-    esac && \
-    wget -qO /tmp/libwebp.apk "${APK_BASE_URL}/${apk_arch}/libwebp-1.6.0-r0.apk" && \
-    apk add --no-cache /tmp/libwebp.apk && \
-    rm -f /tmp/libwebp.apk
+    esac && mkdir -p "/tmp/local-repo/${apk_arch}" && \
+    for apk_pkg in \
+        libsharpyuv-1.6.0-r0.apk \
+        libwebp-1.6.0-r0.apk \
+        musl-1.2.5-r21.apk \
+        tzdata-2026a-r0.apk \
+        zlib-1.3.2-r0.apk \
+    ; do \
+        wget -qO "/tmp/local-repo/${apk_arch}/${apk_pkg}" "${APK_BASE_URL}/${apk_arch}/${apk_pkg}" || exit 1; \
+    done && \
+    apk index --allow-untrusted -q -o "/tmp/local-repo/${apk_arch}/APKINDEX.tar.gz" /tmp/local-repo/${apk_arch}/*.apk && \
+    apk add --no-cache --no-network --allow-untrusted --repositories-file /dev/null --repository /tmp/local-repo libwebp && \
+    apk add --no-cache --no-network --allow-untrusted "/tmp/local-repo/${apk_arch}/tzdata-2026a-r0.apk" && \
+    rm -rf /tmp/local-repo

@@ -339,6 +339,8 @@ services:
             context: .
             dockerfile: ./infra/docker/dockerfile-api
             target: builder
+            args:
+              - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r2}
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
@@ -383,6 +385,7 @@ services:
                 context: .
                 dockerfile: ./infra/docker/dockerfile-api
                 args:
+                    - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r2}
                     - APP_VERSION=0.0.0.1
                     - APP_HOST_PORT=${ENV_HTTP_PORT}
                     - APP_USER=${ENV_DOCKER_USER}
