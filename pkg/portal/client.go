@@ -36,7 +36,7 @@ func NewDefaultClient(transport *http.Transport) *Client {
 	return &Client{
 		client:         client,
 		transport:      transport,
-		UserAgent:      "gocanto.dev",
+		UserAgent:      "oullin.io",
 		OnHeaders:      nil,
 		AbortOnNone2xx: false,
 	}

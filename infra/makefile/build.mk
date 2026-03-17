@@ -1,4 +1,4 @@
-.PHONY: build-local watch-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images
+.PHONY: build-local watch-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images generate-apk-checksums
 
 BUILD_VERSION ?= latest
 BASE_GO_VERSION ?= 1.26.1
@@ -38,6 +38,10 @@ ensure-builder-base-image:
 ensure-runtime-base-image:
 	@docker image inspect "$(BUILD_BASE_RUNTIME_IMAGE)" >/dev/null 2>&1 || \
 		docker build $(BUILD_BASE_RUNTIME_ARGS) -f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.runtime" -t "$(BUILD_BASE_RUNTIME_IMAGE)" "$(BUILD_BASE_IMAGES_DIR)"
+
+generate-apk-checksums:
+	@printf "\n$(CYAN)Generating APK checksum files$(NC)\n"
+	APK_BASE_URL=$(BASE_APK_BASE_URL) "$(BUILD_BASE_IMAGES_DIR)/generate-checksums.sh"
 
 build-base-images:
 	@printf "\n$(CYAN)Building reproducible API base images$(NC)\n"

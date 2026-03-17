@@ -82,6 +82,10 @@ func TestClientLoadsFixtures(t *testing.T) {
 		t.Fatalf("unexpected profile data: %+v", profile.Data)
 	}
 
+	if profile.Data.Profession != "Founder of Oullin" {
+		t.Fatalf("unexpected profile profession: %+v", profile.Data)
+	}
+
 	talks, err := client.GetTalks()
 	if err != nil {
 		t.Fatalf("talks err: %v", err)
@@ -107,6 +111,10 @@ func TestClientLoadsFixtures(t *testing.T) {
 
 	if len(social.Data) == 0 {
 		t.Fatalf("expected social data")
+	}
+
+	if social.Data[0].Description != "Follow Oullin's updates on X." {
+		t.Fatalf("unexpected social description: %+v", social.Data[0])
 	}
 
 	recs, err := client.GetRecommendations()

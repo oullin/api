@@ -13,6 +13,10 @@ func TestClientTransportAndGet(t *testing.T) {
 	tr := portal.GetDefaultTransport()
 	c := portal.NewDefaultClient(tr)
 
+	if c.UserAgent != "oullin.io" {
+		t.Fatalf("unexpected default user agent: %s", c.UserAgent)
+	}
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("hello"))
 	}))

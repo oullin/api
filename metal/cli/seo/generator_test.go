@@ -212,18 +212,42 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		t.Fatalf("expected projects section in projects page: %q", projectsContent)
 	}
 
-	resumeRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "resume.seo.html"))
+	writingRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "writing.seo.html"))
 	if err != nil {
-		t.Fatalf("read resume output: %v", err)
+		t.Fatalf("read writing output: %v", err)
 	}
 
-	resumeContent := strings.ToLower(string(resumeRaw))
-	if !strings.Contains(resumeContent, "<h1>experience</h1>") {
-		t.Fatalf("expected experience section in resume page: %q", resumeContent)
+	writingContent := strings.ToLower(string(writingRaw))
+	if !strings.Contains(writingContent, "<h1>writing archive</h1>") {
+		t.Fatalf("expected writing heading in writing page: %q", writingContent)
 	}
 
-	if !strings.Contains(resumeContent, "<h1>education</h1>") {
-		t.Fatalf("expected education section in resume page: %q", resumeContent)
+	contactRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "contact.seo.html"))
+	if err != nil {
+		t.Fatalf("read contact output: %v", err)
+	}
+
+	contactContent := strings.ToLower(string(contactRaw))
+	if !strings.Contains(contactContent, "<h1>contact</h1>") {
+		t.Fatalf("expected contact heading in contact page: %q", contactContent)
+	}
+
+	if !strings.Contains(contactContent, "mailto:otnacog@example.com") {
+		t.Fatalf("expected contact page to include email link: %q", contactContent)
+	}
+
+	termsRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "terms-and-conditions.seo.html"))
+	if err != nil {
+		t.Fatalf("read terms output: %v", err)
+	}
+
+	termsContent := strings.ToLower(string(termsRaw))
+	if !strings.Contains(termsContent, "<h1>terms and policies</h1>") {
+		t.Fatalf("expected terms heading in terms page: %q", termsContent)
+	}
+
+	if _, err := os.Stat(filepath.Join(env.Seo.SpaDir, "resume.seo.html")); !os.IsNotExist(err) {
+		t.Fatalf("did not expect legacy resume seo output, got err=%v", err)
 	}
 
 	postPath := filepath.Join(env.Seo.SpaDir, "posts", post.Slug+".seo.html")

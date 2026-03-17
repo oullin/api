@@ -14,6 +14,8 @@ DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 # Override with a pinned version (e.g., GO_LOCAL_TOOLCHAIN=go1.26.1) for deterministic builds.
 # Note: docker-compose reads GO_LOCAL_TOOLCHAIN from the environment separately.
 GO_LOCAL_TOOLCHAIN  ?= auto
+GOIMPORTS_VERSION   ?= v0.43.0
+GOBIN               := $(shell go env GOPATH)/bin
 
 DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
 DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
@@ -23,7 +25,7 @@ DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
 # PHONY Targets
 # -------------------------------------------------------------------------------------------------------------------- #
 
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal install-air
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal install-air install-goimports
 
 run-cli run-cli-docker: export DB_SECRET_USERNAME := $(value DB_SECRET_USERNAME)
 run-cli run-cli-docker: export DB_SECRET_PASSWORD := $(value DB_SECRET_PASSWORD)
@@ -34,9 +36,13 @@ run-cli run-cli-docker: export DB_SECRET_DBNAME := $(value DB_SECRET_DBNAME)
 # -------------------------------------------------------------------------------------------------------------------- #
 
 format:
+	@if [ ! -f $(GOBIN)/goimports ]; then \
+		printf "\n  $(YELLOW)goimports not found — installing now...$(NC)\n"; \
+		$(MAKE) install-goimports; \
+	fi
 	@printf "\n  ..... $(CYAN)gofmt & goimports commands have started.$(NC)\n"
 	@git ls-files -z '*.go' | xargs -0 env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) gofmt -w -s
-	@git ls-files -z '*.go' | xargs -0 env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run golang.org/x/tools/cmd/goimports@v0.43.0 -w -local github.com/oullin
+	@git ls-files -z '*.go' | xargs -0 $(GOBIN)/goimports -w -local github.com/oullin
 	@printf "\n  ..... $(GREEN)Formatting finished.$(NC)\n\n"
 
 audit:
@@ -81,6 +87,10 @@ install-air:
 	#     https://github.com/air-verse/air
 	@echo "Installing air ..."
 	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go install github.com/air-verse/air@latest
+
+install-goimports:
+	@echo "Installing goimports $(GOIMPORTS_VERSION) ..."
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # CLI Commands

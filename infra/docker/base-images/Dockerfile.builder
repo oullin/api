@@ -11,7 +11,10 @@ FROM golang:${GO_VERSION}-${GO_IMAGE_VARIANT}@${GO_IMAGE_DIGEST}
 ARG TARGETARCH
 ARG APK_BASE_URL
 
-RUN target_arch="${TARGETARCH}"; \
+COPY checksums/ /tmp/checksums/
+
+RUN apk add --no-cache openssl && \
+    target_arch="${TARGETARCH}"; \
     if [ -z "${target_arch}" ]; then \
         case "$(apk --print-arch)" in \
             aarch64) target_arch="arm64" ;; \
@@ -57,7 +60,20 @@ RUN target_arch="${TARGETARCH}"; \
     ; do \
         wget -qO "/tmp/local-repo/${apk_arch}/${apk_pkg}" "${APK_BASE_URL}/${apk_arch}/${apk_pkg}" || exit 1; \
     done && \
-    apk index --allow-untrusted -q -o "/tmp/local-repo/${apk_arch}/APKINDEX.tar.gz" /tmp/local-repo/${apk_arch}/*.apk && \
-    apk add --no-cache --no-network --allow-untrusted --repositories-file /dev/null --repository /tmp/local-repo binutils file g++ gcc make musl-dev patch pkgconf libwebp-dev && \
-    apk add --no-cache --no-network --allow-untrusted "/tmp/local-repo/${apk_arch}/fortify-headers-1.1-r5.apk" && \
-    rm -rf /tmp/local-repo
+    cd "/tmp/local-repo/${apk_arch}" && \
+    sha256sum -c "/tmp/checksums/builder-${apk_arch}.sha256" && \
+    openssl genrsa -out /tmp/apk-sign.rsa 2048 2>/dev/null && \
+    openssl rsa -in /tmp/apk-sign.rsa -pubout -out /etc/apk/keys/apk-sign.rsa.pub 2>/dev/null && \
+    apk index -q -o /tmp/APKINDEX.unsigned.tar.gz /tmp/local-repo/${apk_arch}/*.apk && \
+    mkdir -p /tmp/sig && \
+    openssl dgst -sha1 -sign /tmp/apk-sign.rsa \
+        -out /tmp/sig/.SIGN.RSA.apk-sign.rsa.pub \
+        /tmp/APKINDEX.unsigned.tar.gz && \
+    tar cf /tmp/sig.tar -C /tmp/sig .SIGN.RSA.apk-sign.rsa.pub && \
+    head -c $(( $(wc -c < /tmp/sig.tar) - 1024 )) /tmp/sig.tar \
+        | gzip -9 \
+        | cat - /tmp/APKINDEX.unsigned.tar.gz \
+        > "/tmp/local-repo/${apk_arch}/APKINDEX.tar.gz" && \
+    apk add --no-cache --no-network --repositories-file /dev/null --repository /tmp/local-repo binutils file g++ gcc make musl-dev patch pkgconf libwebp-dev && \
+    apk add --no-cache --no-network "/tmp/local-repo/${apk_arch}/fortify-headers-1.1-r5.apk" && \
+    rm -rf /tmp/local-repo /tmp/checksums /tmp/apk-sign.rsa /tmp/sig /tmp/sig.tar /tmp/APKINDEX.unsigned.tar.gz /etc/apk/keys/apk-sign.rsa.pub

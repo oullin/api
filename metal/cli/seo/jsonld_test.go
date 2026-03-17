@@ -9,21 +9,25 @@ import (
 )
 
 func TestJsonIDRenderProducesGraph(t *testing.T) {
-	id := &seo.JsonID{
-		SiteURL:     "https://example.test",
-		OrgName:     "Example",
-		LogoURL:     "https://example.test/logo.png",
-		Lang:        "en_GB",
-		FoundedYear: "2020",
-		SameAs:      []string{"https://example.test", "https://github.com/example"},
-		WebRepoURL:  "https://github.com/example/web",
-		APIRepoURL:  "https://github.com/example/api",
-		WebName:     "Example Web",
-		APIName:     "Example API",
+	id := (&seo.JsonID{
+		SiteURL:         "https://example.test",
+		OrgName:         "Example",
+		LogoURL:         "https://example.test/logo.png",
+		Lang:            "en_GB",
+		FoundedYear:     "2020",
+		SameAs:          []string{"https://github.com/example"},
+		SiteDescription: "Example description",
 		Now: func() time.Time {
 			return time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
 		},
-	}
+	}).
+		WithPage("About", "AboutPage", "https://example.test/about", "About Example").
+		WithFounder(seo.JsonPerson{
+			Name:        "Jane Example",
+			JobTitle:    "Founder of Example",
+			URL:         "https://example.test/about",
+			Description: "Founder bio",
+		})
 
 	rendered := id.Render()
 
@@ -41,7 +45,7 @@ func TestJsonIDRenderProducesGraph(t *testing.T) {
 		t.Fatalf("missing graph: %#v", got["@graph"])
 	}
 
-	if len(graph) < 5 {
+	if len(graph) != 4 {
 		t.Fatalf("expected graph entries, got %d", len(graph))
 	}
 
@@ -50,8 +54,13 @@ func TestJsonIDRenderProducesGraph(t *testing.T) {
 		t.Fatalf("unexpected org id %q", org["@id"])
 	}
 
-	api := graph[len(graph)-1].(map[string]any)
-	if api["@type"].(string) != "WebAPI" {
-		t.Fatalf("expected WebAPI entry, got %q", api["@type"])
+	page := graph[2].(map[string]any)
+	if page["@type"].(string) != "AboutPage" {
+		t.Fatalf("expected AboutPage entry, got %q", page["@type"])
+	}
+
+	founder := graph[3].(map[string]any)
+	if founder["@type"].(string) != "Person" {
+		t.Fatalf("expected Person entry, got %q", founder["@type"])
 	}
 }
