@@ -1,7 +1,6 @@
 package handler_test
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -18,39 +17,20 @@ func TestProjectsHandler_SortsAndPaginates(t *testing.T) {
 	fixture := writeProjectsFixture(t, payload.ProjectsResponse{
 		Version: "1.0.0",
 		Data: []payload.ProjectsData{
-			{UUID: "project-1", Title: "One", URL: "https://github.com/example/one"},
-			{UUID: "project-2", Title: "Two", URL: "https://github.com/example/two"},
-			{UUID: "project-3", Title: "Three", URL: "https://github.com/example/three"},
-			{UUID: "project-4", Title: "Four", URL: "https://github.com/example/four"},
-			{UUID: "project-5", Title: "Five", URL: "https://github.com/example/five"},
-			{UUID: "project-6", Title: "Six", URL: "https://github.com/example/six"},
-			{UUID: "project-7", Title: "Seven", URL: "https://github.com/example/seven"},
-			{UUID: "project-8", Title: "Eight", URL: "https://github.com/example/eight"},
-			{UUID: "project-9", Title: "Nine", URL: "https://github.com/example/nine"},
-			{UUID: "project-10", Title: "Ten", URL: "https://github.com/example/ten"},
+			{UUID: "project-1", Title: "One", URL: "https://github.com/example/one", PublishedAt: "2026-03-01T00:00:00Z"},
+			{UUID: "project-2", Title: "Two", URL: "https://github.com/example/two", PublishedAt: "2026-03-10T00:00:00Z"},
+			{UUID: "project-3", Title: "Three", URL: "https://github.com/example/three", PublishedAt: "2026-03-03T00:00:00Z"},
+			{UUID: "project-4", Title: "Four", URL: "https://github.com/example/four", PublishedAt: "2026-03-08T00:00:00Z"},
+			{UUID: "project-5", Title: "Five", URL: "https://github.com/example/five", PublishedAt: "2026-03-02T00:00:00Z"},
+			{UUID: "project-6", Title: "Six", URL: "https://github.com/example/six", PublishedAt: "2026-03-07T00:00:00Z"},
+			{UUID: "project-7", Title: "Seven", URL: "https://github.com/example/seven", PublishedAt: "2026-03-06T00:00:00Z"},
+			{UUID: "project-8", Title: "Eight", URL: "https://github.com/example/eight", PublishedAt: "2026-03-09T00:00:00Z"},
+			{UUID: "project-9", Title: "Nine", URL: "https://github.com/example/nine", PublishedAt: "2026-03-05T00:00:00Z"},
+			{UUID: "project-10", Title: "Ten", URL: "https://github.com/example/ten", PublishedAt: "2026-03-04T00:00:00Z"},
 		},
 	})
 
-	publishedAt := map[string]string{
-		"project-1":  "2026-03-01T00:00:00Z",
-		"project-2":  "2026-03-10T00:00:00Z",
-		"project-3":  "2026-03-03T00:00:00Z",
-		"project-4":  "2026-03-08T00:00:00Z",
-		"project-5":  "2026-03-02T00:00:00Z",
-		"project-6":  "2026-03-07T00:00:00Z",
-		"project-7":  "2026-03-06T00:00:00Z",
-		"project-8":  "2026-03-09T00:00:00Z",
-		"project-9":  "2026-03-05T00:00:00Z",
-		"project-10": "2026-03-04T00:00:00Z",
-	}
-
-	h := handler.NewProjectsHandlerWithResolver(
-		fixture,
-		true,
-		func(_ context.Context, project payload.ProjectsData) (string, error) {
-			return publishedAt[project.UUID], nil
-		},
-	)
+	h := handler.NewProjectsHandlerWithCache(fixture, true)
 
 	req := httptest.NewRequest(http.MethodGet, "/projects?page=1", nil)
 	rec := httptest.NewRecorder()
@@ -93,25 +73,19 @@ func TestProjectsHandler_Page2(t *testing.T) {
 	fixture := writeProjectsFixture(t, payload.ProjectsResponse{
 		Version: "1.0.0",
 		Data: []payload.ProjectsData{
-			{UUID: "project-1", Title: "One", URL: "https://github.com/example/one"},
-			{UUID: "project-2", Title: "Two", URL: "https://github.com/example/two"},
-			{UUID: "project-3", Title: "Three", URL: "https://github.com/example/three"},
-			{UUID: "project-4", Title: "Four", URL: "https://github.com/example/four"},
-			{UUID: "project-5", Title: "Five", URL: "https://github.com/example/five"},
-			{UUID: "project-6", Title: "Six", URL: "https://github.com/example/six"},
-			{UUID: "project-7", Title: "Seven", URL: "https://github.com/example/seven"},
-			{UUID: "project-8", Title: "Eight", URL: "https://github.com/example/eight"},
-			{UUID: "project-9", Title: "Nine", URL: "https://github.com/example/nine"},
+			{UUID: "project-1", Title: "One", URL: "https://github.com/example/one", PublishedAt: "2026-03-09T00:00:00Z"},
+			{UUID: "project-2", Title: "Two", URL: "https://github.com/example/two", PublishedAt: "2026-03-08T00:00:00Z"},
+			{UUID: "project-3", Title: "Three", URL: "https://github.com/example/three", PublishedAt: "2026-03-07T00:00:00Z"},
+			{UUID: "project-4", Title: "Four", URL: "https://github.com/example/four", PublishedAt: "2026-03-06T00:00:00Z"},
+			{UUID: "project-5", Title: "Five", URL: "https://github.com/example/five", PublishedAt: "2026-03-05T00:00:00Z"},
+			{UUID: "project-6", Title: "Six", URL: "https://github.com/example/six", PublishedAt: "2026-03-04T00:00:00Z"},
+			{UUID: "project-7", Title: "Seven", URL: "https://github.com/example/seven", PublishedAt: "2026-03-03T00:00:00Z"},
+			{UUID: "project-8", Title: "Eight", URL: "https://github.com/example/eight", PublishedAt: "2026-03-02T00:00:00Z"},
+			{UUID: "project-9", Title: "Nine", URL: "https://github.com/example/nine", PublishedAt: "2026-03-01T00:00:00Z"},
 		},
 	})
 
-	h := handler.NewProjectsHandlerWithResolver(
-		fixture,
-		true,
-		func(_ context.Context, project payload.ProjectsData) (string, error) {
-			return "2026-03-17T12:00:00Z", nil
-		},
-	)
+	h := handler.NewProjectsHandlerWithCache(fixture, true)
 
 	req := httptest.NewRequest(http.MethodGet, "/projects?page=2", nil)
 	rec := httptest.NewRecorder()
@@ -169,13 +143,7 @@ func TestProjectsHandler_SortsByPublishedAtWithFallbackDates(t *testing.T) {
 		},
 	})
 
-	h := handler.NewProjectsHandlerWithResolver(
-		fixture,
-		true,
-		func(_ context.Context, project payload.ProjectsData) (string, error) {
-			return project.PublishedAt, nil
-		},
-	)
+	h := handler.NewProjectsHandlerWithCache(fixture, true)
 
 	req := httptest.NewRequest(http.MethodGet, "/projects", nil)
 	rec := httptest.NewRecorder()
@@ -214,13 +182,7 @@ func TestProjectsHandler_NoStoreWhenCacheDisabled(t *testing.T) {
 		},
 	})
 
-	h := handler.NewProjectsHandlerWithResolver(
-		fixture,
-		false,
-		func(_ context.Context, project payload.ProjectsData) (string, error) {
-			return "2026-03-17T12:00:00Z", nil
-		},
-	)
+	h := handler.NewProjectsHandlerWithCache(fixture, false)
 	req := httptest.NewRequest(http.MethodGet, "/projects", nil)
 	rec := httptest.NewRecorder()
 

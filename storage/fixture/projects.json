@@ -42,6 +42,7 @@
             "url": "https://github.com/oullin/workflow",
             "is_open_source": true,
             "icon": "GitBranch",
+            "published_at": "2026-03-14",
             "created_at": "2026-03-14",
             "updated_at": "2026-03-14"
         },
@@ -152,7 +153,7 @@
             "url": "https://github.com/laravel/framework/pulls?q=is%3Apr+is%3Aclosed+author%3Agocanto",
             "is_open_source": true,
             "icon": "GitPullRequest",
-            "published_at": "2025-09-15",
+            "published_at": "2022-09-15",
             "created_at": "2017-07-06",
             "updated_at": "2022-09-15"
         },

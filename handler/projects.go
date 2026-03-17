@@ -13,9 +13,8 @@ import (
 )
 
 type ProjectsHandler struct {
-	filePath            string
-	cacheEnabled        bool
-	publishedAtResolver projects.PublishedAtResolver
+	filePath     string
+	cacheEnabled bool
 }
 
 func NewProjectsHandler(filePath string) ProjectsHandler {
@@ -23,18 +22,9 @@ func NewProjectsHandler(filePath string) ProjectsHandler {
 }
 
 func NewProjectsHandlerWithCache(filePath string, cacheEnabled bool) ProjectsHandler {
-	return NewProjectsHandlerWithResolver(filePath, cacheEnabled, nil)
-}
-
-func NewProjectsHandlerWithResolver(filePath string, cacheEnabled bool, resolver projects.PublishedAtResolver) ProjectsHandler {
-	if resolver == nil {
-		resolver = projects.NewGitHubPublishedAtResolver()
-	}
-
 	return ProjectsHandler{
-		filePath:            filePath,
-		cacheEnabled:        cacheEnabled,
-		publishedAtResolver: resolver,
+		filePath:     filePath,
+		cacheEnabled: cacheEnabled,
 	}
 }
 
@@ -47,7 +37,7 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return endpoint.InternalError("could not read projects data")
 	}
 
-	projects.EnrichResponse(r.Context(), &data, h.publishedAtResolver)
+	projects.EnrichResponse(&data)
 
 	page := paginate.NewFrom(r.URL, projects.PageSize)
 	page.SetNumItems(int64(len(data.Data)))
