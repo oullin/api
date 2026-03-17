@@ -1,10 +1,6 @@
-package handler
+package projects
 
-import (
-	"testing"
-
-	"github.com/oullin/handler/payload"
-)
+import "testing"
 
 func TestParseGitHubRepository(t *testing.T) {
 	tests := []struct {
@@ -42,7 +38,7 @@ func TestParseGitHubRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo, ok := parseGitHubRepository(tt.rawURL)
+			repo, ok := ParseGitHubRepository(tt.rawURL)
 			if ok != tt.ok {
 				t.Fatalf("expected ok=%t, got %t", tt.ok, ok)
 			}
@@ -51,34 +47,9 @@ func TestParseGitHubRepository(t *testing.T) {
 				return
 			}
 
-			if repo.owner != tt.owner || repo.name != tt.repo {
+			if repo.Owner != tt.owner || repo.Name != tt.repo {
 				t.Fatalf("unexpected repo: %+v", repo)
 			}
 		})
-	}
-}
-
-func TestSortProjectsByPublishedAtDesc(t *testing.T) {
-	projects := []payload.ProjectsData{
-		{UUID: "first", PublishedAt: "2026-03-10T00:00:00Z"},
-		{UUID: "second", PublishedAt: "2026-03-12T00:00:00Z"},
-		{UUID: "third", PublishedAt: ""},
-		{UUID: "fourth", PublishedAt: "2026-03-11T00:00:00Z"},
-	}
-
-	sortProjectsByPublishedAtDesc(projects)
-
-	got := []string{
-		projects[0].UUID,
-		projects[1].UUID,
-		projects[2].UUID,
-		projects[3].UUID,
-	}
-
-	want := []string{"second", "fourth", "first", "third"}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Fatalf("unexpected order: got %v want %v", got, want)
-		}
 	}
 }

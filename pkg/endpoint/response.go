@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+const MaxResponseCacheSize = 1 << 20 // 1MB limit
+
+var ErrResponseTooLarge = errors.New("response payload exceeds maximum cache size")
+
 type Response struct {
 	etag         string
 	cacheControl string
@@ -55,6 +59,12 @@ func NewResponseFromPayload(payload any, maxAgeSeconds int, writer http.Response
 		return nil, err
 	}
 
+	if len(body) > MaxResponseCacheSize {
+		slog.Warn("Response payload exceeds maximum cache size", "size", len(body), "limit", MaxResponseCacheSize)
+
+		return nil, ErrResponseTooLarge
+	}
+
 	sum := sha256.Sum256(body)
 
 	return NewResponseWithCache(fmt.Sprintf("%x", sum), maxAgeSeconds, writer, request), nil
@@ -65,7 +75,12 @@ func NewResponseForPayload(payload any, maxAgeSeconds int, cacheEnabled bool, wr
 		return NewNoCacheResponse(writer, request), nil
 	}
 
-	return NewResponseFromPayload(payload, maxAgeSeconds, writer, request)
+	resp, err := NewResponseFromPayload(payload, maxAgeSeconds, writer, request)
+	if errors.Is(err, ErrResponseTooLarge) {
+		return NewNoCacheResponse(writer, request), nil
+	}
+
+	return resp, err
 }
 
 func NewNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {

@@ -1,3 +1,12 @@
+# Reproducible Go builder base image.
+#
+# Purpose: provides a deterministic build environment with pinned Alpine system
+# packages required for CGO compilation (gcc, musl-dev, libwebp-dev, etc.).
+#
+# Security model: every .apk artifact is downloaded by exact filename, verified
+# against committed SHA256 checksums, and installed via an ephemeral RSA-signed
+# APKINDEX so `apk add` never contacts the live Alpine package index.
+
 ARG GO_VERSION
 ARG GO_IMAGE_VARIANT
 ARG GO_IMAGE_DIGEST
@@ -13,6 +22,19 @@ ARG APK_BASE_URL
 
 COPY checksums/ /tmp/checksums/
 
+# Install openssl temporarily (needed for APKINDEX signing below), then:
+# 1. Detect target architecture — TARGETARCH is set by BuildKit; fall back to
+#    `apk --print-arch` when building without BuildKit platform args.
+# 2. Download every pinned .apk into a local repo directory.
+# 3. Verify SHA256 checksums against the committed checksum files.
+# 4. Generate an ephemeral RSA key pair and sign a local APKINDEX so that
+#    `apk add --no-network` trusts the packages without `--allow-untrusted`.
+#    The `head -c | gzip | cat` pipeline prepends the detached signature to the
+#    unsigned APKINDEX tarball — this is the format apk-tools expects.
+# 5. Install the bulk of build packages from the signed local repo, then install
+#    fortify-headers separately (it must be added by path because its virtual
+#    provider name conflicts with the musl-provided headers already present).
+# 6. Clean up all temporary artifacts.
 RUN apk add --no-cache openssl && \
     target_arch="${TARGETARCH}"; \
     if [ -z "${target_arch}" ]; then \

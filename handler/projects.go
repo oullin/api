@@ -1,19 +1,21 @@
 package handler
 
 import (
+	"log/slog"
+	"net/http"
+
+	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler/paginate"
 	"github.com/oullin/handler/payload"
 	"github.com/oullin/pkg/endpoint"
 	"github.com/oullin/pkg/portal"
-
-	"log/slog"
-	"net/http"
+	"github.com/oullin/pkg/projects"
 )
 
 type ProjectsHandler struct {
 	filePath            string
 	cacheEnabled        bool
-	publishedAtResolver ProjectsPublishedAtResolver
+	publishedAtResolver projects.PublishedAtResolver
 }
 
 func NewProjectsHandler(filePath string) ProjectsHandler {
@@ -22,6 +24,18 @@ func NewProjectsHandler(filePath string) ProjectsHandler {
 
 func NewProjectsHandlerWithCache(filePath string, cacheEnabled bool) ProjectsHandler {
 	return NewProjectsHandlerWithResolver(filePath, cacheEnabled, nil)
+}
+
+func NewProjectsHandlerWithResolver(filePath string, cacheEnabled bool, resolver projects.PublishedAtResolver) ProjectsHandler {
+	if resolver == nil {
+		resolver = projects.NewGitHubPublishedAtResolver()
+	}
+
+	return ProjectsHandler{
+		filePath:            filePath,
+		cacheEnabled:        cacheEnabled,
+		publishedAtResolver: resolver,
+	}
 }
 
 func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
@@ -33,12 +47,28 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return endpoint.InternalError("could not read projects data")
 	}
 
-	enrichProjectsResponse(r.Context(), &data, h.publishedAtResolver)
+	projects.EnrichResponse(r.Context(), &data, h.publishedAtResolver)
 
-	page := paginate.NewFrom(r.URL, projectsPageSize)
-	data = paginateProjectsResponse(data, page)
+	page := paginate.NewFrom(r.URL, projects.PageSize)
+	page.SetNumItems(int64(len(data.Data)))
 
-	resp, err := endpoint.NewResponseForPayload(data, 3600, h.cacheEnabled, w, r)
+	start := (page.Page - 1) * page.Limit
+	switch {
+	case start < 0:
+		start = 0
+	case start > len(data.Data):
+		start = len(data.Data)
+	}
+
+	end := start + page.Limit
+	if end > len(data.Data) {
+		end = len(data.Data)
+	}
+
+	items := append([]payload.ProjectsData(nil), data.Data[start:end]...)
+	result := pagination.NewPagination(items, page)
+
+	resp, err := endpoint.NewResponseForPayload(result, 3600, h.cacheEnabled, w, r)
 	if err != nil {
 		slog.Error("Error preparing projects response cache", "error", err)
 
@@ -51,7 +81,7 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return nil
 	}
 
-	if err := resp.RespondOk(data); err != nil {
+	if err := resp.RespondOk(result); err != nil {
 		slog.Error("Error marshaling JSON for projects response", "error", err)
 
 		return nil

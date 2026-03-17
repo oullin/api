@@ -232,7 +232,7 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		t.Fatalf("expected contact heading in contact page: %q", contactContent)
 	}
 
-	if !strings.Contains(contactContent, "mailto:otnacog@example.com") {
+	if !strings.Contains(contactContent, "mailto:info@oullin.io") {
 		t.Fatalf("expected contact page to include email link: %q", contactContent)
 	}
 

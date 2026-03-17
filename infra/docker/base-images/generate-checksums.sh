@@ -8,6 +8,7 @@
 #
 set -euo pipefail
 
+# Override with APK_BASE_URL to point at a local mirror or CDN cache.
 BASE_URL="${APK_BASE_URL:-https://dl-cdn.alpinelinux.org/alpine/v3.23/main}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CHECKSUMS_DIR="${SCRIPT_DIR}/checksums"
@@ -17,7 +18,9 @@ trap 'rm -rf "${WORK_DIR}"' EXIT
 
 mkdir -p "${CHECKSUMS_DIR}"
 
-# Package lists (must match the Dockerfiles exactly).
+# Package lists — these must stay in sync with the download loops in
+# Dockerfile.builder and Dockerfile.runtime. When you add, remove, or bump a
+# package in a Dockerfile, mirror the change here.
 BUILDER_PACKAGES=(
     binutils-2.45.1-r0.apk
     file-5.46-r2.apk
@@ -58,6 +61,7 @@ RUNTIME_PACKAGES=(
     zlib-1.3.2-r0.apk
 )
 
+# Architectures for which we generate checksums (multi-platform support).
 ARCHES=(aarch64 x86_64)
 
 generate_checksums() {

@@ -8,6 +8,6 @@ ARG CADDY_VERSION=2.10.2
 # Use the official Caddy image with the latest tag.
 FROM caddy:${CADDY_VERSION}
 
-# Copy your custom Caddyfile into the container.
-# This overwrites the default Caddyfile.
+# Copy the local-development Caddyfile variant into the container,
+# overwriting the default Caddyfile shipped with the base image.
 COPY Caddyfile.local /etc/caddy/Caddyfile

@@ -1,3 +1,16 @@
+# Multi-stage Dockerfile for the Oullin API.
+#
+# Stage 1 (builder): compiles the Go binary with CGO enabled (required for
+# libwebp image encoding via cgo bindings). BUILD_TAGS control which handler
+# groups are included in the final binary.
+#
+# Stage 2 (runtime): copies the compiled binary into a minimal Alpine runtime
+# image. A dedicated non-root user (appuser) runs the process to limit
+# container privileges.
+#
+# ENTRYPOINT uses shell form (`/bin/sh -c`) because Docker's exec form does
+# not expand environment variables — and the binary path is composed from
+# build-time ARGs that are forwarded as ENV vars for runtime resolution.
 #
 # ----------------------------------------------------------------------------------------------------------------------
 #                                    GLOBAL BUILD ARGUMENTS

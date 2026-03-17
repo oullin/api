@@ -1,3 +1,12 @@
+# Minimal Alpine runtime base image.
+#
+# Purpose: provides only the shared libraries (libwebp) and timezone data
+# required at runtime. No compilers, no dev headers — keeps the final image
+# small and reduces the attack surface.
+#
+# Security model: identical to Dockerfile.builder — pinned .apk artifacts,
+# SHA256 checksum verification, ephemeral RSA-signed APKINDEX.
+
 ARG ALPINE_VERSION
 ARG ALPINE_IMAGE_DIGEST
 
@@ -12,6 +21,13 @@ ARG APK_BASE_URL
 
 COPY checksums/ /tmp/checksums/
 
+# Same pinned-download-and-verify flow as the builder image:
+# 1. Install openssl temporarily for APKINDEX signing.
+# 2. Download, verify, sign, and install runtime packages.
+# 3. Install tzdata by path (not in the main repo index group).
+# 4. Remove openssl — it is only needed for the signing step and should not
+#    remain in the runtime image.
+# 5. Clean up all temporary artifacts.
 RUN apk add --no-cache openssl && \
     target_arch="${TARGETARCH}"; \
     if [ -z "${target_arch}" ]; then \

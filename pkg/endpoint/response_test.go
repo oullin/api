@@ -157,6 +157,46 @@ func TestResponse_NotModified(t *testing.T) {
 	}
 }
 
+func TestNewResponseFromPayload_RejectsOversizedPayload(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+
+	oversized := map[string]string{
+		"data": string(make([]byte, endpoint.MaxResponseCacheSize+1)),
+	}
+
+	_, err := endpoint.NewResponseFromPayload(oversized, 3600, rec, req)
+	if err != endpoint.ErrResponseTooLarge {
+		t.Fatalf("expected ErrResponseTooLarge, got %v", err)
+	}
+}
+
+func TestNewResponseForPayload_FallsBackOnOversizedPayload(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+
+	oversized := map[string]string{
+		"data": string(make([]byte, endpoint.MaxResponseCacheSize+1)),
+	}
+
+	r, err := endpoint.NewResponseForPayload(oversized, 3600, true, rec, req)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if err := r.RespondOk(oversized); err != nil {
+		t.Fatalf("respond ok: %v", err)
+	}
+
+	if rec.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("expected no-store cache-control, got %q", rec.Header().Get("Cache-Control"))
+	}
+
+	if rec.Header().Get("ETag") != "" {
+		t.Fatalf("expected empty etag for oversized fallback, got %q", rec.Header().Get("ETag"))
+	}
+}
+
 func TestApiErrorHelpers(t *testing.T) {
 	if endpoint.InternalError("x").Status != http.StatusInternalServerError {
 		t.Fatalf("expected internal error status %d", http.StatusInternalServerError)

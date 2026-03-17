@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
 )
@@ -58,7 +59,7 @@ func TestProjectsHandler_SortsAndPaginates(t *testing.T) {
 		t.Fatalf("handle: %v", err)
 	}
 
-	var resp payload.ProjectsResponse
+	var resp pagination.Pagination[payload.ProjectsData]
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -119,7 +120,7 @@ func TestProjectsHandler_Page2(t *testing.T) {
 		t.Fatalf("handle: %v", err)
 	}
 
-	var resp payload.ProjectsResponse
+	var resp pagination.Pagination[payload.ProjectsData]
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -183,7 +184,7 @@ func TestProjectsHandler_SortsByPublishedAtWithFallbackDates(t *testing.T) {
 		t.Fatalf("handle: %v", err)
 	}
 
-	var resp payload.ProjectsResponse
+	var resp pagination.Pagination[payload.ProjectsData]
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

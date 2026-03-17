@@ -13,8 +13,8 @@
         },
         {
             "uuid": "249c50ad-2fd8-45af-a429-5e25d05a6bdd",
-            "title": "Bootstrapping to objects to control 3rd party integrations.",
-            "subject": "Systems design patters and conventions.",
+            "title": "Bootstrapping to objects to control third-party integrations.",
+            "subject": "Systems design patterns and conventions.",
             "location": "Singapore",
             "url": "https://engineers.sg/v/3052",
             "photo": "talks/002.jpg",
@@ -23,8 +23,8 @@
         },
         {
             "uuid": "36c88e42-b04d-4be1-a183-c53439468769",
-            "title": "Restful controllers in Laravel to stay lean at the HTTP layer.",
-            "subject": "Actions abstractions in Laravel controllers.",
+            "title": "RESTful controllers in Laravel to stay lean at the HTTP layer.",
+            "subject": "Action abstractions in Laravel controllers.",
             "location": "Singapore",
             "url": "https://engineers.sg/v/2907",
             "photo": "talks/001.jpg",

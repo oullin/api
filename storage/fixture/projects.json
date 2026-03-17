@@ -152,6 +152,7 @@
             "url": "https://github.com/laravel/framework/pulls?q=is%3Apr+is%3Aclosed+author%3Agocanto",
             "is_open_source": true,
             "icon": "GitPullRequest",
+            "published_at": "2025-09-15",
             "created_at": "2017-07-06",
             "updated_at": "2022-09-15"
         },
@@ -159,7 +160,7 @@
             "uuid": "de33dc2a-a710-44a3-9413-e886c0498576",
             "language": "Go",
             "title": "money",
-            "excerpt": "A Go implementation of Martin Fowler's Money pattern, centered on amount and currency value objects so arithmetic stays explicit, predictable, and safe across domain boundaries.",
+            "excerpt": "A Go implementation of Martin Fowler's Money pattern, centred on amount and currency value objects so arithmetic stays explicit, predictable, and safe across domain boundaries.",
             "url": "https://github.com/gocanto/money",
             "is_open_source": true,
             "icon": "Coins",
@@ -207,6 +208,7 @@
             "url": "https://github.com/gocanto/csv-files-reader",
             "is_open_source": true,
             "icon": "Sheet",
+            "published_at": "2025-02-26",
             "created_at": "2024-03-19",
             "updated_at": "2026-02-26"
         },
