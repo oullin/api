@@ -10,12 +10,18 @@ import (
 )
 
 type SocialHandler struct {
-	filePath string
+	filePath     string
+	cacheEnabled bool
 }
 
 func NewSocialHandler(filePath string) SocialHandler {
+	return NewSocialHandlerWithCache(filePath, true)
+}
+
+func NewSocialHandlerWithCache(filePath string, cacheEnabled bool) SocialHandler {
 	return SocialHandler{
-		filePath: filePath,
+		filePath:     filePath,
+		cacheEnabled: cacheEnabled,
 	}
 }
 
@@ -29,7 +35,12 @@ func (h SocialHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.
 	}
 
 	// Cache for 1 week (604800 seconds) since social data rarely changes
-	resp := endpoint.NewResponseWithCache(data.Version, 604800, w, r)
+	resp, err := endpoint.NewResponseForPayload(data, 604800, h.cacheEnabled, w, r)
+	if err != nil {
+		slog.Error("Error preparing social response cache", "error", err)
+
+		return endpoint.InternalError("could not prepare social response")
+	}
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()

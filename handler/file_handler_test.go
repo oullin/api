@@ -61,7 +61,7 @@ func RunFileHandlerTest(t *testing.T, tc FileHandlerTestCase) {
 	tc.Assert(t, resp.Data)
 
 	req2 := httptest.NewRequest("GET", tc.Endpoint, nil)
-	req2.Header.Set("If-None-Match", "\""+expected.Version+"\"")
+	req2.Header.Set("If-None-Match", rec.Header().Get("ETag"))
 	rec2 := httptest.NewRecorder()
 
 	if err := h.Handle(rec2, req2); err != nil {

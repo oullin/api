@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,6 +47,25 @@ func NewResponseWithCache(salt string, maxAgeSeconds int, writer http.ResponseWr
 
 func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Request) *Response {
 	return NewResponseWithCache(salt, 3600, writer, request)
+}
+
+func NewResponseFromPayload(payload any, maxAgeSeconds int, writer http.ResponseWriter, request *http.Request) (*Response, error) {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	sum := sha256.Sum256(body)
+
+	return NewResponseWithCache(fmt.Sprintf("%x", sum), maxAgeSeconds, writer, request), nil
+}
+
+func NewResponseForPayload(payload any, maxAgeSeconds int, cacheEnabled bool, writer http.ResponseWriter, request *http.Request) (*Response, error) {
+	if !cacheEnabled {
+		return NewNoCacheResponse(writer, request), nil
+	}
+
+	return NewResponseFromPayload(payload, maxAgeSeconds, writer, request)
 }
 
 func NewNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {

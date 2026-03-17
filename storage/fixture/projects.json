@@ -35,7 +35,7 @@
             "updated_at": "2025-10-18"
         },
         {
-            "uuid": "7e1f3a2b-4c5d-4e6f-9a0b-1c2d3e4f5a6b",
+            "uuid": "e00a72b2-211d-4650-b22d-88dbdcd49cb9",
             "language": "GO",
             "title": "Oullin — Workflow",
             "excerpt": "A production-grade state machine and Petri Net workflow engine for Go, built to model complex domain object lifecycles without coupling state logic to business rules. Transitions are declared explicitly with guard conditions and side-effect hooks, making illegal state changes impossible by construction rather than by convention. The engine ships with a full audit trail, thread-safe concurrent state lookups, and Graphviz export for visualising transition graphs — useful both in debugging and in communicating system behaviour to non-technical stakeholders.",
@@ -154,6 +154,94 @@
             "icon": "GitPullRequest",
             "created_at": "2017-07-06",
             "updated_at": "2022-09-15"
+        },
+        {
+            "uuid": "de33dc2a-a710-44a3-9413-e886c0498576",
+            "language": "Go",
+            "title": "money",
+            "excerpt": "A Go implementation of Martin Fowler's Money pattern, centered on amount and currency value objects so arithmetic stays explicit, predictable, and safe across domain boundaries.",
+            "url": "https://github.com/gocanto/money",
+            "is_open_source": true,
+            "icon": "Coins",
+            "created_at": "2025-12-05",
+            "updated_at": "2026-01-02"
+        },
+        {
+            "uuid": "03c3e74a-4ce4-4d86-8104-8f2a6f4f85d0",
+            "language": "Go",
+            "title": "skills",
+            "excerpt": "A Go CLI for installing and organising reusable AI agent skills so prompts, setup steps, and repo-specific workflows stay consistent instead of drifting across machines.",
+            "url": "https://github.com/gocanto/skills",
+            "is_open_source": true,
+            "icon": "Bot",
+            "created_at": "2026-02-14",
+            "updated_at": "2026-03-03"
+        },
+        {
+            "uuid": "45399ac1-11a7-4678-b366-88690e41a991",
+            "language": "Vue / Vite",
+            "title": "go-maps",
+            "excerpt": "An interactive visualiser for Go's map internals, built to make bucket growth, hashing, and lookup behaviour easier to understand through direct experimentation.",
+            "url": "https://github.com/gocanto/go-maps",
+            "is_open_source": true,
+            "icon": "Map",
+            "created_at": "2025-11-20",
+            "updated_at": "2026-02-26"
+        },
+        {
+            "uuid": "031e58b1-726f-48f2-8eac-5659e0b9bd4d",
+            "language": "Go",
+            "title": "java-spotless",
+            "excerpt": "A Go wrapper around Spotless for Java projects, designed to make formatting automation easier to script inside broader toolchains and CI pipelines.",
+            "url": "https://github.com/gocanto/java-spotless",
+            "is_open_source": true,
+            "icon": "Wand2",
+            "created_at": "2026-02-12",
+            "updated_at": "2026-02-26"
+        },
+        {
+            "uuid": "1f9e6cdb-046f-4d2d-8e31-654e570efd6d",
+            "language": "Go",
+            "title": "csv-files-reader",
+            "excerpt": "A small Go utility for reading CSV files with minimal ceremony, useful when the job is controlled ingestion rather than building a full data-processing framework.",
+            "url": "https://github.com/gocanto/csv-files-reader",
+            "is_open_source": true,
+            "icon": "Sheet",
+            "created_at": "2024-03-19",
+            "updated_at": "2026-02-26"
+        },
+        {
+            "uuid": "b19c190d-12ca-4469-b067-f843e3b18faf",
+            "language": "Makefile / Docker",
+            "title": "to-markdown",
+            "excerpt": "A container-first wrapper around MarkItDown that converts documents to Markdown without requiring a local Python runtime, keeping the tool portable across environments.",
+            "url": "https://github.com/gocanto/to-markdown",
+            "is_open_source": true,
+            "icon": "FileCode2",
+            "created_at": "2026-02-26",
+            "updated_at": "2026-02-26"
+        },
+        {
+            "uuid": "e7367891-db35-48e7-bc58-6fc4812434d2",
+            "language": "Go",
+            "title": "payment-gateway",
+            "excerpt": "A Go payment gateway sandbox focused on provider abstraction and transaction flow handling, structured as a clean starting point for payment integrations.",
+            "url": "https://github.com/gocanto/payment-gateway",
+            "is_open_source": true,
+            "icon": "CreditCard",
+            "created_at": "2025-10-21",
+            "updated_at": "2025-11-22"
+        },
+        {
+            "uuid": "2049877b-c2e3-4fed-968f-9f17bb08e737",
+            "language": "Shell",
+            "title": "dot-files",
+            "excerpt": "Personal shell and editor dotfiles captured as code, making terminal setup reproducible and easier to evolve across machines without manual drift.",
+            "url": "https://github.com/gocanto/dot-files",
+            "is_open_source": true,
+            "icon": "Terminal",
+            "created_at": "2024-05-10",
+            "updated_at": "2025-10-28"
         }
     ]
 }

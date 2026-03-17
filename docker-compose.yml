@@ -182,7 +182,7 @@ services:
                         memory: 256M
 
         postgres_exporter:
-            image: prometheuscommunity/postgres-exporter:v0.16.0@sha256:6999a7657e2f2fb0ca6ebf417213eebf6dc7d21b30708c622f6fcb11183a2bb0
+            image: prometheuscommunity/postgres-exporter:v0.18.0@sha256:3a9be51b73ac4f007cec8a36d824253c0607d065196072b61d8808714d7e8044
             profiles: ["prod"]
             container_name: oullin_postgres_exporter
             restart: unless-stopped
@@ -217,7 +217,7 @@ services:
                         memory: 32M
 
         postgres_exporter_local:
-            image: prometheuscommunity/postgres-exporter:v0.16.0@sha256:6999a7657e2f2fb0ca6ebf417213eebf6dc7d21b30708c622f6fcb11183a2bb0
+            image: prometheuscommunity/postgres-exporter:v0.18.0@sha256:3a9be51b73ac4f007cec8a36d824253c0607d065196072b61d8808714d7e8044
             profiles: ["local"]
             container_name: oullin_postgres_exporter_local
             restart: unless-stopped
@@ -276,7 +276,7 @@ services:
                 prometheus:
                     condition: service_healthy
             healthcheck:
-                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
@@ -315,7 +315,7 @@ services:
                 prometheus_local:
                     condition: service_healthy
             healthcheck:
-                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
@@ -374,6 +374,7 @@ services:
                 - .env
             volumes:
               - ./.env:/app/.env:ro
+              - ./storage/fixture:/app/storage/fixture:ro
             environment:
                 CGO_ENABLED: 1
                 GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}

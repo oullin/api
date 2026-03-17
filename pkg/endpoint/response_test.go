@@ -60,6 +60,78 @@ func TestResponse_NoCache(t *testing.T) {
 	}
 }
 
+func TestResponse_FromPayloadUsesContentHash(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+	type payload struct {
+		Version string `json:"version"`
+		Data    []struct {
+			Title string `json:"title"`
+		} `json:"data"`
+	}
+	first := payload{Version: "v1", Data: []struct {
+		Title string `json:"title"`
+	}{{Title: "first"}}}
+
+	r, err := endpoint.NewResponseFromPayload(first, 3600, rec, req)
+	if err != nil {
+		t.Fatalf("response from payload: %v", err)
+	}
+
+	if err := r.RespondOk(first); err != nil {
+		t.Fatalf("respond ok: %v", err)
+	}
+
+	second := payload{Version: "v1", Data: []struct {
+		Title string `json:"title"`
+	}{{Title: "second"}}}
+	otherRec := httptest.NewRecorder()
+	otherResp, err := endpoint.NewResponseFromPayload(second, 3600, otherRec, req)
+	if err != nil {
+		t.Fatalf("other response from payload: %v", err)
+	}
+
+	if err := otherResp.RespondOk(second); err != nil {
+		t.Fatalf("other respond ok: %v", err)
+	}
+
+	if rec.Header().Get("ETag") == "" {
+		t.Fatalf("expected etag to be set")
+	}
+
+	if rec.Header().Get("ETag") == otherRec.Header().Get("ETag") {
+		t.Fatalf("expected etag to change when payload content changes")
+	}
+
+	req.Header.Set("If-None-Match", rec.Header().Get("ETag"))
+
+	if !r.HasCache() {
+		t.Fatalf("expected payload etag to satisfy conditional request")
+	}
+}
+
+func TestResponse_ForPayloadDisablesCache(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+
+	r, err := endpoint.NewResponseForPayload(map[string]string{"a": "b"}, 3600, false, rec, req)
+	if err != nil {
+		t.Fatalf("response for payload: %v", err)
+	}
+
+	if err := r.RespondOk(map[string]string{"a": "b"}); err != nil {
+		t.Fatalf("respond ok: %v", err)
+	}
+
+	if rec.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("expected no-store cache-control, got %q", rec.Header().Get("Cache-Control"))
+	}
+
+	if rec.Header().Get("ETag") != "" {
+		t.Fatalf("expected empty etag for disabled cache")
+	}
+}
+
 func TestResponse_WithHeaders(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()

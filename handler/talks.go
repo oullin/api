@@ -10,12 +10,18 @@ import (
 )
 
 type TalksHandler struct {
-	filePath string
+	filePath     string
+	cacheEnabled bool
 }
 
 func NewTalksHandler(filePath string) TalksHandler {
+	return NewTalksHandlerWithCache(filePath, true)
+}
+
+func NewTalksHandlerWithCache(filePath string, cacheEnabled bool) TalksHandler {
 	return TalksHandler{
-		filePath: filePath,
+		filePath:     filePath,
+		cacheEnabled: cacheEnabled,
 	}
 }
 
@@ -28,7 +34,12 @@ func (h TalksHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.A
 		return endpoint.InternalError("could not read talks data")
 	}
 
-	resp := endpoint.NewResponseFrom(data.Version, w, r)
+	resp, err := endpoint.NewResponseForPayload(data, 3600, h.cacheEnabled, w, r)
+	if err != nil {
+		slog.Error("Error preparing talks response cache", "error", err)
+
+		return endpoint.InternalError("could not prepare talks response")
+	}
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()
