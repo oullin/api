@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/internal/testutil/dbtest"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/endpoint"
-	"github.com/oullin/pkg/support"
 )
 
 type failingRoute struct{ err *endpoint.ApiError }
@@ -54,7 +54,7 @@ func TestFetchReturnsJSONDecodeError(t *testing.T) {
 }
 
 func TestClientLoadsFixtures(t *testing.T) {
-	h := support.NewTestsHelperSimple(t)
+	h := dbtest.NewTestsHelperSimple(t)
 	h.ChangeRepoRoot()
 
 	spaDir := t.TempDir()

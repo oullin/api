@@ -1,4 +1,4 @@
-package support
+package dbtest
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/database"
-
 	"github.com/oullin/metal/env"
 )
 
@@ -48,6 +47,37 @@ func NewTestsHelperSimple(t *testing.T) *TestsHelper {
 	return &TestsHelper{
 		t: t,
 	}
+}
+
+// NewTestDB starts a PostgreSQL-backed test database and seeds a default user.
+// It preserves the legacy helper shape used by handler/router tests.
+func NewTestDB(t *testing.T) (*database.Connection, database.User) {
+	t.Helper()
+
+	h := NewTestsHelper(
+		t,
+		&database.User{},
+		&database.Post{},
+		&database.Category{},
+		&database.Tag{},
+		&database.PostCategory{},
+		&database.PostTag{},
+	)
+
+	author := database.User{
+		UUID:         uuid.NewString(),
+		Username:     "user",
+		FirstName:    "F",
+		LastName:     "L",
+		Email:        "u@example.com",
+		PasswordHash: "x",
+	}
+
+	if err := h.conn.Sql().Create(&author).Error; err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	return h.Conn(), author
 }
 
 // ChangeRepoRoot changes the working directory to the repository root for the duration of the test.
@@ -227,7 +257,6 @@ func (h *TestsHelper) SeedPostWithContent(author database.User, category databas
 func (h *TestsHelper) seedPostAssociations(post *database.Post, category database.Category, tag database.Tag) {
 	h.t.Helper()
 
-	// Create a category association
 	postCategory := database.PostCategory{
 		PostID:     post.ID,
 		CategoryID: category.ID,
@@ -237,7 +266,6 @@ func (h *TestsHelper) seedPostAssociations(post *database.Post, category databas
 		h.t.Fatalf("create post category: %v", err)
 	}
 
-	// Create a tag association
 	postTag := database.PostTag{
 		PostID: post.ID,
 		TagID:  tag.ID,
@@ -247,7 +275,6 @@ func (h *TestsHelper) seedPostAssociations(post *database.Post, category databas
 		h.t.Fatalf("create post tag: %v", err)
 	}
 
-	// Load associations
 	if err := h.conn.Sql().Preload("Categories").Preload("Tags").Preload("Author").First(post, post.ID).Error; err != nil {
 		h.t.Fatalf("load post associations: %v", err)
 	}

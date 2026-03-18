@@ -5,11 +5,11 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/pkg/support"
+	"github.com/oullin/internal/testutil/dbtest"
 )
 
 func TestUsersFindByPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.User{})
+	h := dbtest.NewTestsHelper(t, &database.User{})
 
 	user := h.SeedUser("Jane", "Doe", "janedoe")
 

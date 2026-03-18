@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	handlertests "github.com/oullin/handler/tests"
+	"github.com/oullin/internal/testutil/apitest"
 	"github.com/oullin/pkg/endpoint"
 )
 
@@ -30,7 +30,7 @@ func RunFileHandlerTest(t *testing.T, tc FileHandlerTestCase) {
 	}
 	defer f.Close()
 
-	var expected handlertests.TestEnvelope
+	var expected apitest.TestEnvelope
 
 	if err := json.NewDecoder(f).Decode(&expected); err != nil {
 		t.Fatalf("decode fixture: %v", err)
@@ -48,7 +48,7 @@ func RunFileHandlerTest(t *testing.T, tc FileHandlerTestCase) {
 		t.Fatalf("status %d", rec.Code)
 	}
 
-	var resp handlertests.TestEnvelope
+	var resp apitest.TestEnvelope
 
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)

@@ -18,7 +18,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/oullin/pkg/support"
+	"github.com/oullin/internal/testutil/dbtest"
 
 	"github.com/oullin/database"
 	"github.com/oullin/handler/payload"
@@ -128,7 +128,7 @@ func TestGeneratorBuildRejectsInvalidTemplateData(t *testing.T) {
 }
 
 func TestGeneratorGenerateAllPages(t *testing.T) {
-	h := support.NewTestsHelper(t,
+	h := dbtest.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -266,7 +266,7 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 }
 
 func TestGeneratorPreparePostImage(t *testing.T) {
-	h := support.NewTestsHelperSimple(t)
+	h := dbtest.NewTestsHelperSimple(t)
 	h.ChangeRepoRoot()
 
 	outputDir := t.TempDir()
@@ -356,7 +356,7 @@ func TestGeneratorPreparePostImage(t *testing.T) {
 }
 
 func TestGeneratorPreparePostImageRemote(t *testing.T) {
-	h := support.NewTestsHelperSimple(t)
+	h := dbtest.NewTestsHelperSimple(t)
 	h.ChangeRepoRoot()
 
 	outputDir := t.TempDir()

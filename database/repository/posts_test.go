@@ -8,11 +8,11 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
-	"github.com/oullin/pkg/support"
+	"github.com/oullin/internal/testutil/dbtest"
 )
 
 func TestPostsCreateLinksAssociationsPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t,
+	h := dbtest.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -82,7 +82,7 @@ func TestPostsCreateLinksAssociationsPostgres(t *testing.T) {
 }
 
 func TestPostsFindByLoadsAssociationsPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t,
+	h := dbtest.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -131,7 +131,7 @@ func TestPostsFindByLoadsAssociationsPostgres(t *testing.T) {
 }
 
 func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t,
+	h := dbtest.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -192,7 +192,7 @@ func TestPostsGetAllFiltersPublishedRecordsPostgres(t *testing.T) {
 }
 
 func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t,
+	h := dbtest.NewTestsHelper(t,
 		&database.User{},
 		&database.Post{},
 		&database.Category{},
@@ -247,7 +247,7 @@ func TestPostsGetAllDeduplicatesResultsPostgres(t *testing.T) {
 }
 
 func TestPostsFindCategoryByDelegatesPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.Category{})
+	h := dbtest.NewTestsHelper(t, &database.Category{})
 
 	category := h.SeedCategory("lifestyle", "Lifestyle", 1)
 
@@ -264,7 +264,7 @@ func TestPostsFindCategoryByDelegatesPostgres(t *testing.T) {
 }
 
 func TestPostsFindTagByHandlesRepositoryErrorsPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.Tag{})
+	h := dbtest.NewTestsHelper(t, &database.Tag{})
 
 	conn := h.Conn()
 
