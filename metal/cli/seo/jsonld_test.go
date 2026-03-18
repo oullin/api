@@ -54,13 +54,25 @@ func TestJsonIDRenderProducesGraph(t *testing.T) {
 		t.Fatalf("unexpected org id %q", org["@id"])
 	}
 
+	if org["founder"].(map[string]any)["@id"].(string) != "https://example.test#founder" {
+		t.Fatalf("unexpected org founder ref %#v", org["founder"])
+	}
+
 	page := graph[2].(map[string]any)
 	if page["@type"].(string) != "AboutPage" {
 		t.Fatalf("expected AboutPage entry, got %q", page["@type"])
 	}
 
+	if page["founder"].(map[string]any)["@id"].(string) != "https://example.test#founder" {
+		t.Fatalf("unexpected page founder ref %#v", page["founder"])
+	}
+
 	founder := graph[3].(map[string]any)
 	if founder["@type"].(string) != "Person" {
 		t.Fatalf("expected Person entry, got %q", founder["@type"])
+	}
+
+	if founder["@id"].(string) != "https://example.test#founder" {
+		t.Fatalf("unexpected founder id %q", founder["@id"])
 	}
 }

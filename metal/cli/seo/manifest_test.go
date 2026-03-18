@@ -3,6 +3,7 @@ package seo_test
 import (
 	"encoding/json"
 	"html/template"
+	"slices"
 	"testing"
 	"time"
 
@@ -91,15 +92,15 @@ func TestManifestRenderUsesFavicons(t *testing.T) {
 		urls = append(urls, entry.(map[string]any)["url"].(string))
 	}
 
-	if !contains(urls, "/writing") {
+	if !slices.Contains(urls, "/writing") {
 		t.Fatalf("expected writing shortcut, got %#v", urls)
 	}
 
-	if !contains(urls, "/contact") {
+	if !slices.Contains(urls, "/contact") {
 		t.Fatalf("expected contact shortcut, got %#v", urls)
 	}
 
-	if contains(urls, "/resume") {
+	if slices.Contains(urls, "/resume") {
 		t.Fatalf("did not expect resume shortcut, got %#v", urls)
 	}
 }
@@ -160,14 +161,4 @@ func TestManifestRenderFallsBackToLogo(t *testing.T) {
 	if icon["src"].(string) != "https://fallback.test/logo.png" {
 		t.Fatalf("expected fallback logo src, got %q", icon["src"])
 	}
-}
-
-func contains(items []string, target string) bool {
-	for _, item := range items {
-		if item == target {
-			return true
-		}
-	}
-
-	return false
 }

@@ -66,3 +66,31 @@ func TestClientOnHeadersAndAbort(t *testing.T) {
 		t.Fatalf("OnHeaders not called")
 	}
 }
+
+func TestClientGetResponseIncludesHeaders(t *testing.T) {
+	c := portal.NewDefaultClient(nil)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Link", `<https://example.test?page=2>; rel="last"`)
+		w.WriteHeader(http.StatusAccepted)
+		_, _ = w.Write([]byte("hello"))
+	}))
+	defer srv.Close()
+
+	resp, err := c.GetResponse(context.Background(), srv.URL)
+	if err != nil {
+		t.Fatalf("get response failed: %v", err)
+	}
+
+	if resp.Body != "hello" {
+		t.Fatalf("unexpected body %q", resp.Body)
+	}
+
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("unexpected status code %d", resp.StatusCode)
+	}
+
+	if resp.Header.Get("Link") != `<https://example.test?page=2>; rel="last"` {
+		t.Fatalf("unexpected link header %q", resp.Header.Get("Link"))
+	}
+}

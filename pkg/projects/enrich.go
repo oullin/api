@@ -14,18 +14,22 @@ func EnrichResponse(response *payload.ProjectsResponse) {
 	}
 
 	for i := range response.Data {
-		if strings.TrimSpace(response.Data[i].PublishedAt) != "" {
-			response.Data[i].PublishedAt = strings.TrimSpace(response.Data[i].PublishedAt)
+		publishedAt := strings.TrimSpace(response.Data[i].PublishedAt)
+		updatedAt := strings.TrimSpace(response.Data[i].UpdatedAt)
+		createdAt := strings.TrimSpace(response.Data[i].CreatedAt)
+
+		if publishedAt != "" {
+			response.Data[i].PublishedAt = publishedAt
 			continue
 		}
 
-		if strings.TrimSpace(response.Data[i].UpdatedAt) != "" {
-			response.Data[i].PublishedAt = strings.TrimSpace(response.Data[i].UpdatedAt)
+		if updatedAt != "" {
+			response.Data[i].PublishedAt = updatedAt
 			continue
 		}
 
-		if strings.TrimSpace(response.Data[i].CreatedAt) != "" {
-			response.Data[i].PublishedAt = strings.TrimSpace(response.Data[i].CreatedAt)
+		if createdAt != "" {
+			response.Data[i].PublishedAt = createdAt
 		}
 	}
 

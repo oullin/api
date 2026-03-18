@@ -76,22 +76,32 @@ func (j *JsonID) WithFounder(person JsonPerson) *JsonID {
 func (j *JsonID) Render() template.JS {
 	siteID := j.SiteURL + "#org"
 	websiteID := j.SiteURL + "#website"
+	founderID := ""
+
+	if j.Founder != nil {
+		founderID = j.SiteURL + "#founder"
+	}
+
+	org := map[string]any{
+		"@id":         siteID,
+		"sameAs":      j.SameAs,
+		"brand":       j.OrgName,
+		"image":       j.LogoURL,
+		"name":        j.OrgName,
+		"legalName":   j.OrgName,
+		"url":         j.SiteURL,
+		"description": j.SiteDescription,
+		"foundedYear": j.FoundedYear,
+		"@type":       "Organization",
+		"logo":        map[string]any{"@type": "ImageObject", "url": j.LogoURL},
+	}
+
+	if founderID != "" {
+		org["founder"] = map[string]any{"@id": founderID}
+	}
 
 	graph := []any{
-		map[string]any{
-			"@id":         siteID,
-			"sameAs":      j.SameAs,
-			"brand":       j.OrgName,
-			"image":       j.LogoURL,
-			"name":        j.OrgName,
-			"legalName":   j.OrgName,
-			"url":         j.SiteURL,
-			"description": j.SiteDescription,
-			"foundedYear": j.FoundedYear,
-			"@type":       "Organization",
-			"logo":        map[string]any{"@type": "ImageObject", "url": j.LogoURL},
-		},
-
+		org,
 		map[string]any{
 			"inLanguage":  j.Lang,
 			"@type":       "WebSite",
@@ -105,19 +115,26 @@ func (j *JsonID) Render() template.JS {
 	}
 
 	if j.PageType != "" && j.PageURL != "" {
-		graph = append(graph, map[string]any{
+		page := map[string]any{
 			"@context":    "https://schema.org",
 			"@type":       j.PageType,
 			"name":        j.PageName,
 			"url":         j.PageURL,
 			"description": j.PageDescription,
 			"isPartOf":    map[string]any{"@id": websiteID},
-		})
+		}
+
+		if founderID != "" {
+			page["founder"] = map[string]any{"@id": founderID}
+		}
+
+		graph = append(graph, page)
 	}
 
 	if j.Founder != nil {
 		founder := map[string]any{
 			"@context": "https://schema.org",
+			"@id":      founderID,
 			"@type":    "Person",
 			"name":     j.Founder.Name,
 			"jobTitle": j.Founder.JobTitle,

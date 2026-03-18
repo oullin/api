@@ -58,6 +58,24 @@ func TestEnrichResponse_FallsBackToCreatedAt(t *testing.T) {
 	}
 }
 
+func TestEnrichResponse_PrefersUpdatedAtOverCreatedAt(t *testing.T) {
+	response := &payload.ProjectsResponse{
+		Data: []payload.ProjectsData{
+			{
+				UUID:      "project-1",
+				UpdatedAt: " 2026-03-10 ",
+				CreatedAt: " 2026-03-01 ",
+			},
+		},
+	}
+
+	EnrichResponse(response)
+
+	if response.Data[0].PublishedAt != "2026-03-10" {
+		t.Fatalf("expected published_at to prefer updated_at, got %q", response.Data[0].PublishedAt)
+	}
+}
+
 func TestEnrichResponse_NoFallbackWhenAllDatesEmpty(t *testing.T) {
 	response := &payload.ProjectsResponse{
 		Data: []payload.ProjectsData{
@@ -75,5 +93,6 @@ func TestEnrichResponse_NoFallbackWhenAllDatesEmpty(t *testing.T) {
 }
 
 func TestEnrichResponse_NilResponse(t *testing.T) {
+	// The nil input should be ignored without panicking.
 	EnrichResponse(nil)
 }

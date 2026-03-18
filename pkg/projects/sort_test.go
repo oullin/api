@@ -1,6 +1,7 @@
 package projects
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/oullin/handler/payload"
@@ -24,9 +25,7 @@ func TestSortByPublishedAtDesc(t *testing.T) {
 	}
 
 	want := []string{"second", "fourth", "first", "third"}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Fatalf("unexpected order: got %v want %v", got, want)
-		}
+	if !slices.Equal(got, want) {
+		t.Fatalf("unexpected order: got %v want %v", got, want)
 	}
 }
