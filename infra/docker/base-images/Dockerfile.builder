@@ -20,6 +20,8 @@ FROM golang:${GO_VERSION}-${GO_IMAGE_VARIANT}@${GO_IMAGE_DIGEST}
 ARG TARGETARCH
 ARG APK_BASE_URL
 
+SHELL ["/bin/sh", "-o", "pipefail", "-c"]
+
 COPY checksums/ /tmp/checksums/
 
 # Install openssl temporarily (needed for APKINDEX signing below), then:
@@ -35,7 +37,7 @@ COPY checksums/ /tmp/checksums/
 #    fortify-headers separately (it must be added by path because its virtual
 #    provider name conflicts with the musl-provided headers already present).
 # 6. Clean up all temporary artifacts.
-RUN apk add --no-cache openssl && \
+RUN apk add --no-cache openssl=3.5.5-r0 && \
     target_arch="${TARGETARCH}"; \
     if [ -z "${target_arch}" ]; then \
         case "$(apk --print-arch)" in \
@@ -98,4 +100,5 @@ RUN apk add --no-cache openssl && \
         > "/tmp/local-repo/${apk_arch}/APKINDEX.tar.gz" && \
     apk add --no-cache --no-network --repositories-file /dev/null --repository /tmp/local-repo binutils file g++ gcc make musl-dev patch pkgconf libwebp-dev && \
     apk add --no-cache --no-network "/tmp/local-repo/${apk_arch}/fortify-headers-1.1-r5.apk" && \
+    apk del --no-cache openssl && \
     rm -rf /tmp/local-repo /tmp/checksums /tmp/apk-sign.rsa /tmp/sig /tmp/sig.tar /tmp/APKINDEX.unsigned.tar.gz /etc/apk/keys/apk-sign.rsa.pub

@@ -31,7 +31,7 @@ ensure-db-volume:
 	docker volume inspect $(DB_DOCKER_VOLUME_NAME) >/dev/null 2>&1 || docker volume create $(DB_DOCKER_VOLUME_NAME)
 
 db\:up:
-	make ensure-db-volume
+	$(MAKE) ensure-db-volume
 	docker compose up $(DB_DOCKER_SERVICE_NAME) -d
 
 db\:down:
@@ -44,8 +44,8 @@ db\:bash:
 	docker exec -it $(DB_DOCKER_CONTAINER_NAME) bash
 
 db\:fresh:
-	make db:delete
-	make db:up
+	$(MAKE) db:delete
+	$(MAKE) db:up
 
 db\:delete:
 	docker compose down -v --remove-orphans

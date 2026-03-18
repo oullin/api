@@ -136,11 +136,9 @@ func (j *JsonID) Render() template.JS {
 		"@context": "https://schema.org",
 	}
 
-	// Encode without Template escaping and compact.
 	var buf bytes.Buffer
 
 	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
 
 	if err := enc.Encode(root); err != nil {
 		return `{}`

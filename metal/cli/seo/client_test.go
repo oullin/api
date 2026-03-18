@@ -104,7 +104,7 @@ func TestClientLoadsFixtures(t *testing.T) {
 		t.Fatalf("expected projects data")
 	}
 
-	social, err := client.GetSocial()
+	social, err := client.GetLinks()
 	if err != nil {
 		t.Fatalf("social err: %v", err)
 	}
@@ -113,8 +113,15 @@ func TestClientLoadsFixtures(t *testing.T) {
 		t.Fatalf("expected social data")
 	}
 
-	if social.Data[0].Description != "Follow Oullin's updates on X." {
-		t.Fatalf("unexpected social description: %+v", social.Data[0])
+	found := false
+	for _, s := range social.Data {
+		if s.Description == "Follow Oullin's updates on X." {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected social entry with description \"Follow Oullin's updates on X.\", got: %+v", social.Data)
 	}
 
 	recs, err := client.GetRecommendations()

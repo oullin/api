@@ -29,6 +29,11 @@ jobs:
       - name: Smoke Test Builder
         run: |
           BUILDER_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^oullin-api-builder-base:' | head -1)
+          if [ -z "${BUILDER_IMAGE}" ]; then
+            echo "::error::No oullin-api-builder-base image found. Did 'make build-base-images' succeed?"
+            docker images
+            exit 1
+          fi
           echo "Testing image: ${BUILDER_IMAGE}"
           docker run --rm "${BUILDER_IMAGE}" sh -c 'gcc --version && pkg-config --libs libwebp && go version'
 

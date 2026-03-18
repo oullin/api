@@ -6,7 +6,7 @@ BASE_ALPINE_VERSION ?= 3.23
 BASE_IMAGE_REVISION ?= 2
 BASE_GO_IMAGE_VARIANT ?= alpine$(BASE_ALPINE_VERSION)
 BASE_GO_IMAGE_DIGEST ?= sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039
-BASE_ALPINE_IMAGE_DIGEST ?= sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+BASE_ALPINE_IMAGE_DIGEST ?= sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 BASE_APK_BASE_URL ?= https://dl-cdn.alpinelinux.org/alpine/v$(BASE_ALPINE_VERSION)/main
 BASE_IMAGE_VERSION ?= $(BASE_GO_VERSION)-alpine$(BASE_ALPINE_VERSION)-r$(BASE_IMAGE_REVISION)
 BUILD_CADDY_NET := caddy_net
@@ -87,9 +87,9 @@ watch-local:
 	docker compose --profile local up
 
 build-local-restart:
-	$(MAKE) ensure-db-volume && \
-	$(MAKE) ensure-base-images && \
-	docker compose --profile local down && \
+	$(MAKE) ensure-db-volume
+	$(MAKE) ensure-base-images
+	docker compose --profile local down
 	docker compose --profile local up --build -d
 
 build-ci:

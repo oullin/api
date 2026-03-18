@@ -19,6 +19,8 @@ FROM alpine:${ALPINE_VERSION}@${ALPINE_IMAGE_DIGEST}
 ARG TARGETARCH
 ARG APK_BASE_URL
 
+SHELL ["/bin/sh", "-o", "pipefail", "-c"]
+
 COPY checksums/ /tmp/checksums/
 
 # Same pinned-download-and-verify flow as the builder image:
@@ -28,7 +30,7 @@ COPY checksums/ /tmp/checksums/
 # 4. Remove openssl — it is only needed for the signing step and should not
 #    remain in the runtime image.
 # 5. Clean up all temporary artifacts.
-RUN apk add --no-cache openssl && \
+RUN apk add --no-cache openssl=3.5.5-r0 && \
     target_arch="${TARGETARCH}"; \
     if [ -z "${target_arch}" ]; then \
         case "$(apk --print-arch)" in \

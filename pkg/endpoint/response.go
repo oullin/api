@@ -103,13 +103,18 @@ func (r *Response) WithHeaders(callback func(w http.ResponseWriter)) {
 }
 
 func (r *Response) RespondOk(payload any) error {
-	w := r.writer
-	headers := r.headers
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
 
-	headers(w)
+	w := r.writer
+	r.headers(w)
 	w.WriteHeader(http.StatusOK)
 
-	return json.NewEncoder(r.writer).Encode(payload)
+	_, err = w.Write(body)
+
+	return err
 }
 
 func (r *Response) HasCache() bool {

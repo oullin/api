@@ -140,7 +140,7 @@ func (r *Router) Social() {
 	maker := handler.NewSocialHandlerWithCache
 
 	r.composeFixtures(
-		r.WebsiteRoutes.Fixture.GetSocial(),
+		r.WebsiteRoutes.Fixture.GetLinks(),
 		func(file string, cacheEnabled bool) StaticRouteResource {
 			return maker(file, cacheEnabled)
 		},

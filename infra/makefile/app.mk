@@ -119,6 +119,13 @@ run-cli:
 						fi; \
 					fi; \
 					;; \
+				*) \
+					if [ -z "$$missing_files" ]; then \
+						missing_files="  - $$secret_name (literal value — must be a file path)"; \
+					else \
+						missing_files="$$missing_files\n  - $$secret_name (literal value — must be a file path)"; \
+					fi; \
+					;; \
 			esac; \
 		fi; \
 	}; \

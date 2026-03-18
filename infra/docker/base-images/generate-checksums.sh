@@ -85,7 +85,7 @@ generate_checksums() {
         done
 
         printf "Computing checksums for %s/%s...\n" "${image_type}" "${arch}"
-        (cd "${dl_dir}" && shasum -a 256 -- *.apk | sort -k2) > "${outfile}"
+        (cd "${dl_dir}" && sha256sum -- *.apk | sort -k2) > "${outfile}"
 
         printf "  -> %s\n" "${outfile}"
     done

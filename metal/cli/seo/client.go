@@ -74,10 +74,10 @@ func (c *Client) GetProjects() (*payload.ProjectsResponse, error) {
 	return c.data.projects, c.data.projectsErr
 }
 
-func (c *Client) GetSocial() (*payload.SocialResponse, error) {
+func (c *Client) GetLinks() (*payload.SocialResponse, error) {
 	return get[payload.SocialResponse](func() router.StaticRouteResource {
-		return handler.NewSocialHandler(c.Fixture.GetSocialFile())
-	}, "social")
+		return handler.NewSocialHandler(c.Fixture.GetLinksFile())
+	}, "links")
 }
 
 func (c *Client) GetRecommendations() (*payload.RecommendationsResponse, error) {

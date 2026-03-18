@@ -181,7 +181,7 @@ func (g *Generator) GenerateAbout() error {
 	}
 
 	cli.Cyanln("Fetching social links for about page")
-	social, err := g.Client.GetSocial()
+	social, err := g.Client.GetLinks()
 	if err != nil {
 		return fmt.Errorf("about: fetching social links: %w", err)
 	}
@@ -290,7 +290,7 @@ func (g *Generator) GenerateContact() error {
 	}
 
 	cli.Cyanln("Fetching social links for contact page")
-	social, err := g.Client.GetSocial()
+	social, err := g.Client.GetLinks()
 	if err != nil {
 		return fmt.Errorf("contact: fetching social links: %w", err)
 	}
