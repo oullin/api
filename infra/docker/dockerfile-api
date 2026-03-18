@@ -125,7 +125,7 @@ ENV TZ=${TZ}
 RUN addgroup -S ${APP_GROUP}
 
 # Create the system user, assign to group, set its home.
-RUN adduser -S ${APP_USER} \
+RUN adduser -S \
 	-G ${APP_GROUP} \
 	-h ${APP_HOME} \
 	${APP_USER}
@@ -142,9 +142,10 @@ WORKDIR ${APP_DIR}
 #       * media/: for uploaded/static media
 #       * fixture/: for static fixtures data
 #
-RUN mkdir -p ${STORAGE_DIR}/${LOGS_DIR}
-RUN mkdir -p ${STORAGE_DIR}/${MEDIA_DIR}
-RUN mkdir -p ${STORAGE_DIR}/${FIXTURES_DIR}
+RUN mkdir -p \
+	${STORAGE_DIR}/${LOGS_DIR} \
+	${STORAGE_DIR}/${MEDIA_DIR} \
+	${STORAGE_DIR}/${FIXTURES_DIR}
 
 # Copy fixture files from builder stage.
 COPY ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}/
@@ -154,13 +155,12 @@ COPY --from=builder ${APP_DIR}/${BINARY_NAME} ${APP_DIR}/
 RUN chmod +x ${APP_DIR}/${BINARY_NAME}
 
 # Give ownership of home and app directories to our non-root user.
-RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
-RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_DIR}
+RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME} ${APP_DIR}
 
 # Switch to non-root user for all subsequent container processes.
 USER ${APP_USER}:${APP_GROUP}
 
-# Arguments do not exist at container runtime, so ${APP_DIR} and ${BINARY_NAME} are empty when the entryoint is called.
+# Arguments do not exist at container runtime, so ${APP_DIR} and ${BINARY_NAME} are empty when the entrypoint is called.
 # Therefore, we need to send those values as environment variables for the shell to pick them up at runtime.
 ENV APP_DIR=${APP_DIR}
 ENV BINARY_NAME=${BINARY_NAME}
