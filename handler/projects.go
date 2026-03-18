@@ -57,8 +57,18 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 
 	items := append([]payload.ProjectsData(nil), data.Data[start:end]...)
 	result := pagination.NewPagination(items, page)
+	response := payload.ProjectsResponse{
+		Version:      data.Version,
+		Data:         result.Data,
+		Page:         result.Page,
+		Total:        result.Total,
+		PageSize:     result.PageSize,
+		TotalPages:   result.TotalPages,
+		NextPage:     result.NextPage,
+		PreviousPage: result.PreviousPage,
+	}
 
-	resp, err := endpoint.NewResponseForPayload(result, 3600, h.cacheEnabled, w, r)
+	resp, err := endpoint.NewResponseForPayload(response, 3600, h.cacheEnabled, w, r)
 	if err != nil {
 		slog.Error("Error preparing projects response cache", "error", err)
 
@@ -71,10 +81,10 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return nil
 	}
 
-	if err := resp.RespondOk(result); err != nil {
+	if err := resp.RespondOk(response); err != nil {
 		slog.Error("Error marshaling JSON for projects response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode projects response")
 	}
 
 	return nil // A nil return indicates success.

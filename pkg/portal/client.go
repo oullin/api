@@ -81,18 +81,20 @@ func (f *Client) GetResponse(ctx context.Context, url string) (Response, error) 
 
 	defer resp.Body.Close()
 
-	if f.AbortOnNone2xx && (resp.StatusCode < 200 || resp.StatusCode >= 300) {
-		return Response{}, fmt.Errorf("received non-2xx status code: %d", resp.StatusCode)
-	}
-
 	body, err := ReadWithSizeLimit(resp.Body)
 	if err != nil {
 		return Response{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return Response{
+	response := Response{
 		Body:       string(body),
 		Header:     resp.Header.Clone(),
 		StatusCode: resp.StatusCode,
-	}, nil
+	}
+
+	if f.AbortOnNone2xx && (resp.StatusCode < 200 || resp.StatusCode >= 300) {
+		return response, fmt.Errorf("received non-2xx status code: %d", resp.StatusCode)
+	}
+
+	return response, nil
 }

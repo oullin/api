@@ -116,7 +116,6 @@ func (j *JsonID) Render() template.JS {
 
 	if j.PageType != "" && j.PageURL != "" {
 		page := map[string]any{
-			"@context":    "https://schema.org",
 			"@type":       j.PageType,
 			"name":        j.PageName,
 			"url":         j.PageURL,
@@ -133,7 +132,6 @@ func (j *JsonID) Render() template.JS {
 
 	if j.Founder != nil {
 		founder := map[string]any{
-			"@context": "https://schema.org",
 			"@id":      founderID,
 			"@type":    "Person",
 			"name":     j.Founder.Name,

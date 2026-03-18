@@ -221,7 +221,7 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 	return template.HTML("<h1>" + title + "</h1>" + metaHTML + excerptHTML + contentHTML)
 }
 
-func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
+func (s *Sections) Social(social *payload.LinksResponse) template.HTML {
 	if social == nil {
 		return template.HTML("<h1>Social</h1><p><ul></ul></p>")
 	}

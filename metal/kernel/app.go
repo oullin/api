@@ -91,7 +91,7 @@ func (a *App) Boot() {
 	modem.Profile()
 	modem.Experience()
 	modem.Projects()
-	modem.Social()
+	modem.Links()
 	modem.Talks()
 	modem.Education()
 	modem.Recommendations()

@@ -136,8 +136,8 @@ func (r *Router) Projects() {
 	)
 }
 
-func (r *Router) Social() {
-	maker := handler.NewSocialHandlerWithCache
+func (r *Router) Links() {
+	maker := handler.NewLinksHandlerWithCache
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetLinks(),

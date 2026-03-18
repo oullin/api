@@ -50,7 +50,7 @@ func (h EducationHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoi
 	if err := resp.RespondOk(data); err != nil {
 		slog.Error("Error marshaling JSON for education response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode education response")
 	}
 
 	return nil // A nil return indicates success.

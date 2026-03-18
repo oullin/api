@@ -63,6 +63,10 @@ func TestJsonIDRenderProducesGraph(t *testing.T) {
 		t.Fatalf("expected AboutPage entry, got %q", page["@type"])
 	}
 
+	if _, ok := page["@context"]; ok {
+		t.Fatalf("page should inherit root context: %#v", page)
+	}
+
 	if page["founder"].(map[string]any)["@id"].(string) != "https://example.test#founder" {
 		t.Fatalf("unexpected page founder ref %#v", page["founder"])
 	}
@@ -70,6 +74,10 @@ func TestJsonIDRenderProducesGraph(t *testing.T) {
 	founder := graph[3].(map[string]any)
 	if founder["@type"].(string) != "Person" {
 		t.Fatalf("expected Person entry, got %q", founder["@type"])
+	}
+
+	if _, ok := founder["@context"]; ok {
+		t.Fatalf("founder should inherit root context: %#v", founder)
 	}
 
 	if founder["@id"].(string) != "https://example.test#founder" {

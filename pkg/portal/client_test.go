@@ -54,7 +54,9 @@ func TestClientOnHeadersAndAbort(t *testing.T) {
 			t.Fatalf("missing header")
 		}
 
+		w.Header().Set("Retry-After", "120")
 		w.WriteHeader(500)
+		_, _ = w.Write([]byte("server error"))
 	}))
 	defer srv.Close()
 
@@ -64,6 +66,35 @@ func TestClientOnHeadersAndAbort(t *testing.T) {
 
 	if !called {
 		t.Fatalf("OnHeaders not called")
+	}
+}
+
+func TestClientGetResponsePreservesMetadataOnAbort(t *testing.T) {
+	c := portal.NewDefaultClient(nil)
+	c.AbortOnNone2xx = true
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Retry-After", "120")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write([]byte("slow down"))
+	}))
+	defer srv.Close()
+
+	resp, err := c.GetResponse(context.Background(), srv.URL)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	if resp.StatusCode != http.StatusTooManyRequests {
+		t.Fatalf("unexpected status code %d", resp.StatusCode)
+	}
+
+	if resp.Header.Get("Retry-After") != "120" {
+		t.Fatalf("unexpected retry-after header %q", resp.Header.Get("Retry-After"))
+	}
+
+	if resp.Body != "slow down" {
+		t.Fatalf("unexpected body %q", resp.Body)
 	}
 }
 

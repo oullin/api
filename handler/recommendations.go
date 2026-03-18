@@ -50,7 +50,7 @@ func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *
 	if err := resp.RespondOk(data); err != nil {
 		slog.Error("Error marshaling JSON for recommendations response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode recommendations response")
 	}
 
 	return nil // A nil return indicates success.

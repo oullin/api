@@ -71,6 +71,7 @@ func NewWeb() *Web {
 	}
 
 	postDetail := WebPage{
+		// Title and Excerpt are populated per post during page generation.
 		Name: "Post",
 		Url:  "/post",
 	}

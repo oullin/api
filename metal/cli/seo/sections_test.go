@@ -32,8 +32,8 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 		Data: []payload.ProjectsData{{Title: "API<Server>", Excerpt: "CLI & Tools"}},
 	}
 
-	social := &payload.SocialResponse{
-		Data: []payload.SocialData{{
+	social := &payload.LinksResponse{
+		Data: []payload.LinksData{{
 			Name:        "X",
 			Handle:      "@<gocanto>",
 			URL:         "https://social.example/<gocanto>",

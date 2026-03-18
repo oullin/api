@@ -60,8 +60,13 @@ func RunFileHandlerTest(t *testing.T, tc FileHandlerTestCase) {
 
 	tc.Assert(t, resp.Data)
 
+	etag := rec.Header().Get("ETag")
+	if etag == "" {
+		t.Fatalf("missing ETag header")
+	}
+
 	req2 := httptest.NewRequest("GET", tc.Endpoint, nil)
-	req2.Header.Set("If-None-Match", rec.Header().Get("ETag"))
+	req2.Header.Set("If-None-Match", etag)
 	rec2 := httptest.NewRecorder()
 
 	if err := h.Handle(rec2, req2); err != nil {

@@ -50,7 +50,7 @@ func (h ProfileHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint
 	if err := resp.RespondOk(data); err != nil {
 		slog.Error("Error marshaling JSON for profile response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode profile response")
 	}
 
 	return nil // A nil return indicates success.

@@ -50,7 +50,7 @@ func (h ExperienceHandler) Handle(w http.ResponseWriter, r *http.Request) *endpo
 	if err := resp.RespondOk(data); err != nil {
 		slog.Error("Error marshaling JSON for experience response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode experience response")
 	}
 
 	return nil // A nil return indicates success.

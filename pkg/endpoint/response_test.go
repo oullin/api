@@ -1,8 +1,10 @@
 package endpoint_test
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/oullin/pkg/endpoint"
@@ -110,6 +112,35 @@ func TestResponse_FromPayloadUsesContentHash(t *testing.T) {
 	}
 }
 
+type marshalCounter struct {
+	calls atomic.Int32
+}
+
+func (m *marshalCounter) MarshalJSON() ([]byte, error) {
+	m.calls.Add(1)
+
+	return []byte(`{"version":"v1"}`), nil
+}
+
+func TestResponse_FromPayloadReusesMarshaledBody(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+	payload := &marshalCounter{}
+
+	r, err := endpoint.NewResponseFromPayload(payload, 3600, rec, req)
+	if err != nil {
+		t.Fatalf("response from payload: %v", err)
+	}
+
+	if err := r.RespondOk(payload); err != nil {
+		t.Fatalf("respond ok: %v", err)
+	}
+
+	if got := payload.calls.Load(); got != 1 {
+		t.Fatalf("expected one marshal call, got %d", got)
+	}
+}
+
 func TestResponse_ForPayloadDisablesCache(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rec := httptest.NewRecorder()
@@ -166,7 +197,7 @@ func TestNewResponseFromPayload_RejectsOversizedPayload(t *testing.T) {
 	}
 
 	_, err := endpoint.NewResponseFromPayload(oversized, 3600, rec, req)
-	if err != endpoint.ErrResponseTooLarge {
+	if !errors.Is(err, endpoint.ErrResponseTooLarge) {
 		t.Fatalf("expected ErrResponseTooLarge, got %v", err)
 	}
 }

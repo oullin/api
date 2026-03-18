@@ -16,6 +16,7 @@ var ErrResponseTooLarge = errors.New("response payload exceeds maximum cache siz
 
 type Response struct {
 	etag         string
+	body         []byte
 	cacheControl string
 	writer       http.ResponseWriter
 	request      *http.Request
@@ -67,7 +68,10 @@ func NewResponseFromPayload(payload any, maxAgeSeconds int, writer http.Response
 
 	sum := sha256.Sum256(body)
 
-	return NewResponseWithCache(fmt.Sprintf("%x", sum), maxAgeSeconds, writer, request), nil
+	resp := NewResponseWithCache(fmt.Sprintf("%x", sum), maxAgeSeconds, writer, request)
+	resp.body = body
+
+	return resp, nil
 }
 
 func NewResponseForPayload(payload any, maxAgeSeconds int, cacheEnabled bool, writer http.ResponseWriter, request *http.Request) (*Response, error) {
@@ -103,16 +107,20 @@ func (r *Response) WithHeaders(callback func(w http.ResponseWriter)) {
 }
 
 func (r *Response) RespondOk(payload any) error {
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return err
+	body := r.body
+	if len(body) == 0 {
+		var err error
+		body, err = json.Marshal(payload)
+		if err != nil {
+			return err
+		}
 	}
 
 	w := r.writer
 	r.headers(w)
 	w.WriteHeader(http.StatusOK)
 
-	_, err = w.Write(body)
+	_, err := w.Write(body)
 
 	return err
 }

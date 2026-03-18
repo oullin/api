@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
 )
@@ -39,9 +38,13 @@ func TestProjectsHandler_SortsAndPaginates(t *testing.T) {
 		t.Fatalf("handle: %v", err)
 	}
 
-	var resp pagination.Pagination[payload.ProjectsData]
+	var resp payload.ProjectsResponse
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
+	}
+
+	if resp.Version != "1.0.0" {
+		t.Fatalf("expected version to be preserved, got %q", resp.Version)
 	}
 
 	if resp.Page != 1 || resp.PageSize != 8 || resp.Total != 10 || resp.TotalPages != 2 {
@@ -94,7 +97,7 @@ func TestProjectsHandler_Page2(t *testing.T) {
 		t.Fatalf("handle: %v", err)
 	}
 
-	var resp pagination.Pagination[payload.ProjectsData]
+	var resp payload.ProjectsResponse
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -152,7 +155,7 @@ func TestProjectsHandler_SortsByPublishedAtWithFallbackDates(t *testing.T) {
 		t.Fatalf("handle: %v", err)
 	}
 
-	var resp pagination.Pagination[payload.ProjectsData]
+	var resp payload.ProjectsResponse
 	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
