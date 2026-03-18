@@ -3,6 +3,7 @@ package seo_test
 import (
 	"encoding/json"
 	"html/template"
+	"slices"
 	"testing"
 	"time"
 
@@ -79,6 +80,28 @@ func TestManifestRenderUsesFavicons(t *testing.T) {
 
 	if got["shortcuts"] == nil {
 		t.Fatalf("expected shortcuts in manifest")
+	}
+
+	shortcuts := got["shortcuts"].([]any)
+	if len(shortcuts) != 5 {
+		t.Fatalf("expected 5 shortcuts, got %d", len(shortcuts))
+	}
+
+	urls := make([]string, 0, len(shortcuts))
+	for _, entry := range shortcuts {
+		urls = append(urls, entry.(map[string]any)["url"].(string))
+	}
+
+	if !slices.Contains(urls, "/writing") {
+		t.Fatalf("expected writing shortcut, got %#v", urls)
+	}
+
+	if !slices.Contains(urls, "/contact") {
+		t.Fatalf("expected contact shortcut, got %#v", urls)
+	}
+
+	if slices.Contains(urls, "/resume") {
+		t.Fatalf("did not expect resume shortcut, got %#v", urls)
 	}
 }
 

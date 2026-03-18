@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/oullin/handler/payload"
+	"github.com/oullin/internal/testutil/dbtest"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/endpoint"
-	"github.com/oullin/pkg/support"
 )
 
 type failingRoute struct{ err *endpoint.ApiError }
@@ -54,7 +54,7 @@ func TestFetchReturnsJSONDecodeError(t *testing.T) {
 }
 
 func TestClientLoadsFixtures(t *testing.T) {
-	h := support.NewTestsHelperSimple(t)
+	h := dbtest.NewTestsHelperSimple(t)
 	h.ChangeRepoRoot()
 
 	spaDir := t.TempDir()
@@ -82,6 +82,10 @@ func TestClientLoadsFixtures(t *testing.T) {
 		t.Fatalf("unexpected profile data: %+v", profile.Data)
 	}
 
+	if profile.Data.Profession != "Founder of Oullin" {
+		t.Fatalf("unexpected profile profession: %+v", profile.Data)
+	}
+
 	talks, err := client.GetTalks()
 	if err != nil {
 		t.Fatalf("talks err: %v", err)
@@ -100,13 +104,24 @@ func TestClientLoadsFixtures(t *testing.T) {
 		t.Fatalf("expected projects data")
 	}
 
-	social, err := client.GetSocial()
+	social, err := client.GetLinks()
 	if err != nil {
 		t.Fatalf("social err: %v", err)
 	}
 
 	if len(social.Data) == 0 {
 		t.Fatalf("expected social data")
+	}
+
+	found := false
+	for _, s := range social.Data {
+		if s.Description == "Follow Oullin's updates on X." {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected social entry with description \"Follow Oullin's updates on X.\", got: %+v", social.Data)
 	}
 
 	recs, err := client.GetRecommendations()

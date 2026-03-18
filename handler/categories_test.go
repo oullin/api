@@ -14,11 +14,11 @@ import (
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
-	handlertests "github.com/oullin/handler/tests"
+	"github.com/oullin/internal/testutil/dbtest"
 )
 
 func TestCategoriesHandlerIndex_Success(t *testing.T) {
-	conn, author := handlertests.NewTestDB(t)
+	conn, author := dbtest.NewTestDB(t)
 
 	published := time.Now()
 
@@ -113,7 +113,7 @@ func TestCategoriesHandlerIndex_Success(t *testing.T) {
 }
 
 func TestCategoriesHandlerIndex_SortOrdering(t *testing.T) {
-	conn, author := handlertests.NewTestDB(t)
+	conn, author := dbtest.NewTestDB(t)
 
 	published := time.Now()
 

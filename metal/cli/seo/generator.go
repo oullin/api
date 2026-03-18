@@ -66,9 +66,7 @@ func NewGenerator(db *database.Connection, env *env.Environment, val *portal.Val
 		SiteURL:       portal.SanitiseURL(env.App.URL),
 		AboutPhotoUrl: portal.SanitiseURL(web.Urls.AboutPhotoUrl),
 		SameAsURL: []string{
-			portal.SanitiseURL(web.Urls.RepoApiUrl),
-			portal.SanitiseURL(web.Urls.RepoWebUrl),
-			portal.SanitiseURL(web.Urls.GocantoUrl),
+			portal.SanitiseURL(web.Urls.OrganizationURL),
 		},
 	}
 
@@ -106,7 +104,9 @@ func (g *Generator) GenerateStaticPages() error {
 		{"index", g.GenerateIndex},
 		{"about", g.GenerateAbout},
 		{"projects", g.GenerateProjects},
-		{"resume", g.GenerateResume},
+		{"writing", g.GenerateWriting},
+		{"contact", g.GenerateContact},
+		{"terms-and-conditions", g.GenerateTermsAndPolicies},
 	}
 
 	for _, step := range steps {
@@ -142,7 +142,11 @@ func (g *Generator) GenerateIndex() error {
 	var html []template.HTML
 	sections := NewSections()
 
-	html = append(html, sections.Profile(profile))
+	html = append(html, sections.Narrative(
+		"Oullin",
+		"Oullin is a movement-led platform for engineering leadership, AI architecture, open-source systems, and writing shaped by presence, transformation, and craft.",
+		"Oullin builds tools, writes ideas, and ships systems that move people forward. Engineering leadership. AI architecture. Open source. All of it grounded in presence, craft, and the belief that what you build should outlast the hype cycle.",
+	))
 	html = append(html, sections.Categories(g.Page.Categories))
 	html = append(html, sections.Talks(talks))
 	html = append(html, sections.Skills(profile))
@@ -152,7 +156,7 @@ func (g *Generator) GenerateIndex() error {
 
 	web := g.Web.GetHomePage()
 	tData, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
-		data.Title = web.Title
+		data.Title = g.Page.SiteName
 		data.Description = web.Excerpt
 	})
 
@@ -177,7 +181,7 @@ func (g *Generator) GenerateAbout() error {
 	}
 
 	cli.Cyanln("Fetching social links for about page")
-	social, err := g.Client.GetSocial()
+	social, err := g.Client.GetLinks()
 	if err != nil {
 		return fmt.Errorf("about: fetching social links: %w", err)
 	}
@@ -191,13 +195,18 @@ func (g *Generator) GenerateAbout() error {
 	sections := NewSections()
 	var html []template.HTML
 
+	html = append(html, sections.Narrative(
+		"Oullin",
+		"Oullin is a platform built on a single conviction: movement matters. The name is a deliberate misspelling of Ollin, the Aztec sacred day-sign of movement and transformation.",
+		"Oullin builds tools, writes ideas, and ships systems that move people forward. Engineering leadership. AI architecture. Open source. All of it grounded in presence, craft, and the belief that what you build should outlast the hype cycle.",
+	))
 	html = append(html, sections.Profile(profile))
 	html = append(html, sections.Social(social))
 	html = append(html, sections.Recommendations(recommendations))
 
 	web := g.Web.GetAboutPage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
-		data.Title = web.Title
+		data.Title = g.TitleFor(web.Title)
 		data.Description = web.Excerpt
 	})
 
@@ -227,7 +236,7 @@ func (g *Generator) GenerateProjects() error {
 
 	web := g.Web.GetProjectsPage()
 	data, buildErr := g.buildForPage(web.Name, web.Url, body, func(data *TemplateData) {
-		data.Title = web.Title
+		data.Title = g.TitleFor(web.Title)
 		data.Description = web.Excerpt
 	})
 
@@ -244,48 +253,100 @@ func (g *Generator) GenerateProjects() error {
 	return nil
 }
 
-func (g *Generator) GenerateResume() error {
-	cli.Cyanln("Fetching experience for resume page")
-	experience, err := g.Client.GetExperience()
-
-	if err != nil {
-		return fmt.Errorf("resume: fetching experience: %w", err)
-	}
-
-	cli.Cyanln("Fetching education for resume page")
-	education, err := g.Client.GetEducation()
-	if err != nil {
-		return fmt.Errorf("resume: fetching education: %w", err)
-	}
-
-	cli.Cyanln("Fetching recommendations for resume page")
-	recommendations, err := g.Client.GetRecommendations()
-	if err != nil {
-		return fmt.Errorf("resume: fetching recommendations: %w", err)
-	}
-
+func (g *Generator) GenerateWriting() error {
 	sections := NewSections()
-	var html []template.HTML
+	body := []template.HTML{
+		sections.Narrative(
+			"Writing Archive",
+			"This page holds Oullin's article archive. It is a dedicated place to browse categories, open essays, and follow the writing without burying it inside the landing page.",
+		),
+		sections.Categories(g.Page.Categories),
+	}
 
-	html = append(html, sections.Education(education))
-	html = append(html, sections.Experience(experience))
-	html = append(html, sections.Recommendations(recommendations))
-
-	web := g.Web.GetResumePage()
-	data, buildErr := g.buildForPage(web.Name, web.Url, html, func(data *TemplateData) {
-		data.Title = web.Title
+	web := g.Web.GetWritingPage()
+	data, buildErr := g.buildForPage(web.Title, web.Url, body, func(data *TemplateData) {
+		data.Title = g.TitleFor(web.Title)
 		data.Description = web.Excerpt
 	})
 
 	if buildErr != nil {
-		return fmt.Errorf("resume: generating template data: %w", buildErr)
+		return fmt.Errorf("writing: generating template data: %w", buildErr)
 	}
 
-	if err = g.Export("resume", data); err != nil {
-		return fmt.Errorf("resume: exporting template data: %w", err)
+	if err := g.Export("writing", data); err != nil {
+		return fmt.Errorf("writing: exporting template data: %w", err)
 	}
 
-	cli.Successln("Resume SEO template generated")
+	cli.Successln("Writing SEO template generated")
+
+	return nil
+}
+
+func (g *Generator) GenerateContact() error {
+	cli.Cyanln("Fetching profile for contact page")
+	profile, err := g.Client.GetProfile()
+	if err != nil {
+		return fmt.Errorf("contact: fetching profile: %w", err)
+	}
+
+	cli.Cyanln("Fetching social links for contact page")
+	social, err := g.Client.GetLinks()
+	if err != nil {
+		return fmt.Errorf("contact: fetching social links: %w", err)
+	}
+
+	sections := NewSections()
+	body := []template.HTML{
+		sections.Contact(profile),
+		sections.Social(social),
+		sections.Profile(profile),
+	}
+
+	web := g.Web.GetContactPage()
+	data, buildErr := g.buildForPage(web.Name, web.Url, body, func(data *TemplateData) {
+		data.Title = g.TitleFor(web.Title)
+		data.Description = web.Excerpt
+	})
+
+	if buildErr != nil {
+		return fmt.Errorf("contact: generating template data: %w", buildErr)
+	}
+
+	if err := g.Export("contact", data); err != nil {
+		return fmt.Errorf("contact: exporting template data: %w", err)
+	}
+
+	cli.Successln("Contact SEO template generated")
+
+	return nil
+}
+
+func (g *Generator) GenerateTermsAndPolicies() error {
+	sections := NewSections()
+	body := []template.HTML{
+		sections.Narrative(
+			"Terms and Policies",
+			"These terms govern access to and use of Oullin's digital products and professional services, including software consulting, technical architecture, and platform-based offerings.",
+			"By registering for, purchasing, or using the services, you acknowledge that you have read and agreed to the terms set out here.",
+			"For legal, billing, or policy-related enquiries, please contact Oullin through the communication channels listed on the Contact page.",
+		),
+	}
+
+	web := g.Web.GetTermsPage()
+	data, buildErr := g.buildForPage(web.Title, web.Url, body, func(data *TemplateData) {
+		data.Title = g.TitleFor(web.Title)
+		data.Description = web.Excerpt
+	})
+
+	if buildErr != nil {
+		return fmt.Errorf("terms-and-conditions: generating template data: %w", buildErr)
+	}
+
+	if err := g.Export("terms-and-conditions", data); err != nil {
+		return fmt.Errorf("terms-and-conditions: exporting template data: %w", err)
+	}
+
+	cli.Successln("Terms and Policies SEO template generated")
 
 	return nil
 }
@@ -442,7 +503,6 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 		Lang:           g.Page.Lang,
 		Description:    g.Web.Description,
 		Categories:     g.Page.Categories,
-		JsonLD:         NewJsonID(g.Page, g.Web).Render(),
 		AppleTouchIcon: portal.SanitiseURL(g.Page.LogoURL),
 		HrefLang: []HrefLangData{
 			{
@@ -462,18 +522,20 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 
 	data.Body = body
 	data.Title = g.TitleFor(pageName)
-	data.Manifest = NewManifest(g.Page, data, g.Web).Render()
 	data.Canonical = portal.SanitiseURL(g.CanonicalFor(path))
 
 	for _, opt := range opts {
 		opt(&data)
 	}
 
-	if _, err := g.Validator.Rejects(og); err != nil {
+	data.JsonLD = g.buildJsonLD(pageName, path, data.Description)
+	data.Manifest = NewManifest(g.Page, data, g.Web).Render()
+
+	if _, err := g.Validator.Rejects(data.OGTagOg); err != nil {
 		return TemplateData{}, fmt.Errorf("invalid og data: %s", g.Validator.GetErrorsAsJson())
 	}
 
-	if _, err := g.Validator.Rejects(twitter); err != nil {
+	if _, err := g.Validator.Rejects(data.Twitter); err != nil {
 		return TemplateData{}, fmt.Errorf("invalid twitter data: %s", g.Validator.GetErrorsAsJson())
 	}
 
@@ -524,7 +586,54 @@ func (g *Generator) TitleFor(pageName string) string {
 		return g.Page.SiteName
 	}
 
-	return fmt.Sprintf("%s · %s", pageName, g.Page.SiteName)
+	return fmt.Sprintf("%s - %s", pageName, g.Page.SiteName)
+}
+
+func (g *Generator) buildJsonLD(pageName, path, description string) template.JS {
+	pageType := "WebPage"
+	entityName := pageName
+	founder := (*JsonPerson)(nil)
+
+	switch {
+	case path == g.Web.GetHomePage().Url:
+		entityName = g.Page.SiteName
+	case path == g.Web.GetAboutPage().Url:
+		pageType = "AboutPage"
+		founder = &JsonPerson{
+			Name:        AuthorName,
+			JobTitle:    "Founder of Oullin",
+			URL:         g.CanonicalFor(path),
+			Description: "Founder of Oullin and engineering leader working across architecture, AI, and software delivery.",
+		}
+	case path == g.Web.GetProjectsPage().Url:
+		pageType = "CollectionPage"
+	case path == g.Web.GetWritingPage().Url:
+		pageType = "CollectionPage"
+	case path == g.Web.GetContactPage().Url:
+		pageType = "ContactPage"
+		founder = &JsonPerson{
+			Name:     AuthorName,
+			JobTitle: "Founder of Oullin",
+			URL:      g.CanonicalFor(path),
+		}
+	case path == g.Web.GetTermsPage().Url:
+		pageType = "WebPage"
+	case strings.HasPrefix(path, g.Web.GetPostDetailPage().Url+"/"):
+		pageType = "Article"
+	}
+
+	jsonLD := NewJsonID(g.Page, g.Web).WithPage(
+		entityName,
+		pageType,
+		portal.SanitiseURL(g.CanonicalFor(path)),
+		description,
+	)
+
+	if founder != nil {
+		jsonLD.WithFounder(*founder)
+	}
+
+	return jsonLD.Render()
 }
 
 func truncateForLog(value string) string {
@@ -572,6 +681,7 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 		data.OGTagOg.Type = "article"
 		data.OGTagOg.ImageType = imageType
 		data.Twitter.Image = image
+		data.Title = g.TitleFor(post.Title)
 		data.Description = description
 		data.OGTagOg.ImageAlt = imageAlt
 		data.Twitter.ImageAlt = imageAlt
@@ -581,7 +691,7 @@ func (g *Generator) BuildForPost(post payload.PostResponse, body []template.HTML
 func (g *Generator) CanonicalPostPath(slug string) string {
 	cleaned := strings.TrimSpace(slug)
 	cleaned = strings.Trim(cleaned, "/")
-	web := g.Web.GetPostsDetailPage()
+	web := g.Web.GetPostDetailPage()
 
 	if cleaned == "" {
 		return web.Url

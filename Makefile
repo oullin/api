@@ -54,7 +54,7 @@ help:
 	@printf "$(BOLD)$(BLUE)General Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)fresh$(NC)            : Clean and reset various project components (logs, build, etc.).\n"
 	@printf "  $(BOLD)$(GREEN)audit$(NC)            : Run code audits and checks.\n"
-	@printf "  $(BOLD)$(GREEN)watch$(NC)            : Start a file watcher process.\n"
+	@printf "  $(BOLD)$(GREEN)watch$(NC)            : Start the local Go watcher via air.\n"
 	@printf "  $(BOLD)$(GREEN)format$(NC)           : Automatically format code.\n"
 	@printf "  $(BOLD)$(GREEN)test-all$(NC)         : Run all the application tests.\n"
 	@printf "  $(BOLD)$(GREEN)run-cli$(NC)          : Run the application CLI interface.\n"
@@ -63,6 +63,7 @@ help:
 
 	@printf "$(BOLD)$(BLUE)Build Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)build-local$(NC)      : Build the main application for development.\n"
+	@printf "  $(BOLD)$(GREEN)watch-local$(NC)      : Start the Docker local stack in the foreground.\n"
 	@printf "  $(BOLD)$(GREEN)build-ci$(NC)         : Build the main application for the CI.\n"
 	@printf "  $(BOLD)$(GREEN)build-release$(NC)    : Build a release version of the application.\n"
 	@printf "  $(BOLD)$(GREEN)build-fresh$(NC)      : Build a fresh development environment.\n\n"

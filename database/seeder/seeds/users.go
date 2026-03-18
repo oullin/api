@@ -38,7 +38,7 @@ func (s UsersSeed) Create(attrs database.UsersAttrs) (database.User, error) {
 		PasswordHash: pass.GetHash(),
 		PublicToken:  uuid.NewString(),
 		IsAdmin:      attrs.IsAdmin,
-		Bio:          "Software Engineer with an eye for details.",
+		Bio:          "Software engineer with an eye for detail.",
 		VerifiedAt:   time.Now(),
 	}
 

@@ -104,91 +104,91 @@ func (r *Router) Metrics() {
 }
 
 func (r *Router) Profile() {
-	maker := handler.NewProfileHandler
+	maker := handler.NewProfileHandlerWithCache
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetProfile(),
-		func(file string) StaticRouteResource {
-			return maker(file)
+		func(file string, cacheEnabled bool) StaticRouteResource {
+			return maker(file, cacheEnabled)
 		},
 	)
 }
 
 func (r *Router) Experience() {
-	maker := handler.NewExperienceHandler
+	maker := handler.NewExperienceHandlerWithCache
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetExperience(),
-		func(file string) StaticRouteResource {
-			return maker(file)
+		func(file string, cacheEnabled bool) StaticRouteResource {
+			return maker(file, cacheEnabled)
 		},
 	)
 }
 
 func (r *Router) Projects() {
-	maker := handler.NewProjectsHandler
+	maker := handler.NewProjectsHandlerWithCache
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetProjects(),
-		func(file string) StaticRouteResource {
-			return maker(file)
+		func(file string, cacheEnabled bool) StaticRouteResource {
+			return maker(file, cacheEnabled)
 		},
 	)
 }
 
-func (r *Router) Social() {
-	maker := handler.NewSocialHandler
+func (r *Router) Links() {
+	maker := handler.NewLinksHandlerWithCache
 
 	r.composeFixtures(
-		r.WebsiteRoutes.Fixture.GetSocial(),
-		func(file string) StaticRouteResource {
-			return maker(file)
+		r.WebsiteRoutes.Fixture.GetLinks(),
+		func(file string, cacheEnabled bool) StaticRouteResource {
+			return maker(file, cacheEnabled)
 		},
 	)
 }
 
 func (r *Router) Talks() {
-	maker := handler.NewTalksHandler
+	maker := handler.NewTalksHandlerWithCache
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetTalks(),
-		func(file string) StaticRouteResource {
-			return maker(file)
+		func(file string, cacheEnabled bool) StaticRouteResource {
+			return maker(file, cacheEnabled)
 		},
 	)
 }
 
 func (r *Router) Education() {
-	maker := handler.NewEducationHandler
+	maker := handler.NewEducationHandlerWithCache
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetEducation(),
-		func(file string) StaticRouteResource {
-			return maker(file)
+		func(file string, cacheEnabled bool) StaticRouteResource {
+			return maker(file, cacheEnabled)
 		},
 	)
 }
 
 func (r *Router) Recommendations() {
-	maker := handler.NewRecommendationsHandler
+	maker := handler.NewRecommendationsHandlerWithCache
 
 	r.composeFixtures(
 		r.WebsiteRoutes.Fixture.GetRecommendations(),
-		func(file string) StaticRouteResource {
-			return maker(file)
+		func(file string, cacheEnabled bool) StaticRouteResource {
+			return maker(file, cacheEnabled)
 		},
 	)
 }
 
-func (r *Router) composeFixtures(fxt *Fixture, maker func(file string) StaticRouteResource) {
+func (r *Router) composeFixtures(fxt *Fixture, maker func(file string, cacheEnabled bool) StaticRouteResource) {
 	file := fxt.file
 	fullPath := fxt.fullPath
 
 	addStaticRoute(r, file, fullPath, maker)
 }
 
-func addStaticRoute[H StaticRouteResource](r *Router, route, fixture string, maker func(string) H) {
-	abstract := maker(fixture)
+func addStaticRoute[H StaticRouteResource](r *Router, route, fixture string, maker func(string, bool) H) {
+	abstract := maker(fixture, !r.Env.App.IsLocal())
 	resolver := r.PipelineFor(abstract.Handle)
 
 	route = strings.TrimLeft(route, "/")

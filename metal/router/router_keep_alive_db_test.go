@@ -5,14 +5,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	handlertests "github.com/oullin/handler/tests"
+	"github.com/oullin/internal/testutil/dbtest"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/metal/router"
 	"github.com/oullin/pkg/middleware"
 )
 
 func TestKeepAliveDBRoute(t *testing.T) {
-	db, _ := handlertests.NewTestDB(t)
+	db, _ := dbtest.NewTestDB(t)
 	r := router.Router{
 		Env:      &env.Environment{Ping: env.PingEnvironment{Username: "user", Password: "pass"}},
 		Db:       db,

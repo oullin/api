@@ -1,0 +1,46 @@
+name: Base Images
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, ready_for_review, synchronize]
+
+jobs:
+  validate:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker with Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+
+      - name: Create .env File
+        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+        shell: bash
+
+      - name: Build Base Images
+        run: make build-base-images
+
+      - name: Smoke Test Builder
+        run: |
+          BUILDER_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^oullin-api-builder-base:' | head -1)
+          if [ -z "${BUILDER_IMAGE}" ]; then
+            echo "::error::No oullin-api-builder-base image found. Did 'make build-base-images' succeed?"
+            docker images
+            exit 1
+          fi
+          echo "Testing image: ${BUILDER_IMAGE}"
+          docker run --rm "${BUILDER_IMAGE}" sh -c 'gcc --version && pkg-config --libs libwebp && go version'
+
+      - name: Build CI
+        run: make build-ci
+
+      - name: Verify Checksums
+        run: |
+          make generate-apk-checksums
+          git diff --exit-code infra/docker/base-images/checksums/

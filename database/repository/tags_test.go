@@ -5,11 +5,11 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/pkg/support"
+	"github.com/oullin/internal/testutil/dbtest"
 )
 
 func TestTagsFindOrCreatePostgres(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.Tag{})
+	h := dbtest.NewTestsHelper(t, &database.Tag{})
 
 	conn := h.Conn()
 

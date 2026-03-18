@@ -182,7 +182,7 @@ services:
                         memory: 256M
 
         postgres_exporter:
-            image: prometheuscommunity/postgres-exporter:v0.16.0@sha256:6999a7657e2f2fb0ca6ebf417213eebf6dc7d21b30708c622f6fcb11183a2bb0
+            image: prometheuscommunity/postgres-exporter:v0.18.0@sha256:3a9be51b73ac4f007cec8a36d824253c0607d065196072b61d8808714d7e8044
             profiles: ["prod"]
             container_name: oullin_postgres_exporter
             restart: unless-stopped
@@ -217,7 +217,7 @@ services:
                         memory: 32M
 
         postgres_exporter_local:
-            image: prometheuscommunity/postgres-exporter:v0.16.0@sha256:6999a7657e2f2fb0ca6ebf417213eebf6dc7d21b30708c622f6fcb11183a2bb0
+            image: prometheuscommunity/postgres-exporter:v0.18.0@sha256:3a9be51b73ac4f007cec8a36d824253c0607d065196072b61d8808714d7e8044
             profiles: ["local"]
             container_name: oullin_postgres_exporter_local
             restart: unless-stopped
@@ -276,7 +276,7 @@ services:
                 prometheus:
                     condition: service_healthy
             healthcheck:
-                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
@@ -315,7 +315,7 @@ services:
                 prometheus_local:
                     condition: service_healthy
             healthcheck:
-                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
                 interval: 10s
                 timeout: 5s
                 retries: 5
@@ -339,6 +339,8 @@ services:
             context: .
             dockerfile: ./infra/docker/dockerfile-api
             target: builder
+            args:
+              - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r2}
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
@@ -347,7 +349,7 @@ services:
           working_dir: /app
           environment:
               CGO_ENABLED: 1
-              GOTOOLCHAIN: ${GOTOOLCHAIN_VERSION:-go1.25.5}
+              GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}
               ENV_DB_HOST: api-db
               ENV_SPA_DIR: ${ENV_SPA_DIR}
               ENV_DB_PORT: ${ENV_DB_PORT:-5432}
@@ -372,9 +374,10 @@ services:
                 - .env
             volumes:
               - ./.env:/app/.env:ro
+              - ./storage/fixture:/app/storage/fixture:ro
             environment:
                 CGO_ENABLED: 1
-                GOTOOLCHAIN: ${GOTOOLCHAIN_VERSION:-go1.25.5}
+                GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}
                 # --- This ensures the Go web server listens for connections from other
                 #     containers (like Caddy), not just from within itself.
                 ENV_DB_HOST: api-db
@@ -383,6 +386,7 @@ services:
                 context: .
                 dockerfile: ./infra/docker/dockerfile-api
                 args:
+                    - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r2}
                     - APP_VERSION=0.0.0.1
                     - APP_HOST_PORT=${ENV_HTTP_PORT}
                     - APP_USER=${ENV_DOCKER_USER}

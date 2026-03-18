@@ -1,4 +1,4 @@
-.PHONY: db\:sh db\:up db\:down db\:logs db\:bash db\:fresh
+.PHONY: ensure-db-volume db\:sh db\:up db\:down db\:logs db\:bash db\:fresh
 .PHONY: db\:secure db\:seed db\:import db\:migrate db\:migrate\:create db\:migrate\:force db\:rollback db\:chmod
 
 # --- Docker Services
@@ -6,6 +6,7 @@ DB_API_RUNNER_SERVICE := api-runner
 DB_DOCKER_SERVICE_NAME := api-db
 DB_DOCKER_CONTAINER_NAME := oullin_db
 DB_MIGRATE_SERVICE_NAME := $(DB_DOCKER_SERVICE_NAME)-migrate
+DB_DOCKER_VOLUME_NAME := api_oullin_db_data
 
 # --- Paths
 #     Define root paths for clarity. Assumes ROOT_PATH is exported or defined.
@@ -26,7 +27,11 @@ db\:sh:
 	chmod +x $(DB_INFRA_SCRIPTS_PATH)/healthcheck.sh
 	chmod +x $(DB_INFRA_SCRIPTS_PATH)/run-migration.sh
 
+ensure-db-volume:
+	docker volume inspect $(DB_DOCKER_VOLUME_NAME) >/dev/null 2>&1 || docker volume create $(DB_DOCKER_VOLUME_NAME)
+
 db\:up:
+	$(MAKE) ensure-db-volume
 	docker compose up $(DB_DOCKER_SERVICE_NAME) -d
 
 db\:down:
@@ -39,8 +44,8 @@ db\:bash:
 	docker exec -it $(DB_DOCKER_CONTAINER_NAME) bash
 
 db\:fresh:
-	make db:delete
-	make db:up
+	$(MAKE) db:delete
+	$(MAKE) db:up
 
 db\:delete:
 	docker compose down -v --remove-orphans

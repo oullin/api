@@ -9,27 +9,48 @@ import (
 	"net/http"
 )
 
-type SocialHandler struct {
-	filePath string
+type LinksHandler struct {
+	filePath     string
+	cacheEnabled bool
 }
 
-func NewSocialHandler(filePath string) SocialHandler {
-	return SocialHandler{
-		filePath: filePath,
+type SocialHandler = LinksHandler
+
+func NewLinksHandler(filePath string) LinksHandler {
+	return NewLinksHandlerWithCache(filePath, true)
+}
+
+func NewLinksHandlerWithCache(filePath string, cacheEnabled bool) LinksHandler {
+	return LinksHandler{
+		filePath:     filePath,
+		cacheEnabled: cacheEnabled,
 	}
 }
 
-func (h SocialHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
-	data, err := portal.ParseJsonFile[payload.SocialResponse](h.filePath)
+func NewSocialHandler(filePath string) LinksHandler {
+	return NewLinksHandler(filePath)
+}
+
+func NewSocialHandlerWithCache(filePath string, cacheEnabled bool) LinksHandler {
+	return NewLinksHandlerWithCache(filePath, cacheEnabled)
+}
+
+func (h LinksHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
+	data, err := portal.ParseJsonFile[payload.LinksResponse](h.filePath)
 
 	if err != nil {
-		slog.Error("Error reading social file", "error", err)
+		slog.Error("Error reading links file", "error", err)
 
-		return endpoint.InternalError("could not read social data")
+		return endpoint.InternalError("could not read links data")
 	}
 
-	// Cache for 1 week (604800 seconds) since social data rarely changes
-	resp := endpoint.NewResponseWithCache(data.Version, 604800, w, r)
+	// Cache for 1 week (604800 seconds) since links data rarely changes.
+	resp, err := endpoint.NewResponseForPayload(data, 604800, h.cacheEnabled, w, r)
+	if err != nil {
+		slog.Error("Error preparing links response cache", "error", err)
+
+		return endpoint.InternalError("could not prepare links response")
+	}
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()
@@ -38,9 +59,9 @@ func (h SocialHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.
 	}
 
 	if err := resp.RespondOk(data); err != nil {
-		slog.Error("Error marshaling JSON for social response", "error", err)
+		slog.Error("Error marshaling JSON for links response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode links response")
 	}
 
 	return nil // A nil return indicates success.

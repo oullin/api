@@ -8,8 +8,8 @@ caddy-restart:
 	docker compose up -d --force-recreate caddy_prod
 
 caddy-fresh:
-	@make caddy-del-certs
-	@make caddy-gen-certs
+	@$(MAKE) caddy-del-certs
+	@$(MAKE) caddy-gen-certs
 
 caddy-gen-certs:
 	@set -eu; \

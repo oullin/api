@@ -11,8 +11,28 @@ import (
 
 type Sections struct{}
 
+const (
+	contactIntroParagraph    = "Oullin is open to thoughtful conversations about engineering leadership, AI architecture, open-source systems, and work that needs doing properly."
+	contactFallbackParagraph = "Direct email details are currently unavailable. Please try again later."
+)
+
 func NewSections() Sections {
 	return Sections{}
+}
+
+func (s *Sections) Narrative(title string, paragraphs ...string) template.HTML {
+	parts := []string{"<h1>" + template.HTMLEscapeString(title) + "</h1>"}
+
+	for _, paragraph := range paragraphs {
+		trimmed := strings.TrimSpace(paragraph)
+		if trimmed == "" {
+			continue
+		}
+
+		parts = append(parts, "<p>"+template.HTMLEscapeString(trimmed)+"</p>")
+	}
+
+	return template.HTML(strings.Join(parts, ""))
 }
 
 func (s *Sections) Categories(categories []string) template.HTML {
@@ -201,7 +221,7 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 	return template.HTML("<h1>" + title + "</h1>" + metaHTML + excerptHTML + contentHTML)
 }
 
-func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
+func (s *Sections) Social(social *payload.LinksResponse) template.HTML {
 	if social == nil {
 		return template.HTML("<h1>Social</h1><p><ul></ul></p>")
 	}
@@ -235,6 +255,27 @@ func (s *Sections) Social(social *payload.SocialResponse) template.HTML {
 		strings.Join(items, "") +
 		"</ul></p>",
 	)
+}
+
+func (s *Sections) Contact(profile *payload.ProfileResponse) template.HTML {
+	if profile == nil {
+		return s.contactFallback()
+	}
+
+	email := template.HTMLEscapeString(strings.TrimSpace(profile.Data.Email))
+	if email == "" {
+		return s.contactFallback()
+	}
+
+	return template.HTML(
+		"<h1>Contact</h1>" +
+			"<p>" + contactIntroParagraph + "</p>" +
+			"<p>If you have a project, partnership, or difficult system that needs steady hands, start the conversation by email at <a href=\"mailto:" + email + "\">" + email + "</a>.</p>",
+	)
+}
+
+func (s *Sections) contactFallback() template.HTML {
+	return s.Narrative("Contact", contactIntroParagraph, contactFallbackParagraph)
 }
 
 func (s *Sections) Recommendations(recs *payload.RecommendationsResponse) template.HTML {

@@ -49,4 +49,5 @@ storage/sql/*.*
 .gopath
 go.work
 go.work.sum
+vendor
 

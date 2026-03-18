@@ -15,7 +15,7 @@ import (
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
-	handlertests "github.com/oullin/handler/tests"
+	"github.com/oullin/internal/testutil/dbtest"
 )
 
 func TestPostsHandlerIndex_ParseError(t *testing.T) {
@@ -45,7 +45,7 @@ func TestPostsHandlerShow_MissingSlug(t *testing.T) {
 }
 
 func TestPostsHandlerIndex_Success(t *testing.T) {
-	conn, author := handlertests.NewTestDB(t)
+	conn, author := dbtest.NewTestDB(t)
 	published := time.Now()
 	post := database.Post{
 		UUID:        uuid.NewString(),
@@ -88,7 +88,7 @@ func TestPostsHandlerIndex_Success(t *testing.T) {
 }
 
 func TestPostsHandlerShow_Success(t *testing.T) {
-	conn, author := handlertests.NewTestDB(t)
+	conn, author := dbtest.NewTestDB(t)
 	published := time.Now()
 	tag := database.Tag{
 		UUID: uuid.NewString(),

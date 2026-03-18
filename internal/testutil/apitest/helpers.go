@@ -1,4 +1,4 @@
-package handlertests
+package apitest
 
 import (
 	"encoding/json"
@@ -13,13 +13,19 @@ type TestEnvelope struct {
 
 func WriteJSON(t *testing.T, v interface{}) string {
 	t.Helper()
+
 	f, err := os.CreateTemp("", "data.json")
 	if err != nil {
 		t.Fatalf("tmp: %v", err)
 	}
+
 	if err := json.NewEncoder(f).Encode(v); err != nil {
 		t.Fatalf("encode: %v", err)
 	}
-	f.Close()
+
+	if err := f.Close(); err != nil {
+		t.Fatalf("close: %v", err)
+	}
+
 	return f.Name()
 }

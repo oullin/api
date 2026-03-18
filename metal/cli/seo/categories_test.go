@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/oullin/database"
+	"github.com/oullin/internal/testutil/dbtest"
 	"github.com/oullin/metal/cli/seo"
-	"github.com/oullin/pkg/support"
 )
 
 func TestCategoriesGenerateReturnsLowercaseNames(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.Category{})
+	h := dbtest.NewTestsHelper(t, &database.Category{})
 
 	h.SeedCategory("go", "GoLang", 1)
 	h.SeedCategory("cli", "CLI Tools", 2)

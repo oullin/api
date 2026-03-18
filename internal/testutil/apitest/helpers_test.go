@@ -1,4 +1,4 @@
-package handlertests
+package apitest
 
 import (
 	"os"
@@ -12,5 +12,5 @@ func TestWriteJSON(t *testing.T) {
 		t.Fatalf("expected file path")
 	}
 
-	os.Remove(file)
+	_ = os.Remove(file)
 }

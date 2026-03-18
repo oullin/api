@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/oullin/handler/payload"
-	handlertests "github.com/oullin/handler/tests"
+	"github.com/oullin/internal/testutil/dbtest"
 	"github.com/oullin/metal/env"
 	"github.com/oullin/pkg/portal"
 )
 
 func TestKeepAliveDBHandler(t *testing.T) {
-	db, _ := handlertests.NewTestDB(t)
+	db, _ := dbtest.NewTestDB(t)
 	e := env.PingEnvironment{Username: "user", Password: "pass"}
 	h := NewKeepAliveDBHandler(&e, db)
 

@@ -1,10 +1,23 @@
+# Multi-stage Dockerfile for the Oullin API.
+#
+# Stage 1 (builder): compiles the Go binary with CGO enabled (required for
+# libwebp image encoding via cgo bindings). BUILD_TAGS control which handler
+# groups are included in the final binary.
+#
+# Stage 2 (runtime): copies the compiled binary into a minimal Alpine runtime
+# image. A dedicated non-root user (appuser) runs the process to limit
+# container privileges.
+#
+# ENTRYPOINT uses shell form (`/bin/sh -c`) because Docker's exec form does
+# not expand environment variables — and the binary path is composed from
+# build-time ARGs that are forwarded as ENV vars for runtime resolution.
 #
 # ----------------------------------------------------------------------------------------------------------------------
 #                                    GLOBAL BUILD ARGUMENTS
 # ----------------------------------------------------------------------------------------------------------------------
 #
 # These args can be overridden at build time with `--build-arg NAME=value`.
-# Otherwise, you could use you docker-compose file to achive the same purpose.
+# Otherwise, you could use your docker-compose file to achieve the same purpose.
 #
 # ----------------------------------------------------------------------------------------------------------------------
 #
@@ -13,13 +26,16 @@ ARG APP_VERSION=0.0.0.1
 ARG BUILD_TAGS="posts,experience,profile,projects,social,talks,gus,gocanto"
 ARG BINARY_NAME=oullin_api
 
-# Base image digests
-ARG GO_VERSION=1.25.5
-ARG GO_IMAGE_VARIANT=alpine3.23
-ARG GO_TOOLCHAIN=go1.25.5
-ARG GO_IMAGE_DIGEST=sha256:ac09a5f469f307e5da71e766b0bd59c9c49ea460a528cc3e6686513d64a6f1fb
-ARG ALPINE_VERSION=3.23
-ARG ALPINE_IMAGE_DIGEST=sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+# Base images
+#
+# The defaults point at locally built base tags so `make build-local` and `make build-ci`
+# can work without registry access. CI/maintainers can override these args with
+# digest-pinned registry references after running `make push-base-images`.
+#
+ARG BASE_IMAGE_VERSION=1.26.1-alpine3.23-r2
+ARG BUILDER_BASE_IMAGE=oullin-api-builder-base:${BASE_IMAGE_VERSION}
+ARG RUNTIME_BASE_IMAGE=oullin-api-runtime-base:${BASE_IMAGE_VERSION}
+ARG GO_TOOLCHAIN=go1.26.1
 
 # Non-root user/group settings.
 ARG APP_USER=appuser
@@ -42,7 +58,7 @@ ARG TZ=Asia/Singapore
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           BUILDER STAGE
 # ----------------------------------------------------------------------------------------------------------------------
-FROM golang:${GO_VERSION}-${GO_IMAGE_VARIANT}@${GO_IMAGE_DIGEST} AS builder
+FROM ${BUILDER_BASE_IMAGE} AS builder
 
 # Bring in the build args needed in this stage.
 ARG GO_TOOLCHAIN
@@ -51,12 +67,6 @@ ARG APP_DIR
 ARG BINARY_NAME
 ARG APP_VERSION
 ARG BUILD_TAGS
-
-# Install system dependencies required to build with CGO and libwebp support.
-RUN apk add --no-cache \
-        build-base=0.5-r3 \
-        pkgconf=2.5.1-r0 \
-        libwebp-dev=1.6.0-r0
 
 # Configure Go build cache and module cache under our APP_DIR.
 ENV GOPATH=${APP_DIR}/.gopath
@@ -92,7 +102,7 @@ RUN go build \
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           FINAL STAGE
 # ----------------------------------------------------------------------------------------------------------------------
-FROM alpine:${ALPINE_VERSION}@${ALPINE_IMAGE_DIGEST}
+FROM ${RUNTIME_BASE_IMAGE}
 
 # Bring in the runtime args.
 ARG APP_USER
@@ -109,15 +119,13 @@ ARG APP_HOST_PORT
 # Timezone configuration (default to Asia/Singapore).
 ARG TZ=Asia/Singapore
 
-# Install timezone data and runtime dependencies for the CGO-enabled binary.
-RUN apk add --no-cache tzdata=2025c-r0 libwebp=1.6.0-r0
 ENV TZ=${TZ}
 
 # Create the system group for our non-root user.
 RUN addgroup -S ${APP_GROUP}
 
 # Create the system user, assign to group, set its home.
-RUN adduser -S ${APP_USER} \
+RUN adduser -S \
 	-G ${APP_GROUP} \
 	-h ${APP_HOME} \
 	${APP_USER}
@@ -134,9 +142,10 @@ WORKDIR ${APP_DIR}
 #       * media/: for uploaded/static media
 #       * fixture/: for static fixtures data
 #
-RUN mkdir -p ${STORAGE_DIR}/${LOGS_DIR}
-RUN mkdir -p ${STORAGE_DIR}/${MEDIA_DIR}
-RUN mkdir -p ${STORAGE_DIR}/${FIXTURES_DIR}
+RUN mkdir -p \
+	${STORAGE_DIR}/${LOGS_DIR} \
+	${STORAGE_DIR}/${MEDIA_DIR} \
+	${STORAGE_DIR}/${FIXTURES_DIR}
 
 # Copy fixture files from builder stage.
 COPY ${STORAGE_DIR}/${FIXTURES_DIR} ${STORAGE_DIR}/${FIXTURES_DIR}/
@@ -146,13 +155,12 @@ COPY --from=builder ${APP_DIR}/${BINARY_NAME} ${APP_DIR}/
 RUN chmod +x ${APP_DIR}/${BINARY_NAME}
 
 # Give ownership of home and app directories to our non-root user.
-RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME}
-RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_DIR}
+RUN chown -R ${APP_USER}:${APP_GROUP} ${APP_HOME} ${APP_DIR}
 
 # Switch to non-root user for all subsequent container processes.
 USER ${APP_USER}:${APP_GROUP}
 
-# Arguments do not exist at container runtime, so ${APP_DIR} and ${BINARY_NAME} are empty when the entryoint is called.
+# Arguments do not exist at container runtime, so ${APP_DIR} and ${BINARY_NAME} are empty when the entrypoint is called.
 # Therefore, we need to send those values as environment variables for the shell to pick them up at runtime.
 ENV APP_DIR=${APP_DIR}
 ENV BINARY_NAME=${BINARY_NAME}

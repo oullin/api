@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,8 +10,13 @@ import (
 	"strings"
 )
 
+const MaxResponseCacheSize = 1 << 20 // 1MB limit
+
+var ErrResponseTooLarge = errors.New("response payload exceeds maximum cache size")
+
 type Response struct {
 	etag         string
+	body         []byte
 	cacheControl string
 	writer       http.ResponseWriter
 	request      *http.Request
@@ -48,6 +54,39 @@ func NewResponseFrom(salt string, writer http.ResponseWriter, request *http.Requ
 	return NewResponseWithCache(salt, 3600, writer, request)
 }
 
+func NewResponseFromPayload(payload any, maxAgeSeconds int, writer http.ResponseWriter, request *http.Request) (*Response, error) {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(body) > MaxResponseCacheSize {
+		slog.Warn("Response payload exceeds maximum cache size", "size", len(body), "limit", MaxResponseCacheSize)
+
+		return nil, ErrResponseTooLarge
+	}
+
+	sum := sha256.Sum256(body)
+
+	resp := NewResponseWithCache(fmt.Sprintf("%x", sum), maxAgeSeconds, writer, request)
+	resp.body = body
+
+	return resp, nil
+}
+
+func NewResponseForPayload(payload any, maxAgeSeconds int, cacheEnabled bool, writer http.ResponseWriter, request *http.Request) (*Response, error) {
+	if !cacheEnabled {
+		return NewNoCacheResponse(writer, request), nil
+	}
+
+	resp, err := NewResponseFromPayload(payload, maxAgeSeconds, writer, request)
+	if errors.Is(err, ErrResponseTooLarge) {
+		return NewNoCacheResponse(writer, request), nil
+	}
+
+	return resp, err
+}
+
 func NewNoCacheResponse(writer http.ResponseWriter, request *http.Request) *Response {
 	cacheControl := "no-store"
 
@@ -68,13 +107,22 @@ func (r *Response) WithHeaders(callback func(w http.ResponseWriter)) {
 }
 
 func (r *Response) RespondOk(payload any) error {
-	w := r.writer
-	headers := r.headers
+	body := r.body
+	if len(body) == 0 {
+		var err error
+		body, err = json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+	}
 
-	headers(w)
+	w := r.writer
+	r.headers(w)
 	w.WriteHeader(http.StatusOK)
 
-	return json.NewEncoder(r.writer).Encode(payload)
+	_, err := w.Write(body)
+
+	return err
 }
 
 func (r *Response) HasCache() bool {

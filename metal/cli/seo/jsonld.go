@@ -9,13 +9,19 @@ import (
 )
 
 type JsonID struct {
-	SiteURL     string
-	OrgName     string
-	LogoURL     string
-	Lang        string
-	FoundedYear string
-	SameAs      []string
-	Now         func() time.Time
+	SiteURL         string
+	OrgName         string
+	LogoURL         string
+	Lang            string
+	FoundedYear     string
+	SameAs          []string
+	SiteDescription string
+	PageName        string
+	PageType        string
+	PageURL         string
+	PageDescription string
+	Founder         *JsonPerson
+	Now             func() time.Time
 
 	// Repos and API
 	WebRepoURL string
@@ -24,110 +30,120 @@ type JsonID struct {
 	WebName    string
 }
 
+type JsonPerson struct {
+	Name        string
+	JobTitle    string
+	URL         string
+	Description string
+}
+
 func NewJsonID(tmpl Page, web *Web) *JsonID {
 	if web == nil {
 		web = NewWeb()
 	}
 
 	return &JsonID{
-		Lang:        tmpl.Lang,
-		SiteURL:     tmpl.SiteURL,
-		LogoURL:     tmpl.LogoURL,
-		OrgName:     tmpl.SiteName,
-		WebName:     tmpl.SiteName,
-		APIName:     tmpl.SiteName,
-		SameAs:      tmpl.SameAsURL,
-		APIRepoURL:  tmpl.APIRepoURL,
-		WebRepoURL:  tmpl.WebRepoURL,
-		FoundedYear: fmt.Sprintf("%d", web.FoundedYear),
-		Now:         func() time.Time { return time.Now().UTC() },
+		Lang:            tmpl.Lang,
+		SiteURL:         tmpl.SiteURL,
+		LogoURL:         tmpl.LogoURL,
+		OrgName:         tmpl.SiteName,
+		WebName:         tmpl.SiteName,
+		APIName:         tmpl.SiteName,
+		SameAs:          tmpl.SameAsURL,
+		APIRepoURL:      tmpl.APIRepoURL,
+		WebRepoURL:      tmpl.WebRepoURL,
+		FoundedYear:     fmt.Sprintf("%d", web.FoundedYear),
+		SiteDescription: web.Description,
+		Now:             func() time.Time { return time.Now().UTC() },
 	}
 }
 
+func (j *JsonID) WithPage(name, pageType, url, description string) *JsonID {
+	j.PageName = name
+	j.PageType = pageType
+	j.PageURL = url
+	j.PageDescription = description
+
+	return j
+}
+
+func (j *JsonID) WithFounder(person JsonPerson) *JsonID {
+	j.Founder = &person
+
+	return j
+}
+
 func (j *JsonID) Render() template.JS {
-	now := j.Now().Format(time.RFC3339)
 	siteID := j.SiteURL + "#org"
+	websiteID := j.SiteURL + "#website"
+	founderID := ""
+
+	if j.Founder != nil {
+		founderID = j.SiteURL + "#founder"
+	}
+
+	org := map[string]any{
+		"@id":         siteID,
+		"sameAs":      j.SameAs,
+		"brand":       j.OrgName,
+		"image":       j.LogoURL,
+		"name":        j.OrgName,
+		"legalName":   j.OrgName,
+		"url":         j.SiteURL,
+		"description": j.SiteDescription,
+		"foundedYear": j.FoundedYear,
+		"@type":       "Organization",
+		"logo":        map[string]any{"@type": "ImageObject", "url": j.LogoURL},
+	}
+
+	if founderID != "" {
+		org["founder"] = map[string]any{"@id": founderID}
+	}
 
 	graph := []any{
-
+		org,
 		map[string]any{
-			"@id":         siteID,
-			"sameAs":      j.SameAs,
-			"brand":       j.OrgName,
-			"image":       j.LogoURL,
-			"name":        j.OrgName,
-			"legalName":   j.OrgName,
+			"inLanguage":  j.Lang,
+			"@type":       "WebSite",
 			"url":         j.SiteURL,
-			"foundedYear": j.FoundedYear,
-			"@type":       "Organization",
-			"logo":        map[string]any{"@type": "ImageObject", "url": j.LogoURL},
+			"name":        j.OrgName,
+			"image":       j.LogoURL,
+			"description": j.SiteDescription,
+			"@id":         websiteID,
+			"publisher":   map[string]any{"@id": siteID},
 		},
+	}
 
-		map[string]any{
-			"dateModified": now,
-			"inLanguage":   j.Lang,
-			"@type":        "WebSite",
-			"url":          j.SiteURL,
-			"name":         j.OrgName,
-			"image":        j.LogoURL,
-			"@id":          j.SiteURL + "#website",
-			"publisher":    map[string]any{"@id": siteID},
-		},
+	if j.PageType != "" && j.PageURL != "" {
+		page := map[string]any{
+			"@type":       j.PageType,
+			"name":        j.PageName,
+			"url":         j.PageURL,
+			"description": j.PageDescription,
+			"isPartOf":    map[string]any{"@id": websiteID},
+		}
 
-		map[string]any{
-			"operatingSystem":     "All",
-			"url":                 j.SiteURL,
-			"name":                j.OrgName,
-			"@type":               "WebApplication",
-			"@id":                 j.SiteURL + "#app",
-			"applicationCategory": "DeveloperApplication",
-			"browserRequirements": "Requires a modern browser",
-			"publisher":           map[string]any{"@id": siteID},
-		},
+		if founderID != "" {
+			page["founder"] = map[string]any{"@id": founderID}
+		}
 
-		map[string]any{
-			"@type":               "SoftwareSourceCode",
-			"@id":                 j.WebRepoURL + "#code",
-			"name":                j.WebName,
-			"url":                 j.WebRepoURL,
-			"codeRepository":      j.WebRepoURL,
-			"programmingLanguage": []string{"TypeScript", "JavaScript", "Vue"},
-			"issueTracker":        j.WebRepoURL + "/issues",
-			"license":             j.WebRepoURL + "/blob/main/LICENSE",
-			"publisher":           map[string]any{"@id": siteID},
-			"dateModified":        now,
-		},
+		graph = append(graph, page)
+	}
 
-		map[string]any{
-			"dateModified":  now,
-			"inLanguage":    j.Lang,
-			"@type":         "WebAPI",
-			"name":          j.APIName,
-			"documentation": j.APIRepoURL,
-			"@id":           j.SiteURL + "#api",
-			"provider":      map[string]any{"@id": siteID},
-			"softwareHelp": []any{
-				map[string]any{
-					"@type":                "CreativeWork",
-					"learningResourceType": "Documentation",
-					"url":                  j.APIRepoURL + "#readme",
-				},
-			},
-			"workExample": []any{
-				map[string]any{
-					"dateModified":        now,
-					"name":                j.APIName,
-					"url":                 j.APIRepoURL,
-					"codeRepository":      j.APIRepoURL,
-					"@type":               "SoftwareSourceCode",
-					"@id":                 j.APIRepoURL + "#code",
-					"issueTracker":        j.APIRepoURL + "/issues",
-					"programmingLanguage": []string{"Go", "Makefile"},
-					"publisher":           map[string]any{"@id": siteID},
-					"license":             j.APIRepoURL + "/blob/main/LICENSE",
-				},
-			},
-		},
+	if j.Founder != nil {
+		founder := map[string]any{
+			"@id":      founderID,
+			"@type":    "Person",
+			"name":     j.Founder.Name,
+			"jobTitle": j.Founder.JobTitle,
+			"url":      j.Founder.URL,
+		}
+
+		if j.Founder.Description != "" {
+			founder["description"] = j.Founder.Description
+		}
+
+		graph = append(graph, founder)
 	}
 
 	root := map[string]any{
@@ -135,11 +151,9 @@ func (j *JsonID) Render() template.JS {
 		"@context": "https://schema.org",
 	}
 
-	// Encode without Template escaping and compact.
 	var buf bytes.Buffer
 
 	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
 
 	if err := enc.Encode(root); err != nil {
 		return `{}`

@@ -5,7 +5,7 @@ import (
 )
 
 const FixtureTalks = "talks"
-const FixtureSocial = "social"
+const FixtureLinks = "links"
 const FixtureProfile = "profile"
 const FixtureProjects = "projects"
 const FixtureEducation = "education"
@@ -35,12 +35,12 @@ func (f *Fixture) GetTalksFile() string {
 
 }
 
-func (f *Fixture) GetSocial() *Fixture {
-	return f.resolveFor(FixtureSocial)
+func (f *Fixture) GetLinks() *Fixture {
+	return f.resolveFor(FixtureLinks)
 }
 
-func (f *Fixture) GetSocialFile() string {
-	return f.resolveFor(FixtureSocial).fullPath
+func (f *Fixture) GetLinksFile() string {
+	return f.resolveFor(FixtureLinks).fullPath
 }
 
 func (f *Fixture) GetProfile() *Fixture {

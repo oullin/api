@@ -7,11 +7,11 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/pkg/support"
+	"github.com/oullin/internal/testutil/dbtest"
 )
 
 func TestCategoriesFindByPostgres(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.Category{})
+	h := dbtest.NewTestsHelper(t, &database.Category{})
 
 	category := h.SeedCategory("news", "News", 1)
 
@@ -29,7 +29,7 @@ func TestCategoriesFindByPostgres(t *testing.T) {
 }
 
 func TestCategoriesGetOrdersBySort(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.Category{})
+	h := dbtest.NewTestsHelper(t, &database.Category{})
 
 	conn := h.Conn()
 
@@ -72,7 +72,7 @@ func TestCategoriesGetOrdersBySort(t *testing.T) {
 }
 
 func TestCategoriesGetOrdersBySortAndName(t *testing.T) {
-	h := support.NewTestsHelper(t, &database.Category{})
+	h := dbtest.NewTestsHelper(t, &database.Category{})
 
 	conn := h.Conn()
 
@@ -125,7 +125,7 @@ func TestCategoriesExistOrUpdatePreservesSort(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			h := support.NewTestsHelper(t, &database.Category{})
+			h := dbtest.NewTestsHelper(t, &database.Category{})
 
 			conn := h.Conn()
 

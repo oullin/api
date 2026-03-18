@@ -5,7 +5,7 @@
 - **Go**: Version 1.22+ (Check `go.mod` for exact version)
 - **Docker**: For running the database and monitoring stack.
 - **Make**: For running project commands.
-- **Docker Volume**: Create the external DB volume once: `docker volume create api_oullin_db_data`
+- No manual Docker volume setup is required. The Make targets create the external DB volume automatically when needed.
 
 ## Configuration
 

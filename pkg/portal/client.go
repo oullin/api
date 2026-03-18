@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+type Response struct {
+	Body       string
+	Header     http.Header
+	StatusCode int
+}
+
 type Client struct {
 	UserAgent      string
 	client         *http.Client
@@ -36,21 +42,30 @@ func NewDefaultClient(transport *http.Transport) *Client {
 	return &Client{
 		client:         client,
 		transport:      transport,
-		UserAgent:      "gocanto.dev",
+		UserAgent:      "oullin.io",
 		OnHeaders:      nil,
 		AbortOnNone2xx: false,
 	}
 }
 
 func (f *Client) Get(ctx context.Context, url string) (string, error) {
+	resp, err := f.GetResponse(ctx, url)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Body, nil
+}
+
+func (f *Client) GetResponse(ctx context.Context, url string) (Response, error) {
 	if f == nil || f.client == nil {
-		return "", fmt.Errorf("client is nil")
+		return Response{}, fmt.Errorf("client is nil")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return Response{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	if f.OnHeaders != nil {
@@ -61,19 +76,25 @@ func (f *Client) Get(ctx context.Context, url string) (string, error) {
 
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("http request failed: %w", err)
+		return Response{}, fmt.Errorf("http request failed: %w", err)
 	}
 
 	defer resp.Body.Close()
 
-	if f.AbortOnNone2xx && (resp.StatusCode < 200 || resp.StatusCode >= 300) {
-		return "", fmt.Errorf("received non-2xx status code: %d", resp.StatusCode)
-	}
-
 	body, err := ReadWithSizeLimit(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
+		return Response{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return string(body), nil
+	response := Response{
+		Body:       string(body),
+		Header:     resp.Header.Clone(),
+		StatusCode: resp.StatusCode,
+	}
+
+	if f.AbortOnNone2xx && (resp.StatusCode < 200 || resp.StatusCode >= 300) {
+		return response, fmt.Errorf("received non-2xx status code: %d", resp.StatusCode)
+	}
+
+	return response, nil
 }

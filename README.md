@@ -22,8 +22,8 @@ consider contributing to the project by making improvements or fixing issues by 
 ### ⚡ Quick Start
 
 1.  **Configure**: `cp .env.example .env`
-2.  **DB Volume**: `docker volume create api_oullin_db_data` (one-time)
-3.  **Run**: `make fresh` (Builds and runs the app)
+2.  **Run in background**: `make build-local` (Builds and runs the local stack detached)
+3.  **Run with attached logs**: `make watch-local` (Starts the Docker local stack in the foreground)
 
 For more details, check the [Setup Guide](docs/SETUP.md).
 

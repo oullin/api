@@ -10,12 +10,18 @@ import (
 )
 
 type ExperienceHandler struct {
-	filePath string
+	filePath     string
+	cacheEnabled bool
 }
 
 func NewExperienceHandler(filePath string) ExperienceHandler {
+	return NewExperienceHandlerWithCache(filePath, true)
+}
+
+func NewExperienceHandlerWithCache(filePath string, cacheEnabled bool) ExperienceHandler {
 	return ExperienceHandler{
-		filePath: filePath,
+		filePath:     filePath,
+		cacheEnabled: cacheEnabled,
 	}
 }
 
@@ -28,7 +34,12 @@ func (h ExperienceHandler) Handle(w http.ResponseWriter, r *http.Request) *endpo
 		return endpoint.InternalError("could not read experience data")
 	}
 
-	resp := endpoint.NewResponseFrom(data.Version, w, r)
+	resp, err := endpoint.NewResponseForPayload(data, 3600, h.cacheEnabled, w, r)
+	if err != nil {
+		slog.Error("Error preparing experience response cache", "error", err)
+
+		return endpoint.InternalError("could not prepare experience response")
+	}
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()
@@ -39,7 +50,7 @@ func (h ExperienceHandler) Handle(w http.ResponseWriter, r *http.Request) *endpo
 	if err := resp.RespondOk(data); err != nil {
 		slog.Error("Error marshaling JSON for experience response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode experience response")
 	}
 
 	return nil // A nil return indicates success.

@@ -9,7 +9,13 @@
 ROOT_PATH           := $(shell pwd)
 DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 
-GOTOOLCHAIN_VERSION ?= go1.25.5
+# "auto" lets the local Go installation download the toolchain required by go.mod,
+# so developers don't need to install the exact Go version manually.
+# Override with a pinned version (e.g., GO_LOCAL_TOOLCHAIN=go1.26.1) for deterministic builds.
+# Note: docker-compose reads GO_LOCAL_TOOLCHAIN from the environment separately.
+GO_LOCAL_TOOLCHAIN  ?= auto
+GOIMPORTS_VERSION   ?= v0.43.0
+GOBIN               := $(shell go env GOPATH)/bin
 
 DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
 DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
@@ -19,16 +25,24 @@ DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
 # PHONY Targets
 # -------------------------------------------------------------------------------------------------------------------- #
 
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal install-air
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal install-air install-goimports
+
+run-cli run-cli-docker: export DB_SECRET_USERNAME := $(value DB_SECRET_USERNAME)
+run-cli run-cli-docker: export DB_SECRET_PASSWORD := $(value DB_SECRET_PASSWORD)
+run-cli run-cli-docker: export DB_SECRET_DBNAME := $(value DB_SECRET_DBNAME)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Code Quality Commands
 # -------------------------------------------------------------------------------------------------------------------- #
 
 format:
+	@if [ ! -f $(GOBIN)/goimports ]; then \
+		printf "\n  $(YELLOW)goimports not found — installing now...$(NC)\n"; \
+		$(MAKE) install-goimports; \
+	fi
 	@printf "\n  ..... $(CYAN)gofmt & goimports commands have started.$(NC)\n"
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) gofmt -w -s .
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go run golang.org/x/tools/cmd/goimports -w -local github.com/oullin .
+	@git ls-files -z '*.go' | xargs -0 env GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) gofmt -w -s
+	@git ls-files -z '*.go' | xargs -0 $(GOBIN)/goimports -w -local github.com/oullin
 	@printf "\n  ..... $(GREEN)Formatting finished.$(NC)\n\n"
 
 audit:
@@ -38,7 +52,7 @@ audit:
 	$(call external_deps,'./docs/...')
 
 test-all:
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go test ./...
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go test ./...
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Docker Management Commands
@@ -66,13 +80,17 @@ destroy:
 watch:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
-	cd $(APP_PATH) && GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) air -d
+	cd $(APP_PATH) && GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) air -d
 
 install-air:
 	# --- Works with (air).
 	#     https://github.com/air-verse/air
 	@echo "Installing air ..."
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go install github.com/air-verse/air@latest
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go install github.com/air-verse/air@latest
+
+install-goimports:
+	@echo "Installing goimports $(GOIMPORTS_VERSION) ..."
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # CLI Commands
@@ -101,12 +119,19 @@ run-cli:
 						fi; \
 					fi; \
 					;; \
+				*) \
+					if [ -z "$$missing_files" ]; then \
+						missing_files="  - $$secret_name (literal value — must be a file path)"; \
+					else \
+						missing_files="$$missing_files\n  - $$secret_name (literal value — must be a file path)"; \
+					fi; \
+					;; \
 			esac; \
 		fi; \
 	}; \
-	check_secret DB_SECRET_USERNAME "$(DB_SECRET_USERNAME)"; \
-	check_secret DB_SECRET_PASSWORD "$(DB_SECRET_PASSWORD)"; \
-	check_secret DB_SECRET_DBNAME "$(DB_SECRET_DBNAME)"; \
+	check_secret DB_SECRET_USERNAME "$$DB_SECRET_USERNAME"; \
+	check_secret DB_SECRET_PASSWORD "$$DB_SECRET_PASSWORD"; \
+	check_secret DB_SECRET_DBNAME "$$DB_SECRET_DBNAME"; \
 	if [ -n "$$missing_values" ]; then \
 		printf "\n$(RED)❌ Missing secret values:$(NC)\n"; \
 		printf '%b\n' "$$missing_values"; \
@@ -120,20 +145,20 @@ run-cli:
 		exit 1; \
 	fi
 	@printf "\n$(GREEN)🔒 Running CLI with secrets from:$(NC)\n"
-	@DB_SECRET_USERNAME_DISPLAY=`case "$(DB_SECRET_USERNAME)" in \
-		/*|./*|../*) printf '%s' "$(DB_SECRET_USERNAME)";; \
+	@DB_SECRET_USERNAME_DISPLAY=`case "$$DB_SECRET_USERNAME" in \
+		/*|./*|../*) printf '%s' "$$DB_SECRET_USERNAME";; \
 		"") printf '<unset>';; \
 		*) printf '<redacted>';; \
 		esac`; \
 	printf "           DB_SECRET_USERNAME=%s\n" "$$DB_SECRET_USERNAME_DISPLAY"
-	@DB_SECRET_PASSWORD_DISPLAY=`case "$(DB_SECRET_PASSWORD)" in \
-		/*|./*|../*) printf '%s' "$(DB_SECRET_PASSWORD)";; \
+	@DB_SECRET_PASSWORD_DISPLAY=`case "$$DB_SECRET_PASSWORD" in \
+		/*|./*|../*) printf '%s' "$$DB_SECRET_PASSWORD";; \
 		"") printf '<unset>';; \
 		*) printf '<redacted>';; \
 		esac`; \
 	printf "           DB_SECRET_PASSWORD=%s\n" "$$DB_SECRET_PASSWORD_DISPLAY"
-	@DB_SECRET_DBNAME_DISPLAY=`case "$(DB_SECRET_DBNAME)" in \
-		/*|./*|../*) printf '%s' "$(DB_SECRET_DBNAME)";; \
+	@DB_SECRET_DBNAME_DISPLAY=`case "$$DB_SECRET_DBNAME" in \
+		/*|./*|../*) printf '%s' "$$DB_SECRET_DBNAME";; \
 		"") printf '<unset>';; \
 		*) printf '<redacted>';; \
 		esac`; \
@@ -141,10 +166,10 @@ run-cli:
 	@status=0; \
 	if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
 		printf "Using docker compose to run the CLI.\n"; \
-		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
+		docker compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
 	elif command -v docker-compose >/dev/null 2>&1; then \
 		printf "Using docker-compose to run the CLI.\n"; \
-		DB_SECRET_USERNAME="$(DB_SECRET_USERNAME)" DB_SECRET_PASSWORD="$(DB_SECRET_PASSWORD)" DB_SECRET_DBNAME="$(DB_SECRET_DBNAME)" docker-compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
+		docker-compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
 	else \
 		printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
 		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
@@ -155,8 +180,8 @@ run-cli:
 		exit $$status; \
 	fi
 
-run-cli-docker:
-	make run-cli DB_SECRET_USERNAME=$(DB_SECRET_USERNAME) DB_SECRET_PASSWORD=$(DB_SECRET_PASSWORD) DB_SECRET_DBNAME=$(DB_SECRET_DBNAME)
+run-cli-docker: ensure-base-images
+	$(MAKE) run-cli
 
 run-metal:
-	@GOTOOLCHAIN=$(GOTOOLCHAIN_VERSION) go run metal/cli/main.go
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run metal/cli/main.go

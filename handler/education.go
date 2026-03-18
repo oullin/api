@@ -10,12 +10,18 @@ import (
 )
 
 type EducationHandler struct {
-	filePath string
+	filePath     string
+	cacheEnabled bool
 }
 
 func NewEducationHandler(filePath string) EducationHandler {
+	return NewEducationHandlerWithCache(filePath, true)
+}
+
+func NewEducationHandlerWithCache(filePath string, cacheEnabled bool) EducationHandler {
 	return EducationHandler{
-		filePath: filePath,
+		filePath:     filePath,
+		cacheEnabled: cacheEnabled,
 	}
 }
 
@@ -28,7 +34,12 @@ func (h EducationHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoi
 		return endpoint.InternalError("could not read education data")
 	}
 
-	resp := endpoint.NewResponseFrom(data.Version, w, r)
+	resp, err := endpoint.NewResponseForPayload(data, 3600, h.cacheEnabled, w, r)
+	if err != nil {
+		slog.Error("Error preparing education response cache", "error", err)
+
+		return endpoint.InternalError("could not prepare education response")
+	}
 
 	if resp.HasCache() {
 		resp.RespondWithNotModified()
@@ -39,7 +50,7 @@ func (h EducationHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoi
 	if err := resp.RespondOk(data); err != nil {
 		slog.Error("Error marshaling JSON for education response", "error", err)
 
-		return nil
+		return endpoint.InternalError("could not encode education response")
 	}
 
 	return nil // A nil return indicates success.
