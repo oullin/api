@@ -13,6 +13,7 @@ type ProjectsResponse struct {
 
 type ProjectsData struct {
 	UUID         string `json:"uuid"`
+	Sort         int    `json:"sort"`
 	Language     string `json:"language"`
 	Title        string `json:"title"`
 	Excerpt      string `json:"excerpt"`
@@ -20,6 +21,4 @@ type ProjectsData struct {
 	Icon         string `json:"icon"`
 	IsOpenSource bool   `json:"is_open_source"`
 	PublishedAt  string `json:"published_at"`
-	CreatedAt    string `json:"created_at"`
-	UpdatedAt    string `json:"updated_at"`
 }

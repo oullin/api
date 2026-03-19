@@ -107,6 +107,16 @@ func AssertFirstUUID(expected string) func(*testing.T, any) {
 	}
 }
 
+func AssertEmptyData() func(*testing.T, any) {
+	return func(t *testing.T, data any) {
+		arr, ok := data.([]interface{})
+
+		if !ok || len(arr) != 0 {
+			t.Fatalf("unexpected payload: %+v", data)
+		}
+	}
+}
+
 func AssertNickname(expected string) func(*testing.T, any) {
 	return func(t *testing.T, data any) {
 		obj, ok := data.(map[string]interface{})

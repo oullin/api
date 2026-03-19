@@ -6,65 +6,12 @@ import (
 	"github.com/oullin/handler/payload"
 )
 
-func TestEnrichResponse_FallsBackToUpdatedAt(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{
-				UUID:      "project-1",
-				UpdatedAt: "2026-03-10",
-			},
-		},
-	}
-
-	EnrichResponse(response)
-
-	if response.Data[0].PublishedAt != "2026-03-10" {
-		t.Fatalf("expected published_at to fall back to updated_at, got %q", response.Data[0].PublishedAt)
-	}
-}
-
-func TestEnrichResponse_PreservesExplicitPublishedAt(t *testing.T) {
+func TestEnrichResponse_TrimsPublishedAt(t *testing.T) {
 	response := &payload.ProjectsResponse{
 		Data: []payload.ProjectsData{
 			{
 				UUID:        "project-1",
-				PublishedAt: "2026-03-15T00:00:00Z",
-				UpdatedAt:   "2026-03-10",
-			},
-		},
-	}
-
-	EnrichResponse(response)
-
-	if response.Data[0].PublishedAt != "2026-03-15T00:00:00Z" {
-		t.Fatalf("expected published_at to remain unchanged, got %q", response.Data[0].PublishedAt)
-	}
-}
-
-func TestEnrichResponse_FallsBackToCreatedAt(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{
-				UUID:      "project-1",
-				CreatedAt: "2026-03-01",
-			},
-		},
-	}
-
-	EnrichResponse(response)
-
-	if response.Data[0].PublishedAt != "2026-03-01" {
-		t.Fatalf("expected published_at to fall back to created_at, got %q", response.Data[0].PublishedAt)
-	}
-}
-
-func TestEnrichResponse_PrefersUpdatedAtOverCreatedAt(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{
-				UUID:      "project-1",
-				UpdatedAt: " 2026-03-10 ",
-				CreatedAt: " 2026-03-01 ",
+				PublishedAt: " 2026-03-10 ",
 			},
 		},
 	}
@@ -72,23 +19,58 @@ func TestEnrichResponse_PrefersUpdatedAtOverCreatedAt(t *testing.T) {
 	EnrichResponse(response)
 
 	if response.Data[0].PublishedAt != "2026-03-10" {
-		t.Fatalf("expected published_at to prefer updated_at, got %q", response.Data[0].PublishedAt)
+		t.Fatalf("expected published_at to be trimmed, got %q", response.Data[0].PublishedAt)
 	}
 }
 
-func TestEnrichResponse_NoFallbackWhenAllDatesEmpty(t *testing.T) {
+func TestEnrichResponse_SortsBySortAscending(t *testing.T) {
 	response := &payload.ProjectsResponse{
 		Data: []payload.ProjectsData{
 			{
-				UUID: "project-1",
+				UUID:        "project-3",
+				Sort:        3,
+				PublishedAt: "2026-03-15T00:00:00Z",
+			},
+			{
+				UUID:        "project-1",
+				Sort:        1,
+				PublishedAt: "2026-03-01T00:00:00Z",
+			},
+			{
+				UUID:        "project-2",
+				Sort:        2,
+				PublishedAt: "2026-03-10T00:00:00Z",
 			},
 		},
 	}
 
 	EnrichResponse(response)
 
-	if response.Data[0].PublishedAt != "" {
-		t.Fatalf("expected published_at to remain empty, got %q", response.Data[0].PublishedAt)
+	if response.Data[0].UUID != "project-1" || response.Data[1].UUID != "project-2" || response.Data[2].UUID != "project-3" {
+		t.Fatalf("unexpected sort order: %+v", response.Data)
+	}
+}
+
+func TestEnrichResponse_UsesPublishedAtTieBreaker(t *testing.T) {
+	response := &payload.ProjectsResponse{
+		Data: []payload.ProjectsData{
+			{
+				UUID:        "older",
+				Sort:        1,
+				PublishedAt: "2026-03-01T00:00:00Z",
+			},
+			{
+				UUID:        "newer",
+				Sort:        1,
+				PublishedAt: "2026-03-10T00:00:00Z",
+			},
+		},
+	}
+
+	EnrichResponse(response)
+
+	if response.Data[0].UUID != "newer" || response.Data[1].UUID != "older" {
+		t.Fatalf("expected published_at tie-breaker order, got %+v", response.Data)
 	}
 }
 

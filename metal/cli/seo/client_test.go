@@ -129,8 +129,8 @@ func TestClientLoadsFixtures(t *testing.T) {
 		t.Fatalf("recommendations err: %v", err)
 	}
 
-	if len(recs.Data) == 0 {
-		t.Fatalf("expected recommendations data")
+	if len(recs.Data) != 0 {
+		t.Fatalf("expected no featured recommendations yet, got %+v", recs.Data)
 	}
 
 	experience, err := client.GetExperience()

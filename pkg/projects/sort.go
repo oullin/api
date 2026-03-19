@@ -8,10 +8,14 @@ import (
 	"github.com/oullin/handler/payload"
 )
 
-func SortByPublishedAtDesc(projects []payload.ProjectsData) {
+func SortBySortAsc(projects []payload.ProjectsData) {
 	sort.SliceStable(projects, func(i, j int) bool {
-		left, leftOK := sortDate(projects[i])
-		right, rightOK := sortDate(projects[j])
+		if projects[i].Sort != projects[j].Sort {
+			return projects[i].Sort < projects[j].Sort
+		}
+
+		left, leftOK := publishedAtDate(projects[i])
+		right, rightOK := publishedAtDate(projects[j])
 
 		switch {
 		case leftOK && rightOK:
@@ -26,11 +30,9 @@ func SortByPublishedAtDesc(projects []payload.ProjectsData) {
 	})
 }
 
-func sortDate(project payload.ProjectsData) (time.Time, bool) {
-	for _, candidate := range []string{project.PublishedAt, project.UpdatedAt, project.CreatedAt} {
-		if parsed, ok := ParsePublishedAt(candidate); ok {
-			return parsed, true
-		}
+func publishedAtDate(project payload.ProjectsData) (time.Time, bool) {
+	if parsed, ok := ParsePublishedAt(project.PublishedAt); ok {
+		return parsed, true
 	}
 
 	return time.Time{}, false

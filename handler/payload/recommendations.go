@@ -9,6 +9,7 @@ type RecommendationsData struct {
 	UUID      string                    `json:"uuid"`
 	Relation  string                    `json:"relation"`
 	Text      string                    `json:"text"`
+	Featured  int                       `json:"featured"`
 	CreatedAt string                    `json:"created_at"`
 	UpdatedAt string                    `json:"updated_at"`
 	Person    RecommendationsPersonData `json:"person"`
