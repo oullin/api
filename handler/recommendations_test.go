@@ -17,7 +17,7 @@ func TestRecommendationsHandler(t *testing.T) {
 		Make:     func(f string) handler.FileHandler { return handler.NewRecommendationsHandler(f) },
 		Endpoint: "/recommendations",
 		Fixture:  "../storage/fixture/recommendations.json",
-		Assert:   handler.AssertEmptyData(),
+		Assert:   handler.AssertFirstUUID("be1f8226-61d8-4b9b-a30f-0cdb521bd841"),
 	})
 }
 
