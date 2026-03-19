@@ -7,12 +7,14 @@ import (
 	"github.com/oullin/handler/payload"
 )
 
+func intPtr(v int) *int { return &v }
+
 func TestSortBySortAsc(t *testing.T) {
 	projects := []payload.ProjectsData{
-		{UUID: "third", Sort: 3, PublishedAt: "2026-03-10T00:00:00Z"},
-		{UUID: "first", Sort: 1, PublishedAt: "2026-03-12T00:00:00Z"},
-		{UUID: "fourth", Sort: 4, PublishedAt: ""},
-		{UUID: "second", Sort: 2, PublishedAt: "2026-03-11T00:00:00Z"},
+		{UUID: "third", Sort: intPtr(3), PublishedAt: "2026-03-10T00:00:00Z"},
+		{UUID: "first", Sort: intPtr(1), PublishedAt: "2026-03-12T00:00:00Z"},
+		{UUID: "fourth", Sort: intPtr(4), PublishedAt: ""},
+		{UUID: "second", Sort: intPtr(2), PublishedAt: "2026-03-11T00:00:00Z"},
 	}
 
 	SortBySortAsc(projects)
@@ -32,9 +34,9 @@ func TestSortBySortAsc(t *testing.T) {
 
 func TestSortBySortAsc_UsesPublishedAtDescAsTieBreaker(t *testing.T) {
 	projects := []payload.ProjectsData{
-		{UUID: "older", Sort: 1, PublishedAt: "2026-03-10T00:00:00Z"},
-		{UUID: "newer", Sort: 1, PublishedAt: "2026-03-12T00:00:00Z"},
-		{UUID: "other", Sort: 2, PublishedAt: "2026-03-11T00:00:00Z"},
+		{UUID: "older", Sort: intPtr(1), PublishedAt: "2026-03-10T00:00:00Z"},
+		{UUID: "newer", Sort: intPtr(1), PublishedAt: "2026-03-12T00:00:00Z"},
+		{UUID: "other", Sort: intPtr(2), PublishedAt: "2026-03-11T00:00:00Z"},
 	}
 
 	SortBySortAsc(projects)
@@ -48,8 +50,8 @@ func TestSortBySortAsc_UsesPublishedAtDescAsTieBreaker(t *testing.T) {
 
 func TestSortBySortAsc_StableWhenPublishedAtInvalid(t *testing.T) {
 	projects := []payload.ProjectsData{
-		{UUID: "first", Sort: 1, PublishedAt: "bad"},
-		{UUID: "second", Sort: 1, PublishedAt: ""},
+		{UUID: "first", Sort: intPtr(1), PublishedAt: "bad"},
+		{UUID: "second", Sort: intPtr(1), PublishedAt: ""},
 	}
 
 	SortBySortAsc(projects)
@@ -58,5 +60,20 @@ func TestSortBySortAsc_StableWhenPublishedAtInvalid(t *testing.T) {
 	want := []string{"first", "second"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("unexpected order: got %v want %v", got, want)
+	}
+}
+
+func TestSortBySortAsc_NilSortSinksToEnd(t *testing.T) {
+	projects := []payload.ProjectsData{
+		{UUID: "no-sort", Sort: nil, PublishedAt: "2026-03-10T00:00:00Z"},
+		{UUID: "has-sort", Sort: intPtr(1), PublishedAt: "2026-03-10T00:00:00Z"},
+	}
+
+	SortBySortAsc(projects)
+
+	got := []string{projects[0].UUID, projects[1].UUID}
+	want := []string{"has-sort", "no-sort"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("expected nil sort to sink to end: got %v want %v", got, want)
 	}
 }

@@ -37,7 +37,11 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return endpoint.InternalError("could not read projects data")
 	}
 
-	projects.EnrichResponse(&data)
+	if err := projects.EnrichResponse(&data); err != nil {
+		slog.Error("Error enriching projects data", "error", err)
+
+		return endpoint.InternalError("could not enrich projects data")
+	}
 
 	page := paginate.NewFrom(r.URL, projects.PageSize)
 	page.SetNumItems(int64(len(data.Data)))

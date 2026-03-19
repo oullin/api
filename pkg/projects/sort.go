@@ -1,6 +1,7 @@
 package projects
 
 import (
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -10,8 +11,11 @@ import (
 
 func SortBySortAsc(projects []payload.ProjectsData) {
 	sort.SliceStable(projects, func(i, j int) bool {
-		if projects[i].Sort != projects[j].Sort {
-			return projects[i].Sort < projects[j].Sort
+		si := sortValue(projects[i])
+		sj := sortValue(projects[j])
+
+		if si != sj {
+			return si < sj
 		}
 
 		left, leftOK := publishedAtDate(projects[i])
@@ -28,6 +32,14 @@ func SortBySortAsc(projects []payload.ProjectsData) {
 			return false
 		}
 	})
+}
+
+func sortValue(p payload.ProjectsData) int {
+	if p.Sort == nil {
+		return math.MaxInt
+	}
+
+	return *p.Sort
 }
 
 func publishedAtDate(project payload.ProjectsData) (time.Time, bool) {

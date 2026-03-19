@@ -27,7 +27,7 @@ func TestProjectsResponseJSON(t *testing.T) {
 		t.Fatalf("unexpected response: %+v", res)
 	}
 
-	if res.Data[0].Sort != 1 {
+	if res.Data[0].Sort == nil || *res.Data[0].Sort != 1 {
 		t.Fatalf("unexpected sort: %+v", res)
 	}
 }

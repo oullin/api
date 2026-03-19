@@ -13,7 +13,7 @@ type ProjectsResponse struct {
 
 type ProjectsData struct {
 	UUID         string `json:"uuid"`
-	Sort         int    `json:"sort"`
+	Sort         *int   `json:"sort"`
 	Language     string `json:"language"`
 	Title        string `json:"title"`
 	Excerpt      string `json:"excerpt"`
