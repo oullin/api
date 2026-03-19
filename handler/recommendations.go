@@ -37,7 +37,7 @@ func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *
 		return endpoint.InternalError("could not read recommendations data")
 	}
 
-	data.Data = featuredRecommendations(data.Data)
+	data.Data = h.featured(data.Data)
 
 	resp, err := endpoint.NewResponseForPayload(data, 3600, h.cacheEnabled, w, r)
 	if err != nil {
@@ -61,7 +61,7 @@ func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *
 	return nil // A nil return indicates success.
 }
 
-func featuredRecommendations(items []payload.RecommendationsData) []payload.RecommendationsData {
+func (h RecommendationsHandler) featured(items []payload.RecommendationsData) []payload.RecommendationsData {
 	filtered := make([]payload.RecommendationsData, 0, len(items))
 
 	for _, item := range items {
@@ -75,8 +75,8 @@ func featuredRecommendations(items []payload.RecommendationsData) []payload.Reco
 			return filtered[i].Featured > filtered[j].Featured
 		}
 
-		left, leftOK := recommendationCreatedAt(filtered[i])
-		right, rightOK := recommendationCreatedAt(filtered[j])
+		left, leftOK := h.createdAt(filtered[i])
+		right, rightOK := h.createdAt(filtered[j])
 
 		switch {
 		case leftOK && rightOK:
@@ -93,7 +93,7 @@ func featuredRecommendations(items []payload.RecommendationsData) []payload.Reco
 	return filtered
 }
 
-func recommendationCreatedAt(item payload.RecommendationsData) (time.Time, bool) {
+func (h RecommendationsHandler) createdAt(item payload.RecommendationsData) (time.Time, bool) {
 	createdAt := strings.TrimSpace(item.CreatedAt)
 	if createdAt == "" {
 		return time.Time{}, false
