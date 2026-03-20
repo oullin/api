@@ -130,7 +130,13 @@ func TestClientLoadsFixtures(t *testing.T) {
 	}
 
 	if len(recs.Data) == 0 {
-		t.Fatalf("expected recommendations data")
+		t.Fatalf("expected featured recommendations from fixture")
+	}
+
+	for _, rec := range recs.Data {
+		if rec.Featured != 1 {
+			t.Fatalf("expected only featured recommendations, got featured=%d for %s", rec.Featured, rec.Person.FullName)
+		}
 	}
 
 	experience, err := client.GetExperience()

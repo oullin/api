@@ -6,26 +6,29 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/oullin/handler"
 	"github.com/oullin/handler/payload"
 )
 
+func intPtr(v int) *int { return &v }
+
 func TestProjectsHandler_SortsAndPaginates(t *testing.T) {
 	fixture := writeProjectsFixture(t, payload.ProjectsResponse{
 		Version: "1.0.0",
 		Data: []payload.ProjectsData{
-			{UUID: "project-1", Title: "One", URL: "https://github.com/example/one", PublishedAt: "2026-03-01T00:00:00Z"},
-			{UUID: "project-2", Title: "Two", URL: "https://github.com/example/two", PublishedAt: "2026-03-10T00:00:00Z"},
-			{UUID: "project-3", Title: "Three", URL: "https://github.com/example/three", PublishedAt: "2026-03-03T00:00:00Z"},
-			{UUID: "project-4", Title: "Four", URL: "https://github.com/example/four", PublishedAt: "2026-03-08T00:00:00Z"},
-			{UUID: "project-5", Title: "Five", URL: "https://github.com/example/five", PublishedAt: "2026-03-02T00:00:00Z"},
-			{UUID: "project-6", Title: "Six", URL: "https://github.com/example/six", PublishedAt: "2026-03-07T00:00:00Z"},
-			{UUID: "project-7", Title: "Seven", URL: "https://github.com/example/seven", PublishedAt: "2026-03-06T00:00:00Z"},
-			{UUID: "project-8", Title: "Eight", URL: "https://github.com/example/eight", PublishedAt: "2026-03-09T00:00:00Z"},
-			{UUID: "project-9", Title: "Nine", URL: "https://github.com/example/nine", PublishedAt: "2026-03-05T00:00:00Z"},
-			{UUID: "project-10", Title: "Ten", URL: "https://github.com/example/ten", PublishedAt: "2026-03-04T00:00:00Z"},
+			{UUID: "project-1", Sort: intPtr(10), Title: "One", URL: "https://github.com/example/one", PublishedAt: "2026-03-01T00:00:00Z"},
+			{UUID: "project-2", Sort: intPtr(1), Title: "Two", URL: "https://github.com/example/two", PublishedAt: "2026-03-10T00:00:00Z"},
+			{UUID: "project-3", Sort: intPtr(9), Title: "Three", URL: "https://github.com/example/three", PublishedAt: "2026-03-03T00:00:00Z"},
+			{UUID: "project-4", Sort: intPtr(3), Title: "Four", URL: "https://github.com/example/four", PublishedAt: "2026-03-08T00:00:00Z"},
+			{UUID: "project-5", Sort: intPtr(8), Title: "Five", URL: "https://github.com/example/five", PublishedAt: "2026-03-02T00:00:00Z"},
+			{UUID: "project-6", Sort: intPtr(4), Title: "Six", URL: "https://github.com/example/six", PublishedAt: "2026-03-07T00:00:00Z"},
+			{UUID: "project-7", Sort: intPtr(5), Title: "Seven", URL: "https://github.com/example/seven", PublishedAt: "2026-03-06T00:00:00Z"},
+			{UUID: "project-8", Sort: intPtr(2), Title: "Eight", URL: "https://github.com/example/eight", PublishedAt: "2026-03-09T00:00:00Z"},
+			{UUID: "project-9", Sort: intPtr(6), Title: "Nine", URL: "https://github.com/example/nine", PublishedAt: "2026-03-05T00:00:00Z"},
+			{UUID: "project-10", Sort: intPtr(7), Title: "Ten", URL: "https://github.com/example/ten", PublishedAt: "2026-03-04T00:00:00Z"},
 		},
 	})
 
@@ -63,12 +66,12 @@ func TestProjectsHandler_SortsAndPaginates(t *testing.T) {
 		t.Fatalf("expected 8 items on page 1, got %d", len(resp.Data))
 	}
 
-	if resp.Data[0].UUID != "project-2" || resp.Data[0].PublishedAt != "2026-03-10T00:00:00Z" {
-		t.Fatalf("expected most recent project first, got %+v", resp.Data[0])
+	if resp.Data[0].UUID != "project-2" || resp.Data[0].Sort == nil || *resp.Data[0].Sort != 1 {
+		t.Fatalf("expected lowest sort project first, got %+v", resp.Data[0])
 	}
 
 	if resp.Data[1].UUID != "project-8" {
-		t.Fatalf("expected second most recent project second, got %+v", resp.Data[1])
+		t.Fatalf("expected second-lowest sort project second, got %+v", resp.Data[1])
 	}
 }
 
@@ -76,15 +79,15 @@ func TestProjectsHandler_Page2(t *testing.T) {
 	fixture := writeProjectsFixture(t, payload.ProjectsResponse{
 		Version: "1.0.0",
 		Data: []payload.ProjectsData{
-			{UUID: "project-1", Title: "One", URL: "https://github.com/example/one", PublishedAt: "2026-03-09T00:00:00Z"},
-			{UUID: "project-2", Title: "Two", URL: "https://github.com/example/two", PublishedAt: "2026-03-08T00:00:00Z"},
-			{UUID: "project-3", Title: "Three", URL: "https://github.com/example/three", PublishedAt: "2026-03-07T00:00:00Z"},
-			{UUID: "project-4", Title: "Four", URL: "https://github.com/example/four", PublishedAt: "2026-03-06T00:00:00Z"},
-			{UUID: "project-5", Title: "Five", URL: "https://github.com/example/five", PublishedAt: "2026-03-05T00:00:00Z"},
-			{UUID: "project-6", Title: "Six", URL: "https://github.com/example/six", PublishedAt: "2026-03-04T00:00:00Z"},
-			{UUID: "project-7", Title: "Seven", URL: "https://github.com/example/seven", PublishedAt: "2026-03-03T00:00:00Z"},
-			{UUID: "project-8", Title: "Eight", URL: "https://github.com/example/eight", PublishedAt: "2026-03-02T00:00:00Z"},
-			{UUID: "project-9", Title: "Nine", URL: "https://github.com/example/nine", PublishedAt: "2026-03-01T00:00:00Z"},
+			{UUID: "project-1", Sort: intPtr(9), Title: "One", URL: "https://github.com/example/one", PublishedAt: "2026-03-09T00:00:00Z"},
+			{UUID: "project-2", Sort: intPtr(8), Title: "Two", URL: "https://github.com/example/two", PublishedAt: "2026-03-08T00:00:00Z"},
+			{UUID: "project-3", Sort: intPtr(7), Title: "Three", URL: "https://github.com/example/three", PublishedAt: "2026-03-07T00:00:00Z"},
+			{UUID: "project-4", Sort: intPtr(6), Title: "Four", URL: "https://github.com/example/four", PublishedAt: "2026-03-06T00:00:00Z"},
+			{UUID: "project-5", Sort: intPtr(5), Title: "Five", URL: "https://github.com/example/five", PublishedAt: "2026-03-05T00:00:00Z"},
+			{UUID: "project-6", Sort: intPtr(4), Title: "Six", URL: "https://github.com/example/six", PublishedAt: "2026-03-04T00:00:00Z"},
+			{UUID: "project-7", Sort: intPtr(3), Title: "Seven", URL: "https://github.com/example/seven", PublishedAt: "2026-03-03T00:00:00Z"},
+			{UUID: "project-8", Sort: intPtr(2), Title: "Eight", URL: "https://github.com/example/eight", PublishedAt: "2026-03-02T00:00:00Z"},
+			{UUID: "project-9", Sort: intPtr(1), Title: "Nine", URL: "https://github.com/example/nine", PublishedAt: "2026-03-01T00:00:00Z"},
 		},
 	})
 
@@ -119,29 +122,30 @@ func TestProjectsHandler_Page2(t *testing.T) {
 	}
 }
 
-func TestProjectsHandler_SortsByPublishedAtWithFallbackDates(t *testing.T) {
+func TestProjectsHandler_SortsBySortWithPublishedAtTieBreaker(t *testing.T) {
 	fixture := writeProjectsFixture(t, payload.ProjectsResponse{
 		Version: "1.0.0",
 		Data: []payload.ProjectsData{
 			{
-				UUID:      "project-created",
-				Title:     "Created",
-				URL:       "https://github.com/example/created",
-				CreatedAt: "2026-03-01",
+				UUID:        "project-older",
+				Sort:        intPtr(1),
+				Title:       "Older",
+				URL:         "https://github.com/example/older",
+				PublishedAt: "2026-03-01T00:00:00Z",
 			},
 			{
-				UUID:        "project-updated",
-				Title:       "Updated",
-				URL:         "https://github.com/example/updated",
-				UpdatedAt:   "2026-03-10",
-				PublishedAt: "",
+				UUID:        "project-newer",
+				Sort:        intPtr(1),
+				Title:       "Newer",
+				URL:         "https://github.com/example/newer",
+				PublishedAt: "2026-03-10T00:00:00Z",
 			},
 			{
-				UUID:        "project-published",
-				Title:       "Published",
-				URL:         "https://github.com/example/published",
+				UUID:        "project-later-sort",
+				Sort:        intPtr(2),
+				Title:       "Later Sort",
+				URL:         "https://github.com/example/later-sort",
 				PublishedAt: "2026-03-17T12:00:00Z",
-				UpdatedAt:   "2026-03-05",
 			},
 		},
 	})
@@ -164,16 +168,16 @@ func TestProjectsHandler_SortsByPublishedAtWithFallbackDates(t *testing.T) {
 		t.Fatalf("expected 3 items, got %d", len(resp.Data))
 	}
 
-	if resp.Data[0].UUID != "project-published" {
-		t.Fatalf("expected published project first, got %+v", resp.Data[0])
+	if resp.Data[0].UUID != "project-newer" {
+		t.Fatalf("expected newer project first within equal sort, got %+v", resp.Data[0])
 	}
 
-	if resp.Data[1].UUID != "project-updated" {
-		t.Fatalf("expected updated project second, got %+v", resp.Data[1])
+	if resp.Data[1].UUID != "project-older" {
+		t.Fatalf("expected older project second within equal sort, got %+v", resp.Data[1])
 	}
 
-	if resp.Data[2].UUID != "project-created" {
-		t.Fatalf("expected created project last, got %+v", resp.Data[2])
+	if resp.Data[2].UUID != "project-later-sort" {
+		t.Fatalf("expected higher sort project last, got %+v", resp.Data[2])
 	}
 }
 
@@ -181,7 +185,7 @@ func TestProjectsHandler_NoStoreWhenCacheDisabled(t *testing.T) {
 	fixture := writeProjectsFixture(t, payload.ProjectsResponse{
 		Version: "1.0.0",
 		Data: []payload.ProjectsData{
-			{UUID: "project-1", Title: "One", URL: "https://github.com/example/one"},
+			{UUID: "project-1", Sort: intPtr(1), Title: "One", URL: "https://github.com/example/one", PublishedAt: "2026-03-01T00:00:00Z"},
 		},
 	})
 
@@ -203,6 +207,57 @@ func TestProjectsHandler_NoStoreWhenCacheDisabled(t *testing.T) {
 
 	if rec.Header().Get("ETag") != "" {
 		t.Fatalf("expected empty etag, got %q", rec.Header().Get("ETag"))
+	}
+}
+
+func TestProjectsFixture_ContainsValidPublishedAtAndSort(t *testing.T) {
+	body, err := os.ReadFile(filepath.Join("..", "storage", "fixture", "projects.json"))
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+
+	var raw struct {
+		Data []map[string]any `json:"data"`
+	}
+
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatalf("unmarshal fixture: %v", err)
+	}
+
+	if len(raw.Data) == 0 {
+		t.Fatalf("expected fixture data")
+	}
+
+	for _, item := range raw.Data {
+		uuid, _ := item["uuid"].(string)
+
+		publishedAt, ok := item["published_at"]
+		if !ok {
+			t.Fatalf("expected published_at in fixture item %s: %+v", uuid, item)
+		}
+
+		publishedAtStr, _ := publishedAt.(string)
+		if strings.TrimSpace(publishedAtStr) == "" {
+			t.Fatalf("expected non-empty published_at in fixture item %s", uuid)
+		}
+
+		sortVal, ok := item["sort"]
+		if !ok {
+			t.Fatalf("expected sort in fixture item %s: %+v", uuid, item)
+		}
+
+		sortNum, ok := sortVal.(float64)
+		if !ok || sortNum <= 0 {
+			t.Fatalf("expected positive sort in fixture item %s, got %v", uuid, sortVal)
+		}
+
+		if _, ok := item["created_at"]; ok {
+			t.Fatalf("did not expect created_at in fixture item: %+v", item)
+		}
+
+		if _, ok := item["updated_at"]; ok {
+			t.Fatalf("did not expect updated_at in fixture item: %+v", item)
+		}
 	}
 }
 

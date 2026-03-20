@@ -1,6 +1,7 @@
 package projects
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/oullin/handler/payload"
@@ -8,30 +9,28 @@ import (
 
 const PageSize = 8
 
-func EnrichResponse(response *payload.ProjectsResponse) {
+func EnrichResponse(response *payload.ProjectsResponse) error {
 	if response == nil {
-		return
+		return nil
 	}
 
 	for i := range response.Data {
-		publishedAt := strings.TrimSpace(response.Data[i].PublishedAt)
-		updatedAt := strings.TrimSpace(response.Data[i].UpdatedAt)
-		createdAt := strings.TrimSpace(response.Data[i].CreatedAt)
+		response.Data[i].PublishedAt = strings.TrimSpace(response.Data[i].PublishedAt)
 
-		if publishedAt != "" {
-			response.Data[i].PublishedAt = publishedAt
-			continue
+		if response.Data[i].Sort == nil {
+			return fmt.Errorf("project %q has no sort value", response.Data[i].UUID)
 		}
 
-		if updatedAt != "" {
-			response.Data[i].PublishedAt = updatedAt
-			continue
+		if *response.Data[i].Sort <= 0 {
+			return fmt.Errorf("project %q has invalid sort value %d: must be positive", response.Data[i].UUID, *response.Data[i].Sort)
 		}
 
-		if createdAt != "" {
-			response.Data[i].PublishedAt = createdAt
+		if response.Data[i].PublishedAt == "" {
+			return fmt.Errorf("project %q has empty published_at", response.Data[i].UUID)
 		}
 	}
 
-	SortByPublishedAtDesc(response.Data)
+	SortBySortAsc(response.Data)
+
+	return nil
 }

@@ -93,6 +93,8 @@ func RunFileHandlerTest(t *testing.T, tc FileHandlerTestCase) {
 
 func AssertFirstUUID(expected string) func(*testing.T, any) {
 	return func(t *testing.T, data any) {
+		t.Helper()
+
 		arr, ok := data.([]interface{})
 
 		if !ok || len(arr) == 0 {
@@ -107,8 +109,22 @@ func AssertFirstUUID(expected string) func(*testing.T, any) {
 	}
 }
 
+func AssertEmptyData() func(*testing.T, any) {
+	return func(t *testing.T, data any) {
+		t.Helper()
+
+		arr, ok := data.([]interface{})
+
+		if !ok || len(arr) != 0 {
+			t.Fatalf("unexpected payload: %+v", data)
+		}
+	}
+}
+
 func AssertNickname(expected string) func(*testing.T, any) {
 	return func(t *testing.T, data any) {
+		t.Helper()
+
 		obj, ok := data.(map[string]interface{})
 
 		if !ok || obj["nickname"] != expected {

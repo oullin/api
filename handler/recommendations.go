@@ -7,6 +7,9 @@ import (
 
 	"log/slog"
 	"net/http"
+	"sort"
+	"strings"
+	"time"
 )
 
 type RecommendationsHandler struct {
@@ -34,6 +37,8 @@ func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *
 		return endpoint.InternalError("could not read recommendations data")
 	}
 
+	data.Data = h.featured(data.Data)
+
 	resp, err := endpoint.NewResponseForPayload(data, 3600, h.cacheEnabled, w, r)
 	if err != nil {
 		slog.Error("Error preparing recommendations response cache", "error", err)
@@ -54,4 +59,56 @@ func (h RecommendationsHandler) Handle(w http.ResponseWriter, r *http.Request) *
 	}
 
 	return nil // A nil return indicates success.
+}
+
+func (h RecommendationsHandler) featured(items []payload.RecommendationsData) []payload.RecommendationsData {
+	filtered := make([]payload.RecommendationsData, 0, len(items))
+
+	for _, item := range items {
+		if item.Featured == 1 {
+			filtered = append(filtered, item)
+		}
+	}
+
+	type sortKey struct {
+		time time.Time
+		ok   bool
+	}
+
+	keys := make([]sortKey, len(filtered))
+	for i, item := range filtered {
+		t, ok := h.createdAt(item)
+		keys[i] = sortKey{time: t, ok: ok}
+	}
+
+	sort.SliceStable(filtered, func(i, j int) bool {
+		left, right := keys[i], keys[j]
+
+		switch {
+		case left.ok && right.ok:
+			return left.time.After(right.time)
+		case left.ok:
+			return true
+		case right.ok:
+			return false
+		default:
+			return false
+		}
+	})
+
+	return filtered
+}
+
+func (h RecommendationsHandler) createdAt(item payload.RecommendationsData) (time.Time, bool) {
+	createdAt := strings.TrimSpace(item.CreatedAt)
+	if createdAt == "" {
+		return time.Time{}, false
+	}
+
+	parsed, err := time.Parse("2006-01-02", createdAt)
+	if err != nil {
+		return time.Time{}, false
+	}
+
+	return parsed, true
 }

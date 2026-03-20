@@ -7,8 +7,8 @@
 # Security model: identical to Dockerfile.builder — pinned .apk artifacts,
 # SHA256 checksum verification, ephemeral RSA-signed APKINDEX.
 
-ARG ALPINE_VERSION
-ARG ALPINE_IMAGE_DIGEST
+ARG ALPINE_VERSION=3.23
+ARG ALPINE_IMAGE_DIGEST=sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 
 FROM alpine:${ALPINE_VERSION}@${ALPINE_IMAGE_DIGEST}
 

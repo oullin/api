@@ -8,7 +8,7 @@ import (
 )
 
 func TestProjectsResponseJSON(t *testing.T) {
-	body := []byte(`{"version":"v1","page":1,"total":1,"page_size":8,"total_pages":1,"data":[{"uuid":"u","language":"l","title":"t","excerpt":"e","url":"u","icon":"i","is_open_source":true,"published_at":"2026-03-17T12:00:00Z","created_at":"c","updated_at":"up"}]}`)
+	body := []byte(`{"version":"v1","page":1,"total":1,"page_size":8,"total_pages":1,"data":[{"uuid":"u","sort":1,"language":"l","title":"t","excerpt":"e","url":"u","icon":"i","is_open_source":true,"published_at":"2026-03-17T12:00:00Z"}]}`)
 	var res payload.ProjectsResponse
 
 	if err := json.Unmarshal(body, &res); err != nil {
@@ -25,5 +25,9 @@ func TestProjectsResponseJSON(t *testing.T) {
 
 	if res.Data[0].PublishedAt != "2026-03-17T12:00:00Z" {
 		t.Fatalf("unexpected response: %+v", res)
+	}
+
+	if res.Data[0].Sort == nil || *res.Data[0].Sort != 1 {
+		t.Fatalf("unexpected sort: %+v", res)
 	}
 }

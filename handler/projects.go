@@ -37,7 +37,14 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return endpoint.InternalError("could not read projects data")
 	}
 
-	projects.EnrichResponse(&data)
+	if err := projects.EnrichResponse(&data); err != nil {
+		slog.Error("Error enriching projects data", "error", err)
+
+		// Trusted fixture validation failures are treated as 500s because they
+		// indicate a deployment/configuration issue. Revisit this if the source
+		// data becomes user-controlled or external.
+		return endpoint.InternalError("could not enrich projects data")
+	}
 
 	page := paginate.NewFrom(r.URL, projects.PageSize)
 	page.SetNumItems(int64(len(data.Data)))
