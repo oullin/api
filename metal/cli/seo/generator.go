@@ -531,6 +531,9 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 	return data, nil
 }
 
+// validationTemplateData returns a copy of the data with the title padded to meet the minimum
+// length validation rule. The original data is exported unchanged, so short brand-name titles
+// like "Oullin" appear as-is in the HTML while still passing validation.
 func (g *Generator) validationTemplateData(data TemplateData) TemplateData {
 	if len([]rune(data.Title)) >= 10 {
 		return data
@@ -621,6 +624,7 @@ func (g *Generator) buildJsonLD(pageName, path, description string) template.JS 
 		pageType = "WebPage"
 	case strings.HasPrefix(path, g.Web.GetPostDetailPage().Url+"/"):
 		pageType = "Article"
+		entityName = pageName
 	}
 
 	jsonLD := NewJsonID(g.Page, g.Web).WithPage(
