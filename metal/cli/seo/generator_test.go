@@ -1,7 +1,9 @@
 package seo
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	stdhtml "html"
 	"html/template"
 	"image"
 	"image/color"
@@ -184,8 +186,24 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		t.Fatalf("expected talks section in generated html")
 	}
 
+	if !strings.Contains(content, "<title>Oullin</title>") {
+		t.Fatalf("expected home title to use brand name: %q", content)
+	}
+
 	if !strings.Contains(content, "cli tools") {
 		t.Fatalf("expected categories to be rendered: %q", content)
+	}
+
+	if strings.Contains(content, "Gustavo") || strings.Contains(content, "Ocanto") {
+		t.Fatalf("expected home seo output to avoid personal-name content: %q", content)
+	}
+
+	manifest := readManifestFromHTML(t, content)
+	if manifest["name"].(string) != "Oullin" {
+		t.Fatalf("expected manifest name to use brand name: %#v", manifest)
+	}
+	if manifest["short_name"].(string) != "Oullin" {
+		t.Fatalf("expected manifest short_name to use brand name: %#v", manifest)
 	}
 
 	aboutRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "about.seo.html"))
@@ -198,8 +216,16 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		t.Fatalf("expected social section in about page: %q", aboutContent)
 	}
 
-	if !strings.Contains(aboutContent, "<h1>recommendations</h1>") {
-		t.Fatalf("expected recommendations section in about page: %q", aboutContent)
+	if strings.Contains(aboutContent, "<h1>recommendations</h1>") {
+		t.Fatalf("did not expect recommendations section in about page: %q", aboutContent)
+	}
+
+	if strings.Contains(aboutContent, "<h1>profile</h1>") {
+		t.Fatalf("did not expect profile section in about page: %q", aboutContent)
+	}
+
+	if strings.Contains(aboutContent, "gustavo") || strings.Contains(aboutContent, "ocanto") {
+		t.Fatalf("expected about page to avoid personal-name content: %q", aboutContent)
 	}
 
 	projectsRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "projects.seo.html"))
@@ -236,6 +262,18 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 		t.Fatalf("expected contact page to include email link: %q", contactContent)
 	}
 
+	if strings.Contains(contactContent, "<h1>social</h1>") {
+		t.Fatalf("did not expect social section in contact page: %q", contactContent)
+	}
+
+	if strings.Contains(contactContent, "<h1>profile</h1>") {
+		t.Fatalf("did not expect profile section in contact page: %q", contactContent)
+	}
+
+	if strings.Contains(contactContent, "gustavo") || strings.Contains(contactContent, "ocanto") {
+		t.Fatalf("expected contact page to avoid personal-name content: %q", contactContent)
+	}
+
 	termsRaw, err := os.ReadFile(filepath.Join(env.Seo.SpaDir, "terms-and-conditions.seo.html"))
 	if err != nil {
 		t.Fatalf("read terms output: %v", err)
@@ -263,6 +301,39 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 	if !strings.Contains(postContent, "Second paragraph &amp; details.") {
 		t.Fatalf("expected post body content in seo output: %q", postContent)
 	}
+	if strings.Contains(postContent, "By Gustavo") {
+		t.Fatalf("did not expect author byline in post seo output: %q", postContent)
+	}
+}
+
+func readManifestFromHTML(t *testing.T, content string) map[string]any {
+	t.Helper()
+
+	content = stdhtml.UnescapeString(content)
+
+	const prefix = `href="data:application/manifest+json;base64,`
+	start := strings.Index(content, prefix)
+	if start == -1 {
+		t.Fatalf("manifest data url not found in html: %q", content)
+	}
+
+	start += len(prefix)
+	end := strings.Index(content[start:], `"`)
+	if end == -1 {
+		t.Fatalf("manifest data url terminator not found in html: %q", content)
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(content[start : start+end])
+	if err != nil {
+		t.Fatalf("decode manifest data url: %v", err)
+	}
+
+	var manifest map[string]any
+	if err := json.Unmarshal(decoded, &manifest); err != nil {
+		t.Fatalf("parse manifest json: %v", err)
+	}
+
+	return manifest
 }
 
 func TestGeneratorPreparePostImage(t *testing.T) {

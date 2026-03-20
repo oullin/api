@@ -1,7 +1,30 @@
 package seo
 
+import (
+	"fmt"
+	"strings"
+)
+
+type Brand struct {
+	Name string
+}
+
+func NewBrand() Brand {
+	return Brand{Name: "Oullin"}
+}
+
+func (b Brand) TitleFor(pageTitle string) string {
+	trimmed := strings.TrimSpace(pageTitle)
+	if trimmed == "" || trimmed == b.Name {
+		return b.Name
+	}
+
+	return fmt.Sprintf("%s - %s", trimmed, b.Name)
+}
+
 type Web struct {
 	FoundedYear int16
+	Brand       Brand
 	ThemeColor  string
 	Robots      string
 	ColorScheme string
@@ -27,11 +50,12 @@ type WebPageUrls struct {
 
 func NewWeb() *Web {
 	pages := make(map[string]WebPage, 7)
+	brand := NewBrand()
 
 	home := WebPage{
 		Name:    "Home",
 		Url:     "/",
-		Title:   "Oullin",
+		Title:   brand.Name,
 		Excerpt: "Oullin is a movement-led platform for engineering leadership, AI architecture, open-source systems, and writing shaped by presence, transformation, and craft.",
 	}
 
@@ -39,7 +63,7 @@ func NewWeb() *Web {
 		Name:    "About",
 		Url:     "/about",
 		Title:   "About",
-		Excerpt: "Learn how Oullin approaches movement, transformation, and craft, and meet founder Gustavo Ocanto.",
+		Excerpt: "Learn how Oullin approaches movement, transformation, and craft through engineering leadership, AI architecture, and open-source systems.",
 	}
 
 	contact := WebPage{
@@ -94,6 +118,7 @@ func NewWeb() *Web {
 
 	return &Web{
 		FoundedYear: 2020,
+		Brand:       brand,
 		Urls:        urls,
 		Pages:       pages,
 		ThemeColor:  "#0E172B",

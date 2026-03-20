@@ -147,25 +147,7 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 
 	title := template.HTMLEscapeString(post.Title)
 
-	authorName := strings.TrimSpace(post.Author.DisplayName)
-	if authorName == "" {
-		fullName := strings.TrimSpace(strings.Join(portal.FilterNonEmpty(
-			[]string{post.Author.FirstName, post.Author.LastName}), " "),
-		)
-
-		if fullName != "" {
-			authorName = fullName
-		} else {
-			authorName = strings.TrimSpace(post.Author.Username)
-		}
-	}
-
-	authorName = template.HTMLEscapeString(authorName)
-
 	var metaParts []string
-	if authorName != "" {
-		metaParts = append(metaParts, "By "+authorName)
-	}
 
 	if post.PublishedAt != nil {
 		published := post.PublishedAt.UTC().Format("02 Jan 2006")

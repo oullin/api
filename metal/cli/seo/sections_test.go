@@ -149,6 +149,9 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 	if strings.Contains(renderedPost, "gocanto<script>") {
 		t.Fatalf("post meta should escape username: %q", renderedPost)
 	}
+	if strings.Contains(renderedPost, "By ") {
+		t.Fatalf("post meta should not include author byline: %q", renderedPost)
+	}
 	if !strings.Contains(renderedPost, "Learn &lt;fast&gt;<br/>") {
 		t.Fatalf("post excerpt should escape html and keep breaks: %q", renderedPost)
 	}
