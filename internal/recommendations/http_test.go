@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	filehandler "github.com/oullin/internal/testutil/filehandler"
+	"github.com/oullin/internal/testutil/filehandler"
 )
 
 func TestRecommendationsHandler(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/internal/shared/endpoint"
-	sharedpaginate "github.com/oullin/internal/shared/paginate"
+	"github.com/oullin/internal/shared/paginate"
 	"github.com/oullin/internal/shared/portal"
 )
 
@@ -44,7 +44,7 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 		return endpoint.InternalError("could not enrich projects data")
 	}
 
-	page := sharedpaginate.NewFrom(r.URL, PageSize)
+	page := paginate.NewFrom(r.URL, PageSize)
 	page.SetNumItems(int64(len(data.Data)))
 
 	start := (page.Page - 1) * page.Limit

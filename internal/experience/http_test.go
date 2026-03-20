@@ -3,7 +3,7 @@ package experience
 import (
 	"testing"
 
-	filehandler "github.com/oullin/internal/testutil/filehandler"
+	"github.com/oullin/internal/testutil/filehandler"
 )
 
 func TestExperienceHandler(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	categoriespkg "github.com/oullin/internal/categories"
+	"github.com/oullin/internal/categories"
 	"github.com/oullin/internal/education"
 	"github.com/oullin/internal/experience"
 	"github.com/oullin/internal/links"
@@ -100,8 +100,8 @@ func TestSectionsRenderersEscapeContent(t *testing.T) {
 			FirstName:   "Gus<",
 			LastName:    "C>",
 		},
-		Categories:  []categoriespkg.CategoryResponse{{Name: "Go<Lang>"}},
-		Tags:        []categoriespkg.TagResponse{{Name: "SEO<Tag>"}},
+		Categories:  []categories.CategoryResponse{{Name: "Go<Lang>"}},
+		Tags:        []categories.TagResponse{{Name: "SEO<Tag>"}},
 		PublishedAt: &publishedAt,
 	}
 

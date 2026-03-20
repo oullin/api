@@ -9,7 +9,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/internal/shared/endpoint"
-	sharedpaginate "github.com/oullin/internal/shared/paginate"
+	"github.com/oullin/internal/shared/paginate"
 	"github.com/oullin/internal/shared/portal"
 )
 
@@ -34,7 +34,7 @@ func (h *PostsHandler) Index(w http.ResponseWriter, r *http.Request) *endpoint.A
 
 	result, err := h.Posts.GetAll(
 		GetPostsFiltersFrom(requestBody),
-		sharedpaginate.NewFrom(r.URL, 10),
+		paginate.NewFrom(r.URL, 10),
 	)
 
 	if err != nil {

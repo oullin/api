@@ -10,7 +10,7 @@ import (
 
 	"github.com/oullin/internal/posts"
 	"github.com/oullin/internal/shared/cli"
-	pkgimages "github.com/oullin/internal/shared/images"
+	"github.com/oullin/internal/shared/images"
 	"github.com/oullin/internal/shared/portal"
 )
 
@@ -39,9 +39,9 @@ func (g *Generator) preparePostImage(post posts.PostResponse) (preparedImage, er
 		return preparedImage{}, err
 	}
 
-	img, format, err := pkgimages.Fetch(source)
+	img, format, err := images.Fetch(source)
 	if err != nil {
-		var decodeErr *pkgimages.DecodeError
+		var decodeErr *images.DecodeError
 		if errors.As(err, &decodeErr) {
 			cli.Errorln("Failed to decode remote image. Diagnostics:")
 			for _, line := range decodeErr.Diagnostics() {
@@ -55,11 +55,11 @@ func (g *Generator) preparePostImage(post posts.PostResponse) (preparedImage, er
 	bounds := img.Bounds()
 	cli.Grayln(fmt.Sprintf("Fetched image %s (%s) with bounds %dx%d", source, format, bounds.Dx(), bounds.Dy()))
 
-	resized := pkgimages.Resize(img, seoImageWidth, seoImageHeight)
+	resized := images.Resize(img, seoImageWidth, seoImageHeight)
 	cli.Grayln(fmt.Sprintf("Resized image to %dx%d", seoImageWidth, seoImageHeight))
 
-	ext := pkgimages.DetermineExtension(source, format)
-	fileName := pkgimages.BuildFileName(post.Slug, ext, "post-image")
+	ext := images.DetermineExtension(source, format)
+	fileName := images.BuildFileName(post.Slug, ext, "post-image")
 
 	if err := os.MkdirAll(spaImagesDir, 0o755); err != nil {
 		cli.Errorln(fmt.Sprintf("Unable to create SPA images directory %s: %v", spaImagesDir, err))
@@ -67,7 +67,7 @@ func (g *Generator) preparePostImage(post posts.PostResponse) (preparedImage, er
 	}
 
 	destPath := filepath.Join(spaImagesDir, fileName)
-	if err := pkgimages.Save(destPath, resized, ext, pkgimages.DefaultJPEGQuality); err != nil {
+	if err := images.Save(destPath, resized, ext, images.DefaultJPEGQuality); err != nil {
 		cli.Errorln(fmt.Sprintf("Unable to save resized image to %s: %v", destPath, err))
 		return preparedImage{}, fmt.Errorf("write resized image: %w", err)
 	}
@@ -82,13 +82,13 @@ func (g *Generator) preparePostImage(post posts.PostResponse) (preparedImage, er
 	relativeDir = strings.Trim(relativeDir, "/")
 
 	relative := path.Join(relativeDir, fileName)
-	relative = pkgimages.NormalizeRelativeURL(relative)
+	relative = images.NormalizeRelativeURL(relative)
 
 	cli.Grayln(fmt.Sprintf("Post image relative path: %s", relative))
 
 	return preparedImage{
 		URL:  g.siteURLFor(relative),
-		Mime: pkgimages.MIMEFromExtension(ext),
+		Mime: images.MIMEFromExtension(ext),
 	}, nil
 }
 

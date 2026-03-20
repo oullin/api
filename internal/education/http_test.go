@@ -3,7 +3,7 @@ package education
 import (
 	"testing"
 
-	filehandler "github.com/oullin/internal/testutil/filehandler"
+	"github.com/oullin/internal/testutil/filehandler"
 )
 
 func TestEducationHandler(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"github.com/oullin/database/repository"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/internal/shared/endpoint"
-	sharedpaginate "github.com/oullin/internal/shared/paginate"
+	"github.com/oullin/internal/shared/paginate"
 )
 
 type CategoriesHandler struct {
@@ -23,7 +23,7 @@ func NewCategoriesHandler(categories *repository.Categories) CategoriesHandler {
 }
 
 func (h *CategoriesHandler) Index(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
-	result, err := h.Categories.GetAll(sharedpaginate.NewFrom(r.URL, 10))
+	result, err := h.Categories.GetAll(paginate.NewFrom(r.URL, 10))
 
 	if err != nil {
 		slog.Error("Error getting categories", "err", err)

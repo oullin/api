@@ -3,7 +3,7 @@ package links
 import (
 	"testing"
 
-	filehandler "github.com/oullin/internal/testutil/filehandler"
+	"github.com/oullin/internal/testutil/filehandler"
 )
 
 func TestLinksHandler(t *testing.T) {
