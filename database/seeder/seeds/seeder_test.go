@@ -9,7 +9,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/database"
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 func testConnection(t *testing.T, e *env.Environment) *database.Connection {

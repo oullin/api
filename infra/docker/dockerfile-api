@@ -97,7 +97,7 @@ RUN go build \
     -tags "${BUILD_TAGS}" \
     -o ${APP_DIR}/${BINARY_NAME} \
     -ldflags="-s -w -X main.Version=${APP_VERSION}" \
-    .
+    ./cmd/api
 
 # ----------------------------------------------------------------------------------------------------------------------
 #                                           FINAL STAGE

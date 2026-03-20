@@ -17,7 +17,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository"
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 func setupPostgresConnection(t *testing.T, models ...interface{}) (*database.Connection, func()) {

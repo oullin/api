@@ -1,7 +1,7 @@
 package queries
 
 import (
-	"github.com/oullin/pkg/portal"
+	"github.com/oullin/internal/shared/portal"
 
 	"strings"
 )

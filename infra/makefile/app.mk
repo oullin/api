@@ -166,10 +166,10 @@ run-cli:
 	@status=0; \
 	if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
 		printf "Using docker compose to run the CLI.\n"; \
-		docker compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
+		docker compose run --rm api-runner go run ./cmd/admin || status=$$?; \
 	elif command -v docker-compose >/dev/null 2>&1; then \
 		printf "Using docker-compose to run the CLI.\n"; \
-		docker-compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
+		docker-compose run --rm api-runner go run ./cmd/admin || status=$$?; \
 	else \
 		printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
 		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
@@ -184,4 +184,4 @@ run-cli-docker: ensure-base-images
 	$(MAKE) run-cli
 
 run-metal:
-	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run metal/cli/main.go
+	@GOTOOLCHAIN=$(GO_LOCAL_TOOLCHAIN) go run ./cmd/admin

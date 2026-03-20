@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 type Truncate struct {

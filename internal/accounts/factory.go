@@ -1,0 +1,34 @@
+package accounts
+
+import (
+	"fmt"
+
+	"github.com/oullin/database"
+	"github.com/oullin/database/repository"
+	env "github.com/oullin/internal/app/config"
+	"github.com/oullin/internal/shared/auth"
+)
+
+type Handler struct {
+	IsDebugging  bool
+	Env          *env.Environment
+	Tokens       *repository.ApiKeys
+	TokenHandler *auth.TokenHandler
+}
+
+func NewHandler(db *database.Connection, env *env.Environment) (*Handler, error) {
+	tokenHandler, err := auth.NewTokensHandler(
+		[]byte(env.App.MasterKey),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to make token handler: %v", err)
+	}
+
+	return &Handler{
+		Env:          env,
+		IsDebugging:  false,
+		Tokens:       &repository.ApiKeys{DB: db},
+		TokenHandler: tokenHandler,
+	}, nil
+}

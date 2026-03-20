@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/oullin/database"
-	"github.com/oullin/metal/env"
-	"github.com/oullin/pkg/model"
+	env "github.com/oullin/internal/app/config"
+	"github.com/oullin/internal/shared/model"
 )
 
 type Users struct {

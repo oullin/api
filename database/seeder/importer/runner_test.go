@@ -14,7 +14,7 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/seeder/importer"
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 func TestSeedFromFileExecutesStatements(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/oullin/database"
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 type Seeder struct {

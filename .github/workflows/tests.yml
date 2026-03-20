@@ -33,30 +33,29 @@ jobs:
       - name: Download Go modules
         run: go mod download
 
-      - name: Run pkg tests
+      - name: Run Shared Tests
         run: |
-          go test -coverpkg=./... ./pkg/... -coverprofile=coverage-pkg-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-pkg-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./internal/shared/... -coverprofile=coverage-shared-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-shared-${{ matrix.go-version }}.out | tail -n 1
 
-      - name: Run kernel & env tests
+      - name: Run App Tests
         run: |
-          go test -coverpkg=./... ./metal/kernel ./metal/env -coverprofile=coverage-metal-env-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-metal-env-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./internal/app/... -coverprofile=coverage-app-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-app-${{ matrix.go-version }}.out | tail -n 1
 
-      - name: Run handlers tests
+      - name: Run Feature Tests
         run: |
-          go test -coverpkg=./... ./handler/... -coverprofile=coverage-handler-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-handler-${{ matrix.go-version }}.out | tail -n 1
+          go test -coverpkg=./... ./internal/accounts ./internal/posts ./internal/projects ./internal/profile ./internal/links ./internal/talks ./internal/education ./internal/experience ./internal/recommendations ./internal/health ./internal/categories ./internal/signatures ./internal/metrics ./internal/seo -coverprofile=coverage-features-${{ matrix.go-version }}.out
+          go tool cover -func=coverage-features-${{ matrix.go-version }}.out | tail -n 1
 
       - name: Run database tests
         run: |
           go test -coverpkg=./... ./database/... -coverprofile=coverage-database-${{ matrix.go-version }}.out
           go tool cover -func=coverage-database-${{ matrix.go-version }}.out | tail -n 1
 
-      - name: Run CLI tests
+      - name: Smoke Build Binaries
         run: |
-          go test -coverpkg=./... ./metal/cli/... -coverprofile=coverage-cli-${{ matrix.go-version }}.out
-          go tool cover -func=coverage-cli-${{ matrix.go-version }}.out | tail -n 1
+          go build ./cmd/api ./cmd/admin ./cmd/dbseed ./cmd/dbimport
 
       - name: Merge coverage reports
         run: |

@@ -10,8 +10,8 @@ import (
 
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/repoentity"
-	"github.com/oullin/pkg/model"
-	"github.com/oullin/pkg/portal"
+	"github.com/oullin/internal/shared/model"
+	"github.com/oullin/internal/shared/portal"
 )
 
 type ApiKeys struct {

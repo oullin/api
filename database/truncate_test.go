@@ -11,7 +11,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 func TestTruncateExecuteSkipsMissingTables(t *testing.T) {

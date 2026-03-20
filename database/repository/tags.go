@@ -9,7 +9,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/model"
+	"github.com/oullin/internal/shared/model"
 )
 
 type Tags struct {

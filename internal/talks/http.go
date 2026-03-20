@@ -1,0 +1,56 @@
+package talks
+
+import (
+	"log/slog"
+	"net/http"
+
+	"github.com/oullin/internal/shared/endpoint"
+	"github.com/oullin/internal/shared/portal"
+)
+
+type TalksHandler struct {
+	filePath     string
+	cacheEnabled bool
+}
+
+func NewTalksHandler(filePath string) TalksHandler {
+	return NewTalksHandlerWithCache(filePath, true)
+}
+
+func NewTalksHandlerWithCache(filePath string, cacheEnabled bool) TalksHandler {
+	return TalksHandler{
+		filePath:     filePath,
+		cacheEnabled: cacheEnabled,
+	}
+}
+
+func (h TalksHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoint.ApiError {
+	data, err := portal.ParseJsonFile[TalksResponse](h.filePath)
+
+	if err != nil {
+		slog.Error("Error reading talks file", "error", err)
+
+		return endpoint.InternalError("could not read talks data")
+	}
+
+	resp, err := endpoint.NewResponseForPayload(data, 3600, h.cacheEnabled, w, r)
+	if err != nil {
+		slog.Error("Error preparing talks response cache", "error", err)
+
+		return endpoint.InternalError("could not prepare talks response")
+	}
+
+	if resp.HasCache() {
+		resp.RespondWithNotModified()
+
+		return nil
+	}
+
+	if err := resp.RespondOk(data); err != nil {
+		slog.Error("Error marshaling JSON for talks response", "error", err)
+
+		return endpoint.InternalError("could not encode talks response")
+	}
+
+	return nil // A nil return indicates success.
+}

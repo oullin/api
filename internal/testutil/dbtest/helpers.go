@@ -14,7 +14,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	"github.com/oullin/database"
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 // TestsHelper provides common test utilities for database-backed tests.

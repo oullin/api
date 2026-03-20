@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/oullin/database"
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 func TestExecuteStatementsCommitsStatements(t *testing.T) {

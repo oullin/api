@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/model"
+	"github.com/oullin/internal/shared/model"
 )
 
 type NewslettersSeed struct {

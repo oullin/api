@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/oullin/database"
-	"github.com/oullin/pkg/model"
-	"github.com/oullin/pkg/portal"
+	"github.com/oullin/internal/shared/model"
+	"github.com/oullin/internal/shared/portal"
 )
 
 type UsersSeed struct {

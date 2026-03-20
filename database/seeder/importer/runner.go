@@ -16,7 +16,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/oullin/database"
-	"github.com/oullin/metal/env"
+	env "github.com/oullin/internal/app/config"
 )
 
 func SeedFromFile(conn *database.Connection, environment *env.Environment, filePath string) error {

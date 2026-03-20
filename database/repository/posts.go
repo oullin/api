@@ -8,7 +8,7 @@ import (
 	"github.com/oullin/database"
 	"github.com/oullin/database/repository/pagination"
 	"github.com/oullin/database/repository/queries"
-	"github.com/oullin/pkg/model"
+	"github.com/oullin/internal/shared/model"
 )
 
 type Posts struct {
