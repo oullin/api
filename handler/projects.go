@@ -40,6 +40,9 @@ func (h ProjectsHandler) Handle(w http.ResponseWriter, r *http.Request) *endpoin
 	if err := projects.EnrichResponse(&data); err != nil {
 		slog.Error("Error enriching projects data", "error", err)
 
+		// Trusted fixture validation failures are treated as 500s because they
+		// indicate a deployment/configuration issue. Revisit this if the source
+		// data becomes user-controlled or external.
 		return endpoint.InternalError("could not enrich projects data")
 	}
 

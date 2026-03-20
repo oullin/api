@@ -122,6 +122,23 @@ func TestEnrichResponse_RejectsZeroSort(t *testing.T) {
 	}
 }
 
+func TestEnrichResponse_RejectsNegativeSort(t *testing.T) {
+	response := &payload.ProjectsResponse{
+		Data: []payload.ProjectsData{
+			{UUID: "negative-sort", Sort: intPtr(-1), PublishedAt: "2026-03-10"},
+		},
+	}
+
+	err := EnrichResponse(response)
+	if err == nil {
+		t.Fatalf("expected error for negative sort")
+	}
+
+	if !strings.Contains(err.Error(), "invalid sort value") {
+		t.Fatalf("unexpected error message: %v", err)
+	}
+}
+
 func TestEnrichResponse_RejectsEmptyPublishedAt(t *testing.T) {
 	response := &payload.ProjectsResponse{
 		Data: []payload.ProjectsData{

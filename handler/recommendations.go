@@ -71,10 +71,6 @@ func (h RecommendationsHandler) featured(items []payload.RecommendationsData) []
 	}
 
 	sort.SliceStable(filtered, func(i, j int) bool {
-		if filtered[i].Featured != filtered[j].Featured {
-			return filtered[i].Featured > filtered[j].Featured
-		}
-
 		left, leftOK := h.createdAt(filtered[i])
 		right, rightOK := h.createdAt(filtered[j])
 
