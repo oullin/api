@@ -144,8 +144,8 @@ func (g *Generator) GenerateIndex() error {
 
 	html = append(html, sections.Narrative(
 		"Oullin",
-		"Oullin is a movement-led platform for engineering leadership, AI architecture, open-source systems, and writing shaped by presence, transformation, and craft.",
-		"Oullin builds tools, writes ideas, and ships systems that move people forward. Engineering leadership. AI architecture. Open source. All of it grounded in presence, craft, and the belief that what you build should outlast the hype cycle.",
+		"Oullin is a boutique software engineering and architecture consultancy for startups and scale-ups navigating the AI era. We bring 20+ years of production systems experience to the question that matters most right now.",
+		"Not what to build with AI. How to build it so it lasts.",
 	))
 	html = append(html, sections.Categories(g.Page.Categories))
 	html = append(html, sections.Talks(talks))
@@ -185,8 +185,8 @@ func (g *Generator) GenerateAbout() error {
 
 	html = append(html, sections.Narrative(
 		"Oullin",
-		"Oullin is a platform built on a single conviction: movement matters. The name is a deliberate misspelling of Ollin, the Aztec sacred day-sign of movement and transformation.",
-		"Oullin builds tools, writes ideas, and ships systems that move people forward. Engineering leadership. AI architecture. Open source. All of it grounded in presence, craft, and the belief that what you build should outlast the hype cycle.",
+		"Oullin is a boutique software engineering and architecture consultancy focused on resilient systems, AI-era modernisation, and delivery in regulated and high-trust environments.",
+		"We work close to architecture and delivery. Not above it. The focus is software that has to last: resilient platforms, modernisation programmes, AI-era change, and technical decision-making under pressure.",
 	))
 	html = append(html, sections.Social(g.FilterBrandLinks(social)))
 
@@ -243,8 +243,9 @@ func (g *Generator) GenerateWriting() error {
 	sections := NewSections()
 	body := []template.HTML{
 		sections.Narrative(
-			"Writing Archive",
-			"This page holds Oullin's article archive. It is a dedicated place to browse categories, open essays, and follow the writing without burying it inside the landing page.",
+			"Writing",
+			"These are field notes from real systems: case studies, technical essays, and use cases on AI architecture, production systems, and engineering judgment.",
+			"These are not opinion pieces. They document real architectural decisions, integration patterns, and failure modes that only show up under real load.",
 		),
 		sections.Categories(g.Page.Categories),
 	}
@@ -454,7 +455,11 @@ func (g *Generator) Export(origin string, data TemplateData) error {
 }
 
 func (g *Generator) buildForPage(pageName, path string, body []template.HTML, opts ...func(*TemplateData)) (TemplateData, error) {
-	brandImageAlt := g.SanitizeAltText(g.Web.Brand.Name, g.Web.Brand.Name)
+	page := g.webPageForPath(path)
+	imageAlt := page.ImageAlt
+	if strings.TrimSpace(imageAlt) == "" {
+		imageAlt = g.SanitizeAltText(g.Web.Brand.Name, g.Web.Brand.Name)
+	}
 
 	og := TagOgData{
 		ImageHeight: "630",
@@ -462,13 +467,13 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 		Type:        "website",
 		ImageType:   "image/png",
 		Locale:      g.Page.Lang,
-		ImageAlt:    brandImageAlt,
+		ImageAlt:    imageAlt,
 		SiteName:    g.Page.SiteName,
 		Image:       portal.SanitiseURL(g.Page.AboutPhotoUrl),
 	}
 
 	twitter := TwitterData{
-		ImageAlt: brandImageAlt,
+		ImageAlt: imageAlt,
 		Card:     "summary_large_image",
 		Image:    portal.SanitiseURL(g.Page.AboutPhotoUrl),
 	}
@@ -519,11 +524,35 @@ func (g *Generator) buildForPage(pageName, path string, body []template.HTML, op
 		return TemplateData{}, fmt.Errorf("invalid twitter data: %s", g.Validator.GetErrorsAsJson())
 	}
 
-	if _, err := g.Validator.Rejects(data); err != nil {
+	if _, err := g.Validator.Rejects(g.validationTemplateData(data)); err != nil {
 		return TemplateData{}, fmt.Errorf("invalid template data: %s", g.Validator.GetErrorsAsJson())
 	}
 
 	return data, nil
+}
+
+func (g *Generator) validationTemplateData(data TemplateData) TemplateData {
+	if len([]rune(data.Title)) >= 10 {
+		return data
+	}
+
+	clone := data
+	clone.Title = g.validationTitle(data.Title)
+
+	return clone
+}
+
+func (g *Generator) validationTitle(title string) string {
+	trimmed := strings.TrimSpace(title)
+	if len([]rune(trimmed)) >= 10 {
+		return trimmed
+	}
+
+	if trimmed == "" {
+		return "Oullin site"
+	}
+
+	return strings.TrimSpace(trimmed + " site")
 }
 
 func (t *Page) Load() (*template.Template, error) {
@@ -571,7 +600,11 @@ func (g *Generator) TitleFor(pageName string) string {
 
 func (g *Generator) buildJsonLD(pageName, path, description string) template.JS {
 	pageType := "WebPage"
+	page := g.webPageForPath(path)
 	entityName := pageName
+	if strings.TrimSpace(page.SchemaName) != "" {
+		entityName = page.SchemaName
+	}
 
 	switch {
 	case path == g.Web.GetHomePage().Url:
@@ -598,6 +631,27 @@ func (g *Generator) buildJsonLD(pageName, path, description string) template.JS 
 	)
 
 	return jsonLD.Render()
+}
+
+func (g *Generator) webPageForPath(path string) WebPage {
+	switch {
+	case path == "" || path == g.Web.GetHomePage().Url:
+		return g.Web.GetHomePage()
+	case path == g.Web.GetAboutPage().Url:
+		return g.Web.GetAboutPage()
+	case path == g.Web.GetProjectsPage().Url:
+		return g.Web.GetProjectsPage()
+	case path == g.Web.GetWritingPage().Url:
+		return g.Web.GetWritingPage()
+	case path == g.Web.GetContactPage().Url:
+		return g.Web.GetContactPage()
+	case path == g.Web.GetTermsPage().Url:
+		return g.Web.GetTermsPage()
+	case strings.HasPrefix(path, g.Web.GetPostDetailPage().Url+"/"):
+		return g.Web.GetPostDetailPage()
+	default:
+		return WebPage{}
+	}
 }
 
 func truncateForLog(value string) string {

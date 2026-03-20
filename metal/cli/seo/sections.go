@@ -12,7 +12,7 @@ import (
 type Sections struct{}
 
 const (
-	contactIntroParagraph    = "Oullin is open to thoughtful conversations about engineering leadership, AI architecture, open-source systems, and work that needs doing properly."
+	contactIntroParagraph    = "Oullin is open to conversations about high-availability software, AI-era modernisation, architecture, and delivery in regulated and high-trust environments."
 	contactFallbackParagraph = "Direct email details are currently unavailable. Please try again later."
 )
 

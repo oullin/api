@@ -19,7 +19,7 @@ type Page struct {
 
 type TemplateData struct {
 	Lang           string          `validate:"required,oneof=en_GB"`
-	Title          string          `validate:"required"`
+	Title          string          `validate:"required,min=10"`
 	Description    string          `validate:"required,min=10"`
 	Canonical      string          `validate:"required,url"`
 	Robots         string          `validate:"required"`

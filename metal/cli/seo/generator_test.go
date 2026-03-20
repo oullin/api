@@ -244,7 +244,7 @@ func TestGeneratorGenerateAllPages(t *testing.T) {
 	}
 
 	writingContent := strings.ToLower(string(writingRaw))
-	if !strings.Contains(writingContent, "<h1>writing archive</h1>") {
+	if !strings.Contains(writingContent, "<h1>writing</h1>") {
 		t.Fatalf("expected writing heading in writing page: %q", writingContent)
 	}
 

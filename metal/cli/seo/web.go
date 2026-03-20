@@ -34,10 +34,12 @@ type Web struct {
 }
 
 type WebPage struct {
-	Name    string
-	Url     string
-	Title   string
-	Excerpt string
+	Name       string
+	Url        string
+	Title      string
+	Excerpt    string
+	ImageAlt   string
+	SchemaName string
 }
 
 type WebPageUrls struct {
@@ -53,51 +55,65 @@ func NewWeb() *Web {
 	brand := NewBrand()
 
 	home := WebPage{
-		Name:    "Home",
-		Url:     "/",
-		Title:   brand.Name,
-		Excerpt: "Oullin is a movement-led platform for engineering leadership, AI architecture, open-source systems, and writing shaped by presence, transformation, and craft.",
+		Name:       "Home",
+		Url:        "/",
+		Title:      brand.Name,
+		Excerpt:    "Oullin is a boutique software engineering and architecture consultancy for startups and scale-ups navigating the AI era. AI architecture, modernisation, and resilient systems for regulated and high-trust environments.",
+		ImageAlt:   "Oullin brand preview",
+		SchemaName: "Oullin",
 	}
 
 	about := WebPage{
-		Name:    "About",
-		Url:     "/about",
-		Title:   "About",
-		Excerpt: "Learn how Oullin approaches movement, transformation, and craft through engineering leadership, AI architecture, and open-source systems.",
+		Name:       "About",
+		Url:        "/about",
+		Title:      "About",
+		Excerpt:    "About Oullin, a boutique software engineering and architecture consultancy focused on resilient systems, AI-era modernisation, and engineering judgment in regulated and high-trust environments.",
+		ImageAlt:   "Oullin brand story",
+		SchemaName: "About Oullin",
 	}
 
 	contact := WebPage{
-		Name:    "Contact",
-		Url:     "/contact",
-		Title:   "Contact",
-		Excerpt: "Contact Oullin for engineering leadership, AI architecture, open-source systems, partnerships, and advisory work.",
+		Name:       "Contact",
+		Url:        "/contact",
+		Title:      "Contact",
+		Excerpt:    "Contact Oullin about AI architecture, modernisation, and resilient delivery in regulated and high-trust environments. Direct, senior guidance from the first exchange.",
+		ImageAlt:   "Oullin contact page preview",
+		SchemaName: "Contact Oullin",
 	}
 
 	projects := WebPage{
-		Name:    "Projects",
-		Url:     "/projects",
-		Title:   "Projects",
-		Excerpt: "Explore open-source tools, internal platforms, and client systems from Oullin, built for performance, security, maintainability, and real operating constraints.",
+		Name:       "Projects",
+		Url:        "/projects",
+		Title:      "Projects",
+		Excerpt:    "Proof from real systems: open-source tools, internal platforms, and client work across banking, fintech, AI-era architecture, and resilient software delivery.",
+		ImageAlt:   "Oullin project collection preview",
+		SchemaName: "Oullin Projects",
 	}
 
 	writing := WebPage{
-		Name:    "Writing",
-		Url:     "/writing",
-		Title:   "Writing Archive",
-		Excerpt: "Browse Oullin's writing archive for technical essays, architecture notes, and category-based reading across software, AI, and systems thinking.",
+		Name:       "Writing",
+		Url:        "/writing",
+		Title:      "Writing",
+		Excerpt:    "Field notes from real systems: case studies, technical essays, and use cases on AI architecture, production systems, and engineering judgment.",
+		ImageAlt:   "Oullin writing archive preview",
+		SchemaName: "Oullin Writing",
 	}
 
 	terms := WebPage{
-		Name:    "Terms",
-		Url:     "/terms-and-conditions",
-		Title:   "Terms and Policies",
-		Excerpt: "Review Oullin's terms and policies for software products, consulting, technical architecture, billing, acceptable use, and service responsibilities.",
+		Name:       "Terms",
+		Url:        "/terms-and-conditions",
+		Title:      "Terms and Policies",
+		Excerpt:    "Review Oullin's terms and policies for consulting, technical architecture, software products, billing, acceptable use, and service responsibilities.",
+		ImageAlt:   "Oullin terms and policies preview",
+		SchemaName: "Oullin Terms and Policies",
 	}
 
 	postDetail := WebPage{
 		// Title and Excerpt are populated per post during page generation.
-		Name: "Post",
-		Url:  "/post",
+		Name:       "Post",
+		Url:        "/post",
+		ImageAlt:   "Oullin article preview",
+		SchemaName: "Oullin Article",
 	}
 
 	pages[HomeSlug] = home
@@ -124,7 +140,7 @@ func NewWeb() *Web {
 		ThemeColor:  "#0E172B",
 		Robots:      "index,follow",
 		ColorScheme: "light dark",
-		Description: "Oullin is a movement-led platform for engineering leadership, AI architecture, open-source systems, and writing shaped by presence, transformation, and craft.",
+		Description: "Oullin is a boutique software engineering and architecture consultancy for startups and scale-ups navigating the AI era. AI architecture, modernisation, and resilient systems for regulated and high-trust environments.",
 	}
 }
 
