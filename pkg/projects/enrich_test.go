@@ -88,87 +88,53 @@ func TestEnrichResponse_NilResponse(t *testing.T) {
 	}
 }
 
-func TestEnrichResponse_RejectsNilSort(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{UUID: "bad-project", Sort: nil, PublishedAt: "2026-03-10"},
+func TestEnrichResponse_RejectsInvalidData(t *testing.T) {
+	cases := []struct {
+		name      string
+		data      payload.ProjectsData
+		wantMatch string
+	}{
+		{
+			name:      "nil sort",
+			data:      payload.ProjectsData{UUID: "bad-project", Sort: nil, PublishedAt: "2026-03-10"},
+			wantMatch: "no sort value",
+		},
+		{
+			name:      "zero sort",
+			data:      payload.ProjectsData{UUID: "zero-sort", Sort: intPtr(0), PublishedAt: "2026-03-10"},
+			wantMatch: "invalid sort value",
+		},
+		{
+			name:      "negative sort",
+			data:      payload.ProjectsData{UUID: "negative-sort", Sort: intPtr(-1), PublishedAt: "2026-03-10"},
+			wantMatch: "invalid sort value",
+		},
+		{
+			name:      "empty published_at",
+			data:      payload.ProjectsData{UUID: "no-date", Sort: intPtr(1), PublishedAt: ""},
+			wantMatch: "empty published_at",
+		},
+		{
+			name:      "whitespace-only published_at",
+			data:      payload.ProjectsData{UUID: "space-date", Sort: intPtr(1), PublishedAt: "   "},
+			wantMatch: "empty published_at",
 		},
 	}
 
-	err := EnrichResponse(response)
-	if err == nil {
-		t.Fatalf("expected error for nil sort")
-	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			response := &payload.ProjectsResponse{
+				Data: []payload.ProjectsData{tc.data},
+			}
 
-	if !strings.Contains(err.Error(), "no sort value") {
-		t.Fatalf("unexpected error message: %v", err)
-	}
-}
+			err := EnrichResponse(response)
+			if err == nil {
+				t.Fatalf("expected error for %s", tc.name)
+			}
 
-func TestEnrichResponse_RejectsZeroSort(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{UUID: "zero-sort", Sort: intPtr(0), PublishedAt: "2026-03-10"},
-		},
-	}
-
-	err := EnrichResponse(response)
-	if err == nil {
-		t.Fatalf("expected error for zero sort")
-	}
-
-	if !strings.Contains(err.Error(), "invalid sort value") {
-		t.Fatalf("unexpected error message: %v", err)
-	}
-}
-
-func TestEnrichResponse_RejectsNegativeSort(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{UUID: "negative-sort", Sort: intPtr(-1), PublishedAt: "2026-03-10"},
-		},
-	}
-
-	err := EnrichResponse(response)
-	if err == nil {
-		t.Fatalf("expected error for negative sort")
-	}
-
-	if !strings.Contains(err.Error(), "invalid sort value") {
-		t.Fatalf("unexpected error message: %v", err)
-	}
-}
-
-func TestEnrichResponse_RejectsEmptyPublishedAt(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{UUID: "no-date", Sort: intPtr(1), PublishedAt: ""},
-		},
-	}
-
-	err := EnrichResponse(response)
-	if err == nil {
-		t.Fatalf("expected error for empty published_at")
-	}
-
-	if !strings.Contains(err.Error(), "empty published_at") {
-		t.Fatalf("unexpected error message: %v", err)
-	}
-}
-
-func TestEnrichResponse_RejectsWhitespaceOnlyPublishedAt(t *testing.T) {
-	response := &payload.ProjectsResponse{
-		Data: []payload.ProjectsData{
-			{UUID: "space-date", Sort: intPtr(1), PublishedAt: "   "},
-		},
-	}
-
-	err := EnrichResponse(response)
-	if err == nil {
-		t.Fatalf("expected error for whitespace-only published_at")
-	}
-
-	if !strings.Contains(err.Error(), "empty published_at") {
-		t.Fatalf("unexpected error message: %v", err)
+			if !strings.Contains(err.Error(), tc.wantMatch) {
+				t.Fatalf("unexpected error message: %v", err)
+			}
+		})
 	}
 }

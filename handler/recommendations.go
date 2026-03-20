@@ -70,16 +70,26 @@ func (h RecommendationsHandler) featured(items []payload.RecommendationsData) []
 		}
 	}
 
+	type sortKey struct {
+		time time.Time
+		ok   bool
+	}
+
+	keys := make([]sortKey, len(filtered))
+	for i, item := range filtered {
+		t, ok := h.createdAt(item)
+		keys[i] = sortKey{time: t, ok: ok}
+	}
+
 	sort.SliceStable(filtered, func(i, j int) bool {
-		left, leftOK := h.createdAt(filtered[i])
-		right, rightOK := h.createdAt(filtered[j])
+		left, right := keys[i], keys[j]
 
 		switch {
-		case leftOK && rightOK:
-			return left.After(right)
-		case leftOK:
+		case left.ok && right.ok:
+			return left.time.After(right.time)
+		case left.ok:
 			return true
-		case rightOK:
+		case right.ok:
 			return false
 		default:
 			return false
