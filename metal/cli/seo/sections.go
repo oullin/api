@@ -12,7 +12,7 @@ import (
 type Sections struct{}
 
 const (
-	contactIntroParagraph    = "Oullin is open to thoughtful conversations about engineering leadership, AI architecture, open-source systems, and work that needs doing properly."
+	contactIntroParagraph    = "Oullin is open to conversations about high-availability software, AI-era modernisation, architecture, and delivery in regulated and high-trust environments."
 	contactFallbackParagraph = "Direct email details are currently unavailable. Please try again later."
 )
 
@@ -147,25 +147,7 @@ func (s *Sections) Post(post *payload.PostResponse) template.HTML {
 
 	title := template.HTMLEscapeString(post.Title)
 
-	authorName := strings.TrimSpace(post.Author.DisplayName)
-	if authorName == "" {
-		fullName := strings.TrimSpace(strings.Join(portal.FilterNonEmpty(
-			[]string{post.Author.FirstName, post.Author.LastName}), " "),
-		)
-
-		if fullName != "" {
-			authorName = fullName
-		} else {
-			authorName = strings.TrimSpace(post.Author.Username)
-		}
-	}
-
-	authorName = template.HTMLEscapeString(authorName)
-
 	var metaParts []string
-	if authorName != "" {
-		metaParts = append(metaParts, "By "+authorName)
-	}
 
 	if post.PublishedAt != nil {
 		published := post.PublishedAt.UTC().Format("02 Jan 2006")
