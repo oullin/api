@@ -16,9 +16,6 @@ DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 GO_LOCAL_TOOLCHAIN  ?= auto
 GOIMPORTS_VERSION   ?= v0.43.0
 GOBIN               := $(shell go env GOPATH)/bin
-CLI_DOCKER_BINARY_HOST := $(ROOT_PATH)/bin/metal-cli
-CLI_DOCKER_BINARY_CONTAINER := /app/bin/metal-cli
-CLI_DOCKER_BUILD_INPUTS := $(shell git ls-files '*.go' go.mod go.sum 2>/dev/null)
 
 DB_SECRET_USERNAME  ?= $(DB_SECRETS_DIR)/pg_username
 DB_SECRET_PASSWORD  ?= $(DB_SECRETS_DIR)/pg_password
@@ -28,7 +25,7 @@ DB_SECRET_DBNAME    ?= $(DB_SECRETS_DIR)/pg_dbname
 # PHONY Targets
 # -------------------------------------------------------------------------------------------------------------------- #
 
-.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal install-air install-goimports build-cli-docker
+.PHONY: fresh destroy audit watch format run-cli test-all run-cli-docker run-metal install-air install-goimports
 
 run-cli run-cli-docker: export DB_SECRET_USERNAME := $(value DB_SECRET_USERNAME)
 run-cli run-cli-docker: export DB_SECRET_PASSWORD := $(value DB_SECRET_PASSWORD)
@@ -98,28 +95,6 @@ install-goimports:
 # -------------------------------------------------------------------------------------------------------------------- #
 # CLI Commands
 # -------------------------------------------------------------------------------------------------------------------- #
-
-build-cli-docker: $(CLI_DOCKER_BINARY_HOST)
-	@printf "  $(CYAN)Docker CLI binary ready at %s.$(NC)\n" "$(CLI_DOCKER_BINARY_HOST)"
-
-$(CLI_DOCKER_BINARY_HOST): $(CLI_DOCKER_BUILD_INPUTS) | ensure-base-images
-	@mkdir -p "$(dir $@)"
-	@status=0; \
-	if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
-		printf "Building Docker CLI binary at $(CLI_DOCKER_BINARY_CONTAINER).\n"; \
-		docker compose run --rm --no-deps api-runner sh -lc '/usr/local/go/bin/go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		printf "Building Docker CLI binary at $(CLI_DOCKER_BINARY_CONTAINER).\n"; \
-		docker-compose run --rm --no-deps api-runner sh -lc '/usr/local/go/bin/go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
-	else \
-		printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
-		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
-		exit 1; \
-	fi; \
-	if [ $$status -ne 0 ]; then \
-		printf "\n$(RED)❌ Failed to build the Docker CLI binary (status $$status).$(NC)\n"; \
-		exit $$status; \
-	fi
 
 run-cli:
 	@missing_values=""; \
@@ -201,8 +176,7 @@ run-cli:
 		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
 		exit 1; \
 	fi; \
-	db_running() { docker inspect --format '{{.State.Running}}' $(DB_DOCKER_CONTAINER_NAME) 2>/dev/null || true; }; \
-	db_health() { docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}unknown{{end}}' $(DB_DOCKER_CONTAINER_NAME) 2>/dev/null || true; }; \
+	$(DB_DOCKER_STATE_FUNCS) \
 	$(MAKE) --no-print-directory ensure-base-images || status=$$?; \
 	if [ $$status -eq 0 ] && [ "$$(db_running)" = "true" ] && [ "$$(db_health)" = "healthy" ]; then \
 		printf "Database container $(DB_DOCKER_CONTAINER_NAME) is already healthy.\n"; \

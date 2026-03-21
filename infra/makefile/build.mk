@@ -1,4 +1,4 @@
-.PHONY: build-local watch-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images generate-apk-checksums
+.PHONY: build-local watch-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images generate-apk-checksums build-cli-docker prewarm-cli-docker
 
 BUILD_VERSION ?= latest
 BASE_GO_VERSION ?= 1.26.1
@@ -20,8 +20,11 @@ BUILD_BASE_BUILDER_ARGS := --build-arg GO_VERSION=$(BASE_GO_VERSION) --build-arg
 BUILD_BASE_RUNTIME_ARGS := --build-arg ALPINE_VERSION=$(BASE_ALPINE_VERSION) --build-arg ALPINE_IMAGE_DIGEST=$(BASE_ALPINE_IMAGE_DIGEST) --build-arg APK_BASE_URL=$(BASE_APK_BASE_URL)
 DB_INFRA_ROOT_PATH ?= $(ROOT_PATH)/database/infra
 DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
+CLI_DOCKER_BINARY_HOST := $(ROOT_PATH)/bin/metal-cli
+CLI_DOCKER_BINARY_CONTAINER := /app/bin/metal-cli
+CLI_DOCKER_BUILD_INPUTS := $(shell git ls-files '*.go' go.mod go.sum 2>/dev/null)
 
-build-local build-local-restart build-ci build-prod build-deploy run-cli run-cli-docker: export BASE_IMAGE_VERSION := $(BASE_IMAGE_VERSION)
+build-local build-local-restart build-ci build-prod build-deploy run-cli run-cli-docker build-cli-docker prewarm-cli-docker: export BASE_IMAGE_VERSION := $(BASE_IMAGE_VERSION)
 build-prod build-deploy: export DB_SECRET_USERNAME := $(value DB_SECRET_USERNAME)
 build-prod build-deploy: export DB_SECRET_PASSWORD := $(value DB_SECRET_PASSWORD)
 build-prod build-deploy: export DB_SECRET_DBNAME := $(value DB_SECRET_DBNAME)
@@ -55,6 +58,33 @@ build-base-images:
 		-f "$(BUILD_BASE_IMAGES_DIR)/Dockerfile.runtime" \
 		-t "$(BUILD_BASE_RUNTIME_IMAGE)" \
 		"$(BUILD_BASE_IMAGES_DIR)"
+
+build-cli-docker: $(CLI_DOCKER_BINARY_HOST)
+	@printf "  $(CYAN)Docker CLI binary ready at %s.$(NC)\n" "$(CLI_DOCKER_BINARY_HOST)"
+
+prewarm-cli-docker:
+	@printf "\n$(CYAN)Warming Docker CLI caches and binary$(NC)\n"
+	@printf "  This does not start or wait for the database.\n"
+	@$(MAKE) --no-print-directory build-cli-docker
+
+$(CLI_DOCKER_BINARY_HOST): $(CLI_DOCKER_BUILD_INPUTS) | ensure-base-images
+	@mkdir -p "$(dir $@)"
+	@status=0; \
+	if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+		printf "Building Docker CLI binary at $(CLI_DOCKER_BINARY_CONTAINER).\n"; \
+		docker compose run --rm --no-deps api-runner sh -lc '/usr/local/go/bin/go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		printf "Building Docker CLI binary at $(CLI_DOCKER_BINARY_CONTAINER).\n"; \
+		docker-compose run --rm --no-deps api-runner sh -lc '/usr/local/go/bin/go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
+	else \
+		printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
+		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
+		exit 1; \
+	fi; \
+	if [ $$status -ne 0 ]; then \
+		printf "\n$(RED)❌ Failed to build the Docker CLI binary (status $$status).$(NC)\n"; \
+		exit $$status; \
+	fi
 
 push-base-images:
 	@$(MAKE) ensure-base-images
