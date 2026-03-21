@@ -55,7 +55,7 @@ The application uses a PostgreSQL database. You can manage it using the followin
 
 To run the application locally:
 
-- **CLI Mode**: `make run-cli`
+- **CLI Mode**: `make run-cli` reuses `oullin_db` when it is already healthy, starts `api-db` only when needed, and reuses a Docker-built CLI binary on warm runs.
 - **Metal (Dev) Mode**: `make run-metal`
 
 ### Monitoring

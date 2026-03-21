@@ -62,7 +62,7 @@ db\:secure:
 
 db\:seed:
 	docker compose --env-file ./.env run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) \
-		go run ./database/seeder/main.go
+		/usr/local/go/bin/go run ./database/seeder/main.go
 
 db\:import:
 	@if [ ! -f "./storage/sql/dump.sql" ]; then \
@@ -70,7 +70,7 @@ db\:import:
 		exit 1; \
 	fi
 	docker compose --env-file ./.env run --rm $(DB_MIGRATE_DOCKER_ENV_FLAGS) $(DB_API_RUNNER_SERVICE) \
-	go run ./database/seeder/importer/cmd
+	/usr/local/go/bin/go run ./database/seeder/importer/cmd
 # -------------------------------------------------------------------------------------------------------------------- #
 # --- Migrations
 # -------------------------------------------------------------------------------------------------------------------- #

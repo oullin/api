@@ -12,6 +12,8 @@ volumes:
     caddy_config:
     go_mod_cache:
         driver: local
+    go_build_cache:
+        driver: local
     prometheus_data_prod:
         driver: local
     prometheus_data_local:
@@ -344,11 +346,16 @@ services:
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
+            - go_build_cache:/tmp/go-build
             - "${ENV_SPA_DIR}:${ENV_SPA_DIR}"
             - "${ENV_SPA_IMAGES_DIR}:${ENV_SPA_IMAGES_DIR}"
           working_dir: /app
           environment:
               CGO_ENABLED: 1
+              PATH: /usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              GOPATH: /go
+              GOMODCACHE: /go/pkg/mod
+              GOCACHE: /tmp/go-build
               GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}
               ENV_DB_HOST: api-db
               ENV_SPA_DIR: ${ENV_SPA_DIR}
