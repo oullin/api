@@ -72,10 +72,10 @@ $(CLI_DOCKER_BINARY_HOST): $(CLI_DOCKER_BUILD_INPUTS) | ensure-base-images
 	@status=0; \
 	if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
 		printf "Building Docker CLI binary at $(CLI_DOCKER_BINARY_CONTAINER).\n"; \
-		docker compose run --rm --no-deps api-runner sh -lc '/usr/local/go/bin/go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
+		docker compose run --rm --no-deps api-runner sh -lc 'go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
 	elif command -v docker-compose >/dev/null 2>&1; then \
 		printf "Building Docker CLI binary at $(CLI_DOCKER_BINARY_CONTAINER).\n"; \
-		docker-compose run --rm --no-deps api-runner sh -lc '/usr/local/go/bin/go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
+		docker-compose run --rm --no-deps api-runner sh -lc 'go build -o "$(CLI_DOCKER_BINARY_CONTAINER)" ./metal/cli/main.go' || status=$$?; \
 	else \
 		printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
 		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
