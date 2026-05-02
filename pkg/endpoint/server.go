@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/oullin/pkg/portal"
 )
 
 // RunServer starts the provided HTTP server, listens for shutdown signals, and
@@ -94,5 +97,78 @@ func NewServerHandler(cfg ServerHandlerConfig) http.Handler {
 		handler = cfg.Wrap(handler)
 	}
 
-	return handler
+	return requestLogHandler{next: handler}
+}
+
+type requestLogHandler struct {
+	next http.Handler
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+	bytes  int
+}
+
+func (r *statusRecorder) WriteHeader(status int) {
+	if r.status != 0 {
+		return
+	}
+
+	r.status = status
+	r.ResponseWriter.WriteHeader(status)
+}
+
+func (r *statusRecorder) Write(body []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+
+	n, err := r.ResponseWriter.Write(body)
+	r.bytes += n
+
+	return n, err
+}
+
+func (h requestLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	rec := &statusRecorder{ResponseWriter: w}
+
+	h.next.ServeHTTP(rec, r)
+
+	status := rec.status
+	if status == 0 {
+		status = http.StatusOK
+	}
+
+	attrs := []any{
+		"method", r.Method,
+		"path", r.URL.Path,
+		"status", status,
+		"duration_ms", time.Since(started).Milliseconds(),
+		"bytes", rec.bytes,
+		"remote_addr", r.RemoteAddr,
+		"request_id", r.Header.Get(portal.RequestIDHeader),
+		"user_agent", r.UserAgent(),
+	}
+
+	if query := r.URL.RawQuery; query != "" {
+		attrs = append(attrs, "query", query)
+	}
+
+	if forwardedFor := r.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		attrs = append(attrs, "forwarded_for", forwardedFor)
+	}
+
+	if status >= http.StatusInternalServerError {
+		slog.Error("http request completed", append(attrs, "status_class", strconv.Itoa(status)[0:1]+"xx")...)
+		return
+	}
+
+	if status >= http.StatusBadRequest {
+		slog.Warn("http request completed", append(attrs, "status_class", strconv.Itoa(status)[0:1]+"xx")...)
+		return
+	}
+
+	slog.Info("http request completed", attrs...)
 }

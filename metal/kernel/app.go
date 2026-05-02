@@ -87,6 +87,7 @@ func (a *App) Boot() {
 
 	modem.KeepAlive()
 	modem.KeepAliveDB()
+	modem.Health()
 	modem.Metrics()
 	modem.Profile()
 	modem.Experience()
