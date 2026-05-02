@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/felixge/httpsnoop"
 
 	"github.com/oullin/pkg/portal"
 )
@@ -104,55 +107,23 @@ type requestLogHandler struct {
 	next http.Handler
 }
 
-type statusRecorder struct {
-	http.ResponseWriter
-	status int
-	bytes  int
-}
-
-func (r *statusRecorder) WriteHeader(status int) {
-	if r.status != 0 {
-		return
-	}
-
-	r.status = status
-	r.ResponseWriter.WriteHeader(status)
-}
-
-func (r *statusRecorder) Write(body []byte) (int, error) {
-	if r.status == 0 {
-		r.status = http.StatusOK
-	}
-
-	n, err := r.ResponseWriter.Write(body)
-	r.bytes += n
-
-	return n, err
-}
-
 func (h requestLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	started := time.Now()
-	rec := &statusRecorder{ResponseWriter: w}
-
-	h.next.ServeHTTP(rec, r)
-
-	status := rec.status
-	if status == 0 {
-		status = http.StatusOK
-	}
+	metrics := httpsnoop.CaptureMetrics(h.next, w, r)
+	status := metrics.Code
 
 	attrs := []any{
 		"method", r.Method,
 		"path", r.URL.Path,
 		"status", status,
 		"duration_ms", time.Since(started).Milliseconds(),
-		"bytes", rec.bytes,
+		"bytes", metrics.Written,
 		"remote_addr", r.RemoteAddr,
 		"request_id", r.Header.Get(portal.RequestIDHeader),
 		"user_agent", r.UserAgent(),
 	}
 
-	if query := r.URL.RawQuery; query != "" {
+	if query := safeRequestQuery(r.URL.Query()); query != "" {
 		attrs = append(attrs, "query", query)
 	}
 
@@ -171,4 +142,16 @@ func (h requestLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.Info("http request completed", attrs...)
+}
+
+func safeRequestQuery(values url.Values) string {
+	safe := url.Values{}
+
+	for _, key := range []string{"limit", "page"} {
+		if v, ok := values[key]; ok {
+			safe[key] = v
+		}
+	}
+
+	return safe.Encode()
 }

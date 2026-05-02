@@ -44,7 +44,11 @@ func (h KeepAliveDBHandler) Handle(w http.ResponseWriter, r *http.Request) *endp
 			"error", err,
 		)
 
-		return endpoint.LogInternalError("database ping failed", err)
+		return &endpoint.ApiError{
+			Message: "Internal server error: database ping failed",
+			Status:  http.StatusInternalServerError,
+			Err:     err,
+		}
 	}
 	slog.Info(
 		"database ping completed",
