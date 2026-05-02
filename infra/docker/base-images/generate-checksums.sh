@@ -45,8 +45,8 @@ BUILDER_PACKAGES=(
     make-4.4.1-r3.apk
     mpc1-1.3.1-r1.apk
     mpfr4-4.2.2-r0.apk
-    musl-1.2.5-r21.apk
-    musl-dev-1.2.5-r21.apk
+    musl-1.2.5-r23.apk
+    musl-dev-1.2.5-r23.apk
     patch-2.8-r0.apk
     pkgconf-2.5.1-r0.apk
     zlib-1.3.2-r0.apk
@@ -56,8 +56,8 @@ BUILDER_PACKAGES=(
 RUNTIME_PACKAGES=(
     libsharpyuv-1.6.0-r0.apk
     libwebp-1.6.0-r0.apk
-    musl-1.2.5-r21.apk
-    tzdata-2026a-r0.apk
+    musl-1.2.5-r23.apk
+    tzdata-2026b-r0.apk
     zlib-1.3.2-r0.apk
 )
 

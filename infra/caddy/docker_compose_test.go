@@ -1,6 +1,7 @@
 package caddy_test
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -29,12 +30,25 @@ func readComposeRoot(t *testing.T) *yaml.Node {
 		t.Fatalf("read docker-compose.yml: %v", err)
 	}
 
-	var compose yaml.Node
-	if err := yaml.Unmarshal(content, &compose); err != nil {
-		t.Fatalf("parse docker-compose.yml: %v", err)
+	root, err := parseComposeRoot(content)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	return compose.Content[0]
+	return root
+}
+
+func parseComposeRoot(content []byte) (*yaml.Node, error) {
+	var compose yaml.Node
+	if err := yaml.Unmarshal(content, &compose); err != nil {
+		return nil, err
+	}
+
+	if len(compose.Content) == 0 || compose.Content[0] == nil {
+		return nil, errors.New("expected docker-compose.yml to contain a YAML document")
+	}
+
+	return compose.Content[0], nil
 }
 
 func sequenceContains(node *yaml.Node, value string) bool {
@@ -49,6 +63,29 @@ func sequenceContains(node *yaml.Node, value string) bool {
 	}
 
 	return false
+}
+
+func TestParseComposeRootRejectsEmptyDocuments(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{name: "empty", content: ""},
+		{name: "comments only", content: "# docker compose config\n# no document body\n"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := parseComposeRoot([]byte(tt.content))
+			if err == nil {
+				t.Fatalf("expected empty document error, got root %#v", root)
+			}
+
+			if err.Error() != "expected docker-compose.yml to contain a YAML document" {
+				t.Fatalf("expected empty document error, got %q", err)
+			}
+		})
+	}
 }
 
 func TestComposeKeepsProxyAliasOnProdCaddy(t *testing.T) {

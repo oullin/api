@@ -3,7 +3,7 @@
 BUILD_VERSION ?= latest
 BASE_GO_VERSION ?= 1.26.1
 BASE_ALPINE_VERSION ?= 3.23
-BASE_IMAGE_REVISION ?= 2
+BASE_IMAGE_REVISION ?= 3
 BASE_GO_IMAGE_VARIANT ?= alpine$(BASE_ALPINE_VERSION)
 BASE_GO_IMAGE_DIGEST ?= sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039
 BASE_ALPINE_IMAGE_DIGEST ?= sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
@@ -22,7 +22,7 @@ DB_INFRA_ROOT_PATH ?= $(ROOT_PATH)/database/infra
 DB_INFRA_SCRIPTS_PATH ?= $(DB_INFRA_ROOT_PATH)/scripts
 CLI_DOCKER_BINARY_HOST := $(ROOT_PATH)/bin/metal-cli
 CLI_DOCKER_BINARY_CONTAINER := /app/bin/metal-cli
-CLI_DOCKER_BUILD_INPUTS := $(shell git ls-files '*.go' go.mod go.sum 2>/dev/null)
+CLI_DOCKER_BUILD_INPUTS := $(shell find "$(ROOT_PATH)" \( -name '.git' -o -name '.gopath' -o -name '.gocache' -o -name 'vendor' \) -prune -o \( -type f \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' \) \) -print 2>/dev/null)
 
 build-local build-local-restart build-ci build-prod build-deploy run-cli run-cli-docker build-cli-docker prewarm-cli-docker: export BASE_IMAGE_VERSION := $(BASE_IMAGE_VERSION)
 build-prod build-deploy: export DB_SECRET_USERNAME := $(value DB_SECRET_USERNAME)
