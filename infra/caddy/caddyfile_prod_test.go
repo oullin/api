@@ -30,8 +30,6 @@ func protectedPublicPaths(caddyfile string) map[string]bool {
 		for _, path := range fields[2:] {
 			paths[path] = true
 		}
-
-		return paths
 	}
 
 	return paths
@@ -90,6 +88,41 @@ func TestProdCaddyfileBlocksPublicSignatureEndpoint(t *testing.T) {
 
 	if !regexp.MustCompile(`handle\s+@protected_public\s*{\s*respond\s+403\s*}`).MatchString(caddyfile) {
 		t.Fatal("expected public protected matcher to respond with 403")
+	}
+}
+
+func TestProdCaddyfileHandlesBrowserSignatureRelayAtEdge(t *testing.T) {
+	caddyfile := stripCaddyComments(readProdCaddyfile(t))
+
+	relayContract := regexp.MustCompile(`(?s)` +
+		`@relay_signature_cors\s+path\s+/relay/generate-signature\*.*?` +
+		`header\s+@relay_signature_cors\s+Access-Control-Allow-Origin\s+"https://oullin\.io".*?` +
+		`header\s+@relay_signature_cors\s+Access-Control-Allow-Methods\s+"POST, OPTIONS".*?` +
+		`header\s+@relay_signature_cors\s+Access-Control-Allow-Headers\s+"X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin".*?` +
+		`@relay_signature_preflight\s*{\s*` +
+		`path\s+/relay/generate-signature\*\s+` +
+		`method\s+OPTIONS\s*` +
+		`}.*?` +
+		`handle\s+@relay_signature_preflight\s*{\s*` +
+		`header\s+Access-Control-Max-Age\s+"86400"\s+` +
+		`respond\s+204\s*` +
+		`}.*?` +
+		`@relay_signature_post\s*{\s*` +
+		`path\s+/relay/generate-signature\*\s+` +
+		`method\s+POST\s*` +
+		`}.*?` +
+		`handle\s+@relay_signature_post\s*{\s*` +
+		`uri\s+strip_prefix\s+/relay\s+` +
+		`reverse_proxy\s+api:8080\s*{.*?` +
+		`header_up\s+X-API-Intended-Origin\s+\{http\.request\.header\.X-API-Intended-Origin\}.*?` +
+		`}`)
+
+	if !relayContract.MatchString(caddyfile) {
+		t.Fatal("expected /relay/generate-signature* to be handled by the public edge and proxied to api:8080")
+	}
+
+	if !regexp.MustCompile(`handle\s+/relay/generate-signature\*\s*{\s*respond\s+405\s*}`).MatchString(caddyfile) {
+		t.Fatal("expected unsupported relay signature methods to respond with 405")
 	}
 }
 

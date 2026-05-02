@@ -48,6 +48,50 @@ oullin.io {
 		respond 403
 	}
 
+	# --- Browser-facing signature relay
+	@relay_signature_cors path /relay/generate-signature*
+	header @relay_signature_cors Access-Control-Allow-Origin "https://oullin.io"
+	header @relay_signature_cors Access-Control-Allow-Methods "POST, OPTIONS"
+	header @relay_signature_cors Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
+	header @relay_signature_cors Vary "Origin"
+
+	@relay_signature_preflight {
+		path /relay/generate-signature*
+		method OPTIONS
+	}
+	handle @relay_signature_preflight {
+		header Access-Control-Max-Age "86400"
+		respond 204
+	}
+
+	@relay_signature_post {
+		path /relay/generate-signature*
+		method POST
+	}
+	handle @relay_signature_post {
+		uri strip_prefix /relay
+		reverse_proxy api:8080 {
+			header_up Host {host}
+
+			header_up X-API-Username {http.request.header.X-API-Username}
+			header_up X-API-Key {http.request.header.X-API-Key}
+			header_up X-API-Timestamp {http.request.header.X-API-Timestamp}
+			header_up X-Request-ID {http.request.header.X-Request-ID}
+			header_up Content-Type {http.request.header.Content-Type}
+			header_up User-Agent {http.request.header.User-Agent}
+			header_up X-API-Intended-Origin {http.request.header.X-API-Intended-Origin}
+
+			transport http {
+				dial_timeout 10s
+				response_header_timeout 30s
+			}
+		}
+	}
+
+	handle /relay/generate-signature* {
+		respond 405
+	}
+
 	@preflight {
 		method OPTIONS
 		header Origin *
