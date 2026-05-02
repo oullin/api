@@ -21,6 +21,8 @@ Review the `.env` file and adjust the settings as needed.
 
 - `ENV_APP_NAME`: Name of the application.
 - `ENV_APP_ENV_TYPE`: Environment type (e.g., `local`, `production`).
+- `ENV_APP_LOGS_DIR`: Application log filename pattern inside the API runtime.
+- `API_LOGS_PATH`: Host path mounted to `/app/storage/logs` for persistent API logs.
 - `ENV_DB_*`: Database connection details.
 - `ENV_HTTP_PORT`: Port for the HTTP server (default: `8080`).
 
@@ -55,7 +57,8 @@ The application uses a PostgreSQL database. You can manage it using the followin
 
 To run the application locally:
 
-- **CLI Mode**: `make run-cli`
+- **Optional first-run prewarm**: `make prewarm-cli-docker` warms the Docker CLI module cache, build cache, and reusable CLI binary. It does **not** start the database.
+- **CLI Mode**: `make run-cli` reuses `oullin_db` when it is already healthy, starts `api-db` only when needed, and reuses a Docker-built CLI binary on warm runs.
 - **Metal (Dev) Mode**: `make run-metal`
 
 ### Monitoring
@@ -66,6 +69,8 @@ The project includes a monitoring stack with Prometheus and Grafana.
 - Stop Monitoring: `make monitor-down`
 - Check Status: `make monitor-status`
 - Open Grafana: `make monitor-grafana`
+
+For production outage investigation, use [Uptime Incident Log Runbook](UPTIME_LOGS.md).
 
 ## Testing
 

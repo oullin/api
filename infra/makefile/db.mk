@@ -7,6 +7,8 @@ DB_DOCKER_SERVICE_NAME := api-db
 DB_DOCKER_CONTAINER_NAME := oullin_db
 DB_MIGRATE_SERVICE_NAME := $(DB_DOCKER_SERVICE_NAME)-migrate
 DB_DOCKER_VOLUME_NAME := api_oullin_db_data
+DB_DOCKER_STATE_FUNCS = db_running() { docker inspect --format '{{.State.Running}}' $(DB_DOCKER_CONTAINER_NAME) 2>/dev/null || true; }; \
+	db_health() { docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}unknown{{end}}' $(DB_DOCKER_CONTAINER_NAME) 2>/dev/null || true; };
 
 # --- Paths
 #     Define root paths for clarity. Assumes ROOT_PATH is exported or defined.

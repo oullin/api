@@ -92,6 +92,16 @@ func (r *Router) KeepAliveDB() {
 	r.Mux.HandleFunc("GET /ping-db", apiHandler)
 }
 
+func (r *Router) Health() {
+	abstract := handler.NewHealthHandler()
+
+	apiHandler := endpoint.NewApiHandler(
+		r.Pipeline.Chain(abstract.Handle),
+	)
+
+	r.Mux.HandleFunc("GET /health", apiHandler)
+}
+
 func (r *Router) Metrics() {
 	metricsHandler := handler.NewMetricsHandler()
 

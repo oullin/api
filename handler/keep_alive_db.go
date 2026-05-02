@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -31,9 +32,32 @@ func (h KeepAliveDBHandler) Handle(w http.ResponseWriter, r *http.Request) *endp
 		)
 	}
 
+	started := time.Now()
 	if err := h.db.Ping(); err != nil {
-		return endpoint.LogInternalError("database ping failed", err)
+		slog.Error(
+			"database ping failed",
+			"duration_ms", time.Since(started).Milliseconds(),
+			"method", r.Method,
+			"path", r.URL.Path,
+			"remote_addr", r.RemoteAddr,
+			"request_id", r.Header.Get(portal.RequestIDHeader),
+			"error", err,
+		)
+
+		return &endpoint.ApiError{
+			Message: "Internal server error: database ping failed",
+			Status:  http.StatusInternalServerError,
+			Err:     err,
+		}
 	}
+	slog.Info(
+		"database ping completed",
+		"duration_ms", time.Since(started).Milliseconds(),
+		"method", r.Method,
+		"path", r.URL.Path,
+		"remote_addr", r.RemoteAddr,
+		"request_id", r.Header.Get(portal.RequestIDHeader),
+	)
 
 	resp := endpoint.NewNoCacheResponse(w, r)
 	now := time.Now().UTC()

@@ -66,7 +66,8 @@ help:
 	@printf "  $(BOLD)$(GREEN)watch-local$(NC)      : Start the Docker local stack in the foreground.\n"
 	@printf "  $(BOLD)$(GREEN)build-ci$(NC)         : Build the main application for the CI.\n"
 	@printf "  $(BOLD)$(GREEN)build-release$(NC)    : Build a release version of the application.\n"
-	@printf "  $(BOLD)$(GREEN)build-fresh$(NC)      : Build a fresh development environment.\n\n"
+	@printf "  $(BOLD)$(GREEN)build-fresh$(NC)      : Build a fresh development environment.\n"
+	@printf "  $(BOLD)$(GREEN)prewarm-cli-docker$(NC): Warm Docker CLI caches and build the reusable CLI binary.\n\n"
 
 	@printf "$(BOLD)$(BLUE)Database Commands:$(NC)\n"
 	@printf "  $(BOLD)$(GREEN)db:local$(NC)         : Set up or manage the local database environment.\n"

@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,12 +53,27 @@ func TestKeepAliveDBHandler(t *testing.T) {
 	})
 
 	t.Run("db ping failure", func(t *testing.T) {
+		var logs bytes.Buffer
+		previous := slog.Default()
+		slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
+		t.Cleanup(func() {
+			slog.SetDefault(previous)
+		})
+
 		db.Close()
 		req := httptest.NewRequest("GET", "/ping-db", nil)
 		req.SetBasicAuth("user", "pass")
 		rec := httptest.NewRecorder()
 		if err := h.Handle(rec, req); err == nil || err.Status != http.StatusInternalServerError {
 			t.Fatalf("expected internal error, got %#v", err)
+		}
+
+		got := logs.String()
+		if count := strings.Count(got, "level=ERROR"); count != 1 {
+			t.Fatalf("expected one error log, got %d: %s", count, got)
+		}
+		if !strings.Contains(got, `msg="database ping failed"`) {
+			t.Fatalf("expected structured db ping failure log, got %s", got)
 		}
 	})
 }

@@ -7,9 +7,9 @@
 # against committed SHA256 checksums, and installed via an ephemeral RSA-signed
 # APKINDEX so `apk add` never contacts the live Alpine package index.
 
-ARG GO_VERSION
-ARG GO_IMAGE_VARIANT
-ARG GO_IMAGE_DIGEST
+ARG GO_VERSION=1.26.1
+ARG GO_IMAGE_VARIANT=alpine3.23
+ARG GO_IMAGE_DIGEST=sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039
 
 FROM golang:${GO_VERSION}-${GO_IMAGE_VARIANT}@${GO_IMAGE_DIGEST}
 
@@ -37,7 +37,7 @@ COPY checksums/ /tmp/checksums/
 #    fortify-headers separately (it must be added by path because its virtual
 #    provider name conflicts with the musl-provided headers already present).
 # 6. Clean up all temporary artifacts.
-RUN apk add --no-cache openssl=3.5.5-r0 && \
+RUN apk add --no-cache openssl=3.5.6-r0 && \
     target_arch="${TARGETARCH}"; \
     if [ -z "${target_arch}" ]; then \
         case "$(apk --print-arch)" in \
@@ -75,8 +75,8 @@ RUN apk add --no-cache openssl=3.5.5-r0 && \
         make-4.4.1-r3.apk \
         mpc1-1.3.1-r1.apk \
         mpfr4-4.2.2-r0.apk \
-        musl-1.2.5-r21.apk \
-        musl-dev-1.2.5-r21.apk \
+        musl-1.2.5-r23.apk \
+        musl-dev-1.2.5-r23.apk \
         patch-2.8-r0.apk \
         pkgconf-2.5.1-r0.apk \
         zlib-1.3.2-r0.apk \

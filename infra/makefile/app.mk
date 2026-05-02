@@ -164,16 +164,51 @@ run-cli:
 		esac`; \
 	printf "           DB_SECRET_DBNAME=%s\n\n" "$$DB_SECRET_DBNAME_DISPLAY"
 	@status=0; \
+	compose_cmd=""; \
 	if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then \
+		compose_cmd="docker compose"; \
 		printf "Using docker compose to run the CLI.\n"; \
-		docker compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
 	elif command -v docker-compose >/dev/null 2>&1; then \
+		compose_cmd="docker-compose"; \
 		printf "Using docker-compose to run the CLI.\n"; \
-		docker-compose run --rm api-runner go run ./metal/cli/main.go || status=$$?; \
 	else \
 		printf "\n$(RED)❌ Neither 'docker compose' nor 'docker-compose' is available.$(NC)\n"; \
 		printf "   Install Docker Compose or run the CLI locally without containers.\n\n"; \
 		exit 1; \
+	fi; \
+	$(DB_DOCKER_STATE_FUNCS) \
+	$(MAKE) --no-print-directory ensure-base-images || status=$$?; \
+	if [ $$status -eq 0 ] && [ "$$(db_running)" = "true" ] && [ "$$(db_health)" = "healthy" ]; then \
+		printf "Database container $(DB_DOCKER_CONTAINER_NAME) is already healthy.\n"; \
+	elif [ $$status -eq 0 ]; then \
+		printf "Database container $(DB_DOCKER_CONTAINER_NAME) is not ready. Starting $(DB_DOCKER_SERVICE_NAME)...\n"; \
+		$(MAKE) --no-print-directory ensure-db-volume || status=$$?; \
+		if [ $$status -eq 0 ]; then \
+			$$compose_cmd up -d $(DB_DOCKER_SERVICE_NAME) || status=$$?; \
+		fi; \
+		if [ $$status -eq 0 ]; then \
+			printf "Waiting for database to become healthy...\n"; \
+			attempt=0; max_attempts=30; \
+			while [ $$attempt -lt $$max_attempts ]; do \
+				if [ "$$(db_running)" = "true" ] && [ "$$(db_health)" = "healthy" ]; then \
+					printf "Database is healthy.\n"; \
+					break; \
+				fi; \
+				attempt=$$((attempt + 1)); \
+				if [ $$attempt -eq $$max_attempts ]; then \
+					printf "\n$(RED)❌ Database failed to become healthy after 60 seconds.$(NC)\n"; \
+					status=1; \
+					break; \
+				fi; \
+				sleep 2; \
+			done; \
+		fi; \
+	fi; \
+	if [ $$status -eq 0 ]; then \
+		$(MAKE) --no-print-directory build-cli-docker || status=$$?; \
+	fi; \
+	if [ $$status -eq 0 ]; then \
+		$$compose_cmd run --rm --no-deps api-runner $(CLI_DOCKER_BINARY_CONTAINER) || status=$$?; \
 	fi; \
 	if [ $$status -ne 0 ]; then \
 		printf "\n$(RED)❌ CLI exited with status $$status.$(NC)\n"; \

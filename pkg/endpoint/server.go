@@ -6,10 +6,16 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/felixge/httpsnoop"
+
+	"github.com/oullin/pkg/portal"
 )
 
 // RunServer starts the provided HTTP server, listens for shutdown signals, and
@@ -94,5 +100,58 @@ func NewServerHandler(cfg ServerHandlerConfig) http.Handler {
 		handler = cfg.Wrap(handler)
 	}
 
-	return handler
+	return requestLogHandler{next: handler}
+}
+
+type requestLogHandler struct {
+	next http.Handler
+}
+
+func (h requestLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	metrics := httpsnoop.CaptureMetrics(h.next, w, r)
+	status := metrics.Code
+
+	attrs := []any{
+		"method", r.Method,
+		"path", r.URL.Path,
+		"status", status,
+		"duration_ms", time.Since(started).Milliseconds(),
+		"bytes", metrics.Written,
+		"remote_addr", r.RemoteAddr,
+		"request_id", r.Header.Get(portal.RequestIDHeader),
+		"user_agent", r.UserAgent(),
+	}
+
+	if query := safeRequestQuery(r.URL.Query()); query != "" {
+		attrs = append(attrs, "query", query)
+	}
+
+	if forwardedFor := r.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		attrs = append(attrs, "forwarded_for", forwardedFor)
+	}
+
+	if status >= http.StatusInternalServerError {
+		slog.Error("http request completed", append(attrs, "status_class", strconv.Itoa(status)[0:1]+"xx")...)
+		return
+	}
+
+	if status >= http.StatusBadRequest {
+		slog.Warn("http request completed", append(attrs, "status_class", strconv.Itoa(status)[0:1]+"xx")...)
+		return
+	}
+
+	slog.Info("http request completed", attrs...)
+}
+
+func safeRequestQuery(values url.Values) string {
+	safe := url.Values{}
+
+	for _, key := range []string{"limit", "page"} {
+		if v, ok := values[key]; ok {
+			safe[key] = v
+		}
+	}
+
+	return safe.Encode()
 }

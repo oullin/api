@@ -12,6 +12,8 @@ volumes:
     caddy_config:
     go_mod_cache:
         driver: local
+    go_build_cache:
+        driver: local
     prometheus_data_prod:
         driver: local
     prometheus_data_local:
@@ -48,7 +50,8 @@ services:
             container_name: oullin_proxy_prod
             restart: unless-stopped
             depends_on:
-                - api
+                api:
+                    condition: service_healthy
 
             # --- The 443:443/udp is required for HTTP/3
             #     NOTES:
@@ -86,7 +89,8 @@ services:
             container_name: oullin_local_proxy
             restart: unless-stopped
             depends_on:
-                - api
+                api:
+                    condition: service_healthy
             ports:
                 - "18080:80"
                 - "127.0.0.1:2019:2019" # Admin API - localhost only for debugging
@@ -340,15 +344,19 @@ services:
             dockerfile: ./infra/docker/dockerfile-api
             target: builder
             args:
-              - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r2}
+              - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r3}
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
+            - go_build_cache:/tmp/go-build
             - "${ENV_SPA_DIR}:${ENV_SPA_DIR}"
             - "${ENV_SPA_IMAGES_DIR}:${ENV_SPA_IMAGES_DIR}"
           working_dir: /app
           environment:
               CGO_ENABLED: 1
+              GOPATH: /go
+              GOMODCACHE: /go/pkg/mod
+              GOCACHE: /tmp/go-build
               GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}
               ENV_DB_HOST: api-db
               ENV_SPA_DIR: ${ENV_SPA_DIR}
@@ -375,18 +383,20 @@ services:
             volumes:
               - ./.env:/app/.env:ro
               - ./storage/fixture:/app/storage/fixture:ro
+              - ${API_LOGS_PATH:-./storage/logs/api}:/app/storage/logs
             environment:
                 CGO_ENABLED: 1
                 GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}
                 # --- This ensures the Go web server listens for connections from other
                 #     containers (like Caddy), not just from within itself.
+                ENV_APP_LOGS_DIR: /app/storage/logs/logs_%s.log
                 ENV_DB_HOST: api-db
                 ENV_HTTP_HOST: 0.0.0.0
             build:
                 context: .
                 dockerfile: ./infra/docker/dockerfile-api
                 args:
-                    - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r2}
+                    - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r3}
                     - APP_VERSION=0.0.0.1
                     - APP_HOST_PORT=${ENV_HTTP_PORT}
                     - APP_USER=${ENV_DOCKER_USER}
@@ -405,6 +415,12 @@ services:
                 # local: use Caddy on port 18080 (handles /api prefix like production)
                 # prod : Caddy handles all traffic (no direct API access)
                 - ${ENV_HTTP_PORT}
+            healthcheck:
+                test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:$${ENV_HTTP_PORT:-8080}/health"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 15s
             networks:
                 oullin_net: {}
                 caddy_net:
