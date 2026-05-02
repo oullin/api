@@ -52,7 +52,7 @@ oullin.io {
 	@relay_signature_cors path /relay/generate-signature*
 	header @relay_signature_cors Access-Control-Allow-Origin "https://oullin.io"
 	header @relay_signature_cors Access-Control-Allow-Methods "POST, OPTIONS"
-	header @relay_signature_cors Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Timestamp, X-Request-ID, Content-Type, User-Agent, X-API-Intended-Origin"
+	header @relay_signature_cors Access-Control-Allow-Headers "X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin"
 	header @relay_signature_cors Vary "Origin"
 
 	@relay_signature_preflight {

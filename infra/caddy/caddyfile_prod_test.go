@@ -100,7 +100,7 @@ func TestProdCaddyfileHandlesBrowserSignatureRelayAtEdge(t *testing.T) {
 		`@relay_signature_cors\s+path\s+/relay/generate-signature\*.*?` +
 		`header\s+@relay_signature_cors\s+Access-Control-Allow-Origin\s+"https://oullin\.io".*?` +
 		`header\s+@relay_signature_cors\s+Access-Control-Allow-Methods\s+"POST, OPTIONS".*?` +
-		`header\s+@relay_signature_cors\s+Access-Control-Allow-Headers\s+"X-API-Key, X-API-Username, X-API-Timestamp, X-Request-ID, Content-Type, User-Agent, X-API-Intended-Origin".*?` +
+		`header\s+@relay_signature_cors\s+Access-Control-Allow-Headers\s+"X-API-Key, X-API-Username, X-API-Signature, X-API-Timestamp, X-API-Nonce, X-Request-ID, Content-Type, User-Agent, If-None-Match, X-API-Intended-Origin".*?` +
 		`@relay_signature_preflight\s*{\s*` +
 		`path\s+/relay/generate-signature\*\s+` +
 		`method\s+OPTIONS\s*` +
