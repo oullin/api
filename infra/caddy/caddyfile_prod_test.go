@@ -30,8 +30,6 @@ func protectedPublicPaths(caddyfile string) map[string]bool {
 		for _, path := range fields[2:] {
 			paths[path] = true
 		}
-
-		return paths
 	}
 
 	return paths
