@@ -738,7 +738,7 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environme
 			UserName:     "test",
 			UserPassword: "secret",
 			DatabaseName: "testdb",
-			Port:         port.Int(),
+			Port:         int(port.Num()),
 			Host:         host,
 			DriverName:   database.DriverName,
 			SSLMode:      "disable",

@@ -52,52 +52,56 @@ func (s *ScopeApiError) Enrich() {
 	s.scope.SetTag("http.route", s.request.URL.Path)
 
 	s.scope.SetRequest(s.request)
-	s.scope.SetExtra("api_error_status_text", http.StatusText(s.apiErr.Status))
-	s.scope.SetExtra("api_error_message", s.apiErr.Message)
+	context := sentry.Context{
+		"api_error_status_text": http.StatusText(s.apiErr.Status),
+		"api_error_message":     s.apiErr.Message,
+	}
 
 	if requestID := s.RequestID(); requestID != "" {
 		s.scope.SetTag("http.request_id", requestID)
-		s.scope.SetExtra("http_request_id", requestID)
+		context["http_request_id"] = requestID
 	}
 
 	if s.apiErr.Data != nil {
-		s.scope.SetExtra("api_error_data", s.apiErr.Data)
+		context["api_error_data"] = s.apiErr.Data
 	}
 
 	if s.apiErr.Err != nil {
-		s.scope.SetExtra("api_error_cause", s.apiErr.Err.Error())
+		context["api_error_cause"] = s.apiErr.Err.Error()
 		s.scope.SetTag("api.error.cause_type", fmt.Sprintf("%T", s.apiErr.Err))
 
-		s.scope.SetExtra("api_error_cause_chain", s.buildErrorChain(s.apiErr.Err))
+		context["api_error_cause_chain"] = s.buildErrorChain(s.apiErr.Err)
 	}
 
 	if accountName := s.accountName(); accountName != "" {
-		s.scope.SetExtra("api_account_name", accountName)
+		context["api_account_name"] = accountName
 	}
 
 	if username := s.headerValue(portal.UsernameHeader); username != "" {
-		s.scope.SetExtra("api_username_header", username)
+		context["api_username_header"] = username
 	}
 
 	if origin := portal.IntendedOriginFromHeader(s.request.Header); origin != "" {
-		s.scope.SetExtra("api_intended_origin", origin)
+		context["api_intended_origin"] = origin
 	}
 
 	if ts := s.headerValue(portal.TimestampHeader); ts != "" {
-		s.scope.SetExtra("api_request_timestamp", ts)
+		context["api_request_timestamp"] = ts
 	}
 
 	if nonce := s.headerValue(portal.NonceHeader); nonce != "" {
-		s.scope.SetExtra("api_request_nonce", nonce)
+		context["api_request_nonce"] = nonce
 	}
 
 	if publicKey := s.headerValue(portal.TokenHeader); publicKey != "" {
-		s.scope.SetExtra("api_public_key", publicKey)
+		context["api_public_key"] = publicKey
 	}
 
 	if clientIP := strings.TrimSpace(portal.ParseClientIP(s.request)); clientIP != "" {
-		s.scope.SetExtra("http_client_ip", clientIP)
+		context["http_client_ip"] = clientIP
 	}
+
+	s.scope.SetContext("api_error", context)
 }
 
 func (s *ScopeApiError) accountName() string {

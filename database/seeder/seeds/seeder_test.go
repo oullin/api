@@ -55,7 +55,7 @@ func testConnection(t *testing.T, e *env.Environment) *database.Connection {
 		UserName:     "test",
 		UserPassword: "secret",
 		DatabaseName: "testdb",
-		Port:         port.Int(),
+		Port:         int(port.Num()),
 		Host:         host,
 		DriverName:   database.DriverName,
 		SSLMode:      "disable",

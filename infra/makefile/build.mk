@@ -1,12 +1,12 @@
 .PHONY: build-local watch-local build-ci build-prod build-release build-deploy build-local-restart build-prod-force build-fresh ensure-caddy-net ensure-base-images ensure-builder-base-image ensure-runtime-base-image build-base-images push-base-images generate-apk-checksums build-cli-docker prewarm-cli-docker
 
 BUILD_VERSION ?= latest
-BASE_GO_VERSION ?= 1.26.1
+BASE_GO_VERSION ?= 1.26.3
 BASE_ALPINE_VERSION ?= 3.23
 BASE_IMAGE_REVISION ?= 3
 BASE_GO_IMAGE_VARIANT ?= alpine$(BASE_ALPINE_VERSION)
-BASE_GO_IMAGE_DIGEST ?= sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039
-BASE_ALPINE_IMAGE_DIGEST ?= sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
+BASE_GO_IMAGE_DIGEST ?= sha256:91eda9776261207ea25fd06b5b7fed8d397dd2c0a283e77f2ab6e91bfa71079d
+BASE_ALPINE_IMAGE_DIGEST ?= sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11
 BASE_APK_BASE_URL ?= https://dl-cdn.alpinelinux.org/alpine/v$(BASE_ALPINE_VERSION)/main
 BASE_IMAGE_VERSION ?= $(BASE_GO_VERSION)-alpine$(BASE_ALPINE_VERSION)-r$(BASE_IMAGE_REVISION)
 BUILD_CADDY_NET := caddy_net

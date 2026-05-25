@@ -11,7 +11,7 @@ DB_SECRETS_DIR      := $(ROOT_PATH)/database/infra/secrets
 
 # "auto" lets the local Go installation download the toolchain required by go.mod,
 # so developers don't need to install the exact Go version manually.
-# Override with a pinned version (e.g., GO_LOCAL_TOOLCHAIN=go1.26.1) for deterministic builds.
+# Override with a pinned version (e.g., GO_LOCAL_TOOLCHAIN=go1.26.3) for deterministic builds.
 # Note: docker-compose reads GO_LOCAL_TOOLCHAIN from the environment separately.
 GO_LOCAL_TOOLCHAIN  ?= auto
 GOIMPORTS_VERSION   ?= v0.43.0
