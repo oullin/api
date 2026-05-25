@@ -108,7 +108,7 @@ services:
                 - caddy_net
 
         prometheus:
-            image: prom/prometheus:v3.8.1@sha256:2b6f734e372c1b4717008f7d0a0152316aedd4d13ae17ef1e3268dbfaf68041b
+            image: prom/prometheus:v3.11.3@sha256:e4254400b85610324913f0dc4acf92603d9984e7519414c5a12811aa6146acc3
             profiles: ["prod"]
             container_name: oullin_prometheus
             restart: unless-stopped
@@ -147,7 +147,7 @@ services:
                         memory: 256M
 
         prometheus_local:
-            image: prom/prometheus:v3.8.1@sha256:2b6f734e372c1b4717008f7d0a0152316aedd4d13ae17ef1e3268dbfaf68041b
+            image: prom/prometheus:v3.11.3@sha256:e4254400b85610324913f0dc4acf92603d9984e7519414c5a12811aa6146acc3
             profiles: ["local"]
             container_name: oullin_prometheus_local
             restart: unless-stopped
@@ -186,7 +186,7 @@ services:
                         memory: 256M
 
         postgres_exporter:
-            image: prometheuscommunity/postgres-exporter:v0.18.0@sha256:3a9be51b73ac4f007cec8a36d824253c0607d065196072b61d8808714d7e8044
+            image: prometheuscommunity/postgres-exporter:v0.19.1@sha256:e96064f876226d94bb6ce48a4c4b3dd76edba91168ec1ab024e5c4b959310b0f
             profiles: ["prod"]
             container_name: oullin_postgres_exporter
             restart: unless-stopped
@@ -221,7 +221,7 @@ services:
                         memory: 32M
 
         postgres_exporter_local:
-            image: prometheuscommunity/postgres-exporter:v0.18.0@sha256:3a9be51b73ac4f007cec8a36d824253c0607d065196072b61d8808714d7e8044
+            image: prometheuscommunity/postgres-exporter:v0.19.1@sha256:e96064f876226d94bb6ce48a4c4b3dd76edba91168ec1ab024e5c4b959310b0f
             profiles: ["local"]
             container_name: oullin_postgres_exporter_local
             restart: unless-stopped
@@ -256,7 +256,7 @@ services:
                         memory: 32M
 
         grafana:
-            image: grafana/grafana:12.3.1@sha256:2175aaa91c96733d86d31cf270d5310b278654b03f5718c59de12a865380a31f
+            image: grafana/grafana:13.0.1-security-01@sha256:2d1f9ae67c1778d33e291d4c3c759cd8b650e67491f02533499eb950e075eeb5
             profiles: ["prod"]
             container_name: oullin_grafana
             restart: unless-stopped
@@ -295,7 +295,7 @@ services:
                         memory: 128M
 
         grafana_local:
-            image: grafana/grafana:12.3.1@sha256:2175aaa91c96733d86d31cf270d5310b278654b03f5718c59de12a865380a31f
+            image: grafana/grafana:13.0.1-security-01@sha256:2d1f9ae67c1778d33e291d4c3c759cd8b650e67491f02533499eb950e075eeb5
             profiles: ["local"]
             container_name: oullin_grafana_local
             restart: unless-stopped
@@ -344,7 +344,7 @@ services:
             dockerfile: ./infra/docker/dockerfile-api
             target: builder
             args:
-              - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r3}
+              - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.3-alpine3.23-r4}
           volumes:
             - .:/app
             - go_mod_cache:/go/pkg/mod
@@ -357,7 +357,7 @@ services:
               GOPATH: /go
               GOMODCACHE: /go/pkg/mod
               GOCACHE: /tmp/go-build
-              GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}
+              GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.3}
               ENV_DB_HOST: api-db
               ENV_SPA_DIR: ${ENV_SPA_DIR}
               ENV_DB_PORT: ${ENV_DB_PORT:-5432}
@@ -386,7 +386,7 @@ services:
               - ${API_LOGS_PATH:-./storage/logs/api}:/app/storage/logs
             environment:
                 CGO_ENABLED: 1
-                GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.1}
+                GOTOOLCHAIN: ${GO_LOCAL_TOOLCHAIN:-go1.26.3}
                 # --- This ensures the Go web server listens for connections from other
                 #     containers (like Caddy), not just from within itself.
                 ENV_APP_LOGS_DIR: /app/storage/logs/logs_%s.log
@@ -396,7 +396,7 @@ services:
                 context: .
                 dockerfile: ./infra/docker/dockerfile-api
                 args:
-                    - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.1-alpine3.23-r3}
+                    - BASE_IMAGE_VERSION=${BASE_IMAGE_VERSION:-1.26.3-alpine3.23-r4}
                     - APP_VERSION=0.0.0.1
                     - APP_HOST_PORT=${ENV_HTTP_PORT}
                     - APP_USER=${ENV_DOCKER_USER}
@@ -461,10 +461,10 @@ services:
             # Ensure the database always restarts on server reboot or crash.
             restart: always
 
-            # Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+            # Pinning to postgres:18.4-alpine to avoid CVE-2025-12817/12818 and ensure
             # consistent checksum behaviour (initdb enables checksums by default in PG 18).
             # This matches the version used in test environments for consistency.
-            image: postgres:18.1-alpine@sha256:6723ec6d445fe51c6d097b9248f8a4b793255853524839fca1b2d69a435b6072
+            image: postgres:18.4-alpine@sha256:96d56f7f57c6aacd1fcb908bc83b345ec5f83231ee486dd66a1baadce274db88
             container_name: oullin_db
 
             env_file:

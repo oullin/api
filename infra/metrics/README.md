@@ -81,22 +81,22 @@ The monitoring stack is designed to maintain configuration consistency across lo
 The following configurations are **identical** across both environments:
 
 1. **Grafana Settings:**
-   - Same Grafana version (`grafana/grafana:12.3.1`)
+   - Same Grafana version (`grafana/grafana:13.0.1-security-01`)
    - Identical security settings (admin user, sign-up disabled, anonymous disabled)
    - Same dashboard and datasource provisioning structure
    - Same volume mount paths
 
 2. **Prometheus Core Settings:**
-   - Same Prometheus version (`prom/prometheus:v3.0.1`)
+   - Same Prometheus version (`prom/prometheus:v3.11.3`)
    - Identical scrape interval (15s) and evaluation interval (15s)
    - Same job structure (caddy, postgresql, api, prometheus) with per-environment targets
    - Same metrics endpoints and paths
 
 3. **Postgres Exporter:**
-   - Same exporter version (`prometheuscommunity/postgres-exporter:v0.16.0`)
+   - Same exporter version (`prometheuscommunity/postgres-exporter:v0.19.1`)
    - Identical port exposure (9187)
    - Same entrypoint script and secrets handling
-   - **Note:** v0.16.0 uses log/slog (stdlib) with new logging format
+   - **Note:** v0.19.1 uses log/slog (stdlib) with the current logging format
 
 #### Environment-Specific Variables
 

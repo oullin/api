@@ -7,9 +7,9 @@
 # against committed SHA256 checksums, and installed via an ephemeral RSA-signed
 # APKINDEX so `apk add` never contacts the live Alpine package index.
 
-ARG GO_VERSION=1.26.1
+ARG GO_VERSION=1.26.3
 ARG GO_IMAGE_VARIANT=alpine3.23
-ARG GO_IMAGE_DIGEST=sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039
+ARG GO_IMAGE_DIGEST=sha256:91eda9776261207ea25fd06b5b7fed8d397dd2c0a283e77f2ab6e91bfa71079d
 
 FROM golang:${GO_VERSION}-${GO_IMAGE_VARIANT}@${GO_IMAGE_DIGEST}
 

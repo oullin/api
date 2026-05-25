@@ -32,10 +32,10 @@ ARG BINARY_NAME=oullin_api
 # can work without registry access. CI/maintainers can override these args with
 # digest-pinned registry references after running `make push-base-images`.
 #
-ARG BASE_IMAGE_VERSION=1.26.1-alpine3.23-r3
+ARG BASE_IMAGE_VERSION=1.26.3-alpine3.23-r4
 ARG BUILDER_BASE_IMAGE=oullin-api-builder-base:${BASE_IMAGE_VERSION}
 ARG RUNTIME_BASE_IMAGE=oullin-api-runtime-base:${BASE_IMAGE_VERSION}
-ARG GO_TOOLCHAIN=go1.26.1
+ARG GO_TOOLCHAIN=go1.26.3
 
 # Non-root user/group settings.
 ARG APP_USER=appuser

@@ -26,10 +26,10 @@ func NewTestConnection(t *testing.T, models ...interface{}) *database.Connection
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
-	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
+	// Pinning to postgres:18.4-alpine by digest to avoid CVE-2025-12817/12818
+	// and ensure consistent checksum behaviour (initdb enables checksums by default in PG 18).
 	pg, err := postgres.Run(ctx,
-		"postgres:18.1-alpine",
+		"postgres:18.4-alpine@sha256:96d56f7f57c6aacd1fcb908bc83b345ec5f83231ee486dd66a1baadce274db88",
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),
@@ -54,7 +54,7 @@ func NewTestConnection(t *testing.T, models ...interface{}) *database.Connection
 			UserName:     "test",
 			UserPassword: "secret",
 			DatabaseName: "testdb",
-			Port:         port.Int(),
+			Port:         int(port.Num()),
 			Host:         host,
 			DriverName:   database.DriverName,
 			SSLMode:      "disable",
