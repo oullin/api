@@ -30,10 +30,10 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	// Pinning to postgres:18.4-alpine to avoid CVE-2025-12817/12818 and ensure
-	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
+	// Pinning to postgres:18.4-alpine by digest to avoid CVE-2025-12817/12818
+	// and ensure consistent checksum behaviour (initdb enables checksums by default in PG 18).
 	pgC, err := postgrescontainer.Run(ctx,
-		"postgres:18.4-alpine",
+		"postgres:18.4-alpine@sha256:96d56f7f57c6aacd1fcb908bc83b345ec5f83231ee486dd66a1baadce274db88",
 		postgrescontainer.WithDatabase("testdb"),
 		postgrescontainer.WithUsername("test"),
 		postgrescontainer.WithPassword("test"),
