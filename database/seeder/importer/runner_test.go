@@ -709,10 +709,10 @@ func setupPostgresConnection(t *testing.T) (*database.Connection, *env.Environme
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 
-	// Pinning to postgres:18.1-alpine to avoid CVE-2025-12817/12818 and ensure
+	// Pinning to postgres:18.4-alpine to avoid CVE-2025-12817/12818 and ensure
 	// consistent checksum behaviour (initdb enables checksums by default in PG 18).
 	pg, err := postgres.Run(ctx,
-		"postgres:18.1-alpine",
+		"postgres:18.4-alpine",
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),
 		postgres.WithPassword("secret"),
