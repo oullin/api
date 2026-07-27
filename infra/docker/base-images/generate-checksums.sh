@@ -57,7 +57,7 @@ RUNTIME_PACKAGES=(
     libsharpyuv-1.6.0-r0.apk
     libwebp-1.6.0-r0.apk
     musl-1.2.5-r23.apk
-    tzdata-2026b-r0.apk
+    tzdata-2026c-r0.apk
     zlib-1.3.2-r0.apk
 )
 

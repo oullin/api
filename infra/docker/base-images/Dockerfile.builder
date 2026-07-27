@@ -37,7 +37,7 @@ COPY checksums/ /tmp/checksums/
 #    fortify-headers separately (it must be added by path because its virtual
 #    provider name conflicts with the musl-provided headers already present).
 # 6. Clean up all temporary artifacts.
-RUN apk add --no-cache openssl=3.5.6-r0 && \
+RUN apk add --no-cache openssl=3.5.7-r0 && \
     target_arch="${TARGETARCH}"; \
     if [ -z "${target_arch}" ]; then \
         case "$(apk --print-arch)" in \
