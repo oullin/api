@@ -62,6 +62,8 @@ jobs:
     name: Deploy to VPS
     needs: build-and-push
     runs-on: ubuntu-24.04
+    permissions:
+      packages: read
 
     steps:
       - name: SSH and Pull Images on VPS
@@ -75,7 +77,7 @@ jobs:
             IMAGE_TAG=${{ needs.build-and-push.outputs.IMAGE_TAG }}
 
             echo "🔑 Logging into GitHub Container Registry ..."
-            echo ${{ secrets.DOCKER_REGISTRY_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             echo "🚚 Pulling latest images with tag: $IMAGE_TAG"
             docker pull ghcr.io/oullin/oullin_api:$IMAGE_TAG
