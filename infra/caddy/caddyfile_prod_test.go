@@ -208,8 +208,12 @@ func TestProdCaddyfileRedirectsWritingArchiveBeforeDefaultProxy(t *testing.T) {
 		"redir /writing/ https://writing.gocanto.sh/ 301",
 		"redir /tags/* https://writing.gocanto.sh/ 301",
 	} {
-		if !strings.Contains(oullinBlock, directive) {
+		position := strings.Index(oullinBlock, directive)
+		if position == -1 {
 			t.Fatalf("expected archive redirect %q", directive)
+		}
+		if position > defaultProxy {
+			t.Fatalf("expected archive redirect %q before the default web proxy", directive)
 		}
 	}
 
