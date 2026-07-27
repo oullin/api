@@ -62,6 +62,9 @@ jobs:
     name: Deploy to VPS
     needs: build-and-push
     runs-on: ubuntu-24.04
+    # GHCR pulls require package access; all other token permissions stay disabled.
+    permissions:
+      packages: read
 
     steps:
       - name: SSH and Pull Images on VPS
@@ -70,12 +73,13 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: GITHUB_TOKEN,GITHUB_ACTOR
           script: |
             set -Eeuo pipefail
             IMAGE_TAG=${{ needs.build-and-push.outputs.IMAGE_TAG }}
 
             echo "🔑 Logging into GitHub Container Registry ..."
-            echo ${{ secrets.DOCKER_REGISTRY_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
             echo "🚚 Pulling latest images with tag: $IMAGE_TAG"
             docker pull ghcr.io/oullin/oullin_api:$IMAGE_TAG
@@ -105,3 +109,6 @@ jobs:
             ./deployment
 
             echo "✅ Deployment completed!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
