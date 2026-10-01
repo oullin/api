@@ -22,7 +22,8 @@ jobs:
           driver: docker
 
       - name: Create .env File
-        run: echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+        # Image builds need Compose defaults, including for Dependabot PRs without secrets.
+        run: cp .env.example .env
         shell: bash
 
       - name: Build Base Images
