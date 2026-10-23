@@ -8,7 +8,7 @@
 # SHA256 checksum verification, ephemeral RSA-signed APKINDEX.
 
 ARG ALPINE_VERSION=3.23
-ARG ALPINE_IMAGE_DIGEST=sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11
+ARG ALPINE_IMAGE_DIGEST=sha256:21f3e19bafab57a9ff7aa9dd571dac72f868370472c10f450cc0416cc1aca553
 
 FROM alpine:${ALPINE_VERSION}@${ALPINE_IMAGE_DIGEST}
 
@@ -47,9 +47,9 @@ RUN apk add --no-cache openssl=3.5.9-r0 && \
     for apk_pkg in \
         libsharpyuv-1.6.0-r0.apk \
         libwebp-1.6.0-r0.apk \
-        musl-1.2.5-r23.apk \
-        tzdata-2026d-r0.apk \
-        zlib-1.3.2-r0.apk \
+        musl-1.2.5-r24.apk \
+        tzdata-2026e-r0.apk \
+        zlib-1.3.2-r1.apk \
     ; do \
         wget -qO "/tmp/local-repo/${apk_arch}/${apk_pkg}" "${APK_BASE_URL}/${apk_arch}/${apk_pkg}" || exit 1; \
     done && \
@@ -67,7 +67,7 @@ RUN apk add --no-cache openssl=3.5.9-r0 && \
         | gzip -9 \
         | cat - /tmp/APKINDEX.unsigned.tar.gz \
         > "/tmp/local-repo/${apk_arch}/APKINDEX.tar.gz" && \
-    apk add --no-cache --no-network --repositories-file /dev/null --repository /tmp/local-repo musl=1.2.5-r23 libwebp && \
-    apk add --no-cache --no-network "/tmp/local-repo/${apk_arch}/tzdata-2026d-r0.apk" && \
+    apk add --no-cache --no-network --repositories-file /dev/null --repository /tmp/local-repo musl=1.2.5-r24 libwebp && \
+    apk add --no-cache --no-network "/tmp/local-repo/${apk_arch}/tzdata-2026e-r0.apk" && \
     apk del --no-cache openssl && \
     rm -rf /tmp/local-repo /tmp/checksums /tmp/apk-sign.rsa /tmp/sig /tmp/sig.tar /tmp/APKINDEX.unsigned.tar.gz /etc/apk/keys/apk-sign.rsa.pub
