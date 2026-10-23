@@ -7,9 +7,9 @@
 # against committed SHA256 checksums, and installed via an ephemeral RSA-signed
 # APKINDEX so `apk add` never contacts the live Alpine package index.
 
-ARG GO_VERSION=1.26.3
+ARG GO_VERSION=1.26.10
 ARG GO_IMAGE_VARIANT=alpine3.23
-ARG GO_IMAGE_DIGEST=sha256:91eda9776261207ea25fd06b5b7fed8d397dd2c0a283e77f2ab6e91bfa71079d
+ARG GO_IMAGE_DIGEST=sha256:0525c952defebc693cdaf62cdf43afa32be5a7f377e99260642ea19c240c708e
 
 FROM golang:${GO_VERSION}-${GO_IMAGE_VARIANT}@${GO_IMAGE_DIGEST}
 
@@ -75,11 +75,11 @@ RUN apk add --no-cache openssl=3.5.9-r0 && \
         make-4.4.1-r3.apk \
         mpc1-1.3.1-r1.apk \
         mpfr4-4.2.2-r0.apk \
-        musl-1.2.5-r23.apk \
-        musl-dev-1.2.5-r23.apk \
+        musl-1.2.5-r24.apk \
+        musl-dev-1.2.5-r24.apk \
         patch-2.8-r0.apk \
         pkgconf-2.5.1-r0.apk \
-        zlib-1.3.2-r0.apk \
+        zlib-1.3.2-r1.apk \
         zstd-libs-1.5.7-r2.apk \
     ; do \
         wget -qO "/tmp/local-repo/${apk_arch}/${apk_pkg}" "${APK_BASE_URL}/${apk_arch}/${apk_pkg}" || exit 1; \

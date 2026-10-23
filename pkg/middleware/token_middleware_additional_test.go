@@ -33,7 +33,7 @@ func makeRepo(t *testing.T, account string) (*repository.ApiKeys, *auth.TokenHan
 	// Pinning to postgres:18.4-alpine by digest to avoid CVE-2025-12817/12818
 	// and ensure consistent checksum behaviour (initdb enables checksums by default in PG 18).
 	pgC, err := postgrescontainer.Run(ctx,
-		"postgres:18.4-alpine@sha256:96d56f7f57c6aacd1fcb908bc83b345ec5f83231ee486dd66a1baadce274db88",
+		"postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
 		postgrescontainer.WithDatabase("testdb"),
 		postgrescontainer.WithUsername("test"),
 		postgrescontainer.WithPassword("test"),

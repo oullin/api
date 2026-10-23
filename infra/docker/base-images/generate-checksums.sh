@@ -45,20 +45,20 @@ BUILDER_PACKAGES=(
     make-4.4.1-r3.apk
     mpc1-1.3.1-r1.apk
     mpfr4-4.2.2-r0.apk
-    musl-1.2.5-r23.apk
-    musl-dev-1.2.5-r23.apk
+    musl-1.2.5-r24.apk
+    musl-dev-1.2.5-r24.apk
     patch-2.8-r0.apk
     pkgconf-2.5.1-r0.apk
-    zlib-1.3.2-r0.apk
+    zlib-1.3.2-r1.apk
     zstd-libs-1.5.7-r2.apk
 )
 
 RUNTIME_PACKAGES=(
     libsharpyuv-1.6.0-r0.apk
     libwebp-1.6.0-r0.apk
-    musl-1.2.5-r23.apk
-    tzdata-2026d-r0.apk
-    zlib-1.3.2-r0.apk
+    musl-1.2.5-r24.apk
+    tzdata-2026e-r0.apk
+    zlib-1.3.2-r1.apk
 )
 
 # Architectures for which we generate checksums (multi-platform support).
